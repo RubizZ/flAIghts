@@ -29,7 +29,7 @@ export default function AuthCard({ children, title = "fl/AI\\ghts" }: AuthCardPr
                         </svg>
                     </button>
 
-                    <span className="font-bold text-3xl tracking-tighter bg-clip-text text-transparent bg-linear-to-b from-(--color-text-primary) to-(--color-text-primary)/70 drop-shadow-sm">
+                    <span className="pb-2 font-bold text-3xl tracking-tighter bg-clip-text text-transparent bg-linear-to-b from-(--color-text-primary) to-(--color-text-primary)/70 drop-shadow-sm">
                         {title}
                     </span>
                 </div>

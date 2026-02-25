@@ -72,7 +72,7 @@ const UserSchema = new Schema<IUser>({
   created_at: { type: Date, default: Date.now },
   last_seen_at: { type: Date, default: Date.now },
   auth_version: { type: Number, default: 1, min: 1 },
-  password_reset_token: { type: String, select: false },
+  password_reset_token: { type: String, select: false, index: true },
   password_reset_expires: { type: Date, select: false }
 });
 

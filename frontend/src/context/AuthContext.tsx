@@ -34,8 +34,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
         isError,
     } = useGetUser({
         query: {
-            // Re-intentar solo una vez en caso de error
-            retry: 1,
+            // No reintentar en caso de error
+            retry: 0,
             // No refetch automático al enfocar la ventana
             refetchOnWindowFocus: false,
             // Mantener datos frescos por 5 minutos

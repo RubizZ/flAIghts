@@ -66,7 +66,7 @@ export default function Register() {
                                 break;
                         }
                         break;
-                    case "DATABASE_VALIDATION_ERROR":
+                    case "DATABASE_VALIDATION_ERROR": // TODO Mejorar validacion de base de datos
                         toast.error(error.message);
                         break;
                 }
@@ -153,12 +153,15 @@ export default function Register() {
                         value={formData.confirmPassword}
                         onChange={handleChange}
                         type="password"
+                        isRepeat
                         id="confirmPassword"
                         name="confirmPassword"
                         label="Confirmar contraseña"
                         error={errors.confirmPassword}
                         onKeyDown={enterKeyPress}
                     />
+
+                    <p className="text-xs text-center text-gray-500">Al registrarte, aceptas los <a href="/terms" target="_blank" rel="noopener noreferrer" className="text-accent hover:underline">Términos de servicio</a> y la <a href="/privacy" target="_blank" rel="noopener noreferrer" className="text-accent hover:underline">Política de privacidad</a>.</p>
 
                     <button
                         type="button"

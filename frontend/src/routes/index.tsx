@@ -11,6 +11,7 @@ import Register from "../pages/Register.tsx";
 // Layouts
 import MainLayout from "../components/layout/MainLayout.tsx";
 import ForgotPassword from "@/pages/ForgotPassword.tsx";
+import ResetPassword from "@/pages/ResetPassword.tsx";
 
 export const routes: RouteObject[] = [
     {
@@ -23,6 +24,7 @@ export const routes: RouteObject[] = [
                     { path: "/login", element: <Login /> },
                     { path: "/register", element: <Register /> },
                     { path: "/forgot-password", element: <ForgotPassword /> },
+                    { path: "/reset-password", element: <ResetPassword /> },
                 ]
             },
             {
