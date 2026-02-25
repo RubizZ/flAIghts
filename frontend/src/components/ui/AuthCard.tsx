@@ -6,7 +6,7 @@ interface AuthCardProps {
     title?: string;
 }
 
-export default function AuthCard({ children, title = "fl/AI\\ght" }: AuthCardProps) {
+export default function AuthCard({ children, title = "fl/AI\\ghts" }: AuthCardProps) {
     const [hasBack, setHasBack] = useState(false);
 
     useEffect(() => {

@@ -6,8 +6,8 @@ import "dotenv/config";
 
 async function runTest() {
     // Conexión a MongoDB (asume que tienes el docker levantado y el puerto 27017 expuesto)
-    const mongoUri = "mongodb://root:1234@localhost:27017/tfg?authSource=admin";
-    
+    const mongoUri = "mongodb://root:1234@localhost:27017/flAIghts?authSource=admin";
+
     console.log("🔌 Conectando a MongoDB...");
     await mongoose.connect(mongoUri);
     console.log("✅ Conectado.");

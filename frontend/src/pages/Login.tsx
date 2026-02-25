@@ -67,7 +67,7 @@ export default function Login() {
 
     return (
         <AuthLayout>
-            <AuthCard title="fl/AI\ght">
+            <AuthCard title="Inicio de sesión">
                 <form onSubmit={(e) => e.preventDefault()} className="flex flex-col gap-6">
                     {/* Form Fields */}
                     <FloatingLabelInput

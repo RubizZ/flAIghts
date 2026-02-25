@@ -59,8 +59,8 @@ export default function Footer() {
                 <div className="relative pt-16 pb-12 px-6">
                     <div className="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center gap-10">
                         <div className="flex flex-col items-center md:items-start text-center md:text-left">
-                            <span className="font-bold text-3xl tracking-tighter mb-2 bg-clip-text text-transparent bg-linear-to-b from-white to-white/60">fl/AI\ght</span>
-                            <p className="text-sm opacity-50 font-medium">© {new Date().getFullYear()} fl/AI\ght. Innovating the way you fly.</p>
+                            <span className="font-bold text-3xl tracking-tighter mb-2 bg-clip-text text-transparent bg-linear-to-b from-white to-white/60">flAIghts</span>
+                            <p className="text-sm opacity-50 font-medium">© {new Date().getFullYear()} flAIghts. Innovating the way you fly.</p>
                         </div>
                         <div className="flex flex-wrap justify-center gap-x-10 gap-y-6">
                             <Link to="/about" onClick={() => setIsExpanded(false)} className="text-sm font-semibold hover:opacity-100 opacity-70 transition-all hover:-translate-y-px">About us</Link>

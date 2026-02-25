@@ -196,7 +196,7 @@ async function migrate(mongoUri: string) {
 let uri = process.argv[2] || process.env.MONGODB_URI;
 
 if (process.env.NODE_ENV === "development" || process.argv.includes("--docker")) {
-    uri = "mongodb://root:1234@localhost:27017/tfg?authSource=admin";
+    uri = "mongodb://root:1234@localhost:27017/flAIghts?authSource=admin";
 }
 
 if (!uri) {

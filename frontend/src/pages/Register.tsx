@@ -113,7 +113,7 @@ export default function Register() {
 
     return (
         <AuthLayout>
-            <AuthCard title="Únete a fl/AI\ght">
+            <AuthCard title="Únete a flAIghts">
                 <form onSubmit={(e) => e.preventDefault()} className="flex flex-col gap-5">
 
                     <FloatingLabelInput

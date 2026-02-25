@@ -44,7 +44,7 @@ export default function Navbar() {
             </div>
 
             <div className="flex flex-1 items-center justify-center">
-                <span className="text-secondary font-bold text-xl tracking-tighter">fl/AI\ght</span>
+                <span className="text-secondary font-bold text-xl tracking-tighter">flAIghts</span>
             </div>
 
             <div className="flex flex-1 items-center justify-end gap-2">

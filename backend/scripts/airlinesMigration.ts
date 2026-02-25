@@ -48,7 +48,7 @@ async function migrate(mongoUri: string) {
             }
 
             const parts = parseCSVLine(line);
-            const name= parts[0];
+            const name = parts[0];
             let iata = parts[1];
             let icao = parts[2];
             const country = parts[4];
@@ -86,7 +86,7 @@ async function migrate(mongoUri: string) {
             // Guardar por lotes
             if (batch.length >= batchSize) {
                 await processBatch(batch);
-                count+= batch.length;
+                count += batch.length;
                 console.log(`Processed ${count} airlines...`);
                 batch = [];
             }
@@ -126,7 +126,7 @@ async function processBatch(batch: any[]) {
 let uri = process.argv[2] || process.env.MONGODB_URI;
 
 if (process.env.NODE_ENV === "development" || process.argv.includes("--docker")) {
-    uri = "mongodb://root:1234@localhost:27017/tfg?authSource=admin";
+    uri = "mongodb://root:1234@localhost:27017/flAIghts?authSource=admin";
 }
 
 if (!uri) {

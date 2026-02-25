@@ -2252,6 +2252,146 @@
 				],
 				"type": "object",
 				"additionalProperties": false
+			},
+			"AirportResponse": {
+				"properties": {
+					"iata_code": {
+						"type": "string"
+					},
+					"name": {
+						"type": "string"
+					},
+					"city": {
+						"type": "string"
+					},
+					"country": {
+						"type": "string"
+					},
+					"type": {
+						"type": "string"
+					},
+					"importance_score": {
+						"type": "number",
+						"format": "double"
+					},
+					"location": {
+						"properties": {
+							"coordinates": {
+								"items": {
+									"type": "number",
+									"format": "double"
+								},
+								"type": "array"
+							},
+							"type": {
+								"type": "string",
+								"enum": [
+									"Point"
+								],
+								"nullable": false
+							}
+						},
+						"required": [
+							"coordinates",
+							"type"
+						],
+						"type": "object"
+					}
+				},
+				"required": [
+					"iata_code",
+					"name",
+					"city",
+					"country",
+					"type",
+					"importance_score",
+					"location"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"SuccessResponse_AirportResponse-Array_": {
+				"description": "Wrapper de éxito JSend (aplicado por el middleware global).",
+				"properties": {
+					"status": {
+						"type": "string",
+						"enum": [
+							"success"
+						],
+						"nullable": false
+					},
+					"data": {
+						"items": {
+							"$ref": "#/components/schemas/AirportResponse"
+						},
+						"type": "array"
+					}
+				},
+				"required": [
+					"status",
+					"data"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"IAirline": {
+				"properties": {
+					"code": {
+						"type": "string"
+					},
+					"name": {
+						"type": "string"
+					},
+					"country": {
+						"type": "string"
+					},
+					"quality_score": {
+						"type": "number",
+						"format": "double"
+					},
+					"created_at": {
+						"type": "string",
+						"format": "date-time"
+					},
+					"updated_at": {
+						"type": "string",
+						"format": "date-time"
+					}
+				},
+				"required": [
+					"code",
+					"name",
+					"country",
+					"quality_score",
+					"created_at",
+					"updated_at"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"SuccessResponse_IAirline-Array_": {
+				"description": "Wrapper de éxito JSend (aplicado por el middleware global).",
+				"properties": {
+					"status": {
+						"type": "string",
+						"enum": [
+							"success"
+						],
+						"nullable": false
+					},
+					"data": {
+						"items": {
+							"$ref": "#/components/schemas/IAirline"
+						},
+						"type": "array"
+					}
+				},
+				"required": [
+					"status",
+					"data"
+				],
+				"type": "object",
+				"additionalProperties": false
 			}
 		},
 		"securitySchemes": {
@@ -2268,7 +2408,7 @@
 		}
 	},
 	"info": {
-		"title": "@tfg/backend",
+		"title": "@flaights/backend",
 		"version": "1.0.0",
 		"license": {
 			"name": "ISC"
@@ -2935,6 +3075,68 @@
 						}
 					}
 				}
+			}
+		},
+		"/airports": {
+			"get": {
+				"operationId": "Search",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/SuccessResponse_AirportResponse-Array_"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Airports"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"in": "query",
+						"name": "q",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				]
+			}
+		},
+		"/airlines": {
+			"get": {
+				"operationId": "Search",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/SuccessResponse_IAirline-Array_"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Airlines"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"in": "query",
+						"name": "q",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				]
 			}
 		}
 	},
