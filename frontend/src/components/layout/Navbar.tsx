@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { useTheme } from "@/context/ThemeContext";
 import Dropdown from "@/components/ui/Dropdown";
@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 
 export default function Navbar() {
+    const navigate = useNavigate();
     const { user, isAuthenticated, isLoading, logout } = useAuth();
     const { theme, setTheme } = useTheme();
 
@@ -69,8 +70,8 @@ export default function Navbar() {
                                 {
                                     true ? ( // TODO Implementar avatar
                                         <img
-                                            src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.username}`}
-                                            className="w-7 h-7 rounded-full shadow-inner bg-secondary border border-accent/20"
+                                            src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.id}`}
+                                            className="w-7 h-7 rounded-full shadow-inner bg-secondary border border-themed"
                                             alt="Avatar"
                                         />
                                     ) : (
@@ -91,12 +92,11 @@ export default function Navbar() {
                                     <p className="text-sm font-bold text-primary truncate">{user?.email}</p>
                                 </div>
                                 <div className="p-1">
-                                    <button className="w-full flex items-center justify-between px-3 py-2 text-sm rounded-xl transition-all cursor-not-allowed group text-left">
-                                        <div className="flex items-center gap-3 opacity-20 text-primary">
-                                            <User size={16} />
-                                            Mi Perfil
+                                    <button onClick={() => { setIsUserMenuOpen(false); navigate(`/user/${user?.id}`) }} className="w-full flex items-center justify-between text-secondary px-3 py-2 text-sm rounded-xl transition-all group text-left hover:bg-(--color-bg-secondary)/70 hover:cursor-pointer font-medium">
+                                        <div className="flex items-center gap-3">
+                                            <User size={16} className="shrink-0" />
+                                            <span className="leading-none">Mi Perfil</span>
                                         </div>
-                                        <span className="text-[8px] bg-secondary/10 px-1.5 py-0.5 rounded uppercase tracking-tighter opacity-20 text-primary">Soon</span>
                                     </button>
                                     <button className="w-full flex items-center justify-between px-3 py-2 text-sm rounded-xl transition-all cursor-not-allowed group text-left">
                                         <div className="flex items-center gap-3 opacity-20 text-primary">
@@ -119,15 +119,15 @@ export default function Navbar() {
                                             e.stopPropagation();
                                             setIsThemeSubmenuOpen(true);
                                         }}
-                                        className="w-full flex items-center justify-between px-3 py-2 text-sm text-primary hover:bg-secondary rounded-xl transition-all cursor-pointer group text-left font-medium"
+                                        className="w-full flex items-center justify-between px-3 py-2 text-sm text-secondary hover:bg-(--color-bg-secondary)/70 rounded-xl transition-all cursor-pointer group text-left font-medium"
                                     >
-                                        <div className="flex items-center gap-3 group-hover:translate-x-1 transition-transform">
-                                            <Palette size={16} className="text-secondary group-hover:text-accent transition-colors" />
-                                            Tema
+                                        <div className="flex items-center gap-3">
+                                            <Palette size={16} className="shrink-0" />
+                                            <span className="leading-none">Tema</span>
                                         </div>
-                                        <div className="flex items-center gap-1 text-[10px] text-secondary opacity-60 font-bold group-hover:text-accent transition-colors">
-                                            {themeLabels[theme as keyof typeof themeLabels]}
-                                            <ChevronDown size={12} className="-rotate-90" />
+                                        <div className="flex items-center gap-1.5 text-[10px] text-secondary opacity-60 font-bold transition-colors">
+                                            <span className="leading-none">{themeLabels[theme as keyof typeof themeLabels]}</span>
+                                            <ChevronDown size={12} className="-rotate-90 group-hover:rotate-0 transition-transform shrink-0" />
                                         </div>
                                     </button>
                                 </div>
