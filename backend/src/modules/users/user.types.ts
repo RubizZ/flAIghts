@@ -24,6 +24,20 @@ export interface SafeUser {
     auth_version: number;
 }
 
+export interface PublicUser {
+    id: string;
+    username: string;
+    role: "user" | "admin";
+    /**
+     * @isDateTime
+     */
+    created_at: string;
+    /**
+     * @isDateTime
+     */
+    last_seen_at: string;
+}
+
 // ==================== TIPOS DE RESPUESTA POR ENDPOINT ====================
 
 /**
@@ -35,6 +49,11 @@ export type CreateUserResponseData = SafeUser;
  * Respuesta del endpoint GET /users/me
  */
 export type GetUserResponseData = SafeUser;
+
+/**
+ * Respuesta del endpoint GET /users/:id
+ */
+export type GetUserByIdResponseData = PublicUser;
 
 /**
  * Respuesta del endpoint PATCH /users/me

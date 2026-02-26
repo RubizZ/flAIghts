@@ -1,5 +1,5 @@
-import { Body, Controller, Get, Patch, Post, RequestProp, Response, Route, Security, SuccessResponse as SuccessResponseDecorator, Tags } from "tsoa";
-import type { RegisterData, UpdateUserData, RegisterValidationFailResponse, UpdateUserValidationFailResponse, CreateUserResponseData, GetUserResponseData, SafeUser, UpdateUserResponseData } from "./user.types.js";
+import { Body, Controller, Get, Patch, Path, Post, RequestProp, Response, Route, Security, SuccessResponse as SuccessResponseDecorator, Tags } from "tsoa";
+import type { RegisterData, UpdateUserData, RegisterValidationFailResponse, UpdateUserValidationFailResponse, CreateUserResponseData, GetUserResponseData, SafeUser, UpdateUserResponseData, PublicUser, GetUserByIdResponseData } from "./user.types.js";
 import { inject, injectable } from "tsyringe";
 import { UserService } from "./user.service.js";
 import type { AuthenticatedUser } from "../auth/auth.types.js";
@@ -54,12 +54,38 @@ export class UsersController extends Controller {
         return this.sanitizeUser(updatedUser) satisfies UpdateUserResponseData as any;
     }
 
+    /**
+     * Obtiene los datos de un usuario por su ID.
+     */
+    @Get("/{id}")
+    @Security("jwt")
+    @Response<AuthFailResponse>(401, "No autenticado")
+    @Response<FailResponseFromError<UserNotFoundError>>(404, "Usuario no encontrado")
+    public async getUserById(@Path() id: string): Promise<SuccessResponse<GetUserByIdResponseData>> {
+        const targetUser = await this.userService.getUserById(id);
+        return this.sanitizePublicUser(targetUser) satisfies GetUserByIdResponseData as any;
+    }
+
     private sanitizeUser(user: IUser): SafeUser {
-        const { password, ...cleanUser } = user;
         return {
-            ...cleanUser,
-            created_at: cleanUser.created_at.toISOString(),
-            last_seen_at: cleanUser.last_seen_at.toISOString()
+            id: user.id,
+            username: user.username,
+            email: user.email,
+            role: user.role,
+            preferences: user.preferences,
+            created_at: user.created_at.toISOString(),
+            last_seen_at: user.last_seen_at.toISOString(),
+            auth_version: user.auth_version
+        };
+    }
+
+    private sanitizePublicUser(user: IUser): PublicUser {
+        return {
+            id: user.id,
+            username: user.username,
+            role: user.role,
+            created_at: user.created_at.toISOString(),
+            last_seen_at: user.last_seen_at.toISOString()
         };
     }
 
