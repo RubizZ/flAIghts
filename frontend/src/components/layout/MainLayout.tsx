@@ -8,7 +8,7 @@ export default function MainLayout() {
             <header>
                 <Navbar />
             </header>
-            <main className="grow bg-secondary py-4">
+            <main className="grow bg-secondary p-4">
                 <Outlet />
             </main>
             <Footer />

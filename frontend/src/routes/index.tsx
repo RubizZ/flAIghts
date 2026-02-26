@@ -13,6 +13,7 @@ import SearchResults from "../pages/SearchResults.tsx";
 import MainLayout from "../components/layout/MainLayout.tsx";
 import ForgotPassword from "@/pages/ForgotPassword.tsx";
 import ResetPassword from "@/pages/ResetPassword.tsx";
+import UserProfile from "@/pages/UserProfile.tsx";
 
 export const routes: RouteObject[] = [
     {
@@ -34,6 +35,7 @@ export const routes: RouteObject[] = [
                 children: [
                     { path: "/", element: <Home /> },
                     { path: "/search/:id", element: <SearchResults /> },
+                    { path: "/user/:id", element: <UserProfile /> },
                     { path: "*", element: <NotFound /> },
                 ]
             }
