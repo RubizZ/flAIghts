@@ -21,20 +21,21 @@ export class AuthController extends Controller {
     @Post("/login")
     @Response<LoginValidationFailResponse>(422, "Error de validación")
     @Response<FailResponseFromError<InvalidCredentialsError>>(401, "Credenciales inválidas")
-    public async login(@Body() body: LoginRequest, @Request() request: ExpressRequest): Promise<SuccessResponse | SuccessResponse<LoginResponseData>> {
+    public async login(@Body() body: LoginRequest, @Request() request: ExpressRequest): Promise<SuccessResponse<LoginResponseData>> {
         const { identifier, password, responseType } = body;
         try {
             const result = await this.authService.login(identifier, password);
 
             switch (responseType) {
                 case 'cookie':
+                    console.log('Setting cookie for user:', result.userId);
                     request.res!.cookie('token', result.token, {
                         httpOnly: true,
                         secure: false,
                         sameSite: 'strict',
                         maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
                     });
-                    return null as any;
+                    return result satisfies LoginResponseData as any;
                 case 'json':
                 default:
                     return result satisfies LoginResponseData as any;

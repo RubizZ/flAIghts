@@ -6,9 +6,12 @@ import FloatingLabelInput from "@/components/ui/FloatingLabelInput";
 import { useCreateUser } from "@/api/generated/users/users";
 import { useLogin } from "@/api/generated/auth/auth";
 import { useNavigate } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
+import { getGetUserQueryKey } from "@/api/generated/users/users";
 
 export default function Register() {
     const navigate = useNavigate();
+    const queryClient = useQueryClient();
     const [formData, setFormData] = useState({
         username: "",
         email: "",
@@ -25,6 +28,7 @@ export default function Register() {
     const { mutate: performLogin } = useLogin({
         mutation: {
             onSuccess: () => {
+                queryClient.invalidateQueries({ queryKey: getGetUserQueryKey() });
                 toast.success("¡Bienvenido a bordo!");
                 navigate("/");
             },

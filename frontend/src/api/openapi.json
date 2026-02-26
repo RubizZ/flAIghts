@@ -1516,31 +1516,6 @@
 				"$ref": "#/components/schemas/FailResponse_NOT_AUTHORIZED._searchId-string--requesterId-string__",
 				"description": "Extrae automáticamente code y details de una clase AppError.\r\n\r\nEjemplo:\r\n- FailResponseFromError<UserAlreadyExistsError> → { status: 'fail', data: { code: 'CONFLICT', message: string, details: { field, value } } }\r\n- FailResponseFromError<UserNotFoundError> → { status: 'fail', data: { code: 'NOT_FOUND', message: string, details: { userId } } }"
 			},
-			"SuccessResponse": {
-				"description": "Wrapper de éxito JSend (aplicado por el middleware global).",
-				"properties": {
-					"status": {
-						"type": "string",
-						"enum": [
-							"success"
-						],
-						"nullable": false
-					},
-					"data": {
-						"type": "number",
-						"enum": [
-							null
-						],
-						"nullable": true
-					}
-				},
-				"required": [
-					"status",
-					"data"
-				],
-				"type": "object",
-				"additionalProperties": false
-			},
 			"LoginResponseData": {
 				"description": "Respuesta del endpoint POST /auth/login",
 				"properties": {
@@ -2803,14 +2778,7 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"anyOf": [
-										{
-											"$ref": "#/components/schemas/SuccessResponse"
-										},
-										{
-											"$ref": "#/components/schemas/SuccessResponse_LoginResponseData_"
-										}
-									]
+									"$ref": "#/components/schemas/SuccessResponse_LoginResponseData_"
 								}
 							}
 						}
