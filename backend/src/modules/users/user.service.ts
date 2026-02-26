@@ -48,8 +48,16 @@ export class UserService {
         }
     }
 
+    public async getUserById(id: string): Promise<IUser> {
+        const user = await User.findOne({ id });
+        if (!user) {
+            throw new UserNotFoundError(id);
+        }
+        return this.sanitizeUser(user);
+    }
+
     private sanitizeUser(user: HydratedDocument<IUser>): IUser {
         const { _id, __v, ...cleanUser } = user.toObject();
         return cleanUser;
     }
-} 
+}
