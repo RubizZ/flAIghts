@@ -1,22 +1,23 @@
 import { RouteObject } from "react-router-dom";
-import RootLayout from "../components/layout/RootLayout.tsx";
-import RouteErrorBoundary from "../components/common/RouteErrorBoundary.tsx";
+import RootLayout from "@/components/layout/RootLayout";
+import RouteErrorBoundary from "@/components/common/RouteErrorBoundary";
 
 // Pages
-import Home from "../pages/Home.tsx";
-import NotFound from "../pages/NotFound.tsx";
-import Login from "../pages/Login.tsx";
-import Register from "../pages/Register.tsx";
-import SearchResults from "../pages/SearchResults.tsx";
+
+import Home from "@/pages/Home.tsx";
+import NotFound from "@/pages/NotFound.tsx";
+import Login from "@/pages/Login.tsx";
+import Register from "@/pages/Register.tsx";
+import SearchResults from "@/pages/SearchResults.tsx";
 import ForgotPassword from "@/pages/ForgotPassword.tsx";
 import ResetPassword from "@/pages/ResetPassword.tsx";
 import EmailVerification from "@/pages/EmailVerification.tsx";
 import UserProfile from "@/pages/UserProfile.tsx";
 import Friends from "@/pages/Friends.tsx";
+import UserSearch from "@/pages/UserSearch.tsx";
 
 // Layouts
-import MainLayout from "../components/layout/MainLayout.tsx";
-import UserSearch from "@/pages/UserSearch.tsx";
+import MainLayout from "@/components/layout/MainLayout";
 
 export const routes: RouteObject[] = [
     {
