@@ -177,6 +177,14 @@ export interface UpdateUserData {
     }
 }
 
+export interface ResendVerificationEmailRequest {
+    /**
+     * @format email
+     * @pattern ^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$ 
+     */
+    email: string;
+}
+
 // ==================== TIPOS DE ERROR ====================
 
 export type RegisterRequestValidationFailResponse = RequestValidationFailResponse<ValidationDetails<
@@ -204,7 +212,7 @@ export type UpdateUserRequestValidationFailResponse = RequestValidationFailRespo
 
 export type VerifyEmailRequestValidationFailResponse = RequestValidationFailResponse<ValidationDetails<
     | "body"
-    | "body.token"
+    | "body.code"
 >>;
 
 

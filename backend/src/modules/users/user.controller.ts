@@ -1,12 +1,12 @@
 import { Body, Controller, Get, Patch, Path, Post, Query, RequestProp, Response, Route, Security, SuccessResponse as SuccessResponseDecorator, Tags } from "tsoa";
-import type { RegisterData, UpdateUserData, RegisterValidationFailResponse, UpdateUserValidationFailResponse, CreateUserResponseData, GetUserResponseData, User, PopulatedUser, UpdateUserResponseData, PublicUser, GetUserByIdResponseData, FriendUser, VerifyEmailResponseData, VerifyEmailValidationFailResponse, VerifyEmailErrorResponse, FriendRequestErrorResponse } from "./user.types.js";
+import type { RegisterData, UpdateUserData, ResendVerificationEmailRequest, RegisterValidationFailResponse, UpdateUserValidationFailResponse, CreateUserResponseData, GetUserResponseData, User, PopulatedUser, UpdateUserResponseData, PublicUser, GetUserByIdResponseData, FriendUser, VerifyEmailResponseData, VerifyEmailValidationFailResponse, VerifyEmailErrorResponse, FriendRequestErrorResponse } from "./user.types.js";
 import { inject, injectable } from "tsyringe";
 import { UserService } from "./user.service.js";
 import type { AuthenticatedUser } from "../auth/auth.types.js";
 import type { IFriend, IUser } from "./user.model.js";
 import type { SuccessResponse, FailResponseFromError } from "../../utils/responses.js";
 import type { AuthFailResponse } from "../auth/auth.types.js";
-import { UserAlreadyExistsError, UserNotFoundError, SelfFriendRequestError, AlreadyFriendsError, FriendRequestAlreadySentError, FriendRequestAlreadyReceivedError, NoPendingFriendRequestError, NoReceivedFriendRequestError, NotFriendsError } from "./user.errors.js";
+import { UserAlreadyExistsError, UserNotFoundError, SelfFriendRequestError, AlreadyFriendsError, FriendRequestAlreadySentError, FriendRequestAlreadyReceivedError, NoPendingFriendRequestError, NoReceivedFriendRequestError, NotFriendsError, EmailAlreadyVerifiedError } from "./user.errors.js";
 import type { PopulatedDoc } from "mongoose";
 
 @injectable()
@@ -38,8 +38,33 @@ export class UsersController extends Controller {
     @Response<VerifyEmailValidationFailResponse>(422, "Código de verificación inválido")
     @Response<VerifyEmailErrorResponse>(400, "Código de verificación inválido o expirado o Email ya verificado")
     public async verifyEmail(@Body() body: { email: string, code: string }): Promise<SuccessResponse<VerifyEmailResponseData>> {
-        await this.userService.verifyEmail(body.email, body.code);
-        return null as any;
+        try {
+            await this.userService.verifyEmail(body.email, body.code);
+            return null as any;
+        } catch (error) {
+            if (error instanceof UserNotFoundError || error instanceof EmailAlreadyVerifiedError) {
+                return null as any;
+            }
+            throw error;
+        }
+    }
+
+    /**
+     * Reenvía el código de verificación al email del usuario.
+     */
+    @Post("/resend-verification-email")
+    @SuccessResponseDecorator(200, "OK")
+    @Response<VerifyEmailErrorResponse>(400, "El email ya está verificado o el usuario no existe")
+    public async resendVerificationEmail(@Body() body: ResendVerificationEmailRequest): Promise<SuccessResponse<null>> {
+        try {
+            await this.userService.resendVerificationEmail(body.email);
+            return null as any;
+        } catch (error) {
+            if (error instanceof UserNotFoundError || error instanceof EmailAlreadyVerifiedError) {
+                return null as any;
+            }
+            throw error;
+        }
     }
 
 

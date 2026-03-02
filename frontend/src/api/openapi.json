@@ -586,7 +586,7 @@
 					}
 				]
 			},
-			"FailResponse_EMAIL_VERIFICATION_TOKEN_INVALID_OR_EXPIRED.undefined_": {
+			"FailResponse_EMAIL_VERIFICATION_CODE_INVALID_OR_EXPIRED.undefined_": {
 				"properties": {
 					"data": {
 						"properties": {
@@ -597,7 +597,7 @@
 							"code": {
 								"type": "string",
 								"enum": [
-									"EMAIL_VERIFICATION_TOKEN_INVALID_OR_EXPIRED"
+									"EMAIL_VERIFICATION_CODE_INVALID_OR_EXPIRED"
 								],
 								"nullable": false
 							}
@@ -623,8 +623,8 @@
 				"type": "object",
 				"description": "Tipo genérico base para respuestas de error con código y detalles opcionales."
 			},
-			"FailResponseFromError_EmailVerificationTokenInvalidOrExpiredError_": {
-				"$ref": "#/components/schemas/FailResponse_EMAIL_VERIFICATION_TOKEN_INVALID_OR_EXPIRED.undefined_",
+			"FailResponseFromError_EmailVerificationCodeInvalidOrExpiredError_": {
+				"$ref": "#/components/schemas/FailResponse_EMAIL_VERIFICATION_CODE_INVALID_OR_EXPIRED.undefined_",
 				"description": "Extrae automáticamente code y details de una clase AppError.\r\n\r\nEjemplo:\r\n- FailResponseFromError<UserAlreadyExistsError> → { status: 'fail', data: { code: 'CONFLICT', message: string, details: { field, value } } }\r\n- FailResponseFromError<UserNotFoundError> → { status: 'fail', data: { code: 'NOT_FOUND', message: string, details: { userId } } }"
 			},
 			"FailResponse_EMAIL_ALREADY_VERIFIED.undefined_": {
@@ -671,12 +671,50 @@
 			"VerifyEmailErrorResponse": {
 				"anyOf": [
 					{
-						"$ref": "#/components/schemas/FailResponseFromError_EmailVerificationTokenInvalidOrExpiredError_"
+						"$ref": "#/components/schemas/FailResponseFromError_EmailVerificationCodeInvalidOrExpiredError_"
 					},
 					{
 						"$ref": "#/components/schemas/FailResponseFromError_EmailAlreadyVerifiedError_"
 					}
 				]
+			},
+			"SuccessResponse_null_": {
+				"description": "Wrapper de éxito JSend (aplicado por el middleware global).",
+				"properties": {
+					"status": {
+						"type": "string",
+						"enum": [
+							"success"
+						],
+						"nullable": false
+					},
+					"data": {
+						"type": "number",
+						"enum": [
+							null
+						],
+						"nullable": true
+					}
+				},
+				"required": [
+					"status",
+					"data"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"ResendVerificationEmailRequest": {
+				"properties": {
+					"email": {
+						"type": "string",
+						"format": "email"
+					}
+				},
+				"required": [
+					"email"
+				],
+				"type": "object",
+				"additionalProperties": false
 			},
 			"FriendUser": {
 				"properties": {
@@ -1671,31 +1709,6 @@
 					},
 					"data": {
 						"$ref": "#/components/schemas/GetUserByIdResponseData"
-					}
-				},
-				"required": [
-					"status",
-					"data"
-				],
-				"type": "object",
-				"additionalProperties": false
-			},
-			"SuccessResponse_null_": {
-				"description": "Wrapper de éxito JSend (aplicado por el middleware global).",
-				"properties": {
-					"status": {
-						"type": "string",
-						"enum": [
-							"success"
-						],
-						"nullable": false
-					},
-					"data": {
-						"type": "number",
-						"enum": [
-							null
-						],
-						"nullable": true
 					}
 				},
 				"required": [
@@ -3530,7 +3543,7 @@
 						}
 					},
 					"400": {
-						"description": "Token inválido o expirado o Email ya verificado",
+						"description": "Código de verificación inválido o expirado o Email ya verificado",
 						"content": {
 							"application/json": {
 								"schema": {
@@ -3540,7 +3553,7 @@
 						}
 					},
 					"422": {
-						"description": "Error de validación",
+						"description": "Código de verificación inválido",
 						"content": {
 							"application/json": {
 								"schema": {
@@ -3550,7 +3563,7 @@
 						}
 					}
 				},
-				"description": "Verifica el email de un usuario usando un token.",
+				"description": "Verifica el email de un usuario usando un código.",
 				"tags": [
 					"Users"
 				],
@@ -3562,7 +3575,7 @@
 						"application/json": {
 							"schema": {
 								"properties": {
-									"token": {
+									"code": {
 										"type": "string"
 									},
 									"email": {
@@ -3570,10 +3583,53 @@
 									}
 								},
 								"required": [
-									"token",
+									"code",
 									"email"
 								],
 								"type": "object"
+							}
+						}
+					}
+				}
+			}
+		},
+		"/users/resend-verification-email": {
+			"post": {
+				"operationId": "ResendVerificationEmail",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/SuccessResponse_null_"
+								}
+							}
+						}
+					},
+					"400": {
+						"description": "El email ya está verificado o el usuario no existe",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/VerifyEmailErrorResponse"
+								}
+							}
+						}
+					}
+				},
+				"description": "Reenvía el código de verificación al email del usuario.",
+				"tags": [
+					"Users"
+				],
+				"security": [],
+				"parameters": [],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/ResendVerificationEmailRequest"
 							}
 						}
 					}

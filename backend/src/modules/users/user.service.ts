@@ -259,6 +259,28 @@ export class UserService {
         await user.save();
     }
 
+    public async resendVerificationEmail(email: string): Promise<void> {
+        const user = await User.findOne({ email });
+
+        if (!user) {
+            throw new UserNotFoundError(email);
+        }
+
+        if (user.email_verified) {
+            throw new EmailAlreadyVerifiedError();
+        }
+
+        const verificationCode = EmailVerificationService.generateCode();
+        const hashedCode = EmailVerificationService.generateHashedCode(verificationCode);
+
+        user.email_verification_code = hashedCode;
+        user.email_verification_expires = new Date(Date.now() + 3600000); // 1 hora
+        await user.save();
+
+        const template = MailTemplates.emailVerification(verificationCode);
+        this.mailService.sendMail(email, template.subject, template.html);
+    }
+
 
     private sanitizeUser(user: HydratedDocument<IUser>): IUser {
 
