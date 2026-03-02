@@ -19,13 +19,28 @@ const PORT = process.env.PORT || 3000;
 
 const app = express();
 
-const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(',').map(o => o.trim()) || [];
+const origins = process.env.ALLOWED_ORIGINS?.split(',').map(o => o.trim().replace(/\/$/, '')) || [];
 if (process.env.FRONTEND_URL) {
-    allowedOrigins.unshift(process.env.FRONTEND_URL);
+    origins.unshift(process.env.FRONTEND_URL.replace(/\/$/, ''));
 }
 
+const originRegexes = origins.map(o => {
+    const pattern = o
+        .replace(/[.+?^${}()|[\]\\]/g, '\\$&')
+        .replace(/\\\*/g, '.*');
+    return new RegExp(`^${pattern}$`);
+});
+
 app.use(cors({
-    origin: allowedOrigins,
+    origin: (origin, callback) => {
+        if (!origin) return callback(null, true);
+
+        if (originRegexes.some(regex => regex.test(origin))) {
+            callback(null, true);
+        } else {
+            callback(new Error('Not allowed by CORS'));
+        }
+    },
     methods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
     credentials: true
