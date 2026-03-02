@@ -29,10 +29,11 @@ export class AuthController extends Controller {
             switch (responseType) {
                 case 'cookie':
                     console.log('Setting cookie for user:', result.userId);
+                    const isProduction = process.env.NODE_ENV === 'production';
                     request.res!.cookie('token', result.token, {
                         httpOnly: true,
-                        secure: false,
-                        sameSite: 'strict',
+                        secure: isProduction,
+                        sameSite: isProduction ? 'none' : 'strict',
                         maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
                     });
                     return result satisfies LoginResponseData as any;
