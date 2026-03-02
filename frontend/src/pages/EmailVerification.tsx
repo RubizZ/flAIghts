@@ -3,10 +3,9 @@ import { toast } from "sonner";
 import AuthLayout from "@/components/layout/AuthLayout";
 import AuthCard from "@/components/ui/AuthCard";
 import FloatingLabelInput from "@/components/ui/FloatingLabelInput";
-import { useVerifyEmail } from "@/api/generated/users/users";
+import { useVerifyEmail, useResendVerificationEmail } from "@/api/generated/users/users";
 import { useLogin } from "@/api/generated/auth/auth";
 import { useNavigate, useLocation } from "react-router-dom";
-import { useAuth } from "@/context/AuthContext";
 import { useQueryClient } from "@tanstack/react-query";
 import { getGetUserQueryKey } from "@/api/generated/users/users";
 
@@ -28,6 +27,15 @@ export default function EmailVerification() {
 
     const [token, setToken] = useState("");
     const [error, setError] = useState("");
+    const [resendCountdown, setResendCountdown] = useState(0);
+
+    // Efecto para el contador del botón de reenvío
+    useEffect(() => {
+        if (resendCountdown > 0) {
+            const timer = setTimeout(() => setResendCountdown(resendCountdown - 1), 1000);
+            return () => clearTimeout(timer);
+        }
+    }, [resendCountdown]);
 
     const { mutate: performLogin } = useLogin({
         mutation: {
@@ -74,6 +82,19 @@ export default function EmailVerification() {
             }
         }
     });
+
+    const { mutate: resend, isPending: isResending } = useResendVerificationEmail({
+        mutation: {
+            onSuccess: () => {
+                toast.success("¡Código reenviado! Revisa tu email.");
+                setResendCountdown(60); // Bloquea por 1 minuto
+            },
+            onError: (err: any) => {
+                toast.error(err.message || "Error al reenviar el código");
+            }
+        }
+    });
+
 
     const handleVerify = () => {
         if (!token) {
@@ -127,13 +148,22 @@ export default function EmailVerification() {
                         {isVerifying ? "Verificando..." : "Verificar Email"}
                     </button>
 
-                    <div className="text-sm text-primary text-center">
-                        <button
-                            onClick={() => navigate("/login")}
-                            className="text-accent hover:underline hover:cursor-pointer"
-                        >
-                            Volver al inicio de sesión
-                        </button>
+                    <div className="flex flex-col gap-3">
+                        <div className="text-center">
+                            <button
+                                type="button"
+                                onClick={() => resend({ data: { email: stateEmail } })}
+                                disabled={isResending || resendCountdown > 0}
+                                className="text-sm font-medium text-secondary hover:underline transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                {resendCountdown > 0
+                                    ? `Reenviar código de nuevo en ${resendCountdown}s`
+                                    : isResending
+                                        ? "Enviando..."
+                                        : "¿No has recibido el código? Reenviar"
+                                }
+                            </button>
+                        </div>
                     </div>
                 </div>
             </AuthCard>
