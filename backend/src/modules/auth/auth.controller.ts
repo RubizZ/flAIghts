@@ -51,11 +51,16 @@ export class AuthController extends Controller {
     }
 
     /**
-     * Cierra la sesión actual (limpia la cookie del navegador).
-     */
+ * Cierra la sesión actual (limpia la cookie del navegador).
+ */
     @Post("/logout")
     public async logout(@Request() request: ExpressRequest): Promise<SuccessResponse<MessageResponseData>> {
-        request.res!.clearCookie('token');
+        const isProduction = process.env.NODE_ENV === 'production';
+        request.res!.clearCookie('token', {
+            httpOnly: true,
+            secure: isProduction,
+            sameSite: isProduction ? 'none' : 'strict'
+        });
         return {
             message: "Sesión cerrada correctamente."
         } satisfies MessageResponseData as any;
@@ -69,7 +74,12 @@ export class AuthController extends Controller {
     @Response<AuthFailResponse>(401, "No autenticado")
     public async logoutAll(@RequestProp("user") user: AuthenticatedUser, @Request() request: ExpressRequest): Promise<SuccessResponse<MessageResponseData>> {
         await this.authService.logoutAll(user.id);
-        request.res!.clearCookie('token');
+        const isProduction = process.env.NODE_ENV === 'production';
+        request.res!.clearCookie('token', {
+            httpOnly: true,
+            secure: isProduction,
+            sameSite: isProduction ? 'none' : 'strict'
+        });
         return {
             message: "Sesiones cerradas correctamente."
         } satisfies MessageResponseData as any;
