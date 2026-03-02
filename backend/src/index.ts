@@ -143,7 +143,7 @@ app.use((err: any, req: express.Request, res: express.Response, next: express.Ne
 
     // Errores INTERNOS no capturados
     if (err instanceof Error) {
-        console.error(`Unhandled Error on path ${req.path}:\n`, err);
+        console.error('Unhandled Error on path %s:\n', req.path, err);
         return res.status(500).json({
             status: 'error',
             message: 'Internal Server Error',
