@@ -5,7 +5,7 @@ import cors from 'cors';
 import { connectDB } from './config/database.js';
 import { RegisterRoutes } from './tsoa/routes.js';
 import { ValidateError as TsoaValidateError } from 'tsoa';
-import { AppError } from './utils/errors.js';
+import { AppError, CorsError } from './utils/errors.js';
 import swaggerUi from 'swagger-ui-express';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -26,7 +26,7 @@ if (process.env.FRONTEND_URL) {
 
 const originRegexes = origins.map(o => {
     const pattern = o
-        .replace(/[.+?^${}()|[\]\\]/g, '\\$&')
+        .replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
         .replace(/\\\*/g, '.*');
     return new RegExp(`^${pattern}$`);
 });
@@ -38,7 +38,7 @@ app.use(cors({
         if (originRegexes.some(regex => regex.test(origin))) {
             callback(null, true);
         } else {
-            callback(new Error('Not allowed by CORS'));
+            callback(new CorsError());
         }
     },
     methods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
@@ -129,6 +129,15 @@ app.use((err: any, req: express.Request, res: express.Response, next: express.Ne
         return res.status(err.statusCode).json({
             status: 'fail',
             data: err.toJSON()
+        });
+    }
+
+    // Errores de CORS: bloqueo de orígenes no permitidos
+    if (err instanceof CorsError) {
+        console.log(`CORS Error on path ${req.path}: ${err.message}`);
+        return res.status(403).json({
+            status: 'fail',
+            message: err.message
         });
     }
 

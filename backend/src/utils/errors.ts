@@ -18,3 +18,10 @@ export abstract class AppError<TCode extends string = string, TDetails = undefin
         return result;
     }
 }
+
+export class CorsError extends Error {
+    constructor(message: string = 'Not allowed by CORS') {
+        super(message);
+        this.name = 'CorsError';
+    }
+}
