@@ -6,7 +6,7 @@ import type { AuthenticatedUser } from "../auth/auth.types.js";
 import type { IFriend, IUser } from "./user.model.js";
 import type { SuccessResponse, FailResponseFromError } from "../../utils/responses.js";
 import type { AuthFailResponse } from "../auth/auth.types.js";
-import { UserAlreadyExistsError, UserNotFoundError, SelfFriendRequestError, AlreadyFriendsError, FriendRequestAlreadySentError, FriendRequestAlreadyReceivedError, NoPendingFriendRequestError, NoReceivedFriendRequestError, NotFriendsError, EmailAlreadyVerifiedError, EmailVerificationTokenInvalidOrExpiredError } from "./user.errors.js";
+import { UserAlreadyExistsError, UserNotFoundError, SelfFriendRequestError, AlreadyFriendsError, FriendRequestAlreadySentError, FriendRequestAlreadyReceivedError, NoPendingFriendRequestError, NoReceivedFriendRequestError, NotFriendsError } from "./user.errors.js";
 import type { PopulatedDoc } from "mongoose";
 
 @injectable()
