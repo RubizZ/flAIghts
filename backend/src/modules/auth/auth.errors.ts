@@ -81,3 +81,14 @@ export class ResetTokenInvalidOrExpiredError extends AppError<'RESET_TOKEN_INVAL
         super("The reset token is invalid or has expired.");
     }
 }
+
+export class EmailNotVerifiedError extends AppError<'EMAIL_NOT_VERIFIED', { email: string }> {
+    public readonly code = 'EMAIL_NOT_VERIFIED';
+    public readonly statusCode: number = 403;
+
+    constructor(email: string) {
+        super(`Email ${email} has not been verified.`);
+        this.details = { email };
+    }
+}
+

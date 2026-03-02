@@ -6,7 +6,7 @@ import type { IItinerary } from "./itinerary.model.js";
 import "@/modules/airport/airport.model.js"; // Necesario para mongoose.model("Airport") en idValidator
 
 export interface ISearch {
-  id: string;
+  _id: string;
   user_id?: string;
   shared: boolean;
   origins: string[];
@@ -24,8 +24,8 @@ export interface ISearch {
 }
 
 const SearchSchema = new Schema<ISearch>({
-  id: { type: String, default: () => randomUUID(), unique: true, index: true },
-  user_id: { type: String, ref: "User", refField: "id", required: false },
+  _id: { type: String, default: () => randomUUID() },
+  user_id: { type: String, ref: "User", required: false },
   shared: { type: Boolean, default: false },
   origins: [{
     type: String,
@@ -65,21 +65,12 @@ const SearchSchema = new Schema<ISearch>({
 }, {
   toJSON: {
     virtuals: true,
-    versionKey: false,
-    transform: (doc, ret) => {
-      delete (ret as any)._id;
-      return ret;
-    }
+    versionKey: false
   },
   toObject: {
     virtuals: true,
-    versionKey: false,
-    transform: (doc, ret) => {
-      delete (ret as any)._id;
-      return ret;
-    }
-  },
-  id: false
+    versionKey: false
+  }
 });
 
 SearchSchema.plugin(idValidator);

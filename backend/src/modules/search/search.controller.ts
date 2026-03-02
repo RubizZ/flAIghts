@@ -30,7 +30,7 @@ export class SearchController extends Controller {
         @RequestProp('user') user: AuthenticatedUser | null
     ): Promise<SuccessResponse<SearchResponseData>> {
         const request: SearchRequest & { user_id?: string } = { ...body };
-        if (user) request.user_id = user.id;
+        if (user) request.user_id = user._id;
         this.setStatus(201);
         const result = await this.searchService.createSearch(request);
         return result satisfies SearchResponseData as any;
@@ -48,7 +48,7 @@ export class SearchController extends Controller {
         @Path('searchId') searchId: string,
         @RequestProp('user') user: AuthenticatedUser | null
     ): Promise<SuccessResponse<SearchResponseData>> {
-        const result = await this.searchService.getSearch(searchId, user?.id);
+        const result = await this.searchService.getSearch(searchId, user?._id);
         return result satisfies SearchResponseData as any;
     }
 
@@ -61,7 +61,7 @@ export class SearchController extends Controller {
         @Path('searchId') searchId: string,
         @RequestProp('user') user: AuthenticatedUser
     ): Promise<SuccessResponse<SearchResponseData>> {
-        const result = await this.searchService.shareSearch(searchId, user.id);
+        const result = await this.searchService.shareSearch(searchId, user._id);
         return result satisfies SearchResponseData as any;
     }
 
@@ -74,7 +74,21 @@ export class SearchController extends Controller {
         @Path('searchId') searchId: string,
         @RequestProp('user') user: AuthenticatedUser
     ): Promise<SuccessResponse<SearchResponseData>> {
-        const result = await this.searchService.privatizeSearch(searchId, user.id);
+        const result = await this.searchService.privatizeSearch(searchId, user._id);
         return result satisfies SearchResponseData as any;
+    }
+
+    @Get("/user/{userId}")
+    @Security('jwt-optional')
+    @Response<FailResponseFromError<SearchNotFoundError>>(404, "Búsqueda no encontrada")
+    @Response<FailResponseFromError<SearchNotAuthorizedError>>(403, "Búsqueda privada no autorizada")
+    public async getSearches(
+        @Path('userId') userId: string,
+        @RequestProp('user') user: AuthenticatedUser | null,
+        @Query('page') page: number = 1,
+        @Query('limit') limit: number = 10
+    ): Promise<SuccessResponse<{ items: SearchResponseData[], total: number, page: number, totalPages: number }>> {
+        const searches = await this.searchService.getSearches(userId, user?._id || undefined, page, limit);
+        return searches satisfies { items: SearchResponseData[], total: number, page: number, totalPages: number } as any;
     }
 }

@@ -2,11 +2,11 @@ import { createContext, useContext, useCallback, ReactNode, useMemo } from 'reac
 import { useGetUser, getGetUserQueryKey } from '@/api/generated/users/users';
 import { useLogout } from '@/api/generated/auth/auth';
 import { useQueryClient } from '@tanstack/react-query';
-import type { SafeUser } from '@/api/generated/model';
+import type { PopulatedUser } from '@/api/generated/model';
 
 interface AuthContextType {
     /** Usuario autenticado actual, null si no está autenticado */
-    user: SafeUser | null;
+    user: PopulatedUser | null;
     /** Indica si se está cargando el estado de autenticación */
     isLoading: boolean;
     /** Indica si el usuario está autenticado */

@@ -2,10 +2,10 @@ import { Body, Controller, Post, Request, RequestProp, Response, Route, Security
 import type { Request as ExpressRequest } from "express";
 import { inject, injectable } from "tsyringe";
 import { AuthService } from "./auth.service.js";
-import type { AuthenticatedUser, ChangePasswordRequest, ChangePasswordValidationFailResponse, ForgotPasswordRequest, ForgotPasswordValidationFailResponse, LoginRequest, LoginResponseData, LoginValidationFailResponse, ResetPasswordRequest, ResetPasswordValidationFailResponse } from "./auth.types.js";
+import type { AuthenticatedUser, ChangePasswordRequest, ChangePasswordValidationFailResponse, ForgotPasswordRequest, ForgotPasswordValidationFailResponse, LoginRequest, LoginResponseData, LoginValidationFailResponse, ResetPasswordRequest, ResetPasswordValidationFailResponse, ChangePasswordErrorResponse } from "./auth.types.js";
 import type { FailResponseFromError, MessageResponseData, SuccessResponse } from "../../utils/responses.js";
 import type { AuthFailResponse } from "./auth.types.js";
-import { InvalidCredentialsError, LoginUserNotFoundError, InvalidPasswordError, ResetTokenInvalidOrExpiredError } from "./auth.errors.js";
+import { InvalidCredentialsError, LoginUserNotFoundError, InvalidPasswordError, ResetTokenInvalidOrExpiredError, EmailNotVerifiedError } from "./auth.errors.js";
 
 @injectable()
 @Route("auth")
@@ -21,7 +21,9 @@ export class AuthController extends Controller {
     @Post("/login")
     @Response<LoginValidationFailResponse>(422, "Error de validación")
     @Response<FailResponseFromError<InvalidCredentialsError>>(401, "Credenciales inválidas")
+    @Response<FailResponseFromError<EmailNotVerifiedError>>(403, "Email no verificado")
     public async login(@Body() body: LoginRequest, @Request() request: ExpressRequest): Promise<SuccessResponse<LoginResponseData>> {
+
         const { identifier, password, responseType } = body;
         try {
             const result = await this.authService.login(identifier, password);
@@ -46,7 +48,11 @@ export class AuthController extends Controller {
             if (error instanceof LoginUserNotFoundError || error instanceof InvalidPasswordError) {
                 throw new InvalidCredentialsError(identifier);
             }
+            if (error instanceof EmailNotVerifiedError) {
+                throw error; // Propagar 403 específicamente
+            }
             throw error;
+
         }
     }
 
@@ -73,7 +79,7 @@ export class AuthController extends Controller {
     @Security("jwt")
     @Response<AuthFailResponse>(401, "No autenticado")
     public async logoutAll(@RequestProp("user") user: AuthenticatedUser, @Request() request: ExpressRequest): Promise<SuccessResponse<MessageResponseData>> {
-        await this.authService.logoutAll(user.id);
+        await this.authService.logoutAll(user._id);
         const isProduction = process.env.NODE_ENV === 'production';
         request.res!.clearCookie('token', {
             httpOnly: true,
@@ -91,16 +97,17 @@ export class AuthController extends Controller {
     @Post("/change-password")
     @Security("jwt")
     @Response<ChangePasswordValidationFailResponse>(422, "Error de validación")
-    @Response<AuthFailResponse>(401, "No autenticado")
-    @Response<FailResponseFromError<InvalidPasswordError>>(401, "Contraseña incorrecta")
+    @Response<ChangePasswordErrorResponse>(401, "No autenticado o contraseña incorrecta")
     @Response<FailResponseFromError<LoginUserNotFoundError>>(404, "Usuario no encontrado")
     public async changePassword(@RequestProp("user") user: AuthenticatedUser, @Body() body: ChangePasswordRequest): Promise<SuccessResponse<MessageResponseData>> {
         const { oldPassword, newPassword } = body;
-        await this.authService.changePassword(user.id, oldPassword, newPassword);
+        await this.authService.changePassword(user._id, oldPassword, newPassword);
         return {
             message: "Contraseña cambiada correctamente."
         } satisfies MessageResponseData as any;
     }
+
+
 
     /**
      * Solicita un email de recuperación de contraseña.

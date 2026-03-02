@@ -33,7 +33,18 @@ export default function Login() {
                     case "INVALID_CREDENTIALS":
                         toast.error("Credenciales inválidas");
                         break;
+                    case "EMAIL_NOT_VERIFIED":
+                        toast.info("Por favor, verifica tu email para continuar");
+                        navigate("/verify-email", {
+                            state: {
+                                email: error.details.email,
+                                password: credentials.password
+                            }
+                        });
+                        break;
                 }
+
+
             }
         }
     });

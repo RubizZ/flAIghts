@@ -29,7 +29,7 @@ export interface SearchRequest {
 
     layover_days?: number[];
 
-    
+
 
 }
 
@@ -60,7 +60,7 @@ export interface ItineraryResponse {
 }
 
 export interface SearchResponseData {
-    id: string;
+    _id: string;
     user_id?: string;
     origins: string[];
     destinations: string[];

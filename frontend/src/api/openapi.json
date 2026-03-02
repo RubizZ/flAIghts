@@ -7,16 +7,29 @@
 		"requestBodies": {},
 		"responses": {},
 		"schemas": {
-			"SafeUser": {
+			"User": {
 				"properties": {
-					"id": {
+					"_id": {
 						"type": "string"
+					},
+					"type": {
+						"type": "string",
+						"enum": [
+							"self"
+						],
+						"nullable": false
 					},
 					"username": {
 						"type": "string"
 					},
+					"public": {
+						"type": "boolean"
+					},
 					"email": {
 						"type": "string"
+					},
+					"email_verified": {
+						"type": "boolean"
 					},
 					"role": {
 						"type": "string",
@@ -61,23 +74,47 @@
 					"auth_version": {
 						"type": "number",
 						"format": "double"
+					},
+					"friends": {
+						"items": {
+							"type": "string"
+						},
+						"type": "array"
+					},
+					"sent_friend_requests": {
+						"items": {
+							"type": "string"
+						},
+						"type": "array"
+					},
+					"received_friend_requests": {
+						"items": {
+							"type": "string"
+						},
+						"type": "array"
 					}
 				},
 				"required": [
-					"id",
+					"_id",
+					"type",
 					"username",
+					"public",
 					"email",
+					"email_verified",
 					"role",
 					"preferences",
 					"created_at",
 					"last_seen_at",
-					"auth_version"
+					"auth_version",
+					"friends",
+					"sent_friend_requests",
+					"received_friend_requests"
 				],
 				"type": "object",
 				"additionalProperties": false
 			},
 			"CreateUserResponseData": {
-				"$ref": "#/components/schemas/SafeUser",
+				"$ref": "#/components/schemas/User",
 				"description": "Respuesta del endpoint POST /users (registro)"
 			},
 			"SuccessResponse_CreateUserResponseData_": {
@@ -438,8 +475,519 @@
 				"type": "object",
 				"additionalProperties": false
 			},
+			"VerifyEmailResponseData": {
+				"type": "number",
+				"enum": [
+					null
+				],
+				"nullable": true,
+				"description": "Respuesta del endpoint POST /users/verify-email"
+			},
+			"SuccessResponse_VerifyEmailResponseData_": {
+				"description": "Wrapper de éxito JSend (aplicado por el middleware global).",
+				"properties": {
+					"status": {
+						"type": "string",
+						"enum": [
+							"success"
+						],
+						"nullable": false
+					},
+					"data": {
+						"$ref": "#/components/schemas/VerifyEmailResponseData"
+					}
+				},
+				"required": [
+					"status",
+					"data"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"ValidationDetails_body-or-body.token_": {
+				"properties": {
+					"body": {
+						"properties": {
+							"value": {},
+							"message": {
+								"type": "string"
+							}
+						},
+						"required": [
+							"message"
+						],
+						"type": "object"
+					},
+					"body.token": {
+						"properties": {
+							"value": {},
+							"message": {
+								"type": "string"
+							}
+						},
+						"required": [
+							"message"
+						],
+						"type": "object"
+					}
+				},
+				"type": "object",
+				"description": "Generador de estructura de detalles.\r\nTransforma una unión de llaves ('body' | 'body.id') en el objeto que TSOA espera."
+			},
+			"RequestValidationFailResponse_ValidationDetails_body-or-body.token__": {
+				"properties": {
+					"data": {
+						"properties": {
+							"details": {
+								"$ref": "#/components/schemas/ValidationDetails_body-or-body.token_"
+							},
+							"message": {
+								"type": "string"
+							},
+							"code": {
+								"type": "string",
+								"enum": [
+									"REQUEST_VALIDATION_ERROR"
+								],
+								"nullable": false
+							}
+						},
+						"required": [
+							"details",
+							"message",
+							"code"
+						],
+						"type": "object"
+					},
+					"status": {
+						"type": "string",
+						"enum": [
+							"fail"
+						],
+						"nullable": false
+					}
+				},
+				"required": [
+					"data",
+					"status"
+				],
+				"type": "object"
+			},
+			"VerifyEmailRequestValidationFailResponse": {
+				"$ref": "#/components/schemas/RequestValidationFailResponse_ValidationDetails_body-or-body.token__"
+			},
+			"VerifyEmailValidationFailResponse": {
+				"anyOf": [
+					{
+						"$ref": "#/components/schemas/VerifyEmailRequestValidationFailResponse"
+					},
+					{
+						"$ref": "#/components/schemas/DatabaseValidationFailResponse"
+					}
+				]
+			},
+			"FailResponse_EMAIL_VERIFICATION_TOKEN_INVALID_OR_EXPIRED.undefined_": {
+				"properties": {
+					"data": {
+						"properties": {
+							"details": {},
+							"message": {
+								"type": "string"
+							},
+							"code": {
+								"type": "string",
+								"enum": [
+									"EMAIL_VERIFICATION_TOKEN_INVALID_OR_EXPIRED"
+								],
+								"nullable": false
+							}
+						},
+						"required": [
+							"message",
+							"code"
+						],
+						"type": "object"
+					},
+					"status": {
+						"type": "string",
+						"enum": [
+							"fail"
+						],
+						"nullable": false
+					}
+				},
+				"required": [
+					"data",
+					"status"
+				],
+				"type": "object",
+				"description": "Tipo genérico base para respuestas de error con código y detalles opcionales."
+			},
+			"FailResponseFromError_EmailVerificationTokenInvalidOrExpiredError_": {
+				"$ref": "#/components/schemas/FailResponse_EMAIL_VERIFICATION_TOKEN_INVALID_OR_EXPIRED.undefined_",
+				"description": "Extrae automáticamente code y details de una clase AppError.\r\n\r\nEjemplo:\r\n- FailResponseFromError<UserAlreadyExistsError> → { status: 'fail', data: { code: 'CONFLICT', message: string, details: { field, value } } }\r\n- FailResponseFromError<UserNotFoundError> → { status: 'fail', data: { code: 'NOT_FOUND', message: string, details: { userId } } }"
+			},
+			"FailResponse_EMAIL_ALREADY_VERIFIED.undefined_": {
+				"properties": {
+					"data": {
+						"properties": {
+							"details": {},
+							"message": {
+								"type": "string"
+							},
+							"code": {
+								"type": "string",
+								"enum": [
+									"EMAIL_ALREADY_VERIFIED"
+								],
+								"nullable": false
+							}
+						},
+						"required": [
+							"message",
+							"code"
+						],
+						"type": "object"
+					},
+					"status": {
+						"type": "string",
+						"enum": [
+							"fail"
+						],
+						"nullable": false
+					}
+				},
+				"required": [
+					"data",
+					"status"
+				],
+				"type": "object",
+				"description": "Tipo genérico base para respuestas de error con código y detalles opcionales."
+			},
+			"FailResponseFromError_EmailAlreadyVerifiedError_": {
+				"$ref": "#/components/schemas/FailResponse_EMAIL_ALREADY_VERIFIED.undefined_",
+				"description": "Extrae automáticamente code y details de una clase AppError.\r\n\r\nEjemplo:\r\n- FailResponseFromError<UserAlreadyExistsError> → { status: 'fail', data: { code: 'CONFLICT', message: string, details: { field, value } } }\r\n- FailResponseFromError<UserNotFoundError> → { status: 'fail', data: { code: 'NOT_FOUND', message: string, details: { userId } } }"
+			},
+			"VerifyEmailErrorResponse": {
+				"anyOf": [
+					{
+						"$ref": "#/components/schemas/FailResponseFromError_EmailVerificationTokenInvalidOrExpiredError_"
+					},
+					{
+						"$ref": "#/components/schemas/FailResponseFromError_EmailAlreadyVerifiedError_"
+					}
+				]
+			},
+			"FriendUser": {
+				"properties": {
+					"_id": {
+						"type": "string"
+					},
+					"type": {
+						"type": "string",
+						"enum": [
+							"friend"
+						],
+						"nullable": false
+					},
+					"username": {
+						"type": "string"
+					},
+					"role": {
+						"type": "string",
+						"enum": [
+							"user",
+							"admin"
+						]
+					},
+					"created_at": {
+						"type": "string"
+					},
+					"last_seen_at": {
+						"type": "string"
+					},
+					"friend_since": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"_id",
+					"type",
+					"username",
+					"role",
+					"created_at",
+					"last_seen_at",
+					"friend_since"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"PublicUser": {
+				"properties": {
+					"_id": {
+						"type": "string"
+					},
+					"type": {
+						"type": "string",
+						"enum": [
+							"public"
+						],
+						"nullable": false
+					},
+					"username": {
+						"type": "string"
+					},
+					"public": {
+						"type": "boolean"
+					},
+					"role": {
+						"type": "string",
+						"enum": [
+							"user",
+							"admin"
+						]
+					},
+					"created_at": {
+						"type": "string"
+					},
+					"last_seen_at": {
+						"type": "string"
+					},
+					"sent_friend_request": {
+						"type": "boolean"
+					},
+					"received_friend_request": {
+						"type": "boolean"
+					}
+				},
+				"required": [
+					"_id",
+					"type",
+					"username",
+					"public",
+					"role",
+					"created_at",
+					"last_seen_at",
+					"sent_friend_request",
+					"received_friend_request"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"Pick_User.Exclude_keyofUser.friends-or-sent_friend_requests-or-received_friend_requests__": {
+				"properties": {
+					"friends": {
+						"items": {
+							"$ref": "#/components/schemas/FriendUser"
+						},
+						"type": "array"
+					},
+					"sent_friend_requests": {
+						"items": {
+							"$ref": "#/components/schemas/PublicUser"
+						},
+						"type": "array"
+					},
+					"received_friend_requests": {
+						"items": {
+							"$ref": "#/components/schemas/PublicUser"
+						},
+						"type": "array"
+					},
+					"email": {
+						"type": "string"
+					},
+					"username": {
+						"type": "string"
+					},
+					"_id": {
+						"type": "string"
+					},
+					"type": {
+						"type": "string",
+						"enum": [
+							"self"
+						],
+						"nullable": false
+					},
+					"public": {
+						"type": "boolean"
+					},
+					"email_verified": {
+						"type": "boolean"
+					},
+					"role": {
+						"type": "string",
+						"enum": [
+							"user",
+							"admin"
+						]
+					},
+					"preferences": {
+						"properties": {
+							"airline_quality_weight": {
+								"type": "number",
+								"format": "double"
+							},
+							"stops_weight": {
+								"type": "number",
+								"format": "double"
+							},
+							"duration_weight": {
+								"type": "number",
+								"format": "double"
+							},
+							"price_weight": {
+								"type": "number",
+								"format": "double"
+							}
+						},
+						"required": [
+							"airline_quality_weight",
+							"stops_weight",
+							"duration_weight",
+							"price_weight"
+						],
+						"type": "object"
+					},
+					"created_at": {
+						"type": "string"
+					},
+					"last_seen_at": {
+						"type": "string"
+					},
+					"auth_version": {
+						"type": "number",
+						"format": "double"
+					}
+				},
+				"required": [
+					"friends",
+					"sent_friend_requests",
+					"received_friend_requests",
+					"email",
+					"username",
+					"_id",
+					"type",
+					"public",
+					"email_verified",
+					"role",
+					"preferences",
+					"created_at",
+					"last_seen_at",
+					"auth_version"
+				],
+				"type": "object",
+				"description": "From T, pick a set of properties whose keys are in the union K"
+			},
+			"PopulatedUser": {
+				"properties": {
+					"friends": {
+						"items": {
+							"$ref": "#/components/schemas/FriendUser"
+						},
+						"type": "array"
+					},
+					"sent_friend_requests": {
+						"items": {
+							"$ref": "#/components/schemas/PublicUser"
+						},
+						"type": "array"
+					},
+					"received_friend_requests": {
+						"items": {
+							"$ref": "#/components/schemas/PublicUser"
+						},
+						"type": "array"
+					},
+					"email": {
+						"type": "string"
+					},
+					"username": {
+						"type": "string"
+					},
+					"_id": {
+						"type": "string"
+					},
+					"type": {
+						"type": "string",
+						"enum": [
+							"self"
+						],
+						"nullable": false
+					},
+					"public": {
+						"type": "boolean"
+					},
+					"email_verified": {
+						"type": "boolean"
+					},
+					"role": {
+						"type": "string",
+						"enum": [
+							"user",
+							"admin"
+						]
+					},
+					"preferences": {
+						"properties": {
+							"airline_quality_weight": {
+								"type": "number",
+								"format": "double"
+							},
+							"stops_weight": {
+								"type": "number",
+								"format": "double"
+							},
+							"duration_weight": {
+								"type": "number",
+								"format": "double"
+							},
+							"price_weight": {
+								"type": "number",
+								"format": "double"
+							}
+						},
+						"required": [
+							"airline_quality_weight",
+							"stops_weight",
+							"duration_weight",
+							"price_weight"
+						],
+						"type": "object"
+					},
+					"created_at": {
+						"type": "string"
+					},
+					"last_seen_at": {
+						"type": "string"
+					},
+					"auth_version": {
+						"type": "number",
+						"format": "double"
+					}
+				},
+				"required": [
+					"friends",
+					"sent_friend_requests",
+					"received_friend_requests",
+					"email",
+					"username",
+					"_id",
+					"type",
+					"public",
+					"email_verified",
+					"role",
+					"preferences",
+					"created_at",
+					"last_seen_at",
+					"auth_version"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
 			"GetUserResponseData": {
-				"$ref": "#/components/schemas/SafeUser",
+				"$ref": "#/components/schemas/PopulatedUser",
 				"description": "Respuesta del endpoint GET /users/me"
 			},
 			"SuccessResponse_GetUserResponseData_": {
@@ -689,14 +1237,45 @@
 			},
 			"AuthenticatedUser": {
 				"properties": {
-					"id": {
+					"friends": {
+						"items": {
+							"$ref": "#/components/schemas/FriendUser"
+						},
+						"type": "array"
+					},
+					"sent_friend_requests": {
+						"items": {
+							"$ref": "#/components/schemas/PublicUser"
+						},
+						"type": "array"
+					},
+					"received_friend_requests": {
+						"items": {
+							"$ref": "#/components/schemas/PublicUser"
+						},
+						"type": "array"
+					},
+					"email": {
 						"type": "string"
 					},
 					"username": {
 						"type": "string"
 					},
-					"email": {
+					"_id": {
 						"type": "string"
+					},
+					"type": {
+						"type": "string",
+						"enum": [
+							"self"
+						],
+						"nullable": false
+					},
+					"public": {
+						"type": "boolean"
+					},
+					"email_verified": {
+						"type": "boolean"
 					},
 					"role": {
 						"type": "string",
@@ -747,9 +1326,15 @@
 					}
 				},
 				"required": [
-					"id",
-					"username",
+					"friends",
+					"sent_friend_requests",
+					"received_friend_requests",
 					"email",
+					"username",
+					"_id",
+					"type",
+					"public",
+					"email_verified",
 					"role",
 					"preferences",
 					"created_at",
@@ -761,7 +1346,7 @@
 				"additionalProperties": false
 			},
 			"UpdateUserResponseData": {
-				"$ref": "#/components/schemas/SafeUser",
+				"$ref": "#/components/schemas/User",
 				"description": "Respuesta del endpoint PATCH /users/me"
 			},
 			"SuccessResponse_UpdateUserResponseData_": {
@@ -1036,40 +1621,42 @@
 				"type": "object",
 				"additionalProperties": false
 			},
-			"PublicUser": {
+			"SuccessResponse_PublicUser-Array_": {
+				"description": "Wrapper de éxito JSend (aplicado por el middleware global).",
 				"properties": {
-					"id": {
-						"type": "string"
-					},
-					"username": {
-						"type": "string"
-					},
-					"role": {
+					"status": {
 						"type": "string",
 						"enum": [
-							"user",
-							"admin"
-						]
+							"success"
+						],
+						"nullable": false
 					},
-					"created_at": {
-						"type": "string"
-					},
-					"last_seen_at": {
-						"type": "string"
+					"data": {
+						"items": {
+							"$ref": "#/components/schemas/PublicUser"
+						},
+						"type": "array"
 					}
 				},
 				"required": [
-					"id",
-					"username",
-					"role",
-					"created_at",
-					"last_seen_at"
+					"status",
+					"data"
 				],
 				"type": "object",
 				"additionalProperties": false
 			},
 			"GetUserByIdResponseData": {
-				"$ref": "#/components/schemas/PublicUser",
+				"anyOf": [
+					{
+						"$ref": "#/components/schemas/User"
+					},
+					{
+						"$ref": "#/components/schemas/PublicUser"
+					},
+					{
+						"$ref": "#/components/schemas/FriendUser"
+					}
+				],
 				"description": "Respuesta del endpoint GET /users/:id"
 			},
 			"SuccessResponse_GetUserByIdResponseData_": {
@@ -1092,6 +1679,334 @@
 				],
 				"type": "object",
 				"additionalProperties": false
+			},
+			"SuccessResponse_null_": {
+				"description": "Wrapper de éxito JSend (aplicado por el middleware global).",
+				"properties": {
+					"status": {
+						"type": "string",
+						"enum": [
+							"success"
+						],
+						"nullable": false
+					},
+					"data": {
+						"type": "number",
+						"enum": [
+							null
+						],
+						"nullable": true
+					}
+				},
+				"required": [
+					"status",
+					"data"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"FailResponse_SELF_FRIEND_REQUEST.undefined_": {
+				"properties": {
+					"data": {
+						"properties": {
+							"details": {},
+							"message": {
+								"type": "string"
+							},
+							"code": {
+								"type": "string",
+								"enum": [
+									"SELF_FRIEND_REQUEST"
+								],
+								"nullable": false
+							}
+						},
+						"required": [
+							"message",
+							"code"
+						],
+						"type": "object"
+					},
+					"status": {
+						"type": "string",
+						"enum": [
+							"fail"
+						],
+						"nullable": false
+					}
+				},
+				"required": [
+					"data",
+					"status"
+				],
+				"type": "object",
+				"description": "Tipo genérico base para respuestas de error con código y detalles opcionales."
+			},
+			"FailResponseFromError_SelfFriendRequestError_": {
+				"$ref": "#/components/schemas/FailResponse_SELF_FRIEND_REQUEST.undefined_",
+				"description": "Extrae automáticamente code y details de una clase AppError.\r\n\r\nEjemplo:\r\n- FailResponseFromError<UserAlreadyExistsError> → { status: 'fail', data: { code: 'CONFLICT', message: string, details: { field, value } } }\r\n- FailResponseFromError<UserNotFoundError> → { status: 'fail', data: { code: 'NOT_FOUND', message: string, details: { userId } } }"
+			},
+			"FailResponse_ALREADY_FRIENDS.undefined_": {
+				"properties": {
+					"data": {
+						"properties": {
+							"details": {},
+							"message": {
+								"type": "string"
+							},
+							"code": {
+								"type": "string",
+								"enum": [
+									"ALREADY_FRIENDS"
+								],
+								"nullable": false
+							}
+						},
+						"required": [
+							"message",
+							"code"
+						],
+						"type": "object"
+					},
+					"status": {
+						"type": "string",
+						"enum": [
+							"fail"
+						],
+						"nullable": false
+					}
+				},
+				"required": [
+					"data",
+					"status"
+				],
+				"type": "object",
+				"description": "Tipo genérico base para respuestas de error con código y detalles opcionales."
+			},
+			"FailResponseFromError_AlreadyFriendsError_": {
+				"$ref": "#/components/schemas/FailResponse_ALREADY_FRIENDS.undefined_",
+				"description": "Extrae automáticamente code y details de una clase AppError.\r\n\r\nEjemplo:\r\n- FailResponseFromError<UserAlreadyExistsError> → { status: 'fail', data: { code: 'CONFLICT', message: string, details: { field, value } } }\r\n- FailResponseFromError<UserNotFoundError> → { status: 'fail', data: { code: 'NOT_FOUND', message: string, details: { userId } } }"
+			},
+			"FailResponse_FRIEND_REQUEST_ALREADY_SENT.undefined_": {
+				"properties": {
+					"data": {
+						"properties": {
+							"details": {},
+							"message": {
+								"type": "string"
+							},
+							"code": {
+								"type": "string",
+								"enum": [
+									"FRIEND_REQUEST_ALREADY_SENT"
+								],
+								"nullable": false
+							}
+						},
+						"required": [
+							"message",
+							"code"
+						],
+						"type": "object"
+					},
+					"status": {
+						"type": "string",
+						"enum": [
+							"fail"
+						],
+						"nullable": false
+					}
+				},
+				"required": [
+					"data",
+					"status"
+				],
+				"type": "object",
+				"description": "Tipo genérico base para respuestas de error con código y detalles opcionales."
+			},
+			"FailResponseFromError_FriendRequestAlreadySentError_": {
+				"$ref": "#/components/schemas/FailResponse_FRIEND_REQUEST_ALREADY_SENT.undefined_",
+				"description": "Extrae automáticamente code y details de una clase AppError.\r\n\r\nEjemplo:\r\n- FailResponseFromError<UserAlreadyExistsError> → { status: 'fail', data: { code: 'CONFLICT', message: string, details: { field, value } } }\r\n- FailResponseFromError<UserNotFoundError> → { status: 'fail', data: { code: 'NOT_FOUND', message: string, details: { userId } } }"
+			},
+			"FailResponse_FRIEND_REQUEST_ALREADY_RECEIVED.undefined_": {
+				"properties": {
+					"data": {
+						"properties": {
+							"details": {},
+							"message": {
+								"type": "string"
+							},
+							"code": {
+								"type": "string",
+								"enum": [
+									"FRIEND_REQUEST_ALREADY_RECEIVED"
+								],
+								"nullable": false
+							}
+						},
+						"required": [
+							"message",
+							"code"
+						],
+						"type": "object"
+					},
+					"status": {
+						"type": "string",
+						"enum": [
+							"fail"
+						],
+						"nullable": false
+					}
+				},
+				"required": [
+					"data",
+					"status"
+				],
+				"type": "object",
+				"description": "Tipo genérico base para respuestas de error con código y detalles opcionales."
+			},
+			"FailResponseFromError_FriendRequestAlreadyReceivedError_": {
+				"$ref": "#/components/schemas/FailResponse_FRIEND_REQUEST_ALREADY_RECEIVED.undefined_",
+				"description": "Extrae automáticamente code y details de una clase AppError.\r\n\r\nEjemplo:\r\n- FailResponseFromError<UserAlreadyExistsError> → { status: 'fail', data: { code: 'CONFLICT', message: string, details: { field, value } } }\r\n- FailResponseFromError<UserNotFoundError> → { status: 'fail', data: { code: 'NOT_FOUND', message: string, details: { userId } } }"
+			},
+			"FriendRequestErrorResponse": {
+				"anyOf": [
+					{
+						"$ref": "#/components/schemas/FailResponseFromError_SelfFriendRequestError_"
+					},
+					{
+						"$ref": "#/components/schemas/FailResponseFromError_AlreadyFriendsError_"
+					},
+					{
+						"$ref": "#/components/schemas/FailResponseFromError_FriendRequestAlreadySentError_"
+					},
+					{
+						"$ref": "#/components/schemas/FailResponseFromError_FriendRequestAlreadyReceivedError_"
+					}
+				]
+			},
+			"FailResponse_NO_PENDING_FRIEND_REQUEST.undefined_": {
+				"properties": {
+					"data": {
+						"properties": {
+							"details": {},
+							"message": {
+								"type": "string"
+							},
+							"code": {
+								"type": "string",
+								"enum": [
+									"NO_PENDING_FRIEND_REQUEST"
+								],
+								"nullable": false
+							}
+						},
+						"required": [
+							"message",
+							"code"
+						],
+						"type": "object"
+					},
+					"status": {
+						"type": "string",
+						"enum": [
+							"fail"
+						],
+						"nullable": false
+					}
+				},
+				"required": [
+					"data",
+					"status"
+				],
+				"type": "object",
+				"description": "Tipo genérico base para respuestas de error con código y detalles opcionales."
+			},
+			"FailResponseFromError_NoPendingFriendRequestError_": {
+				"$ref": "#/components/schemas/FailResponse_NO_PENDING_FRIEND_REQUEST.undefined_",
+				"description": "Extrae automáticamente code y details de una clase AppError.\r\n\r\nEjemplo:\r\n- FailResponseFromError<UserAlreadyExistsError> → { status: 'fail', data: { code: 'CONFLICT', message: string, details: { field, value } } }\r\n- FailResponseFromError<UserNotFoundError> → { status: 'fail', data: { code: 'NOT_FOUND', message: string, details: { userId } } }"
+			},
+			"FailResponse_NO_RECEIVED_FRIEND_REQUEST.undefined_": {
+				"properties": {
+					"data": {
+						"properties": {
+							"details": {},
+							"message": {
+								"type": "string"
+							},
+							"code": {
+								"type": "string",
+								"enum": [
+									"NO_RECEIVED_FRIEND_REQUEST"
+								],
+								"nullable": false
+							}
+						},
+						"required": [
+							"message",
+							"code"
+						],
+						"type": "object"
+					},
+					"status": {
+						"type": "string",
+						"enum": [
+							"fail"
+						],
+						"nullable": false
+					}
+				},
+				"required": [
+					"data",
+					"status"
+				],
+				"type": "object",
+				"description": "Tipo genérico base para respuestas de error con código y detalles opcionales."
+			},
+			"FailResponseFromError_NoReceivedFriendRequestError_": {
+				"$ref": "#/components/schemas/FailResponse_NO_RECEIVED_FRIEND_REQUEST.undefined_",
+				"description": "Extrae automáticamente code y details de una clase AppError.\r\n\r\nEjemplo:\r\n- FailResponseFromError<UserAlreadyExistsError> → { status: 'fail', data: { code: 'CONFLICT', message: string, details: { field, value } } }\r\n- FailResponseFromError<UserNotFoundError> → { status: 'fail', data: { code: 'NOT_FOUND', message: string, details: { userId } } }"
+			},
+			"FailResponse_NOT_FRIENDS.undefined_": {
+				"properties": {
+					"data": {
+						"properties": {
+							"details": {},
+							"message": {
+								"type": "string"
+							},
+							"code": {
+								"type": "string",
+								"enum": [
+									"NOT_FRIENDS"
+								],
+								"nullable": false
+							}
+						},
+						"required": [
+							"message",
+							"code"
+						],
+						"type": "object"
+					},
+					"status": {
+						"type": "string",
+						"enum": [
+							"fail"
+						],
+						"nullable": false
+					}
+				},
+				"required": [
+					"data",
+					"status"
+				],
+				"type": "object",
+				"description": "Tipo genérico base para respuestas de error con código y detalles opcionales."
+			},
+			"FailResponseFromError_NotFriendsError_": {
+				"$ref": "#/components/schemas/FailResponse_NOT_FRIENDS.undefined_",
+				"description": "Extrae automáticamente code y details de una clase AppError.\r\n\r\nEjemplo:\r\n- FailResponseFromError<UserAlreadyExistsError> → { status: 'fail', data: { code: 'CONFLICT', message: string, details: { field, value } } }\r\n- FailResponseFromError<UserNotFoundError> → { status: 'fail', data: { code: 'NOT_FOUND', message: string, details: { userId } } }"
 			},
 			"LegResponse": {
 				"properties": {
@@ -1171,7 +2086,7 @@
 			},
 			"SearchResponseData": {
 				"properties": {
-					"public_id": {
+					"_id": {
 						"type": "string"
 					},
 					"user_id": {
@@ -1242,7 +2157,7 @@
 					}
 				},
 				"required": [
-					"public_id",
+					"_id",
 					"origins",
 					"destinations",
 					"departure_date",
@@ -1573,6 +2488,53 @@
 				"$ref": "#/components/schemas/FailResponse_NOT_AUTHORIZED._searchId-string--requesterId-string__",
 				"description": "Extrae automáticamente code y details de una clase AppError.\r\n\r\nEjemplo:\r\n- FailResponseFromError<UserAlreadyExistsError> → { status: 'fail', data: { code: 'CONFLICT', message: string, details: { field, value } } }\r\n- FailResponseFromError<UserNotFoundError> → { status: 'fail', data: { code: 'NOT_FOUND', message: string, details: { userId } } }"
 			},
+			"SuccessResponse__items-SearchResponseData-Array--total-number--page-number--totalPages-number__": {
+				"description": "Wrapper de éxito JSend (aplicado por el middleware global).",
+				"properties": {
+					"status": {
+						"type": "string",
+						"enum": [
+							"success"
+						],
+						"nullable": false
+					},
+					"data": {
+						"properties": {
+							"totalPages": {
+								"type": "number",
+								"format": "double"
+							},
+							"page": {
+								"type": "number",
+								"format": "double"
+							},
+							"total": {
+								"type": "number",
+								"format": "double"
+							},
+							"items": {
+								"items": {
+									"$ref": "#/components/schemas/SearchResponseData"
+								},
+								"type": "array"
+							}
+						},
+						"required": [
+							"totalPages",
+							"page",
+							"total",
+							"items"
+						],
+						"type": "object"
+					}
+				},
+				"required": [
+					"status",
+					"data"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
 			"LoginResponseData": {
 				"description": "Respuesta del endpoint POST /auth/login",
 				"properties": {
@@ -1765,6 +2727,58 @@
 			},
 			"FailResponseFromError_InvalidCredentialsError_": {
 				"$ref": "#/components/schemas/FailResponse_INVALID_CREDENTIALS._identifier-string__",
+				"description": "Extrae automáticamente code y details de una clase AppError.\r\n\r\nEjemplo:\r\n- FailResponseFromError<UserAlreadyExistsError> → { status: 'fail', data: { code: 'CONFLICT', message: string, details: { field, value } } }\r\n- FailResponseFromError<UserNotFoundError> → { status: 'fail', data: { code: 'NOT_FOUND', message: string, details: { userId } } }"
+			},
+			"FailResponse_EMAIL_NOT_VERIFIED._email-string__": {
+				"properties": {
+					"data": {
+						"properties": {
+							"details": {
+								"properties": {
+									"email": {
+										"type": "string"
+									}
+								},
+								"required": [
+									"email"
+								],
+								"type": "object"
+							},
+							"message": {
+								"type": "string"
+							},
+							"code": {
+								"type": "string",
+								"enum": [
+									"EMAIL_NOT_VERIFIED"
+								],
+								"nullable": false
+							}
+						},
+						"required": [
+							"details",
+							"message",
+							"code"
+						],
+						"type": "object"
+					},
+					"status": {
+						"type": "string",
+						"enum": [
+							"fail"
+						],
+						"nullable": false
+					}
+				},
+				"required": [
+					"data",
+					"status"
+				],
+				"type": "object",
+				"description": "Tipo genérico base para respuestas de error con código y detalles opcionales."
+			},
+			"FailResponseFromError_EmailNotVerifiedError_": {
+				"$ref": "#/components/schemas/FailResponse_EMAIL_NOT_VERIFIED._email-string__",
 				"description": "Extrae automáticamente code y details de una clase AppError.\r\n\r\nEjemplo:\r\n- FailResponseFromError<UserAlreadyExistsError> → { status: 'fail', data: { code: 'CONFLICT', message: string, details: { field, value } } }\r\n- FailResponseFromError<UserNotFoundError> → { status: 'fail', data: { code: 'NOT_FOUND', message: string, details: { userId } } }"
 			},
 			"LoginRequest": {
@@ -1974,6 +2988,16 @@
 				"$ref": "#/components/schemas/FailResponse_INVALID_PASSWORD._identifier-string__",
 				"description": "Extrae automáticamente code y details de una clase AppError.\r\n\r\nEjemplo:\r\n- FailResponseFromError<UserAlreadyExistsError> → { status: 'fail', data: { code: 'CONFLICT', message: string, details: { field, value } } }\r\n- FailResponseFromError<UserNotFoundError> → { status: 'fail', data: { code: 'NOT_FOUND', message: string, details: { userId } } }"
 			},
+			"ChangePasswordErrorResponse": {
+				"anyOf": [
+					{
+						"$ref": "#/components/schemas/AuthFailResponse"
+					},
+					{
+						"$ref": "#/components/schemas/FailResponseFromError_InvalidPasswordError_"
+					}
+				]
+			},
 			"FailResponse_USER_NOT_FOUND._identifier-string__": {
 				"properties": {
 					"data": {
@@ -2147,7 +3171,7 @@
 						],
 						"type": "object"
 					},
-					"body.newPassword": {
+					"body.token": {
 						"properties": {
 							"value": {},
 							"message": {
@@ -2159,7 +3183,7 @@
 						],
 						"type": "object"
 					},
-					"body.token": {
+					"body.newPassword": {
 						"properties": {
 							"value": {},
 							"message": {
@@ -2491,6 +3515,71 @@
 				}
 			}
 		},
+		"/users/verify-email": {
+			"post": {
+				"operationId": "VerifyEmail",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/SuccessResponse_VerifyEmailResponseData_"
+								}
+							}
+						}
+					},
+					"400": {
+						"description": "Token inválido o expirado o Email ya verificado",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/VerifyEmailErrorResponse"
+								}
+							}
+						}
+					},
+					"422": {
+						"description": "Error de validación",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/VerifyEmailValidationFailResponse"
+								}
+							}
+						}
+					}
+				},
+				"description": "Verifica el email de un usuario usando un token.",
+				"tags": [
+					"Users"
+				],
+				"security": [],
+				"parameters": [],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"properties": {
+									"token": {
+										"type": "string"
+									},
+									"email": {
+										"type": "string"
+									}
+								},
+								"required": [
+									"token",
+									"email"
+								],
+								"type": "object"
+							}
+						}
+					}
+				}
+			}
+		},
 		"/users/me": {
 			"get": {
 				"operationId": "GetUser",
@@ -2603,6 +3692,52 @@
 				}
 			}
 		},
+		"/users/search": {
+			"get": {
+				"operationId": "SearchUsers",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/SuccessResponse_PublicUser-Array_"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "No autenticado",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/AuthFailResponse"
+								}
+							}
+						}
+					}
+				},
+				"description": "Busca usuarios por regex en username.",
+				"tags": [
+					"Users"
+				],
+				"security": [
+					{
+						"jwt": []
+					}
+				],
+				"parameters": [
+					{
+						"in": "query",
+						"name": "q",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				]
+			}
+		},
 		"/users/{id}": {
 			"get": {
 				"operationId": "GetUserById",
@@ -2639,6 +3774,331 @@
 					}
 				},
 				"description": "Obtiene los datos de un usuario por su ID.",
+				"tags": [
+					"Users"
+				],
+				"security": [
+					{
+						"jwt": []
+					}
+				],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "id",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				]
+			}
+		},
+		"/users/{id}/send-friend-request": {
+			"post": {
+				"operationId": "SendFriendRequest",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/SuccessResponse_null_"
+								}
+							}
+						}
+					},
+					"400": {
+						"description": "Error en la solicitud de amistad (mismo usuario, ya amigos o solicitud ya existente)",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/FriendRequestErrorResponse"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "No autenticado",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/AuthFailResponse"
+								}
+							}
+						}
+					},
+					"404": {
+						"description": "Usuario no encontrado",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/FailResponseFromError_UserNotFoundError_"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Users"
+				],
+				"security": [
+					{
+						"jwt": []
+					}
+				],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "id",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				]
+			}
+		},
+		"/users/{id}/cancel-friend-request": {
+			"post": {
+				"operationId": "CancelFriendRequest",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/SuccessResponse_null_"
+								}
+							}
+						}
+					},
+					"400": {
+						"description": "No hay solicitud pendiente con este usuario",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/FailResponseFromError_NoPendingFriendRequestError_"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "No autenticado",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/AuthFailResponse"
+								}
+							}
+						}
+					},
+					"404": {
+						"description": "Usuario no encontrado",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/FailResponseFromError_UserNotFoundError_"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Users"
+				],
+				"security": [
+					{
+						"jwt": []
+					}
+				],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "id",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				]
+			}
+		},
+		"/users/{id}/accept-friend-request": {
+			"post": {
+				"operationId": "AcceptFriendRequest",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/SuccessResponse_null_"
+								}
+							}
+						}
+					},
+					"400": {
+						"description": "No tienes ninguna solicitud de este usuario",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/FailResponseFromError_NoReceivedFriendRequestError_"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "No autenticado",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/AuthFailResponse"
+								}
+							}
+						}
+					},
+					"404": {
+						"description": "Usuario no encontrado",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/FailResponseFromError_UserNotFoundError_"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Users"
+				],
+				"security": [
+					{
+						"jwt": []
+					}
+				],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "id",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				]
+			}
+		},
+		"/users/{id}/reject-friend-request": {
+			"post": {
+				"operationId": "RejectFriendRequest",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/SuccessResponse_null_"
+								}
+							}
+						}
+					},
+					"400": {
+						"description": "No tienes ninguna solicitud de este usuario para rechazar",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/FailResponseFromError_NoReceivedFriendRequestError_"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "No autenticado",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/AuthFailResponse"
+								}
+							}
+						}
+					},
+					"404": {
+						"description": "Usuario no encontrado",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/FailResponseFromError_UserNotFoundError_"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Users"
+				],
+				"security": [
+					{
+						"jwt": []
+					}
+				],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "id",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				]
+			}
+		},
+		"/users/{id}/remove-friend": {
+			"post": {
+				"operationId": "RemoveFriend",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/SuccessResponse_null_"
+								}
+							}
+						}
+					},
+					"400": {
+						"description": "No tienes agregada a esa persona",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/FailResponseFromError_NotFriendsError_"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "No autenticado",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/AuthFailResponse"
+								}
+							}
+						}
+					},
+					"404": {
+						"description": "Usuario no encontrado",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/FailResponseFromError_UserNotFoundError_"
+								}
+							}
+						}
+					}
+				},
 				"tags": [
 					"Users"
 				],
@@ -2872,6 +4332,81 @@
 				]
 			}
 		},
+		"/search/user/{userId}": {
+			"get": {
+				"operationId": "GetSearches",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/SuccessResponse__items-SearchResponseData-Array--total-number--page-number--totalPages-number__"
+								}
+							}
+						}
+					},
+					"403": {
+						"description": "Búsqueda privada no autorizada",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/FailResponseFromError_SearchNotAuthorizedError_"
+								}
+							}
+						}
+					},
+					"404": {
+						"description": "Búsqueda no encontrada",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/FailResponseFromError_SearchNotFoundError_"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Search"
+				],
+				"security": [
+					{
+						"jwt-optional": []
+					}
+				],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "userId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "query",
+						"name": "page",
+						"required": false,
+						"schema": {
+							"default": 1,
+							"format": "double",
+							"type": "number"
+						}
+					},
+					{
+						"in": "query",
+						"name": "limit",
+						"required": false,
+						"schema": {
+							"default": 10,
+							"format": "double",
+							"type": "number"
+						}
+					}
+				]
+			}
+		},
 		"/auth/login": {
 			"post": {
 				"operationId": "Login",
@@ -2892,6 +4427,16 @@
 							"application/json": {
 								"schema": {
 									"$ref": "#/components/schemas/FailResponseFromError_InvalidCredentialsError_"
+								}
+							}
+						}
+					},
+					"403": {
+						"description": "Email no verificado",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/FailResponseFromError_EmailNotVerifiedError_"
 								}
 							}
 						}
@@ -3000,11 +4545,11 @@
 						}
 					},
 					"401": {
-						"description": "Contraseña incorrecta",
+						"description": "No autenticado o contraseña incorrecta",
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/FailResponseFromError_InvalidPasswordError_"
+									"$ref": "#/components/schemas/ChangePasswordErrorResponse"
 								}
 							}
 						}

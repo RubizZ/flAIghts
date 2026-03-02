@@ -1,6 +1,6 @@
 import type { ValidationDetails, RequestValidationFailResponse, DatabaseValidationFailResponse, FailResponseFromError } from "../../utils/responses.js";
-import type { SafeUser } from "../users/user.types.js";
-import type { NoTokenProvidedError, InvalidTokenError, TokenUserNotFoundError, AuthenticationVersionMismatchError } from "./auth.errors.js";
+import type { PopulatedUser, User } from "../users/user.types.js";
+import { NoTokenProvidedError, InvalidTokenError, TokenUserNotFoundError, AuthenticationVersionMismatchError, InvalidPasswordError } from "./auth.errors.js";
 
 // ==================== TIPOS DE AUTENTICACIÓN ====================
 
@@ -18,7 +18,7 @@ export type AuthFailResponse =
     | FailResponseFromError<TokenUserNotFoundError>
     | FailResponseFromError<AuthenticationVersionMismatchError>;
 
-export interface AuthenticatedUser extends SafeUser {
+export interface AuthenticatedUser extends PopulatedUser {
     token: string;
 }
 
@@ -112,3 +112,5 @@ export type LoginValidationFailResponse = LoginRequestValidationFailResponse;
 export type ChangePasswordValidationFailResponse = ChangePasswordRequestValidationFailResponse | DatabaseValidationFailResponse;
 export type ForgotPasswordValidationFailResponse = ForgotPasswordRequestValidationFailResponse;
 export type ResetPasswordValidationFailResponse = ResetPasswordRequestValidationFailResponse | DatabaseValidationFailResponse;
+
+export type ChangePasswordErrorResponse = AuthFailResponse | FailResponseFromError<InvalidPasswordError>;
