@@ -11,7 +11,7 @@ export const MailTemplates = {
                             ${code}
                         </span>
                     </div>
-                    <p style="color: #666; font-size: 0.9em;">Este código es válido por tiempo limitado. Si no has solicitado este registro, puedes ignorar este correo de forma segura.</p>
+                    <p style="color: #666; font-size: 0.9em;">Este código es válido por 1 hora. Si no has solicitado este registro, puedes ignorar este correo de forma segura.</p>
                     <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
                     <p style="color: #999; font-size: 0.8em; text-align: center;">© 2026 flAIghts. Todos los derechos reservados.</p>
                 </div>
