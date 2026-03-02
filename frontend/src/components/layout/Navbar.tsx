@@ -107,13 +107,13 @@ export default function Navbar() {
                     <p className="text-sm font-bold text-primary truncate">{user?.email}</p>
                 </div>
                 <div className="p-1">
-                    <button onClick={() => { setIsOpen(false); navigate(`/user/${user?._id}`) }} className="w-full flex items-center justify-between text-secondary px-3 py-2 text-sm rounded-xl transition-all group text-left hover:bg-(--color-bg-secondary)/70 hover:cursor-pointer font-medium">
+                    <button onClick={() => { setIsOpen(false); navigate(`/user/${user?._id}`) }} className="w-full flex items-center justify-between text-primary px-3 py-2 text-sm rounded-xl transition-all group text-left hover:bg-(--color-bg-secondary)/70 hover:cursor-pointer font-medium">
                         <div className="flex items-center gap-3">
                             <User size={16} className="shrink-0" />
                             <span className="leading-none">Mi Perfil</span>
                         </div>
                     </button>
-                    <button onClick={() => { setIsOpen(false); navigate('/settings') }} className="w-full flex items-center justify-between text-secondary px-3 py-2 text-sm rounded-xl transition-all group text-left hover:bg-(--color-bg-secondary)/70 hover:cursor-pointer font-medium">
+                    <button onClick={() => { setIsOpen(false); navigate('/settings') }} className="w-full flex items-center justify-between text-primary px-3 py-2 text-sm rounded-xl transition-all group text-left hover:bg-(--color-bg-secondary)/70 hover:cursor-pointer font-medium">
                         <div className="flex items-center gap-3">
                             <Settings size={16} className="shrink-0" />
                             <span className="leading-none">Ajustes</span>
@@ -133,13 +133,13 @@ export default function Navbar() {
                             e.stopPropagation();
                             pushMenu('theme');
                         }}
-                        className="w-full flex items-center justify-between px-3 py-2 text-sm text-secondary hover:bg-(--color-bg-secondary)/70 rounded-xl transition-all cursor-pointer group text-left font-medium"
+                        className="w-full flex items-center justify-between px-3 py-2 text-sm text-primary hover:bg-(--color-bg-secondary)/70 rounded-xl transition-all cursor-pointer group text-left font-medium"
                     >
                         <div className="flex items-center gap-3">
                             <Palette size={16} className="shrink-0" />
                             <span className="leading-none">Tema</span>
                         </div>
-                        <div className="flex items-center gap-1.5 text-[10px] text-secondary opacity-60 font-bold transition-colors">
+                        <div className="flex items-center gap-1.5 text-[10px] text-primary opacity-60 font-bold transition-colors">
                             <span className="leading-none">{themeLabels[theme as keyof typeof themeLabels]}</span>
                             <ChevronDown size={12} className="-rotate-90 group-hover:rotate-0 transition-transform shrink-0" />
                         </div>
@@ -212,15 +212,35 @@ export default function Navbar() {
     };
 
     const OptionsMainView = ({ theme, themeLabels }: { theme: string, themeLabels: Record<string, string> }) => {
-        const { pushMenu } = useDropdown();
+        const { pushMenu, setIsOpen } = useDropdown();
         return (
             <div className="w-64 p-1">
+                {/* Mobile Auth Options */}
+                <div className="sm:hidden mb-2 pb-2 border-b border-themed">
+                    <p className="px-3 py-2 text-[10px] uppercase tracking-widest text-secondary font-bold opacity-50">Autenticación</p>
+                    <button
+                        onClick={() => { setIsOpen(false); navigate('/login'); }}
+                        className="w-full flex items-center gap-3 px-3 py-2 text-sm text-primary hover:bg-(--color-bg-secondary)/70 rounded-xl transition-colors cursor-pointer font-medium"
+                    >
+                        <User size={16} className="text-accent" />
+                        Log in
+                    </button>
+                    <button
+                        onClick={() => { setIsOpen(false); navigate('/register'); }}
+                        className="w-full flex items-center gap-3 px-3 py-2 text-sm text-primary hover:bg-(--color-bg-secondary)/70 rounded-xl transition-colors cursor-pointer font-medium"
+                    >
+                        <ShieldCheck size={16} className="text-accent" />
+                        Register
+                    </button>
+                </div>
+
+                <p className="hidden sm:block px-3 py-2 text-[10px] uppercase tracking-widest text-secondary font-bold opacity-50">Opciones</p>
                 <button
                     onClick={(e) => {
                         e.stopPropagation();
                         pushMenu('theme');
                     }}
-                    className="w-full flex items-center justify-between px-3 py-2 text-sm text-secondary hover:text-primary hover:bg-secondary rounded-xl transition-colors cursor-pointer group text-left font-medium"
+                    className="w-full flex items-center justify-between px-3 py-2 text-sm text-primary hover:text-primary hover:bg-(--color-bg-secondary)/70 rounded-xl transition-colors cursor-pointer group text-left font-medium"
                 >
                     <div className="flex items-center gap-3">
                         <Palette size={16} className="group-hover:text-accent transition-colors" />
@@ -245,14 +265,14 @@ export default function Navbar() {
             </div>
 
             <div className="hidden min-[400px]:flex items-center justify-center absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
-                <Link to="/" className="text-secondary hover:text-primary transition-colors font-bold text-lg sm:text-xl tracking-tighter">flAIghts</Link>
+                <Link to="/" className="text-secondary hover:text-(--color-accent) transition-colors font-bold text-lg sm:text-xl tracking-tighter">flAIghts</Link>
             </div>
 
             <div className="flex items-center justify-end gap-2 sm:gap-4 shrink-0 z-10 bg-primary">
                 {isLoading ? (
                     <div className="flex items-center gap-2">
-                        <div className="w-16 h-8 bg-secondary rounded-full animate-pulse opacity-50" />
-                        <div className="w-20 h-8 bg-secondary rounded-full animate-pulse opacity-50" />
+                        <div className="hidden sm:block w-16 h-8 bg-secondary rounded-full animate-pulse opacity-50" />
+                        <div className="hidden sm:block w-20 h-8 bg-secondary rounded-full animate-pulse opacity-50" />
                         <div className="w-9 h-9 bg-secondary rounded-full animate-pulse opacity-50" />
                     </div>
                 ) : isAuthenticated ? (
@@ -336,7 +356,7 @@ export default function Navbar() {
                         />
                     </div>
                 ) : (
-                    <div className="flex gap-2">
+                    <div className="hidden sm:flex gap-2">
                         <Link to="/login" className="bg-secondary text-primary hover:bg-secondary/80 px-5 py-1.5 rounded-full transition-colors cursor-pointer font-medium text-sm">Log in</Link>
                         <Link to="/register" className="bg-accent bg-accent-hover text-on-accent hover:bg-accent-hover px-5 py-1.5 rounded-full transition-colors cursor-pointer font-medium text-sm text-center">Register</Link>
                     </div>
@@ -354,8 +374,9 @@ export default function Navbar() {
                             }
                         }}
                         trigger={
-                            <div className="w-9 h-9 flex items-center justify-center bg-secondary hover:bg-secondary/80 border border-themed rounded-full text-primary transition-all active:scale-90">
-                                <MoreHorizontal size={20} />
+                            <div className="w-9 h-9 flex items-center justify-center bg-secondary hover:bg-secondary/80 border border-themed rounded-full text-primary transition-all active:scale-90 cursor-pointer">
+                                <User size={20} className="sm:hidden" />
+                                <MoreHorizontal size={20} className="hidden sm:block" />
                             </div>
                         }
                         menus={{
