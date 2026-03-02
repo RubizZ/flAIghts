@@ -1,10 +1,10 @@
 import { createBrowserRouter, RouterProvider } from "react-router-dom"
-import { ThemeProvider } from "./context/ThemeContext.tsx"
-import { AuthProvider } from "./context/AuthContext.tsx"
-import { routes } from "./routes";
+import { ThemeProvider } from "@/context/ThemeContext"
+import { AuthProvider } from "@/context/AuthContext"
+import { routes } from "@/routes";
 import { QueryClient, QueryClientProvider, QueryErrorResetBoundary } from "@tanstack/react-query";
 import { Toaster } from 'sonner';
-import ErrorBoundary from "./components/common/ErrorBoundary.tsx";
+import ErrorBoundary from "@/components/common/ErrorBoundary.tsx";
 
 const router = createBrowserRouter(routes);
 
