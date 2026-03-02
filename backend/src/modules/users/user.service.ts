@@ -16,7 +16,7 @@ import {
     NoReceivedFriendRequestError,
     NotFriendsError,
     EmailAlreadyVerifiedError,
-    EmailVerificationTokenInvalidOrExpiredError
+    EmailVerificationCodeInvalidOrExpiredError
 } from "./user.errors.js";
 import { MailService } from "@/services/mail.service.js";
 import { MailTemplates } from "@/services/mail.templates.js";
@@ -250,7 +250,7 @@ export class UserService {
         }
 
         if (user.email_verification_code !== hashedCode || (user.email_verification_expires && user.email_verification_expires < new Date())) {
-            throw new EmailVerificationTokenInvalidOrExpiredError();
+            throw new EmailVerificationCodeInvalidOrExpiredError();
         }
 
         user.email_verified = true;
