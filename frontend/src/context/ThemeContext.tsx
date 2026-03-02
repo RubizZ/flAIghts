@@ -22,14 +22,16 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
 
     useEffect(() => {
         const root = document.documentElement;
+
+        root.classList.add('theme-transition');
+
         root.classList.remove('light', 'dark');
         root.classList.add(theme);
         localStorage.setItem('theme', theme);
 
-        // Activar transiciones tras un pequeño retardo para evitar parpadeos iniciales
         const timeout = setTimeout(() => {
-            root.classList.add('theme-transition');
-        }, 100);
+            root.classList.remove('theme-transition')
+        }, 400);
         return () => clearTimeout(timeout);
     }, [theme]);
 
