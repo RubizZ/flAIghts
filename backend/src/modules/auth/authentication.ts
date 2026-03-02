@@ -1,9 +1,10 @@
 import type { Request } from "express";
 import type { AuthenticatedUser, JWTPayload } from "./auth.types.js";
 import jwt from "jsonwebtoken";
-import { User } from "../users/user.model.js";
+import { User, type IFriend, type IUser } from "../users/user.model.js";
 import { AuthenticationVersionMismatchError, InvalidTokenError, NoTokenProvidedError, TokenUserNotFoundError } from "./auth.errors.js";
-import type { SafeUser } from "../users/user.types.js";
+import type { FriendUser, PopulatedUser, PublicUser } from "../users/user.types.js";
+import type { PopulatedDoc } from "mongoose";
 
 if (!process.env.JWT_SECRET) {
     throw new Error("JWT_SECRET is not defined");
@@ -39,7 +40,7 @@ export async function expressAuthentication(
 
         const decoded = jwt.verify(token, JWT_SECRET) as JWTPayload;
 
-        const user = await User.findOne({ id: decoded.userId });
+        let user = await User.findById(decoded.userId);
         if (!user) {
             throw new TokenUserNotFoundError(decoded.userId);
         }
@@ -51,17 +52,64 @@ export async function expressAuthentication(
         user.last_seen_at = new Date();
         await user.save();
 
+        await user.populate('friends.user', 'username role created_at last_seen_at');
+        await user.populate('sent_friend_requests', 'username role created_at last_seen_at public');
+        await user.populate('received_friend_requests', 'username role created_at last_seen_at public');
+
         const userObj = user.toObject();
         const safeUser = {
-            id: userObj.id,
+            _id: userObj._id,
+            type: 'self',
             username: userObj.username,
             email: userObj.email,
+            email_verified: userObj.email_verified,
             role: userObj.role,
             preferences: userObj.preferences,
+            public: userObj.public,
             created_at: user.created_at.toISOString(),
             last_seen_at: user.last_seen_at.toISOString(),
-            auth_version: userObj.auth_version
-        } satisfies SafeUser;
+            auth_version: userObj.auth_version,
+            friends: userObj.friends.map(f => {
+                const user = f.user as IUser;
+                return {
+                    _id: user._id,
+                    type: 'friend',
+                    username: user.username,
+                    role: user.role,
+                    created_at: user.created_at.toISOString(),
+                    last_seen_at: user.last_seen_at.toISOString(),
+                    friend_since: f.friend_since.toISOString()
+                } satisfies FriendUser;
+            }),
+            sent_friend_requests: userObj.sent_friend_requests.map(u => {
+                const user = u as IUser;
+                return {
+                    _id: user._id,
+                    type: 'public',
+                    username: user.username,
+                    role: user.role,
+                    public: user.public,
+                    created_at: user.created_at.toISOString(),
+                    last_seen_at: user.last_seen_at.toISOString(),
+                    sent_friend_request: true,
+                    received_friend_request: false
+                } satisfies PublicUser;
+            }),
+            received_friend_requests: userObj.received_friend_requests.map(u => {
+                const user = u as IUser;
+                return {
+                    _id: user._id,
+                    type: 'public',
+                    username: user.username,
+                    role: user.role,
+                    public: user.public,
+                    created_at: user.created_at.toISOString(),
+                    last_seen_at: user.last_seen_at.toISOString(),
+                    sent_friend_request: false,
+                    received_friend_request: true
+                } satisfies PublicUser;
+            })
+        } satisfies PopulatedUser;
 
         return {
             ...safeUser,
@@ -75,7 +123,7 @@ export async function expressAuthentication(
         }
 
         if (securityName === 'jwt-optional') {
-            if (headerValue) { // Si hay token jwt, validarlo (y falla si no es válido)
+            if (headerValue || (request.cookies && request.cookies.token)) { // Si hay token jwt en header o cookie, validarlo
                 return await validateJWT();
             }
             return null; // Invitado si no hay token jwt

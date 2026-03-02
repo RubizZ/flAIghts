@@ -1,11 +1,17 @@
-import { Schema, model } from "mongoose";
+import { Schema, model, type HydratedDocument, type PopulatedDoc } from "mongoose";
 import { randomUUID } from "node:crypto";
 
+export interface IFriend {
+  user: PopulatedDoc<IUser, string>;
+  friend_since: Date;
+}
+
 export interface IUser {
-  id: string;
+  _id: string;
   username: string;
   email: string;
   password: string;
+  public: boolean;
   role: "user" | "admin";
   preferences: {
     price_weight: number;
@@ -16,12 +22,18 @@ export interface IUser {
   created_at: Date;
   last_seen_at: Date;
   auth_version: number;
+  email_verified: boolean;
+  email_verification_code?: string;
+  email_verification_expires?: Date;
   password_reset_token?: string;
   password_reset_expires?: Date;
+  friends: IFriend[];
+  sent_friend_requests: PopulatedDoc<IUser, string>[];
+  received_friend_requests: PopulatedDoc<IUser, string>[];
 }
 
 const UserSchema = new Schema<IUser>({
-  id: { type: String, default: () => randomUUID(), unique: true, index: true },
+  _id: { type: String, default: () => randomUUID() },
   username: {
     type: String,
     required: true,
@@ -41,6 +53,10 @@ const UserSchema = new Schema<IUser>({
     type: String,
     required: true,
     select: false
+  },
+  public: {
+    type: Boolean,
+    default: false
   },
   role: { type: String, enum: ["user", "admin"], default: "user" },
   preferences: {
@@ -72,8 +88,17 @@ const UserSchema = new Schema<IUser>({
   created_at: { type: Date, default: Date.now },
   last_seen_at: { type: Date, default: Date.now },
   auth_version: { type: Number, default: 1, min: 1 },
+  email_verified: { type: Boolean, default: false },
+  email_verification_code: { type: String, select: false },
+  email_verification_expires: { type: Date, select: false },
   password_reset_token: { type: String, select: false, index: true },
-  password_reset_expires: { type: Date, select: false }
+  password_reset_expires: { type: Date, select: false },
+  friends: [{
+    user: { type: String, ref: "User", required: true },
+    friend_since: { type: Date, default: Date.now }
+  }],
+  sent_friend_requests: [{ type: String, ref: "User" }],
+  received_friend_requests: [{ type: String, ref: "User" }]
 });
 
 // Índice único case-insensitive para username
@@ -82,7 +107,7 @@ UserSchema.index(
   { unique: true, collation: { locale: 'en', strength: 2 } }
 );
 
-UserSchema.pre('save', function () {
+UserSchema.pre('save', function (this: HydratedDocument<IUser>) {
   const sum = this.preferences.price_weight + this.preferences.duration_weight +
     this.preferences.stops_weight + this.preferences.airline_quality_weight;
   if (Math.abs(sum - 1.0) > 0.001) {

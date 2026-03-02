@@ -6,7 +6,7 @@ import ms from 'ms'
 import crypto from "node:crypto";
 import { MailService } from "../../services/mail.service.js";
 import { MailTemplates } from "../../services/mail.templates.js";
-import { ResetTokenInvalidOrExpiredError, LoginUserNotFoundError, InvalidPasswordError } from "./auth.errors.js";
+import { ResetTokenInvalidOrExpiredError, LoginUserNotFoundError, InvalidPasswordError, EmailNotVerifiedError } from "./auth.errors.js";
 import type { LoginResponseData, JWTPayload } from "./auth.types.js";
 
 export class PasswordService {
@@ -50,7 +50,9 @@ export class AuthService {
     }
 
     public async login(identifier: string, password: string): Promise<LoginResponseData> {
-        const user = await User.findOne({ $or: [{ email: identifier }, { username: identifier }] }).select('+password');
+        const user = await User.findOne({ $or: [{ email: identifier }, { username: identifier }] })
+            .collation({ locale: 'en', strength: 2 })
+            .select('+password');
 
         if (!user) {
             throw new LoginUserNotFoundError(identifier);
@@ -62,9 +64,14 @@ export class AuthService {
             throw new InvalidPasswordError(identifier);
         }
 
+        if (!user.email_verified) {
+            throw new EmailNotVerifiedError(user.email);
+        }
+
+
         const token = jwt.sign(
             {
-                userId: user.id,
+                userId: user._id,
                 version: user.auth_version
             } as JWTPayload,
             this.jwtSecret,
@@ -72,18 +79,18 @@ export class AuthService {
         );
 
         return {
-            userId: user.id,
+            userId: user._id,
             token,
             authVersion: user.auth_version
         };
     }
 
     public async logoutAll(userId: string) {
-        await User.updateOne({ id: userId }, { $inc: { auth_version: 1 } });
+        await User.updateOne({ _id: userId }, { $inc: { auth_version: 1 } });
     }
 
     public async changePassword(userId: string, oldPassword: string, newPassword: string) {
-        const user = await User.findOne({ id: userId }).select('+password');
+        const user = await User.findOne({ _id: userId }).select('+password');
         if (!user) throw new LoginUserNotFoundError(userId);
 
         const passwordMatch = PasswordService.comparePassword(oldPassword, user.password);

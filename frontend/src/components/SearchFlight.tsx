@@ -69,8 +69,8 @@ function SearchFlight() {
     }
 
     return (
-        <div className='flex flex-col items-center justify-center gap-5'>
-            <div className='flex items-center justify-center gap-5 mt-5'>
+        <div className='flex flex-col items-center justify-center gap-5 w-full overflow-x-hidden'>
+            <div className='flex flex-wrap items-center justify-center gap-3 sm:gap-5 mt-5 px-4 w-full'>
                 <div className='flex flex-col gap-2.5'>
                     <AirportAutocomplete
                         placeholder="Origin"

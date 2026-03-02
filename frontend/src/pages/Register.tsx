@@ -40,7 +40,18 @@ export default function Register() {
 
     const { mutate: performRegister, isPending } = useCreateUser({
         mutation: {
-            onSuccess: () => {
+            onSuccess: (response) => {
+                if (!response.email_verified) {
+                    toast.info("Cuenta creada. Por favor, verifica tu email.");
+                    navigate("/verify-email", {
+                        state: {
+                            email: formData.email,
+                            password: formData.password
+                        }
+                    });
+                    return;
+                }
+
                 performLogin({
                     data: {
                         identifier: formData.email,
@@ -49,6 +60,7 @@ export default function Register() {
                     }
                 });
             },
+
             onError: (error) => {
                 switch (error.code) {
                     case "REQUEST_VALIDATION_ERROR":

@@ -4,11 +4,11 @@ import Footer from "./Footer.tsx";
 
 export default function MainLayout() {
     return (
-        <div className="flex flex-col min-h-screen bg-primary text-primary transition-colors">
-            <header>
+        <div className="flex flex-col min-h-screen w-full overflow-x-hidden bg-primary text-primary transition-colors">
+            <header className="sticky top-0 z-50 w-full">
                 <Navbar />
             </header>
-            <main className="grow bg-secondary p-4">
+            <main className="grow w-full max-w-full overflow-x-hidden bg-secondary p-4">
                 <Outlet />
             </main>
             <Footer />

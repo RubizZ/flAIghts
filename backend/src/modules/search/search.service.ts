@@ -3,6 +3,7 @@ import type { SearchRequest, SearchResponseData, LegResponse} from "./search.typ
 import { Itinerary } from "./models/itinerary.model.js";
 import { SerpApiClient } from "@/services/serpapi/serpapi.client.js";
 import { Search, type ISearch } from "./models/search.model.js";
+import { User } from "../users/user.model.js";
 import "./models/itinerary.model.js"; // Necesario para .populate("itineraries")
 import { SearchNotFoundError, SearchNotAuthorizedError } from "./search.errors.js";
 import { SerpapiStorageService } from "../serpapi-storage/serpapi-storage.service.js";
@@ -24,12 +25,12 @@ export class SearchService {
         const createdData: Partial<ISearch> = { ...data };
         createdData.shared = !data.user_id;
         const search = await Search.create(createdData);
-        this.runExploration(search.id, data);
+        this.runExploration(search._id, data);
         return this.formatSearchResponse(search.toJSON());
     }
 
     public async getSearch(searchId: string, requesterId: string | undefined): Promise<SearchResponseData> {
-        const search = await Search.findOne({ id: searchId });
+        const search = await Search.findById(searchId);
 
         if (search == null) {
             throw new SearchNotFoundError(searchId, requesterId ?? 'anonymous');
@@ -46,7 +47,7 @@ export class SearchService {
     }
 
     public async shareSearch(searchId: string, requesterId: string): Promise<SearchResponseData> {
-        const search = await Search.findOne({ id: searchId });
+        const search = await Search.findById(searchId);
 
         if (search == null) {
             throw new SearchNotFoundError(searchId, requesterId);
@@ -62,7 +63,7 @@ export class SearchService {
     }
 
     public async privatizeSearch(searchId: string, requesterId: string): Promise<SearchResponseData> {
-        const search = await Search.findOne({ id: searchId });
+        const search = await Search.findById(searchId);
 
         if (search == null) {
             throw new SearchNotFoundError(searchId, requesterId);
@@ -189,6 +190,43 @@ export class SearchService {
         await Search.updateOne({ id: searchId }, { status: "failed" });
     }
 }
+
+    public async getSearches(userId: string, requesterId: string | undefined, page: number = 1, limit: number = 10): Promise<{ items: SearchResponseData[], total: number, page: number, totalPages: number }> {
+        const targetUser = await User.findById(userId);
+        if (!targetUser) throw new SearchNotFoundError(userId, requesterId ?? 'anonymous');
+
+        const isOwner = requesterId === userId;
+        const isFriend = targetUser.friends.some(f => (typeof f.user === 'string' ? f.user : f.user._id?.toString() || f.user.toString()) === requesterId);
+
+        // Si el perfil es privado, solo sus amigos o el propio dueño pueden ver sus búsquedas (y solo las públicas).
+        if (!targetUser.public && !isOwner && !isFriend) {
+            throw new SearchNotAuthorizedError(userId, requesterId ?? 'anonymous');
+        }
+
+        const skip = (page - 1) * limit;
+        const query = {
+            user_id: userId,
+            // Solo el dueño puede ver sus búsquedas NO compartidas. Todos los demás ven SOLO las compartidas.
+            ...(!isOwner ? { shared: true } : {})
+        };
+
+        const [searches, total] = await Promise.all([
+            Search.find(query)
+                .sort({ created_at: -1 })
+                .skip(skip)
+                .limit(limit),
+            Search.countDocuments(query)
+        ]);
+
+        return {
+            items: searches.map(s => this.formatSearchResponse(s.toJSON())),
+            total,
+            page,
+            totalPages: Math.ceil(total / limit)
+        };
+    }
+
+
 
     private formatSearchResponse(data: any): SearchResponseData {
         return {
