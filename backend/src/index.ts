@@ -125,7 +125,7 @@ app.use((err: any, req: express.Request, res: express.Response, next: express.Ne
     // Errores de NEGOCIO: errores del servicio
     // Incluye lógica de negocio, conflictos, recursos no encontrados, etc.
     if (err instanceof AppError) {
-        console.log(`AppError on path ${req.path}:\n`, err);
+        console.log('AppError on path %s:\n', req.path, err);
         return res.status(err.statusCode).json({
             status: 'fail',
             data: err.toJSON()
