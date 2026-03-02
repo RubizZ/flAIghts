@@ -84,7 +84,7 @@ export default function EmailVerification() {
         verify({
             data: {
                 email: stateEmail,
-                token
+                code: token
             }
         });
     };
