@@ -79,7 +79,7 @@ export class SearchService {
     private async runExploration(searchId: string, criteria: SearchRequest) {
     try {
         const sequence = [criteria.origins[0], ...criteria.destinations].filter((node): node is string => !!node);        
-        let currentDate = criteria.departure_date;
+        let currentDate = criteria.departure_date.toISOString().split("T")[0]! ;
         const layoverDays = criteria.layover_days ?? [];
         const fullPath: DijkstraFlightEdge[] = [];
 
@@ -165,7 +165,6 @@ export class SearchService {
             }
 
             await Itinerary.create({
-                search_id: searchId,
                 total_price: totalPrice,
                 total_duration: totalDuration,
                 legs: legs,
