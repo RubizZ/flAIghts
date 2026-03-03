@@ -6,4 +6,8 @@ export interface DijkstraFlightEdge {
     duration: number;       
     stops: number;   
     date: string; //YYYY-MM-DD
+    airline: string;
+    airline_logo?: string;
+    departure_time: string;
+    arrival_time: string;
 }

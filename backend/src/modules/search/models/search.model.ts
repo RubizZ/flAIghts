@@ -5,7 +5,7 @@ import { randomUUID } from "node:crypto";
 import type { IItinerary } from "./itinerary.model.js";
 
 export interface ISearch {
-  public_id: string;
+  id: string;
   user_id?: string;
   origins: string[];
   destinations: string[];
@@ -19,7 +19,7 @@ export interface ISearch {
 }
 
 const SearchSchema = new Schema<ISearch>({
-  public_id: { type: String, default: () => randomUUID(), unique: true, index: true },
+  id: { type: String, default: () => randomUUID(), unique: true, index: true },
   user_id: { type: String, ref: "User", required: false },
   origins: [{ 
     type: String, 

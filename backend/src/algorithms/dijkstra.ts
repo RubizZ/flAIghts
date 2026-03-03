@@ -13,6 +13,7 @@ export class Dijkstra {
         
         const distancias: Record<string, number> = {};
         const prevEdge: Record<string, DijkstraFlightEdge | null> = {};
+        const arrivalTimes: Record<string, Date> = {};
         const pq = new PriorityQueue<string>();
 
         const nodos = new Set<string>();
@@ -24,11 +25,13 @@ export class Dijkstra {
         for (const nodo of nodos) {
             distancias[nodo] = Infinity;
             prevEdge[nodo] = null;
+            arrivalTimes[nodo] = new Date(-8640000000000000);
         }
 
         if (!nodos.has(inicio)) return null;
 
         distancias[inicio] = 0;
+        arrivalTimes[inicio] = new Date(-8640000000000000);
         pq.enqueue(inicio, 0);
 
         while (!pq.isEmpty()) {
@@ -38,12 +41,25 @@ export class Dijkstra {
             const aristasVecinas = edges.filter(e => e.from === u);
 
             for (const edge of aristasVecinas) {
-                const peso = this.calculateWeight(edge, priority);
-                const alt = distancias[u]! + peso;
+                const departureDate = parseEdgeDateTime(edge.departure_time);
+                if (arrivalTimes[u]! > departureDate) {
+                    continue;
+                }
+
+                const baseWeight = this.calculateWeight(edge, priority);
+                const waitMinutes = Math.max(0, departureDate.getTime() - arrivalTimes[u]!.getTime()) / 60000;
+                let alt = distancias[u]! + baseWeight;
+
+                if (priority === "fast") {
+                    alt += edge.duration + waitMinutes;
+                } else if (priority === "balanced") {
+                    alt += (edge.duration + waitMinutes) / 10;
+                }
 
                 if (alt < distancias[edge.to]!) {
                     distancias[edge.to] = alt;
                     prevEdge[edge.to] = edge;
+                    arrivalTimes[edge.to] = parseEdgeDateTime(edge.arrival_time);
                     pq.enqueue(edge.to, alt);
                 }
             }
@@ -80,4 +96,12 @@ export class Dijkstra {
 
         return path.length > 0 ? path : null;
     }
+}
+
+export function parseEdgeDateTime(input: string): Date {
+    let normalized = input;
+    if (input.includes(" ") && !input.includes("T")) {
+        normalized = input.replace(" ", "T");
     }
+    return new Date(normalized);
+}

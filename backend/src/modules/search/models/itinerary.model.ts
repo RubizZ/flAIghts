@@ -8,6 +8,11 @@ export interface ILeg {
   destination: string;
   price: number;
   duration: number;
+  airline: string;
+  airline_logo?: string;
+  departure_time: string;
+  arrival_time: string;
+  wait_time?: number;
 }
 
 export interface IItinerary {
@@ -54,6 +59,25 @@ const LegSchema = new Schema<ILeg>({
     type: Number, 
     required: true,
     min: [0, "La duración no puede ser negativa"]
+  },
+  airline: { 
+    type: String, 
+    required: true 
+  },
+  airline_logo: { 
+    type: String 
+  },
+  departure_time: { 
+    type: String, 
+    required: true 
+  },
+  arrival_time: { 
+    type: String, 
+    required: true 
+  },
+  wait_time: {
+    type: Number,
+    min: [0, "El tiempo de espera no puede ser negativo"]
   }
 });
 

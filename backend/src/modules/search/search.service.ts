@@ -3,10 +3,10 @@ import type { SearchRequest, SearchResponseData, LegResponse} from "./search.typ
 import { Itinerary } from "./models/itinerary.model.js";
 import { SerpApiClient } from "@/services/serpapi/serpapi.client.js";
 import { Search } from "./models/search.model.js";
-import "./models/itinerary.model.js"; // Necesario para .populate("itineraries")
+import "./models/itinerary.model.js";
 import { SearchNotFoundError } from "./search.errors.js";
 import { SerpapiStorageService } from "../serpapi-storage/serpapi-storage.service.js";
-import { Dijkstra } from "@/algorithms/dijkstra.js";
+import { Dijkstra, parseEdgeDateTime } from "@/algorithms/dijkstra.js";
 import type { DijkstraFlightEdge } from "../serpapi-storage/dijkstra.types.js";
 import type { ApiRequestParameters, SerpApiResponse, FlightRoute } from "@/services/serpapi/serpapi.types.js";
 import { getCandidateLayovers } from "./candidate-layovers.js";
@@ -21,14 +21,14 @@ export class SearchService {
     ) {}
     public async createSearch(data: SearchRequest & { user_id?: string }): Promise<SearchResponseData> {
         const search = await Search.create(data);
-        this.runExploration(search.public_id, data);
+        this.runExploration(search.id, data);
         return this.formatSearchResponse(search.toJSON());
     }
 
     public async getSearch(searchId: string, requesterId: string | undefined): Promise<SearchResponseData> {
         const query = requesterId
-            ? { public_id: searchId, $or: [{ user_id: requesterId }, { user_id: { $exists: false } }] }
-            : { public_id: searchId, user_id: { $exists: false } };
+            ? { id: searchId, $or: [{ user_id: requesterId }, { user_id: { $exists: false } }] }
+            : { id: searchId, user_id: { $exists: false } };
 
         const search = await Search.findOne(query).populate("itineraries");
         if (search == null)
@@ -63,9 +63,12 @@ export class SearchService {
 
             originArray = candidatos.length > 0 ? candidatos : [puntoA];
             destinationArray = [puntoB];
-            const layoversToDestEdges = (await this.getFlightsFromSerpApi(originArray, destinationArray, searchDate)).filter(edge => isValidNextFlight(edge.date, searchDate));
+            const layoversToDestEdgesToday = (await this.getFlightsFromSerpApi(originArray, destinationArray, searchDate))
+                .filter(edge => isValidNextFlight(edge.date, searchDate));
+            const layoversToDestEdgesTomorrow = (await this.getFlightsFromSerpApi(originArray, destinationArray, addDays(searchDate, 1)))
+                .filter(edge => isValidNextFlight(edge.date, searchDate));
 
-            edges.push(...layoversToDestEdges);
+            edges.push(...layoversToDestEdgesToday, ...layoversToDestEdgesTomorrow);
 
             const directFligtEdges = (await this.getFlightsFromSerpApi([puntoA], [puntoB], searchDate)).filter(edge => isValidNextFlight(edge.date, searchDate));
 
@@ -75,7 +78,7 @@ export class SearchService {
 
             if (!tramo) {
                     console.warn(`Tramo inalcanzable: ${puntoA} -> ${puntoB}`);
-                await Search.updateOne({ public_id: searchId }, { status: "failed" });
+                await Search.updateOne({ id: searchId }, { status: "failed" });
                 return;
             }
             currentDate = tramo[tramo.length - 1]!.date;
@@ -86,17 +89,41 @@ export class SearchService {
 
 
         if (fullPath.length > 0) {
-            const totalPrice = fullPath.reduce((sum, edge) => sum + edge.price, 0);
-            const totalDuration = fullPath.reduce((sum, edge) => sum + edge.duration, 0);
+            let totalPrice = 0;
+            let totalDuration = 0;
+            const legs: LegResponse[] = [];
+            let previousArrival: Date | null = null;
 
-            const legs: LegResponse[] = fullPath.map((edge, index) => ({
-                order: index + 1,
-                flight_id: edge.id,
-                origin: edge.from,
-                destination: edge.to,
-                price: edge.price,
-                duration: edge.duration
-            }));
+            for (let i = 0; i < fullPath.length; i++) {
+                const edge = fullPath[i];
+                totalPrice += edge!.price;
+
+                const depart = parseEdgeDateTime(edge!.departure_time);
+                const arrive = parseEdgeDateTime(edge!.arrival_time);
+
+                let wait = 0;
+                if (previousArrival) {
+                    wait = Math.max(0, (depart.getTime() - previousArrival.getTime()) / 60000);
+                }
+
+                totalDuration += edge!.duration + wait;
+
+                legs.push({
+                    order: i + 1,
+                    flight_id: edge!.id,
+                    origin: edge!.from,
+                    destination: edge!.to,
+                    price: edge!.price,
+                    duration: edge!.duration,
+                    airline: edge!.airline,
+                    airline_logo: edge!.airline_logo ?? "",
+                    departure_time: edge!.departure_time,
+                    arrival_time: edge!.arrival_time,
+                    wait_time: wait
+                });
+
+                previousArrival = arrive;
+            }
 
             await Itinerary.create({
                 search_id: searchId,
@@ -109,18 +136,18 @@ export class SearchService {
             });
 
             await Search.updateOne(
-                { public_id: searchId },
+                { id: searchId },
                 { status: "completed" }
             );
             
             console.log(`Exploración finalizada para ${searchId}: ${fullPath.length} vuelos encontrados.`);
         } else {
-            await Search.updateOne({ public_id: searchId }, { status: "failed" });
+            await Search.updateOne({ id: searchId }, { status: "failed" });
         }
 
     } catch (error) {
         console.error(`Error en exploración ${searchId}:`, error);
-        await Search.updateOne({ public_id: searchId }, { status: "failed" });
+        await Search.updateOne({ id: searchId }, { status: "failed" });
     }
 }
 
@@ -188,7 +215,11 @@ export class SearchService {
             price: flight.price,
             duration: flight.total_duration,
             stops: flight.layovers ? flight.layovers.length : 0,
-            date: response.search_parameters.outbound_date
+            date: response.search_parameters.outbound_date,
+            airline: firstSegment!.airline,
+            airline_logo: firstSegment!.airline_logo ?? "",
+            departure_time: firstSegment!.departure_airport.time,
+            arrival_time: lastSegment!.arrival_airport.time
         };
     });
 }
