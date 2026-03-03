@@ -1,0 +1,75 @@
+name: Backend CI
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "backend/**"
+
+jobs:
+  build-and-health:
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: ./backend
+
+    services:
+      mongodb:
+        image: mongo:latest
+        ports:
+          - 27017:27017
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: "npm"
+          cache-dependency-path: "./backend/package-lock.json"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate TSOA spec and routes
+        run: |
+          npx tsoa spec
+          npx tsoa routes
+
+      - name: Build backend
+        run: npm run build
+
+      - name: Health check
+        env:
+          MONGODB_URI: "mongodb://localhost:27017/test"
+          JWT_SECRET: "test-secret-value-for-ci"
+          FRONTEND_URL: "http://localhost:5173"
+          NODE_ENV: "development"
+          PORT: "3000"
+        run: |
+          # Ensure build directory exists for docs if needed
+          mkdir -p build
+          npx tsoa spec
+
+          # Start backend in a background process
+          npm start &
+
+          # Give it a few seconds to boot
+          sleep 5
+
+          # Retry up to 10 more times if not ready
+          for i in {1..10}; do
+            # Use curl to check if /docs is reachable
+            STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:3000/docs || echo "000")
+            if [ "$STATUS" -eq 200 ] || [ "$STATUS" -eq 301 ] || [ "$STATUS" -eq 302 ]; then
+              echo "Server is healthy and responding with status $STATUS!"
+              exit 0
+            fi
+            echo "Waiting for backend to be healthy... attempt $i (status: $STATUS)"
+            sleep 3
+          done
+
+          echo "Backend failed to be healthy after waiting"
+          exit 1

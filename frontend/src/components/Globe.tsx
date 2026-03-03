@@ -18,10 +18,11 @@ export default function Globe({ onAirportSelect, selectedAirports }: GlobeProps)
     const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
 
     useEffect(() => {
-        if (!mountRef.current) return;
+        const mount = mountRef.current;
+        if (!mount) return;
 
-        let width = mountRef.current.clientWidth;
-        let height = mountRef.current.clientHeight;
+        let width = mount.clientWidth;
+        let height = mount.clientHeight;
 
         // Scene
         const scene = new THREE.Scene();
@@ -35,12 +36,14 @@ export default function Globe({ onAirportSelect, selectedAirports }: GlobeProps)
         const renderer = new THREE.WebGLRenderer({ antialias: true });
         renderer.setSize(width, height);
         renderer.setPixelRatio(window.devicePixelRatio);
-        mountRef.current.appendChild(renderer.domElement);
+        mount.appendChild(renderer.domElement);
         rendererRef.current = renderer;
 
         // Controls
         const controls = new OrbitControls(camera, renderer.domElement);
         controls.enableDamping = true;
+        controls.minDistance = 1.3;
+        controls.maxDistance = 5;
 
         // Light
         scene.add(new THREE.AmbientLight(0xffffff, 1));
@@ -99,16 +102,16 @@ export default function Globe({ onAirportSelect, selectedAirports }: GlobeProps)
         const mouse = new THREE.Vector2();
 
         const onClick = (e: MouseEvent) => {
-            if (!popupRef.current || !mountRef.current) return;
+            if (!popupRef.current || !mount) return;
 
             // Recalculate rectangle of canvas if size changed
-            const rect = mountRef.current.getBoundingClientRect();
+            const rect = mount.getBoundingClientRect();
 
             const x = e.clientX - rect.left;
             const y = e.clientY - rect.top;
 
-            mouse.x = (x / mountRef.current.clientWidth) * 2 - 1;
-            mouse.y = -(y / mountRef.current.clientHeight) * 2 + 1;
+            mouse.x = (x / mount.clientWidth) * 2 - 1;
+            mouse.y = -(y / mount.clientHeight) * 2 + 1;
 
             raycaster.setFromCamera(mouse, camera);
             const intersects = raycaster.intersectObjects(airportGroup.children);
@@ -128,13 +131,34 @@ export default function Globe({ onAirportSelect, selectedAirports }: GlobeProps)
             }
         };
 
+        const onMouseMove = (e: MouseEvent) => {
+            if (!mount) return;
+
+            const rect = mount.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+
+            mouse.x = (x / mount.clientWidth) * 2 - 1;
+            mouse.y = -(y / mount.clientHeight) * 2 + 1;
+
+            raycaster.setFromCamera(mouse, camera);
+            const intersects = raycaster.intersectObjects(airportGroup.children);
+
+            if (intersects.length > 0) {
+                renderer.domElement.style.cursor = "pointer";
+            } else {
+                renderer.domElement.style.cursor = "default";
+            }
+        };
+
         renderer.domElement.addEventListener("click", onClick);
+        renderer.domElement.addEventListener("mousemove", onMouseMove);
 
         const handleResize = () => {
-            if(!mountRef.current) return;
+            if(!mount) return;
 
-            const newWidth = mountRef.current.clientWidth;
-            const newHeight = mountRef.current.clientHeight;
+            const newWidth = mount.clientWidth;
+            const newHeight = mount.clientHeight;
 
             camera.aspect = newWidth / newHeight;
             camera.updateProjectionMatrix();
@@ -144,20 +168,24 @@ export default function Globe({ onAirportSelect, selectedAirports }: GlobeProps)
 
         window.addEventListener("resize", handleResize);
 
+        let animationId: number;
         const animate = () => {
-            requestAnimationFrame(animate);
+            animationId = requestAnimationFrame(animate);
             controls.update();
             renderer.render(scene, camera);
         };
         animate();
 
         return () => {
+            cancelAnimationFrame(animationId);
             window.removeEventListener("resize", handleResize);
             renderer.domElement.removeEventListener("click", onClick);
+            renderer.domElement.removeEventListener("mousemove", onMouseMove);
 
-            if (mountRef.current && renderer.domElement) {
-                mountRef.current?.removeChild(renderer.domElement);
+            if (mount && renderer.domElement) {
+                mount.removeChild(renderer.domElement);
             }
+            renderer.dispose();
         };
     }, []);
 
@@ -187,6 +215,7 @@ export default function Globe({ onAirportSelect, selectedAirports }: GlobeProps)
                 left: 0,
                 zIndex: 10,
                 background: "white",
+                color: "black",
                 padding: "6px",
                 borderRadius: "6px",
                 border: "1px solid #555",

@@ -1,8 +1,8 @@
-import { Controller, Get, Route, Query, Tags } from "tsoa"
+import { Controller, Get, Route, Query, Tags, Response } from "tsoa"
 import { injectable, inject } from "tsyringe";
 import { AirlineService } from "./airline.service.js";
 import type { IAirline } from "./airline.model.js";
-
+import type { SuccessResponse } from "../../utils/responses.js";
 @injectable()
 @Route("airlines")
 @Tags("Airlines")
@@ -12,7 +12,9 @@ export class AirlineController extends Controller {
     }
 
     @Get("/")
-    public async search(@Query() q: string): Promise<IAirline[]> {
-        return this.airlineService.searchAirlines(q);
+    @Response<SuccessResponse<IAirline[]>>(200, "Aerolineas encontradas")
+    public async search(@Query() q: string): Promise<SuccessResponse<IAirline[]>> {
+        const airlines = await this.airlineService.searchAirlines(q);
+        return airlines satisfies IAirline[] as any;
     }
 }

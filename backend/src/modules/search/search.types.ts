@@ -12,10 +12,13 @@ export interface SearchRequest {
      */
     destinations: string[];
     /**
-     * Fecha de salida en formato ISO (YYYY-MM-DD)
-     * @pattern ^\d{4}-\d{2}-\d{2}$
+     * @isDateTime Fecha de ida (YYYY-MM-DD o formato ISO)
      */
-    departure_date: string;
+    departure_date: Date;
+    /**
+     * @isDateTime Fecha de vuelta (si es round_trip)
+     */
+    return_date?: Date;
     criteria: {
         priority: "balanced" | "cheap" | "fast";
         /**
@@ -45,7 +48,6 @@ export interface LegResponse {
 }
 
 export interface ItineraryResponse {
-    search_id: string;
     score: number;
     total_price: number;
     total_duration: number;
@@ -62,12 +64,21 @@ export interface SearchResponseData {
     user_id?: string;
     origins: string[];
     destinations: string[];
+    /**
+     * @isDateTime
+     */
+    departure_date: Date;
+    /**
+     * @isDateTime
+     */
+    return_date?: Date;
     criteria: {
         priority: "balanced" | "cheap" | "fast";
         max_price?: number;
     };
     status: "searching" | "completed" | "failed";
-    itineraries?: ItineraryResponse[];
+    departure_itineraries?: ItineraryResponse[];
+    return_itineraries?: ItineraryResponse[];
     /**
      * @isDateTime
      */

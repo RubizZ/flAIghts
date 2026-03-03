@@ -1,10 +1,10 @@
-import { Body, Controller, Get, Post, Query, RequestProp, Response, Route, Security, SuccessResponse as SuccessResponseDecorator, Tags } from "tsoa";
+import { Body, Controller, Get, Patch, Path, Post, Query, RequestProp, Response, Route, Security, SuccessResponse as SuccessResponseDecorator, Tags } from "tsoa";
 import type { SearchRequest, SearchResponseData, SearchValidationFailResponse } from "./search.types.js";
 import { inject, injectable } from "tsyringe";
 import { SearchService } from "./search.service.js";
 import type { AuthenticatedUser } from "../auth/auth.types.js";
 import type { SuccessResponse, FailResponseFromError } from "../../utils/responses.js";
-import { SearchNotFoundError } from "./search.errors.js";
+import { SearchNotFoundError, SearchNotAuthorizedError } from "./search.errors.js";
 
 @injectable()
 @Route("search")
@@ -38,16 +38,43 @@ export class SearchController extends Controller {
 
     /**
      * Obtiene los resultados de una búsqueda por su ID.
-     * Solo devuelve búsquedas del usuario autenticado o búsquedas anónimas.
+     * Si la búsqueda es privada, solo devolverá el resultado a su dueño.
      */
-    @Get("/")
+    @Get("/{searchId}")
     @Security('jwt-optional')
-    @Response<FailResponseFromError<SearchNotFoundError>>(404, "Búsqueda no encontrada o no autorizada")
+    @Response<FailResponseFromError<SearchNotFoundError>>(404, "Búsqueda no encontrada")
+    @Response<FailResponseFromError<SearchNotAuthorizedError>>(403, "Búsqueda privada no autorizada")
     public async searchResult(
-        @Query('id') searchId: string,
+        @Path('searchId') searchId: string,
         @RequestProp('user') user: AuthenticatedUser | null
     ): Promise<SuccessResponse<SearchResponseData>> {
         const result = await this.searchService.getSearch(searchId, user?.id);
+        return result satisfies SearchResponseData as any;
+    }
+
+    @Patch("/{searchId}/share")
+    @Security('jwt')
+    @Response<FailResponseFromError<SearchNotFoundError>>(404, "Búsqueda no encontrada")
+    @Response<FailResponseFromError<SearchNotAuthorizedError>>(403, "Operación no autorizada sobre un recurso ajeno")
+    @SuccessResponseDecorator(200, "Búsqueda compartida")
+    public async shareSearch(
+        @Path('searchId') searchId: string,
+        @RequestProp('user') user: AuthenticatedUser
+    ): Promise<SuccessResponse<SearchResponseData>> {
+        const result = await this.searchService.shareSearch(searchId, user.id);
+        return result satisfies SearchResponseData as any;
+    }
+
+    @Patch("/{searchId}/privatize")
+    @Security('jwt')
+    @Response<FailResponseFromError<SearchNotFoundError>>(404, "Búsqueda no encontrada")
+    @Response<FailResponseFromError<SearchNotAuthorizedError>>(403, "Operación no autorizada sobre un recurso ajeno")
+    @SuccessResponseDecorator(200, "Búsqueda privatizada")
+    public async privatizeSearch(
+        @Path('searchId') searchId: string,
+        @RequestProp('user') user: AuthenticatedUser
+    ): Promise<SuccessResponse<SearchResponseData>> {
+        const result = await this.searchService.privatizeSearch(searchId, user.id);
         return result satisfies SearchResponseData as any;
     }
 }

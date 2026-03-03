@@ -2,9 +2,9 @@ import { singleton, inject } from "tsyringe";
 import type { SearchRequest, SearchResponseData, LegResponse} from "./search.types.js";
 import { Itinerary } from "./models/itinerary.model.js";
 import { SerpApiClient } from "@/services/serpapi/serpapi.client.js";
-import { Search } from "./models/search.model.js";
+import { Search, type ISearch } from "./models/search.model.js";
 import "./models/itinerary.model.js";
-import { SearchNotFoundError } from "./search.errors.js";
+import { SearchNotFoundError, SearchNotAuthorizedError } from "./search.errors.js";
 import { SerpapiStorageService } from "../serpapi-storage/serpapi-storage.service.js";
 import { Dijkstra, parseEdgeDateTime } from "@/algorithms/dijkstra.js";
 import type { DijkstraFlightEdge } from "../serpapi-storage/dijkstra.types.js";
@@ -20,20 +20,59 @@ export class SearchService {
         @inject(Dijkstra) private readonly dijkstra: Dijkstra
     ) {}
     public async createSearch(data: SearchRequest & { user_id?: string }): Promise<SearchResponseData> {
-        const search = await Search.create(data);
+        const createdData: Partial<ISearch> = { ...data };
+        createdData.shared = !data.user_id;
+        const search = await Search.create(createdData);
         this.runExploration(search.id, data);
         return this.formatSearchResponse(search.toJSON());
     }
 
     public async getSearch(searchId: string, requesterId: string | undefined): Promise<SearchResponseData> {
-        const query = requesterId
-            ? { id: searchId, $or: [{ user_id: requesterId }, { user_id: { $exists: false } }] }
-            : { id: searchId, user_id: { $exists: false } };
+        const search = await Search.findOne({ id: searchId });
 
-        const search = await Search.findOne(query).populate("itineraries");
-        if (search == null)
+        if (search == null) {
             throw new SearchNotFoundError(searchId, requesterId ?? 'anonymous');
+        }
 
+        if (!search.shared && search.user_id !== requesterId) {
+            throw new SearchNotAuthorizedError(searchId, requesterId ?? 'anonymous');
+        }
+
+        await search.populate("departure_itineraries");
+        await search.populate("return_itineraries");
+
+        return this.formatSearchResponse(search.toJSON());
+    }
+
+    public async shareSearch(searchId: string, requesterId: string): Promise<SearchResponseData> {
+        const search = await Search.findOne({ id: searchId });
+
+        if (search == null) {
+            throw new SearchNotFoundError(searchId, requesterId);
+        }
+
+        if (search.user_id !== requesterId) {
+            throw new SearchNotAuthorizedError(searchId, requesterId);
+        }
+
+        search.shared = true;
+        await search.save();
+        return this.formatSearchResponse(search.toJSON());
+    }
+
+    public async privatizeSearch(searchId: string, requesterId: string): Promise<SearchResponseData> {
+        const search = await Search.findOne({ id: searchId });
+
+        if (search == null) {
+            throw new SearchNotFoundError(searchId, requesterId);
+        }
+
+        if (search.user_id !== requesterId) {
+            throw new SearchNotAuthorizedError(searchId, requesterId);
+        }
+
+        search.shared = false;
+        await search.save();
         return this.formatSearchResponse(search.toJSON());
     }
 
@@ -155,7 +194,11 @@ export class SearchService {
         return {
             ...data,
             created_at: data.created_at instanceof Date ? data.created_at.toISOString() : data.created_at,
-            itineraries: data.itineraries?.map((itinerary: any) => ({
+            departure_itineraries: data.departure_itineraries?.map((itinerary: any) => ({
+                ...itinerary,
+                created_at: itinerary.created_at instanceof Date ? itinerary.created_at.toISOString() : itinerary.created_at
+            })),
+            return_itineraries: data.return_itineraries?.map((itinerary: any) => ({
                 ...itinerary,
                 created_at: itinerary.created_at instanceof Date ? itinerary.created_at.toISOString() : itinerary.created_at
             }))

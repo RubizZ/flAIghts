@@ -1,5 +1,5 @@
 import { Schema, model } from "mongoose";
-//import idValidator from "mongoose-id-validator";
+import idValidator from "../../../utils/mongoose-id-validator.js";
 
 export interface ILeg {
   order: number;
@@ -16,7 +16,6 @@ export interface ILeg {
 }
 
 export interface IItinerary {
-  search_id: string;
   score: number;
   total_price: number;
   total_duration: number;
@@ -26,37 +25,39 @@ export interface IItinerary {
 }
 
 const LegSchema = new Schema<ILeg>({
-  order: { 
-    type: Number, 
+  order: {
+    type: Number,
     required: true,
     min: [0, "El orden no puede ser negativo"]
   },
-  flight_id: { 
-    type: String, 
-    ref: "Flight", 
+  flight_id: {
+    type: String,
+    ref: "Flight",
     required: true
   },
-  origin: { 
-    type: String, 
+  origin: {
+    type: String,
     ref: "Airport",
+    refField: "iata_code",
     required: true,
     uppercase: true,
     match: [/^[A-Z]{3}$/, "El origen debe ser código IATA válido"]
   },
-  destination: { 
-    type: String, 
+  destination: {
+    type: String,
     ref: "Airport",
+    refField: "iata_code",
     required: true,
     uppercase: true,
     match: [/^[A-Z]{3}$/, "El destino debe ser código IATA válido"]
   },
-  price: { 
-    type: Number, 
+  price: {
+    type: Number,
     required: true,
     min: [0, "El precio no puede ser negativo"]
   },
-  duration: { 
-    type: Number, 
+  duration: {
+    type: Number,
     required: true,
     min: [0, "La duración no puede ser negativa"]
   },
@@ -82,30 +83,26 @@ const LegSchema = new Schema<ILeg>({
 });
 
 const ItinerarySchema = new Schema<IItinerary>({
-  search_id: { 
-    type: String, 
-    ref: "Search", 
-    required: true
-  },
-  score: { 
-    type: Number, 
+  score: {
+    type: Number,
     required: true,
     min: [0, "El score no puede ser negativo"],
     max: [10, "El score no puede exceder 10"]
   },
-  total_price: { 
-    type: Number, 
+  total_price: {
+    type: Number,
     required: true,
     min: [0, "El precio no puede ser negativo"]
   },
-  total_duration: { 
-    type: Number, 
+  total_duration: {
+    type: Number,
     required: true,
     min: [0, "La duración no puede ser negativa"]
   },
   city_order: [{
     type: String,
     ref: "Airport",
+    refField: "iata_code",
     required: true,
     uppercase: true,
     match: [/^[A-Z]{3}$/, "Cada aeropuerto debe ser código IATA válido"]
@@ -129,5 +126,6 @@ const ItinerarySchema = new Schema<IItinerary>({
   id: false
 });
 
+ItinerarySchema.plugin(idValidator);
 
 export const Itinerary = model<IItinerary>("Itinerary", ItinerarySchema);

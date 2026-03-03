@@ -159,7 +159,7 @@
 			},
 			"FailResponseFromError_UserAlreadyExistsError_": {
 				"$ref": "#/components/schemas/FailResponse_CONFLICT._field-email-or-username--value-string__",
-				"description": "Extrae automáticamente code y details de una clase AppError.\n\nEjemplo:\n- FailResponseFromError<UserAlreadyExistsError> → { status: 'fail', data: { code: 'CONFLICT', message: string, details: { field, value } } }\n- FailResponseFromError<UserNotFoundError> → { status: 'fail', data: { code: 'NOT_FOUND', message: string, details: { userId } } }"
+				"description": "Extrae automáticamente code y details de una clase AppError.\r\n\r\nEjemplo:\r\n- FailResponseFromError<UserAlreadyExistsError> → { status: 'fail', data: { code: 'CONFLICT', message: string, details: { field, value } } }\r\n- FailResponseFromError<UserNotFoundError> → { status: 'fail', data: { code: 'NOT_FOUND', message: string, details: { userId } } }"
 			},
 			"ValidationDetails_body-or-body.username-or-body.email-or-body.password-or-body.preferences-or-body.preferences.price_weight-or-body.preferences.duration_weight-or-body.preferences.stops_weight-or-body.preferences.airline_quality_weight_": {
 				"properties": {
@@ -273,7 +273,7 @@
 					}
 				},
 				"type": "object",
-				"description": "Generador de estructura de detalles.\nTransforma una unión de llaves ('body' | 'body.id') en el objeto que TSOA espera."
+				"description": "Generador de estructura de detalles.\r\nTransforma una unión de llaves ('body' | 'body.id') en el objeto que TSOA espera."
 			},
 			"RequestValidationFailResponse_ValidationDetails_body-or-body.username-or-body.email-or-body.password-or-body.preferences-or-body.preferences.price_weight-or-body.preferences.duration_weight-or-body.preferences.stops_weight-or-body.preferences.airline_quality_weight__": {
 				"properties": {
@@ -317,22 +317,18 @@
 			"RegisterRequestValidationFailResponse": {
 				"$ref": "#/components/schemas/RequestValidationFailResponse_ValidationDetails_body-or-body.username-or-body.email-or-body.password-or-body.preferences-or-body.preferences.price_weight-or-body.preferences.duration_weight-or-body.preferences.stops_weight-or-body.preferences.airline_quality_weight__"
 			},
-			"Record_string._kind-string--path-string--value-any__": {
+			"Record_string._message-string--value-any__": {
 				"properties": {},
 				"additionalProperties": {
 					"properties": {
 						"value": {},
-						"path": {
-							"type": "string"
-						},
-						"kind": {
+						"message": {
 							"type": "string"
 						}
 					},
 					"required": [
 						"value",
-						"path",
-						"kind"
+						"message"
 					],
 					"type": "object"
 				},
@@ -344,7 +340,7 @@
 					"data": {
 						"properties": {
 							"details": {
-								"$ref": "#/components/schemas/Record_string._kind-string--path-string--value-any__"
+								"$ref": "#/components/schemas/Record_string._message-string--value-any__"
 							},
 							"message": {
 								"type": "string"
@@ -517,7 +513,7 @@
 			},
 			"FailResponseFromError_NoTokenProvidedError_": {
 				"$ref": "#/components/schemas/FailResponse_NO_TOKEN_PROVIDED._reason-string__",
-				"description": "Extrae automáticamente code y details de una clase AppError.\n\nEjemplo:\n- FailResponseFromError<UserAlreadyExistsError> → { status: 'fail', data: { code: 'CONFLICT', message: string, details: { field, value } } }\n- FailResponseFromError<UserNotFoundError> → { status: 'fail', data: { code: 'NOT_FOUND', message: string, details: { userId } } }"
+				"description": "Extrae automáticamente code y details de una clase AppError.\r\n\r\nEjemplo:\r\n- FailResponseFromError<UserAlreadyExistsError> → { status: 'fail', data: { code: 'CONFLICT', message: string, details: { field, value } } }\r\n- FailResponseFromError<UserNotFoundError> → { status: 'fail', data: { code: 'NOT_FOUND', message: string, details: { userId } } }"
 			},
 			"FailResponse_INVALID_TOKEN.undefined_": {
 				"properties": {
@@ -558,7 +554,7 @@
 			},
 			"FailResponseFromError_InvalidTokenError_": {
 				"$ref": "#/components/schemas/FailResponse_INVALID_TOKEN.undefined_",
-				"description": "Extrae automáticamente code y details de una clase AppError.\n\nEjemplo:\n- FailResponseFromError<UserAlreadyExistsError> → { status: 'fail', data: { code: 'CONFLICT', message: string, details: { field, value } } }\n- FailResponseFromError<UserNotFoundError> → { status: 'fail', data: { code: 'NOT_FOUND', message: string, details: { userId } } }"
+				"description": "Extrae automáticamente code y details de una clase AppError.\r\n\r\nEjemplo:\r\n- FailResponseFromError<UserAlreadyExistsError> → { status: 'fail', data: { code: 'CONFLICT', message: string, details: { field, value } } }\r\n- FailResponseFromError<UserNotFoundError> → { status: 'fail', data: { code: 'NOT_FOUND', message: string, details: { userId } } }"
 			},
 			"FailResponse_TOKEN_USER_NOT_FOUND._userId-string__": {
 				"properties": {
@@ -610,7 +606,7 @@
 			},
 			"FailResponseFromError_TokenUserNotFoundError_": {
 				"$ref": "#/components/schemas/FailResponse_TOKEN_USER_NOT_FOUND._userId-string__",
-				"description": "Extrae automáticamente code y details de una clase AppError.\n\nEjemplo:\n- FailResponseFromError<UserAlreadyExistsError> → { status: 'fail', data: { code: 'CONFLICT', message: string, details: { field, value } } }\n- FailResponseFromError<UserNotFoundError> → { status: 'fail', data: { code: 'NOT_FOUND', message: string, details: { userId } } }"
+				"description": "Extrae automáticamente code y details de una clase AppError.\r\n\r\nEjemplo:\r\n- FailResponseFromError<UserAlreadyExistsError> → { status: 'fail', data: { code: 'CONFLICT', message: string, details: { field, value } } }\r\n- FailResponseFromError<UserNotFoundError> → { status: 'fail', data: { code: 'NOT_FOUND', message: string, details: { userId } } }"
 			},
 			"FailResponse_AUTH_VERSION_MISMATCH._userId-string--currentVersion-number--tokenVersion-number__": {
 				"properties": {
@@ -672,7 +668,7 @@
 			},
 			"FailResponseFromError_AuthenticationVersionMismatchError_": {
 				"$ref": "#/components/schemas/FailResponse_AUTH_VERSION_MISMATCH._userId-string--currentVersion-number--tokenVersion-number__",
-				"description": "Extrae automáticamente code y details de una clase AppError.\n\nEjemplo:\n- FailResponseFromError<UserAlreadyExistsError> → { status: 'fail', data: { code: 'CONFLICT', message: string, details: { field, value } } }\n- FailResponseFromError<UserNotFoundError> → { status: 'fail', data: { code: 'NOT_FOUND', message: string, details: { userId } } }"
+				"description": "Extrae automáticamente code y details de una clase AppError.\r\n\r\nEjemplo:\r\n- FailResponseFromError<UserAlreadyExistsError> → { status: 'fail', data: { code: 'CONFLICT', message: string, details: { field, value } } }\r\n- FailResponseFromError<UserNotFoundError> → { status: 'fail', data: { code: 'NOT_FOUND', message: string, details: { userId } } }"
 			},
 			"AuthFailResponse": {
 				"anyOf": [
@@ -689,7 +685,7 @@
 						"$ref": "#/components/schemas/FailResponseFromError_AuthenticationVersionMismatchError_"
 					}
 				],
-				"description": "Tipo de respuesta para errores de autenticación JWT (401).\nCubre todos los errores lanzados por expressAuthentication:\n- NO_TOKEN_PROVIDED: No se proporcionó token (con reason en details)\n- INVALID_TOKEN: Token inválido o expirado\n- TOKEN_USER_NOT_FOUND: Usuario del token ya no existe (con userId en details)\n- AUTH_VERSION_MISMATCH: Sesión invalidada (con userId, currentVersion, tokenVersion en details)"
+				"description": "Tipo de respuesta para errores de autenticación JWT (401).\r\nCubre todos los errores lanzados por expressAuthentication:\r\n- NO_TOKEN_PROVIDED: No se proporcionó token (con reason en details)\r\n- INVALID_TOKEN: Token inválido o expirado\r\n- TOKEN_USER_NOT_FOUND: Usuario del token ya no existe (con userId en details)\r\n- AUTH_VERSION_MISMATCH: Sesión invalidada (con userId, currentVersion, tokenVersion en details)"
 			},
 			"AuthenticatedUser": {
 				"properties": {
@@ -839,7 +835,7 @@
 			},
 			"FailResponseFromError_UserNotFoundError_": {
 				"$ref": "#/components/schemas/FailResponse_NOT_FOUND._userId-string__",
-				"description": "Extrae automáticamente code y details de una clase AppError.\n\nEjemplo:\n- FailResponseFromError<UserAlreadyExistsError> → { status: 'fail', data: { code: 'CONFLICT', message: string, details: { field, value } } }\n- FailResponseFromError<UserNotFoundError> → { status: 'fail', data: { code: 'NOT_FOUND', message: string, details: { userId } } }"
+				"description": "Extrae automáticamente code y details de una clase AppError.\r\n\r\nEjemplo:\r\n- FailResponseFromError<UserAlreadyExistsError> → { status: 'fail', data: { code: 'CONFLICT', message: string, details: { field, value } } }\r\n- FailResponseFromError<UserNotFoundError> → { status: 'fail', data: { code: 'NOT_FOUND', message: string, details: { userId } } }"
 			},
 			"ValidationDetails_body-or-body.username-or-body.email-or-body.preferences-or-body.preferences.price_weight-or-body.preferences.duration_weight-or-body.preferences.stops_weight-or-body.preferences.airline_quality_weight_": {
 				"properties": {
@@ -941,7 +937,7 @@
 					}
 				},
 				"type": "object",
-				"description": "Generador de estructura de detalles.\nTransforma una unión de llaves ('body' | 'body.id') en el objeto que TSOA espera."
+				"description": "Generador de estructura de detalles.\r\nTransforma una unión de llaves ('body' | 'body.id') en el objeto que TSOA espera."
 			},
 			"RequestValidationFailResponse_ValidationDetails_body-or-body.username-or-body.email-or-body.preferences-or-body.preferences.price_weight-or-body.preferences.duration_weight-or-body.preferences.stops_weight-or-body.preferences.airline_quality_weight__": {
 				"properties": {
@@ -1077,9 +1073,6 @@
 			},
 			"ItineraryResponse": {
 				"properties": {
-					"search_id": {
-						"type": "string"
-					},
 					"score": {
 						"type": "number",
 						"format": "double"
@@ -1109,7 +1102,6 @@
 					}
 				},
 				"required": [
-					"search_id",
 					"score",
 					"total_price",
 					"total_duration",
@@ -1140,6 +1132,14 @@
 						},
 						"type": "array"
 					},
+					"departure_date": {
+						"type": "string",
+						"format": "date-time"
+					},
+					"return_date": {
+						"type": "string",
+						"format": "date-time"
+					},
 					"criteria": {
 						"properties": {
 							"max_price": {
@@ -1168,7 +1168,13 @@
 							"failed"
 						]
 					},
-					"itineraries": {
+					"departure_itineraries": {
+						"items": {
+							"$ref": "#/components/schemas/ItineraryResponse"
+						},
+						"type": "array"
+					},
+					"return_itineraries": {
 						"items": {
 							"$ref": "#/components/schemas/ItineraryResponse"
 						},
@@ -1182,6 +1188,7 @@
 					"public_id",
 					"origins",
 					"destinations",
+					"departure_date",
 					"criteria",
 					"status",
 					"created_at"
@@ -1286,7 +1293,7 @@
 					}
 				},
 				"type": "object",
-				"description": "Generador de estructura de detalles.\nTransforma una unión de llaves ('body' | 'body.id') en el objeto que TSOA espera."
+				"description": "Generador de estructura de detalles.\r\nTransforma una unión de llaves ('body' | 'body.id') en el objeto que TSOA espera."
 			},
 			"RequestValidationFailResponse_ValidationDetails_body-or-body.origins-or-body.destinations-or-body.criteria-or-body.criteria.priority-or-body.criteria.max_price__": {
 				"properties": {
@@ -1358,6 +1365,14 @@
 						"minItems": 1,
 						"pattern": "^[A-Z]{3}$"
 					},
+					"departure_date": {
+						"type": "string",
+						"format": "date-time"
+					},
+					"return_date": {
+						"type": "string",
+						"format": "date-time"
+					},
 					"criteria": {
 						"properties": {
 							"max_price": {
@@ -1383,6 +1398,7 @@
 				"required": [
 					"origins",
 					"destinations",
+					"departure_date",
 					"criteria"
 				],
 				"type": "object",
@@ -1442,32 +1458,63 @@
 			},
 			"FailResponseFromError_SearchNotFoundError_": {
 				"$ref": "#/components/schemas/FailResponse_NOT_FOUND._searchId-string--requesterId-string__",
-				"description": "Extrae automáticamente code y details de una clase AppError.\n\nEjemplo:\n- FailResponseFromError<UserAlreadyExistsError> → { status: 'fail', data: { code: 'CONFLICT', message: string, details: { field, value } } }\n- FailResponseFromError<UserNotFoundError> → { status: 'fail', data: { code: 'NOT_FOUND', message: string, details: { userId } } }"
+				"description": "Extrae automáticamente code y details de una clase AppError.\r\n\r\nEjemplo:\r\n- FailResponseFromError<UserAlreadyExistsError> → { status: 'fail', data: { code: 'CONFLICT', message: string, details: { field, value } } }\r\n- FailResponseFromError<UserNotFoundError> → { status: 'fail', data: { code: 'NOT_FOUND', message: string, details: { userId } } }"
 			},
-			"SuccessResponse": {
-				"description": "Wrapper de éxito JSend (aplicado por el middleware global).",
+			"FailResponse_NOT_AUTHORIZED._searchId-string--requesterId-string__": {
 				"properties": {
+					"data": {
+						"properties": {
+							"details": {
+								"properties": {
+									"requesterId": {
+										"type": "string"
+									},
+									"searchId": {
+										"type": "string"
+									}
+								},
+								"required": [
+									"requesterId",
+									"searchId"
+								],
+								"type": "object"
+							},
+							"message": {
+								"type": "string"
+							},
+							"code": {
+								"type": "string",
+								"enum": [
+									"NOT_AUTHORIZED"
+								],
+								"nullable": false
+							}
+						},
+						"required": [
+							"details",
+							"message",
+							"code"
+						],
+						"type": "object"
+					},
 					"status": {
 						"type": "string",
 						"enum": [
-							"success"
+							"fail"
 						],
 						"nullable": false
-					},
-					"data": {
-						"type": "number",
-						"enum": [
-							null
-						],
-						"nullable": true
 					}
 				},
 				"required": [
-					"status",
-					"data"
+					"data",
+					"status"
 				],
 				"type": "object",
-				"additionalProperties": false
+				"description": "Tipo genérico base para respuestas de error con código y detalles opcionales."
+			},
+			"FailResponseFromError_SearchNotAuthorizedError_": {
+				"$ref": "#/components/schemas/FailResponse_NOT_AUTHORIZED._searchId-string--requesterId-string__",
+				"description": "Extrae automáticamente code y details de una clase AppError.\r\n\r\nEjemplo:\r\n- FailResponseFromError<UserAlreadyExistsError> → { status: 'fail', data: { code: 'CONFLICT', message: string, details: { field, value } } }\r\n- FailResponseFromError<UserNotFoundError> → { status: 'fail', data: { code: 'NOT_FOUND', message: string, details: { userId } } }"
 			},
 			"LoginResponseData": {
 				"description": "Respuesta del endpoint POST /auth/login",
@@ -1564,7 +1611,7 @@
 					}
 				},
 				"type": "object",
-				"description": "Generador de estructura de detalles.\nTransforma una unión de llaves ('body' | 'body.id') en el objeto que TSOA espera."
+				"description": "Generador de estructura de detalles.\r\nTransforma una unión de llaves ('body' | 'body.id') en el objeto que TSOA espera."
 			},
 			"RequestValidationFailResponse_ValidationDetails_body-or-body.identifier-or-body.password-or-body.responseType__": {
 				"properties": {
@@ -1661,7 +1708,7 @@
 			},
 			"FailResponseFromError_InvalidCredentialsError_": {
 				"$ref": "#/components/schemas/FailResponse_INVALID_CREDENTIALS._identifier-string__",
-				"description": "Extrae automáticamente code y details de una clase AppError.\n\nEjemplo:\n- FailResponseFromError<UserAlreadyExistsError> → { status: 'fail', data: { code: 'CONFLICT', message: string, details: { field, value } } }\n- FailResponseFromError<UserNotFoundError> → { status: 'fail', data: { code: 'NOT_FOUND', message: string, details: { userId } } }"
+				"description": "Extrae automáticamente code y details de una clase AppError.\r\n\r\nEjemplo:\r\n- FailResponseFromError<UserAlreadyExistsError> → { status: 'fail', data: { code: 'CONFLICT', message: string, details: { field, value } } }\r\n- FailResponseFromError<UserNotFoundError> → { status: 'fail', data: { code: 'NOT_FOUND', message: string, details: { userId } } }"
 			},
 			"LoginRequest": {
 				"properties": {
@@ -1691,7 +1738,7 @@
 				"additionalProperties": false
 			},
 			"MessageResponseData": {
-				"description": "Respuesta de éxito solo con mensaje (sin datos).\nEl wrapper global lo convertirá en: { status: 'success', data: { message: string } }",
+				"description": "Respuesta de éxito solo con mensaje (sin datos).\r\nEl wrapper global lo convertirá en: { status: 'success', data: { message: string } }",
 				"properties": {
 					"message": {
 						"type": "string"
@@ -1764,7 +1811,7 @@
 					}
 				},
 				"type": "object",
-				"description": "Generador de estructura de detalles.\nTransforma una unión de llaves ('body' | 'body.id') en el objeto que TSOA espera."
+				"description": "Generador de estructura de detalles.\r\nTransforma una unión de llaves ('body' | 'body.id') en el objeto que TSOA espera."
 			},
 			"RequestValidationFailResponse_ValidationDetails_body-or-body.oldPassword-or-body.newPassword__": {
 				"properties": {
@@ -1868,7 +1915,7 @@
 			},
 			"FailResponseFromError_InvalidPasswordError_": {
 				"$ref": "#/components/schemas/FailResponse_INVALID_PASSWORD._identifier-string__",
-				"description": "Extrae automáticamente code y details de una clase AppError.\n\nEjemplo:\n- FailResponseFromError<UserAlreadyExistsError> → { status: 'fail', data: { code: 'CONFLICT', message: string, details: { field, value } } }\n- FailResponseFromError<UserNotFoundError> → { status: 'fail', data: { code: 'NOT_FOUND', message: string, details: { userId } } }"
+				"description": "Extrae automáticamente code y details de una clase AppError.\r\n\r\nEjemplo:\r\n- FailResponseFromError<UserAlreadyExistsError> → { status: 'fail', data: { code: 'CONFLICT', message: string, details: { field, value } } }\r\n- FailResponseFromError<UserNotFoundError> → { status: 'fail', data: { code: 'NOT_FOUND', message: string, details: { userId } } }"
 			},
 			"FailResponse_USER_NOT_FOUND._identifier-string__": {
 				"properties": {
@@ -1920,7 +1967,7 @@
 			},
 			"FailResponseFromError_LoginUserNotFoundError_": {
 				"$ref": "#/components/schemas/FailResponse_USER_NOT_FOUND._identifier-string__",
-				"description": "Extrae automáticamente code y details de una clase AppError.\n\nEjemplo:\n- FailResponseFromError<UserAlreadyExistsError> → { status: 'fail', data: { code: 'CONFLICT', message: string, details: { field, value } } }\n- FailResponseFromError<UserNotFoundError> → { status: 'fail', data: { code: 'NOT_FOUND', message: string, details: { userId } } }"
+				"description": "Extrae automáticamente code y details de una clase AppError.\r\n\r\nEjemplo:\r\n- FailResponseFromError<UserAlreadyExistsError> → { status: 'fail', data: { code: 'CONFLICT', message: string, details: { field, value } } }\r\n- FailResponseFromError<UserNotFoundError> → { status: 'fail', data: { code: 'NOT_FOUND', message: string, details: { userId } } }"
 			},
 			"ChangePasswordRequest": {
 				"properties": {
@@ -1968,7 +2015,7 @@
 					}
 				},
 				"type": "object",
-				"description": "Generador de estructura de detalles.\nTransforma una unión de llaves ('body' | 'body.id') en el objeto que TSOA espera."
+				"description": "Generador de estructura de detalles.\r\nTransforma una unión de llaves ('body' | 'body.id') en el objeto que TSOA espera."
 			},
 			"RequestValidationFailResponse_ValidationDetails_body-or-body.email__": {
 				"properties": {
@@ -2069,7 +2116,7 @@
 					}
 				},
 				"type": "object",
-				"description": "Generador de estructura de detalles.\nTransforma una unión de llaves ('body' | 'body.id') en el objeto que TSOA espera."
+				"description": "Generador de estructura de detalles.\r\nTransforma una unión de llaves ('body' | 'body.id') en el objeto que TSOA espera."
 			},
 			"RequestValidationFailResponse_ValidationDetails_body-or-body.token-or-body.newPassword__": {
 				"properties": {
@@ -2162,7 +2209,7 @@
 			},
 			"FailResponseFromError_ResetTokenInvalidOrExpiredError_": {
 				"$ref": "#/components/schemas/FailResponse_RESET_TOKEN_INVALID_OR_EXPIRED.undefined_",
-				"description": "Extrae automáticamente code y details de una clase AppError.\n\nEjemplo:\n- FailResponseFromError<UserAlreadyExistsError> → { status: 'fail', data: { code: 'CONFLICT', message: string, details: { field, value } } }\n- FailResponseFromError<UserNotFoundError> → { status: 'fail', data: { code: 'NOT_FOUND', message: string, details: { userId } } }"
+				"description": "Extrae automáticamente code y details de una clase AppError.\r\n\r\nEjemplo:\r\n- FailResponseFromError<UserAlreadyExistsError> → { status: 'fail', data: { code: 'CONFLICT', message: string, details: { field, value } } }\r\n- FailResponseFromError<UserNotFoundError> → { status: 'fail', data: { code: 'NOT_FOUND', message: string, details: { userId } } }"
 			},
 			"ResetPasswordRequest": {
 				"properties": {
@@ -2177,6 +2224,146 @@
 				"required": [
 					"token",
 					"newPassword"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"AirportResponse": {
+				"properties": {
+					"iata_code": {
+						"type": "string"
+					},
+					"name": {
+						"type": "string"
+					},
+					"city": {
+						"type": "string"
+					},
+					"country": {
+						"type": "string"
+					},
+					"type": {
+						"type": "string"
+					},
+					"importance_score": {
+						"type": "number",
+						"format": "double"
+					},
+					"location": {
+						"properties": {
+							"coordinates": {
+								"items": {
+									"type": "number",
+									"format": "double"
+								},
+								"type": "array"
+							},
+							"type": {
+								"type": "string",
+								"enum": [
+									"Point"
+								],
+								"nullable": false
+							}
+						},
+						"required": [
+							"coordinates",
+							"type"
+						],
+						"type": "object"
+					}
+				},
+				"required": [
+					"iata_code",
+					"name",
+					"city",
+					"country",
+					"type",
+					"importance_score",
+					"location"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"SuccessResponse_AirportResponse-Array_": {
+				"description": "Wrapper de éxito JSend (aplicado por el middleware global).",
+				"properties": {
+					"status": {
+						"type": "string",
+						"enum": [
+							"success"
+						],
+						"nullable": false
+					},
+					"data": {
+						"items": {
+							"$ref": "#/components/schemas/AirportResponse"
+						},
+						"type": "array"
+					}
+				},
+				"required": [
+					"status",
+					"data"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"IAirline": {
+				"properties": {
+					"code": {
+						"type": "string"
+					},
+					"name": {
+						"type": "string"
+					},
+					"country": {
+						"type": "string"
+					},
+					"quality_score": {
+						"type": "number",
+						"format": "double"
+					},
+					"created_at": {
+						"type": "string",
+						"format": "date-time"
+					},
+					"updated_at": {
+						"type": "string",
+						"format": "date-time"
+					}
+				},
+				"required": [
+					"code",
+					"name",
+					"country",
+					"quality_score",
+					"created_at",
+					"updated_at"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"SuccessResponse_IAirline-Array_": {
+				"description": "Wrapper de éxito JSend (aplicado por el middleware global).",
+				"properties": {
+					"status": {
+						"type": "string",
+						"enum": [
+							"success"
+						],
+						"nullable": false
+					},
+					"data": {
+						"items": {
+							"$ref": "#/components/schemas/IAirline"
+						},
+						"type": "array"
+					}
+				},
+				"required": [
+					"status",
+					"data"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -2196,7 +2383,7 @@
 		}
 	},
 	"info": {
-		"title": "@tfg/backend",
+		"title": "@flaights/backend",
 		"version": "1.0.0",
 		"license": {
 			"name": "ISC"
@@ -2394,7 +2581,7 @@
 						}
 					}
 				},
-				"description": "Crea una nueva búsqueda de vuelos.\nSi el usuario está autenticado, la búsqueda se asocia a su cuenta.",
+				"description": "Crea una nueva búsqueda de vuelos.\r\nSi el usuario está autenticado, la búsqueda se asocia a su cuenta.",
 				"tags": [
 					"Search"
 				],
@@ -2414,7 +2601,9 @@
 						}
 					}
 				}
-			},
+			}
+		},
+		"/search/{searchId}": {
 			"get": {
 				"operationId": "SearchResult",
 				"responses": {
@@ -2428,8 +2617,18 @@
 							}
 						}
 					},
+					"403": {
+						"description": "Búsqueda privada no autorizada",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/FailResponseFromError_SearchNotAuthorizedError_"
+								}
+							}
+						}
+					},
 					"404": {
-						"description": "Búsqueda no encontrada o no autorizada",
+						"description": "Búsqueda no encontrada",
 						"content": {
 							"application/json": {
 								"schema": {
@@ -2439,7 +2638,7 @@
 						}
 					}
 				},
-				"description": "Obtiene los resultados de una búsqueda por su ID.\nSolo devuelve búsquedas del usuario autenticado o búsquedas anónimas.",
+				"description": "Obtiene los resultados de una búsqueda por su ID.\r\nSi la búsqueda es privada, solo devolverá el resultado a su dueño.",
 				"tags": [
 					"Search"
 				],
@@ -2450,8 +2649,118 @@
 				],
 				"parameters": [
 					{
-						"in": "query",
-						"name": "id",
+						"in": "path",
+						"name": "searchId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				]
+			}
+		},
+		"/search/{searchId}/share": {
+			"patch": {
+				"operationId": "ShareSearch",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/SuccessResponse_SearchResponseData_"
+								}
+							}
+						}
+					},
+					"403": {
+						"description": "Operación no autorizada sobre un recurso ajeno",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/FailResponseFromError_SearchNotAuthorizedError_"
+								}
+							}
+						}
+					},
+					"404": {
+						"description": "Búsqueda no encontrada",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/FailResponseFromError_SearchNotFoundError_"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Search"
+				],
+				"security": [
+					{
+						"jwt": []
+					}
+				],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "searchId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				]
+			}
+		},
+		"/search/{searchId}/privatize": {
+			"patch": {
+				"operationId": "PrivatizeSearch",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/SuccessResponse_SearchResponseData_"
+								}
+							}
+						}
+					},
+					"403": {
+						"description": "Operación no autorizada sobre un recurso ajeno",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/FailResponseFromError_SearchNotAuthorizedError_"
+								}
+							}
+						}
+					},
+					"404": {
+						"description": "Búsqueda no encontrada",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/FailResponseFromError_SearchNotFoundError_"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Search"
+				],
+				"security": [
+					{
+						"jwt": []
+					}
+				],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "searchId",
 						"required": true,
 						"schema": {
 							"type": "string"
@@ -2469,14 +2778,7 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"anyOf": [
-										{
-											"$ref": "#/components/schemas/SuccessResponse"
-										},
-										{
-											"$ref": "#/components/schemas/SuccessResponse_LoginResponseData_"
-										}
-									]
+									"$ref": "#/components/schemas/SuccessResponse_LoginResponseData_"
 								}
 							}
 						}
@@ -2672,7 +2974,7 @@
 						}
 					}
 				},
-				"description": "Solicita un email de recuperación de contraseña.\nPor seguridad, siempre devuelve éxito aunque el email no exista.",
+				"description": "Solicita un email de recuperación de contraseña.\r\nPor seguridad, siempre devuelve éxito aunque el email no exista.",
 				"tags": [
 					"Auth"
 				],
@@ -2741,6 +3043,68 @@
 						}
 					}
 				}
+			}
+		},
+		"/airports": {
+			"get": {
+				"operationId": "Search",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/SuccessResponse_AirportResponse-Array_"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Airports"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"in": "query",
+						"name": "q",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				]
+			}
+		},
+		"/airlines": {
+			"get": {
+				"operationId": "Search",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/SuccessResponse_IAirline-Array_"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Airlines"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"in": "query",
+						"name": "q",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				]
 			}
 		}
 	},

@@ -22,9 +22,10 @@
     },
     "routes": {
         "autoAlias": true,
-        "routesDir": "build",
+        "routesDir": "src/tsoa",
         "iocModule": "src/ioc.ts",
         "middleware": "express",
+        "esm": true,
         "authenticationModule": "src/modules/auth/authentication.ts"
     },
     "noImplicitAdditionalProperties": "throw-on-extras"

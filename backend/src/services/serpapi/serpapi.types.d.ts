@@ -111,8 +111,8 @@ export interface PriceInsights {
 }
 
 export interface Segment {
-    departure?: Airport;
-    arrival?: Airport;
+    departure?: Airport[];
+    arrival?: Airport[];
 }
 
 export interface SerpApiResponse {
@@ -124,7 +124,7 @@ export interface SerpApiResponse {
         processed_at: string;
         google_flights_url: string;
         raw_html_file: string;
-        prettyfy_html_file: string;
+        prettify_html_file: string;
         total_time_taken: number;
     };
     search_parameters: ApiRequestParameters;

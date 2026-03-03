@@ -21,20 +21,22 @@ export class AuthController extends Controller {
     @Post("/login")
     @Response<LoginValidationFailResponse>(422, "Error de validación")
     @Response<FailResponseFromError<InvalidCredentialsError>>(401, "Credenciales inválidas")
-    public async login(@Body() body: LoginRequest, @Request() request: ExpressRequest): Promise<SuccessResponse | SuccessResponse<LoginResponseData>> {
+    public async login(@Body() body: LoginRequest, @Request() request: ExpressRequest): Promise<SuccessResponse<LoginResponseData>> {
         const { identifier, password, responseType } = body;
         try {
             const result = await this.authService.login(identifier, password);
 
             switch (responseType) {
                 case 'cookie':
+                    console.log('Setting cookie for user:', result.userId);
+                    const isProduction = process.env.NODE_ENV === 'production';
                     request.res!.cookie('token', result.token, {
                         httpOnly: true,
-                        secure: false,
-                        sameSite: 'strict',
+                        secure: isProduction,
+                        sameSite: isProduction ? 'none' : 'strict',
                         maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
                     });
-                    return null as any;
+                    return result satisfies LoginResponseData as any;
                 case 'json':
                 default:
                     return result satisfies LoginResponseData as any;
@@ -49,11 +51,16 @@ export class AuthController extends Controller {
     }
 
     /**
-     * Cierra la sesión actual (limpia la cookie del navegador).
-     */
+ * Cierra la sesión actual (limpia la cookie del navegador).
+ */
     @Post("/logout")
     public async logout(@Request() request: ExpressRequest): Promise<SuccessResponse<MessageResponseData>> {
-        request.res!.clearCookie('token');
+        const isProduction = process.env.NODE_ENV === 'production';
+        request.res!.clearCookie('token', {
+            httpOnly: true,
+            secure: isProduction,
+            sameSite: isProduction ? 'none' : 'strict'
+        });
         return {
             message: "Sesión cerrada correctamente."
         } satisfies MessageResponseData as any;
@@ -67,7 +74,12 @@ export class AuthController extends Controller {
     @Response<AuthFailResponse>(401, "No autenticado")
     public async logoutAll(@RequestProp("user") user: AuthenticatedUser, @Request() request: ExpressRequest): Promise<SuccessResponse<MessageResponseData>> {
         await this.authService.logoutAll(user.id);
-        request.res!.clearCookie('token');
+        const isProduction = process.env.NODE_ENV === 'production';
+        request.res!.clearCookie('token', {
+            httpOnly: true,
+            secure: isProduction,
+            sameSite: isProduction ? 'none' : 'strict'
+        });
         return {
             message: "Sesiones cerradas correctamente."
         } satisfies MessageResponseData as any;

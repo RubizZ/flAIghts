@@ -67,11 +67,11 @@ export type RequestValidationFailResponse<
     };
 };
 
-export type DatabaseValidationFailResponse = {
+export type DatabaseValidationFailResponse = { //TODO Hacer que el detalle tenga más información (que sea genérico)
     status: 'fail';
     data: {
         code: 'DATABASE_VALIDATION_ERROR';
         message: string;
-        details: Record<string, { kind: string; path: string; value: any }>;
+        details: Record<string, { message: string; value: any }>;
     };
 };

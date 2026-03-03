@@ -1,15 +1,20 @@
-import type { FlightRoute } from "@/services/serpapi/serpapi.types.js";
-import { singleton } from "tsyringe";
+import type { FlightRoute, ApiRequestParameters } from "../../services/serpapi/serpapi.types.js";
+import { singleton, inject } from "tsyringe";
 import { SerpapiStorage } from "./serpapi-storage.model.js";
-import type { DijkstraFlightEdge } from "./dijkstra.types.js";
+import { SerpApiClient } from "../../services/serpapi/serpapi.client.js";
 
 @singleton()
 export class SerpapiStorageService {
-    private readonly CACHE_TTL_HOURS = 24;
+    constructor(
+        @inject(SerpApiClient) private readonly serpApiClient: SerpApiClient
+    ) {}
+
+    private get CACHE_TTL_HOURS() {
+        return Number(process.env.FLIGHT_CACHE_TTL_HOURS) || 24;
+    }
 
     public async getAllFlights(departure: string, arrival: string, date: string): Promise<FlightRoute[]> {
         
-        // Set freshness limit (24 hours ago)
         const freshnessLimit = new Date();
         freshnessLimit.setHours(freshnessLimit.getHours() - this.CACHE_TTL_HOURS);
 
@@ -21,7 +26,20 @@ export class SerpapiStorageService {
         }).sort({ createdAt: -1 }).lean();
 
         if (!record) {
-            return [];
+            const params: ApiRequestParameters = {
+                departure_id: departure,
+                arrival_id: arrival,
+                outbound_date: date,
+                type: 2,
+                currency: "EUR",
+                hl: "es",
+                gl: "es",
+            }
+            const response = await this.serpApiClient.search(params);
+
+            await SerpapiStorage.create(response);
+
+            return [...(response.best_flights || []), ...(response.other_flights || [])];
         }
 
         // Concatenate best flights and other flights
@@ -31,23 +49,5 @@ export class SerpapiStorageService {
         ];
 
         return allFlights;
-    }
-
-    public async getFlightsForGraph(departure: string, arrival: string, date: string): Promise<DijkstraFlightEdge[]> {
-        const rawFlights = await this.getAllFlights(departure, arrival, date);
-
-        return rawFlights.map(flight => {
-            const firstSegment = flight.flights[0];
-            const lastSegment = flight.flights[flight.flights.length - 1];
-
-            return {
-                id: flight.booking_token, // Usamos el token como ID único
-                from: firstSegment.departure_airport.id,
-                to: lastSegment.arrival_airport.id,
-                price: flight.price,
-                duration: flight.total_duration,
-                stops: flight.layovers ? flight.layovers.length : 0
-            }
-        })
     }
 }

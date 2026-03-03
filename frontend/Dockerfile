@@ -1,9 +1,7 @@
 # syntax=docker/dockerfile:1
-ARG NODE_VERSION=22.17.0
+ARG NODE_VERSION=22.18.0
 
-FROM node:${NODE_VERSION}-alpine
-
-ENV NODE_ENV development
+FROM node:${NODE_VERSION}-alpine AS builder
 WORKDIR /usr/src/app
 
 RUN --mount=type=bind,source=package.json,target=package.json \
@@ -12,7 +10,16 @@ RUN --mount=type=bind,source=package.json,target=package.json \
     npm ci
 
 COPY . .
+RUN npm run build
 
-EXPOSE 5173
+FROM nginx:alpine
+ARG PORT=80
+ENV PORT=${PORT}
 
-CMD npm run dev
+RUN printf "server {\n    listen %s;\n    location / {\n        root   /usr/share/nginx/html;\n        index  index.html index.htm;\n        try_files \$uri \$uri/ /index.html;\n    }\n}\n" "$PORT" > /etc/nginx/conf.d/default.conf
+
+COPY --from=builder /usr/src/app/dist /usr/share/nginx/html
+
+EXPOSE ${PORT}
+
+CMD ["nginx", "-g", "daemon off;"]

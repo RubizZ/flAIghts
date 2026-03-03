@@ -22,7 +22,7 @@ const LayoverSchema = new Schema<Layover>({
     duration: { type: Number, required: true },
     name: { type: String, required: true },
     id: { type: String, required: true },
-    overnight: { type: Boolean, required: true },
+    overnight: { type: Boolean, required: false },
 }, { _id: false });
 
 const CarbonEmissionsSchema = new Schema<CarbonEmmisions>({
@@ -43,9 +43,9 @@ const FlightSchema = new Schema<Flight>({
     extensions: { type: [String], required: true },
     ticket_also_sold_by: { type: [String], required: true },
     legroom: { type: String, required: true },
-    overnight: { type: Boolean, required: true },
-    often_delayed_by_30_min: { type: Boolean, required: true },
-    plane_and_crew_by: { type: String, required: true },
+    overnight: { type: Boolean, required: false },
+    often_delayed_by_30_min: { type: Boolean, required: false },
+    plane_and_crew_by: { type: String, required: false },
 }, { _id: false });
 
 const FlightRouteSchema = new Schema<FlightRoute>({
@@ -57,7 +57,7 @@ const FlightRouteSchema = new Schema<FlightRoute>({
     type: { type: String, required: true },
     airline_logo: { type: String, required: false },
     extensions: { type: [String], required: true },
-    departure_token: { type: String, required: true },
+    departure_token: { type: String, required: false }, // required for round-trip flights only
     booking_token: { type: String, required: true },
 }, { _id: false });
 
@@ -81,8 +81,8 @@ const AirportSchema = new Schema<Airport>({
 }, { _id: false });
 
 const SegmentSchema = new Schema<Segment>({
-    departure: { type: AirportSchema, required: false },
-    arrival: { type: AirportSchema, required: false },
+    departure: { type: [AirportSchema], required: false },
+    arrival: { type: [AirportSchema], required: false },
 }, { _id: false });
 
 const SearchMetadataSchema = new Schema<SerpApiResponse["search_metadata"]>({
@@ -93,7 +93,7 @@ const SearchMetadataSchema = new Schema<SerpApiResponse["search_metadata"]>({
     processed_at: { type: String, required: true },
     google_flights_url: { type: String, required: true },
     raw_html_file: { type: String, required: true },
-    prettyfy_html_file: { type: String, required: true },
+    prettify_html_file: { type: String, required: true },
     total_time_taken: { type: Number, required: true },
 }, { _id: false });
 
@@ -121,7 +121,7 @@ const SearchParametersSchema = new Schema<ApiRequestParameters>({
 const SerpapiStorageSchema = new Schema<SerpApiResponse>({
     search_metadata: { type: SearchMetadataSchema, required: true },
     search_parameters: { type: SearchParametersSchema, required: true },
-    best_flights: { type: [FlightRouteSchema], required: true },
+    best_flights: { type: [FlightRouteSchema], required: false },
     other_flights: { type: [FlightRouteSchema], required: false },
     price_insights: { type: PriceInsightsSchema, required: false },
     airports: { type: [SegmentSchema], required: false },
