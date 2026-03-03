@@ -92,3 +92,11 @@ export class EmailNotVerifiedError extends AppError<'EMAIL_NOT_VERIFIED', { emai
     }
 }
 
+export class NewPasswordSameAsOldError extends AppError<'NEW_PASSWORD_SAME_AS_OLD'> {
+    public readonly code = 'NEW_PASSWORD_SAME_AS_OLD';
+    public readonly statusCode: number = 400;
+
+    constructor() {
+        super("La nueva contraseña debe ser diferente a la actual.");
+    }
+}

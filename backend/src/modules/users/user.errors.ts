@@ -1,12 +1,22 @@
 import { AppError } from "../../utils/errors.js";
 
-export class UserAlreadyExistsError extends AppError<'CONFLICT', { field: 'email' | 'username'; value: string }> {
-    public readonly code = 'CONFLICT';
+export class EmailAlreadyInUseError extends AppError<'EMAIL_ALREADY_IN_USE', { field: 'email'; value: string }> {
+    public readonly code = 'EMAIL_ALREADY_IN_USE';
     public readonly statusCode: number = 409;
 
-    constructor(identifier: string, type: 'email' | 'username') {
-        super(`User with ${type} ${identifier} already exists`);
-        this.details = { field: type, value: identifier };
+    constructor(email: string) {
+        super(`User with email ${email} already exists`);
+        this.details = { field: 'email', value: email };
+    }
+}
+
+export class UsernameAlreadyInUseError extends AppError<'USERNAME_ALREADY_IN_USE', { field: 'username'; value: string }> {
+    public readonly code = 'USERNAME_ALREADY_IN_USE';
+    public readonly statusCode: number = 409;
+
+    constructor(username: string) {
+        super(`User with username ${username} already exists`);
+        this.details = { field: 'username', value: username };
     }
 }
 

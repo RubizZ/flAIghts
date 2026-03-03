@@ -1,5 +1,5 @@
 import { createContext, useContext, useCallback, ReactNode, useMemo } from 'react';
-import { useGetUser, getGetUserQueryKey } from '@/api/generated/users/users';
+import { useGetSelfUser, getGetSelfUserQueryKey } from '@/api/generated/users/users';
 import { useLogout } from '@/api/generated/auth/auth';
 import { useQueryClient } from '@tanstack/react-query';
 import type { PopulatedUser } from '@/api/generated/model';
@@ -32,7 +32,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         isLoading,
         refetch: refetchUser,
         isError,
-    } = useGetUser({
+    } = useGetSelfUser({
         query: {
             // No reintentar en caso de error
             retry: 0,
@@ -40,6 +40,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
             refetchOnWindowFocus: false,
             // Mantener datos frescos por 5 minutos
             staleTime: 5 * 60 * 1000,
+            // No lanzar errores de auth al ErrorBoundary - es normal que falle si no hay sesión
+            // Los errores de auth en otras queries sí se lanzan al ErrorBoundary
+            throwOnError: false,
         },
     });
 
@@ -64,7 +67,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
             console.error('Error during logout, clearing local state anyway');
         } finally {
             // Limpiar cache de React Query
-            queryClient.removeQueries({ queryKey: getGetUserQueryKey() });
+            queryClient.removeQueries({ queryKey: getGetSelfUserQueryKey() });
             // Recargar la página para limpiar todo el estado
             window.location.href = '/';
         }

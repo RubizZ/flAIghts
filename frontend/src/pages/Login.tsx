@@ -1,5 +1,5 @@
 import { useLogin } from "@/api/generated/auth/auth";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import AuthLayout from "@/components/layout/AuthLayout";
 import AuthCard from "@/components/ui/AuthCard";
@@ -9,7 +9,14 @@ import { useAuth } from "@/context/AuthContext";
 
 export default function Login() {
     const navigate = useNavigate();
-    const { refetch } = useAuth();
+    const { refetch, isAuthenticated, isLoading } = useAuth();
+
+    useEffect(() => {
+        if (!isLoading && isAuthenticated) {
+            navigate("/");
+        }
+    }, [isAuthenticated, isLoading, navigate]);
+
     const [credentials, setCredentials] = useState({ identifier: "", password: "" });
     const [errors, setErrors] = useState({ identifier: "", password: "" });
 
@@ -32,15 +39,6 @@ export default function Login() {
                         break;
                     case "INVALID_CREDENTIALS":
                         toast.error("Credenciales inválidas");
-                        break;
-                    case "EMAIL_NOT_VERIFIED":
-                        toast.info("Por favor, verifica tu email para continuar");
-                        navigate("/verify-email", {
-                            state: {
-                                email: error.details.email,
-                                password: credentials.password
-                            }
-                        });
                         break;
                 }
 

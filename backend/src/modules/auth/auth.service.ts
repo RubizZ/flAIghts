@@ -1,12 +1,12 @@
 import { singleton, inject } from "tsyringe";
-import { User } from "../users/user.model.js";
+import { User } from "../users/models/user.model.js";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import ms from 'ms'
 import crypto from "node:crypto";
 import { MailService } from "../../services/mail.service.js";
 import { MailTemplates } from "../../services/mail.templates.js";
-import { ResetTokenInvalidOrExpiredError, LoginUserNotFoundError, InvalidPasswordError, EmailNotVerifiedError } from "./auth.errors.js";
+import { ResetTokenInvalidOrExpiredError, LoginUserNotFoundError, InvalidPasswordError, NewPasswordSameAsOldError } from "./auth.errors.js";
 import type { LoginResponseData, JWTPayload } from "./auth.types.js";
 
 export class PasswordService {
@@ -58,16 +58,11 @@ export class AuthService {
             throw new LoginUserNotFoundError(identifier);
         }
 
-        const passwordMatch = PasswordService.comparePassword(password, user.password);
+        const passwordMatch = PasswordService.comparePassword(password, user.password!);
 
         if (!passwordMatch) {
             throw new InvalidPasswordError(identifier);
         }
-
-        if (!user.email_verified) {
-            throw new EmailNotVerifiedError(user.email);
-        }
-
 
         const token = jwt.sign(
             {
@@ -93,8 +88,12 @@ export class AuthService {
         const user = await User.findOne({ _id: userId }).select('+password');
         if (!user) throw new LoginUserNotFoundError(userId);
 
-        const passwordMatch = PasswordService.comparePassword(oldPassword, user.password);
+        const passwordMatch = PasswordService.comparePassword(oldPassword, user.password!);
         if (!passwordMatch) throw new InvalidPasswordError(userId);
+
+        if (PasswordService.comparePassword(newPassword, user.password!)) {
+            throw new NewPasswordSameAsOldError();
+        }
 
         user.password = PasswordService.hashPassword(newPassword);
         user.auth_version += 1;

@@ -5,7 +5,7 @@ import {
     useRejectFriendRequest,
     useCancelFriendRequest,
     useRemoveFriend,
-    getGetUserQueryKey
+    getGetSelfUserQueryKey
 } from "@/api/generated/users/users";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -18,7 +18,7 @@ export default function Friends() {
     const [activeTab, setActiveTab] = useState<'friends' | 'requests'>('friends');
 
     const invalidateUser = () => {
-        queryClient.invalidateQueries({ queryKey: getGetUserQueryKey() });
+        queryClient.invalidateQueries({ queryKey: getGetSelfUserQueryKey() });
     };
 
     const { mutate: acceptRequest } = useAcceptFriendRequest({

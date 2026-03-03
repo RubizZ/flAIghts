@@ -1,10 +1,9 @@
 import type { Request } from "express";
 import type { AuthenticatedUser, JWTPayload } from "./auth.types.js";
 import jwt from "jsonwebtoken";
-import { User, type IFriend, type IUser } from "../users/user.model.js";
+import { User, type IUser } from "../users/models/user.model.js";
 import { AuthenticationVersionMismatchError, InvalidTokenError, NoTokenProvidedError, TokenUserNotFoundError } from "./auth.errors.js";
 import type { FriendUser, PopulatedUser, PublicUser } from "../users/user.types.js";
-import type { PopulatedDoc } from "mongoose";
 
 if (!process.env.JWT_SECRET) {
     throw new Error("JWT_SECRET is not defined");
@@ -62,7 +61,6 @@ export async function expressAuthentication(
             type: 'self',
             username: userObj.username,
             email: userObj.email,
-            email_verified: userObj.email_verified,
             role: userObj.role,
             preferences: userObj.preferences,
             public: userObj.public,

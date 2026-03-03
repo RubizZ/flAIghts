@@ -2,12 +2,20 @@ import { inject, singleton } from "tsyringe";
 import type { HydratedDocument } from "mongoose";
 import { MongoServerError } from "mongodb";
 import crypto from "node:crypto";
-import type { RegisterData, UpdateUserData } from "./user.types.js";
-import { User, type IUser } from "./user.model.js";
+import type {
+    InitiateRegistrationData,
+    CompleteRegistrationData,
+    InitiateEmailChangeData,
+    CompleteEmailChangeData,
+    UpdateUserData
+} from "./user.types.js";
+import { User, type IUser, type IUserDocument, type IUserPopulated, type IUserUnpopulated } from "./models/user.model.js";
+import { PreRegistration } from "./models/pre-registration.model.js";
 import { PasswordService } from "../auth/auth.service.js";
 import {
     UserNotFoundError,
-    UserAlreadyExistsError,
+    EmailAlreadyInUseError,
+    UsernameAlreadyInUseError,
     SelfFriendRequestError,
     AlreadyFriendsError,
     FriendRequestAlreadySentError,
@@ -15,7 +23,6 @@ import {
     NoPendingFriendRequestError,
     NoReceivedFriendRequestError,
     NotFriendsError,
-    EmailAlreadyVerifiedError,
     EmailVerificationCodeInvalidOrExpiredError
 } from "./user.errors.js";
 import { MailService } from "@/services/mail.service.js";
@@ -36,63 +43,153 @@ export class UserService {
 
     constructor(@inject(MailService) private mailService: MailService) { }
 
-    public async createUser(data: RegisterData): Promise<IUser> {
+    public async initiateRegistration(data: InitiateRegistrationData): Promise<void> {
+        // Check if user already exists
+        const userExists = await User.findOne({ email: data.email.toLowerCase() });
+        if (userExists) throw new EmailAlreadyInUseError(data.email);
+
+        const verificationCode = EmailVerificationService.generateCode();
+        const hashedCode = EmailVerificationService.generateHashedCode(verificationCode);
+
+        // Save or update pre-registration
+        await PreRegistration.findOneAndUpdate(
+            { email: data.email.toLowerCase() },
+            {
+                code: hashedCode,
+                expires: new Date(Date.now() + 3600000)
+            },
+            { upsert: true }
+        );
+
+        const template = MailTemplates.emailVerification(verificationCode);
+        this.mailService.sendMail(data.email, template.subject, template.html);
+    }
+
+    public async completeRegistration(data: CompleteRegistrationData): Promise<IUserUnpopulated> {
+        const preReg = await PreRegistration.findOne({ email: data.email.toLowerCase() });
+        if (!preReg) throw new EmailVerificationCodeInvalidOrExpiredError();
+
+        const hashedCode = EmailVerificationService.generateHashedCode(data.code);
+        if (preReg.code !== hashedCode || preReg.expires < new Date()) {
+            throw new EmailVerificationCodeInvalidOrExpiredError();
+        }
+
         try {
-            const verificationCode = EmailVerificationService.generateCode();
-            const hashedCode = EmailVerificationService.generateHashedCode(verificationCode);
             const user = await User.create({
-                ...data,
+                username: data.username,
+                email: data.email.toLowerCase(),
                 password: PasswordService.hashPassword(data.password),
-                email_verification_code: hashedCode,
-                email_verification_expires: new Date(Date.now() + 3600000)
+                preferences: data.preferences
             });
-            const template = MailTemplates.emailVerification(verificationCode)
-            this.mailService.sendMail(data.email, template.subject, template.html);
+
+            // Clean up pre-registration
+            await PreRegistration.deleteOne({ email: data.email.toLowerCase() });
+
             return this.sanitizeUser(user);
         } catch (error) {
-            // Duplicate key error de MongoDB (código 11000)
             if (error instanceof MongoServerError && error.code === 11000) {
                 const field = Object.keys(error.keyPattern ?? {})[0] as 'username' | 'email' | undefined;
-                if (field) {
-                    throw new UserAlreadyExistsError(data[field], field);
-                }
+                if (field === 'email') throw new EmailAlreadyInUseError(data.email);
+                if (field === 'username') throw new UsernameAlreadyInUseError(data.username);
             }
             throw error;
         }
     }
 
-    public async updateUser(userId: string, data: UpdateUserData): Promise<IUser> {
-        try {
-            const updatedUser = await User.findByIdAndUpdate(userId, data, { new: true, runValidators: true });
-            if (!updatedUser) {
-                throw new UserNotFoundError(userId);
-            }
-            return this.sanitizeUser(updatedUser);
-        } catch (error) {
-            if (error instanceof UserNotFoundError) throw error;
+    public async initiateEmailChange(userId: string, data: InitiateEmailChangeData): Promise<void> {
+        const user = await User.findById(userId);
+        if (!user) throw new UserNotFoundError(userId);
 
-            // Duplicate key error de MongoDB
-            if (error instanceof MongoServerError && error.code === 11000) {
-                const field = Object.keys(error.keyPattern ?? {})[0] as 'username' | 'email' | undefined;
-                if (field && data[field]) {
-                    throw new UserAlreadyExistsError(data[field], field);
-                }
-            }
-            throw error;
-        }
+        const newEmail = data.newEmail.toLowerCase();
+        if (newEmail === user.email) return;
+
+        // Check availability
+        const emailInUse = await User.findOne({ email: newEmail });
+        if (emailInUse) throw new EmailAlreadyInUseError(newEmail);
+
+        const oldEmailCode = EmailVerificationService.generateCode();
+        const newEmailCode = EmailVerificationService.generateCode();
+
+        user.email_change_request = {
+            new_email: newEmail,
+            old_email_code: EmailVerificationService.generateHashedCode(oldEmailCode),
+            new_email_code: EmailVerificationService.generateHashedCode(newEmailCode),
+            expires: new Date(Date.now() + 3600000)
+        };
+
+        await user.save();
+
+        // Send both emails
+        const oldTemplate = MailTemplates.emailChangeSecurity(oldEmailCode);
+        const newTemplate = MailTemplates.emailChangeVerification(newEmailCode);
+
+        this.mailService.sendMail(user.email, oldTemplate.subject, oldTemplate.html);
+        this.mailService.sendMail(newEmail, newTemplate.subject, newTemplate.html);
     }
 
-    public async getUserById(id: string): Promise<IUser> {
-        const user = await User.findById(id);
-        if (!user) {
-            throw new UserNotFoundError(id);
+    public async cancelEmailChange(userId: string): Promise<void> {
+        const user = await User.findById(userId);
+        if (!user) throw new UserNotFoundError(userId);
+        user.email_change_request = undefined;
+        await user.save();
+    }
+
+    public async completeEmailChange(userId: string, data: CompleteEmailChangeData): Promise<IUserUnpopulated> {
+        const user = await User.findById(userId).select("+email_change_request.old_email_code +email_change_request.new_email_code");
+        if (!user) throw new UserNotFoundError(userId);
+        if (!user.email_change_request) throw new Error("No hay ninguna solicitud de cambio de email pendiente");
+
+        if (user.email_change_request.expires < new Date()) {
+            user.email_change_request = undefined;
+            await user.save();
+            throw new EmailVerificationCodeInvalidOrExpiredError();
         }
+
+        const hashedOld = EmailVerificationService.generateHashedCode(data.oldEmailCode);
+        const hashedNew = EmailVerificationService.generateHashedCode(data.newEmailCode);
+
+        if (user.email_change_request.old_email_code !== hashedOld ||
+            user.email_change_request.new_email_code !== hashedNew) {
+            throw new EmailVerificationCodeInvalidOrExpiredError();
+        }
+
+        user.email = user.email_change_request.new_email;
+        user.email_change_request = undefined;
+        user.auth_version++;
+        await user.save();
+
         return this.sanitizeUser(user);
     }
 
-    public async searchUsers(query: string, limit: number = 20): Promise<IUser[]> {
+    public async updateUser(userId: string, data: UpdateUserData): Promise<IUserUnpopulated> {
+        if (data.username) {
+            const existing = await User.findOne({ username: data.username, _id: { $ne: userId } });
+            if (existing) throw new UsernameAlreadyInUseError(data.username);
+        }
+        const user = await User.findByIdAndUpdate(userId, data, { new: true });
+        if (!user) throw new UserNotFoundError(userId);
+        return this.sanitizeUser(user);
+    }
+
+    public async getUser(userId: string, populate: true): Promise<IUserPopulated>;
+    public async getUser(userId: string, populate?: false): Promise<IUserUnpopulated>;
+    public async getUser(userId: string, populate: boolean = false): Promise<IUser> {
+        let query = User.findById(userId);
+        if (populate) {
+            query = query
+                .populate('friends.user', 'username _id role last_seen_at created_at')
+                .populate('sent_friend_requests', 'username _id role last_seen_at created_at public')
+                .populate('received_friend_requests', 'username _id role last_seen_at created_at public');
+        }
+        const user = await query;
+        if (!user) throw new UserNotFoundError(userId);
+        return populate ? this.sanitizeUser(user, true) : this.sanitizeUser(user, false);
+    }
+
+    public async searchUsers(query: string, excludeId?: string, limit: number = 20): Promise<IUserUnpopulated[]> {
         const regex = new RegExp(query, 'i');
-        const usersDocs = await User.find({ username: regex }).limit(limit);
+        const filter = excludeId ? { username: regex, _id: { $ne: excludeId } } : { username: regex };
+        const usersDocs = await User.find(filter).limit(limit);
         return usersDocs.map(userDoc => this.sanitizeUser(userDoc));
     }
 
@@ -237,54 +334,12 @@ export class UserService {
         }
     }
 
-    public async verifyEmail(email: string, code: string): Promise<void> {
-        const hashedCode = EmailVerificationService.generateHashedCode(code);
-        const user = await User.findOne({ email }).select('+email_verification_code +email_verification_expires');
-
-        if (!user) {
-            throw new UserNotFoundError(email);
-        }
-
-        if (user.email_verified) {
-            throw new EmailAlreadyVerifiedError();
-        }
-
-        if (user.email_verification_code !== hashedCode || (user.email_verification_expires && user.email_verification_expires < new Date())) {
-            throw new EmailVerificationCodeInvalidOrExpiredError();
-        }
-
-        user.email_verified = true;
-        user.email_verification_code = undefined;
-        user.email_verification_expires = undefined;
-        await user.save();
-    }
-
-    public async resendVerificationEmail(email: string): Promise<void> {
-        const user = await User.findOne({ email });
-
-        if (!user) {
-            throw new UserNotFoundError(email);
-        }
-
-        if (user.email_verified) {
-            throw new EmailAlreadyVerifiedError();
-        }
-
-        const verificationCode = EmailVerificationService.generateCode();
-        const hashedCode = EmailVerificationService.generateHashedCode(verificationCode);
-
-        user.email_verification_code = hashedCode;
-        user.email_verification_expires = new Date(Date.now() + 3600000); // 1 hora
-        await user.save();
-
-        const template = MailTemplates.emailVerification(verificationCode);
-        this.mailService.sendMail(email, template.subject, template.html);
-    }
 
 
-    private sanitizeUser(user: HydratedDocument<IUser>): IUser {
-
-        const { __v, ...cleanUser } = user.toObject();
+    private sanitizeUser(user: HydratedDocument<IUserDocument>, populate: true): IUserPopulated;
+    private sanitizeUser(user: HydratedDocument<IUserDocument>, populate?: false): IUserUnpopulated;
+    private sanitizeUser(user: HydratedDocument<IUserDocument>, populate: boolean = false): IUser {
+        const { __v, password, ...cleanUser } = user.toObject();
         return cleanUser as IUser;
     }
 }
