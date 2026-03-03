@@ -1,12 +1,7 @@
-import { Schema, model, type HydratedDocument, type PopulatedDoc } from "mongoose";
+import { Schema, model, type PopulatedDoc } from "mongoose";
 import { randomUUID } from "node:crypto";
 
-export interface IFriend {
-  user: PopulatedDoc<IUser, string>;
-  friend_since: Date;
-}
-
-export interface IUser {
+export interface IUserFields {
   _id: string;
   username: string;
   email: string;
@@ -22,17 +17,53 @@ export interface IUser {
   created_at: Date;
   last_seen_at: Date;
   auth_version: number;
-  email_verified: boolean;
-  email_verification_code?: string;
-  email_verification_expires?: Date;
   password_reset_token?: string;
   password_reset_expires?: Date;
-  friends: IFriend[];
-  sent_friend_requests: PopulatedDoc<IUser, string>[];
-  received_friend_requests: PopulatedDoc<IUser, string>[];
+  email_change_request?: {
+    new_email: string;
+    old_email_code: string;
+    new_email_code: string;
+    expires: Date;
+  };
 }
 
-const UserSchema = new Schema<IUser>({
+export interface IFriendUnpopulated {
+  user: string;
+  friend_since: Date;
+}
+
+export interface IFriendPopulated {
+  user: IUserUnpopulated;
+  friend_since: Date;
+}
+
+export type IFriend = IFriendUnpopulated | IFriendPopulated;
+
+export interface IUserUnpopulated extends Omit<IUserFields, 'password'> {
+  friends: IFriendUnpopulated[];
+  sent_friend_requests: string[];
+  received_friend_requests: string[];
+}
+
+export interface IUserPopulated extends Omit<IUserFields, 'password'> {
+  friends: IFriendPopulated[];
+  sent_friend_requests: IUserUnpopulated[];
+  received_friend_requests: IUserUnpopulated[];
+}
+
+export type IUser = IUserUnpopulated | IUserPopulated;
+
+/**
+ * Interface for Mongoose model definition, using PopulatedDoc for flexibility during queries.
+ */
+export interface IUserDocument extends Omit<IUserFields, 'password'> {
+  password?: string; // Optional because it's usually +select
+  friends: { user: PopulatedDoc<IUserDocument, string>; friend_since: Date }[];
+  sent_friend_requests: PopulatedDoc<IUserDocument, string>[];
+  received_friend_requests: PopulatedDoc<IUserDocument, string>[];
+}
+
+const UserSchema = new Schema<IUserDocument>({
   _id: { type: String, default: () => randomUUID() },
   username: {
     type: String,
@@ -88,9 +119,6 @@ const UserSchema = new Schema<IUser>({
   created_at: { type: Date, default: Date.now },
   last_seen_at: { type: Date, default: Date.now },
   auth_version: { type: Number, default: 1, min: 1 },
-  email_verified: { type: Boolean, default: false },
-  email_verification_code: { type: String, select: false },
-  email_verification_expires: { type: Date, select: false },
   password_reset_token: { type: String, select: false, index: true },
   password_reset_expires: { type: Date, select: false },
   friends: [{
@@ -98,7 +126,13 @@ const UserSchema = new Schema<IUser>({
     friend_since: { type: Date, default: Date.now }
   }],
   sent_friend_requests: [{ type: String, ref: "User" }],
-  received_friend_requests: [{ type: String, ref: "User" }]
+  received_friend_requests: [{ type: String, ref: "User" }],
+  email_change_request: {
+    new_email: { type: String, lowercase: true },
+    old_email_code: { type: String, select: false },
+    new_email_code: { type: String, select: false },
+    expires: { type: Date, select: false }
+  }
 });
 
 // Índice único case-insensitive para username
@@ -107,12 +141,4 @@ UserSchema.index(
   { unique: true, collation: { locale: 'en', strength: 2 } }
 );
 
-UserSchema.pre('save', function (this: HydratedDocument<IUser>) {
-  const sum = this.preferences.price_weight + this.preferences.duration_weight +
-    this.preferences.stops_weight + this.preferences.airline_quality_weight;
-  if (Math.abs(sum - 1.0) > 0.001) {
-    throw new Error('Los pesos de preferencias deben sumar 1.0');
-  }
-});
-
-export const User = model<IUser>("User", UserSchema);
+export const User = model<IUserDocument>("User", UserSchema);

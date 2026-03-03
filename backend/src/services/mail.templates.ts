@@ -34,5 +34,38 @@ export const MailTemplates = {
                 <p style="color: #999; font-size: 0.8em; text-align: center;">© 2026 flAIghts. Todos los derechos reservados.</p>
             </div>
         `
+    }),
+    emailChangeSecurity: (code: string) => ({
+        subject: "Solicitud de cambio de email",
+        html: `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eee; border-radius: 10px;">
+                <h1 style="color: #333;">Asegura tu cuenta</h1>
+                <p>Hola,</p>
+                <p>Has solicitado cambiar el correo electrónico asociado a tu cuenta de <strong>flAIghts</strong>.</p>
+                <p>Por favor, utiliza este código para confirmar que eres tú desde tu <strong>correo actual</strong>:</p>
+                <div style="text-align: center; margin: 30px 0;">
+                    <span style="font-size: 32px; font-weight: bold; letter-spacing: 5px; color: #dc3545; background-color: #f8f9fa; padding: 10px 20px; border-radius: 5px; border: 1px dashed #dc3545;">
+                        ${code}
+                    </span>
+                </div>
+                <p style="color: #666; font-size: 0.9em;">Si no has solicitado este cambio, por favor revisa la seguridad de tu cuenta.</p>
+            </div>
+        `
+    }),
+    emailChangeVerification: (code: string) => ({
+        subject: "Verifica tu nuevo email",
+        html: `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eee; border-radius: 10px;">
+                <h1 style="color: #333;">Verifica tu nuevo email</h1>
+                <p>Hola,</p>
+                <p>Estás intentando cambiar tu correo de flAIghts por este.</p>
+                <p>Por favor, utiliza el siguiente código para verificar tu <strong>nuevo correo</strong>:</p>
+                <div style="text-align: center; margin: 30px 0;">
+                    <span style="font-size: 32px; font-weight: bold; letter-spacing: 5px; color: #28a745; background-color: #f8f9fa; padding: 10px 20px; border-radius: 5px; border: 1px dashed #28a745;">
+                        ${code}
+                    </span>
+                </div>
+            </div>
+        `
     })
 };

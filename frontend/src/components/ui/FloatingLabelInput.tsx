@@ -6,10 +6,11 @@ interface FloatingLabelInputProps extends React.InputHTMLAttributes<HTMLInputEle
     label: string;
     error?: boolean | string;
     isRepeat?: boolean;
+    icon?: React.ReactNode;
 }
 
 const FloatingLabelInput = forwardRef<HTMLInputElement, FloatingLabelInputProps>(
-    ({ label, error, isRepeat = false, className = "", id, ...props }, ref) => {
+    ({ label, error, isRepeat = false, icon, className = "", id, ...props }, ref) => {
         const [showPassword, setShowPassword] = useState(false);
         // Generar un ID si no se proporciona, necesario para el htmlFor del label
         const inputId = id || `floating-input-${label.replace(/\s+/g, '-').toLowerCase()}`;
@@ -18,7 +19,7 @@ const FloatingLabelInput = forwardRef<HTMLInputElement, FloatingLabelInputProps>
         const currentType = isPassword && !isRepeat && showPassword ? 'text' : props.type;
 
         return (
-            <div className="relative">
+            <div className={`relative group/field ${className}`}>
                 <input
                     ref={ref}
                     id={inputId}
@@ -33,13 +34,13 @@ const FloatingLabelInput = forwardRef<HTMLInputElement, FloatingLabelInputProps>
                         w-full
                         rounded-lg
                         border
-                        bg-primary
-                        pl-2.5
+                        ${props.disabled ? 'bg-secondary' : 'bg-primary'}
+                        ${icon ? 'pl-11' : 'pl-2.5'}
                         pb-2.5
                         pt-5
                         pr-10
                         text-sm
-                        text-primary
+                        ${props.disabled ? 'text-secondary' : 'text-primary'}
                         outline-none
                         transition-all
                         focus:ring-2
@@ -48,14 +49,21 @@ const FloatingLabelInput = forwardRef<HTMLInputElement, FloatingLabelInputProps>
                             ? 'border-red-500 focus:border-red-500 focus:ring-red-500/20'
                             : 'border-themed focus:border-accent focus:ring-accent/20'
                         }
-                        ${className}
+                        
                     `}
                 />
+
+                {icon && (
+                    <div className={`absolute left-3.5 top-1/2 -translate-y-1/2 transition-colors duration-300 ${isError ? 'text-red-500' : 'text-secondary/50 peer-focus:text-accent'}`}>
+                        {icon}
+                    </div>
+                )}
+
                 <label
                     htmlFor={inputId}
                     className={`
                         absolute
-                        left-1
+                        ${icon ? 'left-9.5' : 'left-1'}
                         top-1
                         z-10
                         origin-left

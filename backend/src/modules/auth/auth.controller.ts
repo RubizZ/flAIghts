@@ -5,7 +5,7 @@ import { AuthService } from "./auth.service.js";
 import type { AuthenticatedUser, ChangePasswordRequest, ChangePasswordValidationFailResponse, ForgotPasswordRequest, ForgotPasswordValidationFailResponse, LoginRequest, LoginResponseData, LoginValidationFailResponse, ResetPasswordRequest, ResetPasswordValidationFailResponse, ChangePasswordErrorResponse } from "./auth.types.js";
 import type { FailResponseFromError, MessageResponseData, SuccessResponse } from "../../utils/responses.js";
 import type { AuthFailResponse } from "./auth.types.js";
-import { InvalidCredentialsError, LoginUserNotFoundError, InvalidPasswordError, ResetTokenInvalidOrExpiredError, EmailNotVerifiedError } from "./auth.errors.js";
+import { InvalidCredentialsError, LoginUserNotFoundError, InvalidPasswordError, ResetTokenInvalidOrExpiredError, EmailNotVerifiedError, NewPasswordSameAsOldError } from "./auth.errors.js";
 
 @injectable()
 @Route("auth")
@@ -21,7 +21,6 @@ export class AuthController extends Controller {
     @Post("/login")
     @Response<LoginValidationFailResponse>(422, "Error de validación")
     @Response<FailResponseFromError<InvalidCredentialsError>>(401, "Credenciales inválidas")
-    @Response<FailResponseFromError<EmailNotVerifiedError>>(403, "Email no verificado")
     public async login(@Body() body: LoginRequest, @Request() request: ExpressRequest): Promise<SuccessResponse<LoginResponseData>> {
 
         const { identifier, password, responseType } = body;
@@ -47,9 +46,6 @@ export class AuthController extends Controller {
             // Transformar errores específicos a genérico por seguridad
             if (error instanceof LoginUserNotFoundError || error instanceof InvalidPasswordError) {
                 throw new InvalidCredentialsError(identifier);
-            }
-            if (error instanceof EmailNotVerifiedError) {
-                throw error; // Propagar 403 específicamente
             }
             throw error;
 
@@ -98,6 +94,7 @@ export class AuthController extends Controller {
     @Security("jwt")
     @Response<ChangePasswordValidationFailResponse>(422, "Error de validación")
     @Response<ChangePasswordErrorResponse>(401, "No autenticado o contraseña incorrecta")
+    @Response<FailResponseFromError<NewPasswordSameAsOldError>>(400, "Nueva contraseña igual a la anterior")
     @Response<FailResponseFromError<LoginUserNotFoundError>>(404, "Usuario no encontrado")
     public async changePassword(@RequestProp("user") user: AuthenticatedUser, @Body() body: ChangePasswordRequest): Promise<SuccessResponse<MessageResponseData>> {
         const { oldPassword, newPassword } = body;

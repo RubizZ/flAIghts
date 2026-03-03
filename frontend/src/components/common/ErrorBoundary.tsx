@@ -1,5 +1,6 @@
 import React, { Component, ErrorInfo, ReactNode } from "react";
-import { TriangleAlert, RefreshCcw, Home, ChevronDown, ChevronUp, Copy } from "lucide-react";
+import { TriangleAlert, RefreshCcw, Home, ChevronDown, ChevronUp, Copy, LogIn } from "lucide-react";
+import { AuthFailError } from "@/api/axios-instance";
 
 interface Props {
     children?: ReactNode;
@@ -13,6 +14,7 @@ interface State {
     error: Error | null;
     errorInfo: ErrorInfo | null;
     showDetails: boolean;
+    isAuthError: boolean;
 }
 
 class ErrorBoundary extends Component<Props, State> {
@@ -23,11 +25,18 @@ class ErrorBoundary extends Component<Props, State> {
             error: props.initialError || null,
             errorInfo: null,
             showDetails: false,
+            isAuthError: props.initialError instanceof AuthFailError,
         };
     }
 
     public static getDerivedStateFromError(error: Error): State {
-        return { hasError: true, error, errorInfo: null, showDetails: false };
+        return {
+            hasError: true,
+            error,
+            errorInfo: null,
+            showDetails: false,
+            isAuthError: error instanceof AuthFailError,
+        };
     }
 
     public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
@@ -38,11 +47,15 @@ class ErrorBoundary extends Component<Props, State> {
     private handleReset = () => {
         if (this.props.onReset) {
             this.props.onReset();
-            this.setState({ hasError: false, error: null, errorInfo: null });
+            this.setState({ hasError: false, error: null, errorInfo: null, isAuthError: false });
         } else {
-            this.setState({ hasError: false, error: null, errorInfo: null });
+            this.setState({ hasError: false, error: null, errorInfo: null, isAuthError: false });
             window.location.reload();
         }
+    };
+
+    private redirectToLogin = () => {
+        window.location.href = '/login';
     };
 
     private toggleDetails = () => {
@@ -59,6 +72,52 @@ class ErrorBoundary extends Component<Props, State> {
         if (this.state.hasError) {
             if (this.props.fallback) {
                 return this.props.fallback;
+            }
+
+            // Si es un error de autenticación, mostrar UI específica
+            if (this.state.isAuthError) {
+                return (
+                    <div className="w-full min-h-screen flex items-center justify-center p-6 bg-primary relative overflow-hidden group">
+                        {/* Background decoration */}
+                        <div className="absolute top-0 left-0 w-full h-1 bg-linear-to-r from-transparent via-amber-500/50 to-transparent shadow-[0_0_15px_rgba(245,158,11,0.5)]" />
+                        <div className="absolute -bottom-20 -right-20 w-64 h-64 bg-accent/5 blur-[100px] rounded-full" />
+                        <div className="absolute -top-20 -left-20 w-64 h-64 bg-accent/5 blur-[100px] rounded-full" />
+
+                        <div className="max-w-xl w-full text-center space-y-8 relative z-10 transition-all duration-500">
+                            <div className="relative inline-block">
+                                <div className="absolute inset-0 bg-amber-500/10 blur-2xl rounded-full scale-150 animate-pulse" />
+                                <div className="relative bg-secondary p-6 rounded-full border border-amber-500/20 shadow-2xl">
+                                    <LogIn size={48} className="text-amber-500" />
+                                </div>
+                            </div>
+
+                            <div className="space-y-3">
+                                <h2 className="text-2xl font-bold text-primary tracking-tight">Sesión expirada</h2>
+                                <p className="text-secondary leading-relaxed">
+                                    Tu sesión ha expirado o no tienes permisos para acceder a este recurso. Por favor, inicia sesión de nuevo.
+                                </p>
+                            </div>
+
+                            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
+                                <button
+                                    onClick={this.redirectToLogin}
+                                    className="flex items-center gap-2 px-6 py-3 bg-accent text-on-accent rounded-full font-semibold hover:bg-accent-hover transition-all duration-300 shadow-md active:scale-95 group/btn cursor-pointer"
+                                >
+                                    <LogIn size={18} />
+                                    Iniciar sesión
+                                </button>
+
+                                <button
+                                    onClick={() => window.location.href = '/'}
+                                    className="flex items-center gap-2 px-6 py-3 bg-secondary text-primary rounded-full border border-themed hover:bg-secondary/80 transition-all duration-300 active:scale-95 cursor-pointer"
+                                >
+                                    <Home size={18} />
+                                    Volver al inicio
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                );
             }
 
             return (

@@ -5,10 +5,10 @@ import {
     useCancelFriendRequest,
     useRemoveFriend,
     getGetUserByIdQueryKey,
-    getGetUserQueryKey
+    getGetSelfUserQueryKey
 } from "@/api/generated/users/users";
 import { getSearches } from "@/api/generated/search/search";
-import { useEffect, UIEvent } from "react";
+import { UIEvent } from "react";
 import { useNavigate, useParams, Link } from "react-router-dom";
 import { toast } from "sonner";
 import { useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
@@ -27,7 +27,7 @@ export default function UserProfile() {
     const queryClient = useQueryClient();
     const invalidateUser = () => {
         queryClient.invalidateQueries({ queryKey: getGetUserByIdQueryKey(id) });
-        queryClient.invalidateQueries({ queryKey: getGetUserQueryKey() });
+        queryClient.invalidateQueries({ queryKey: getGetSelfUserQueryKey() });
     };
 
     const { mutate: sendFriendRequest } = useSendFriendRequest({
@@ -175,9 +175,9 @@ export default function UserProfile() {
                         {user.type === "friend" ? (
                             <p className="text-secondary text-sm">Amigo desde {new Date(user.friend_since).toLocaleDateString()}</p>
                         ) : user.type === "public" && user.sent_friend_request ? (
-                            <p className="text-secondary text-sm">Solicitud de amistad recibida</p>
-                        ) : user.type === "public" && user.received_friend_request ? (
                             <p className="text-secondary text-sm">Solicitud de amistad enviada</p>
+                        ) : user.type === "public" && user.received_friend_request ? (
+                            <p className="text-secondary text-sm">Solicitud de amistad recibida</p>
                         ) : null}
                         <p className="text-secondary text-sm">Miembro desde {new Date(user.created_at).toLocaleDateString()}</p>
                     </div>
@@ -198,11 +198,11 @@ export default function UserProfile() {
                             Eliminar
                         </button>
                     </div>
-                ) : user.type === "public" && user.sent_friend_request ? (
+                ) : user.type === "public" && user.received_friend_request ? (
                     <button onClick={() => acceptFriendRequest({ id })} className="px-8 py-3 bg-green-500 text-on-accent rounded-full hover:bg-green-600 transition-all shadow-xl active:scale-95 cursor-pointer">
                         Aceptar solicitud de amistad
                     </button>
-                ) : user.type === "public" && user.received_friend_request ? (
+                ) : user.type === "public" && user.sent_friend_request ? (
                     <button onClick={() => cancelFriendRequest({ id })} className="px-8 py-3 bg-accent text-on-accent rounded-full hover:bg-accent-hover transition-all shadow-xl active:scale-95 cursor-pointer">
                         Cancelar solicitud de amistad
                     </button>

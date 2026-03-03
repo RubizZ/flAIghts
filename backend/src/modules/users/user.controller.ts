@@ -1,13 +1,31 @@
 import { Body, Controller, Get, Patch, Path, Post, Query, RequestProp, Response, Route, Security, SuccessResponse as SuccessResponseDecorator, Tags } from "tsoa";
-import type { RegisterData, UpdateUserData, ResendVerificationEmailRequest, RegisterValidationFailResponse, UpdateUserValidationFailResponse, CreateUserResponseData, GetUserResponseData, User, PopulatedUser, UpdateUserResponseData, PublicUser, GetUserByIdResponseData, FriendUser, VerifyEmailResponseData, VerifyEmailValidationFailResponse, VerifyEmailErrorResponse, FriendRequestErrorResponse } from "./user.types.js";
+import type {
+    InitiateRegistrationData,
+    CompleteRegistrationData,
+    InitiateEmailChangeData,
+    CompleteEmailChangeData,
+    UpdateUserData,
+    UpdateUserValidationFailResponse,
+    InitiateRegistrationRequestValidationFailResponse,
+    CompleteRegistrationRequestValidationFailResponse,
+    InitiateEmailChangeRequestValidationFailResponse,
+    CompleteEmailChangeRequestValidationFailResponse,
+    GetUserResponseData,
+    User,
+    PopulatedUser,
+    UpdateUserResponseData,
+    PublicUser,
+    GetUserByIdResponseData,
+    FriendUser,
+    FriendRequestErrorResponse
+} from "./user.types.js";
 import { inject, injectable } from "tsyringe";
 import { UserService } from "./user.service.js";
 import type { AuthenticatedUser } from "../auth/auth.types.js";
-import type { IFriend, IUser } from "./user.model.js";
+import type { IFriend, IFriendPopulated, IUser, IUserUnpopulated } from "./models/user.model.js";
 import type { SuccessResponse, FailResponseFromError } from "../../utils/responses.js";
 import type { AuthFailResponse } from "../auth/auth.types.js";
-import { UserAlreadyExistsError, UserNotFoundError, SelfFriendRequestError, AlreadyFriendsError, FriendRequestAlreadySentError, FriendRequestAlreadyReceivedError, NoPendingFriendRequestError, NoReceivedFriendRequestError, NotFriendsError, EmailAlreadyVerifiedError } from "./user.errors.js";
-import type { PopulatedDoc } from "mongoose";
+import { EmailAlreadyInUseError, UsernameAlreadyInUseError, UserNotFoundError, NoPendingFriendRequestError, NoReceivedFriendRequestError, NotFriendsError, EmailVerificationCodeInvalidOrExpiredError } from "./user.errors.js";
 
 @injectable()
 @Route("users")
@@ -19,54 +37,30 @@ export class UsersController extends Controller {
     }
 
     /**
-     * Registra un nuevo usuario en el sistema.
+     * Paso 1 del registro: Inicia el registro enviando un código de verificación al email.
      */
-    @Post("/")
+    @Post("/register/initiate")
+    @SuccessResponseDecorator(200, "OK")
+    @Response<FailResponseFromError<EmailAlreadyInUseError>>(409, "Email ya registrado")
+    @Response<InitiateRegistrationRequestValidationFailResponse>(422, "Error de validación")
+    public async initiateRegistration(@Body() body: InitiateRegistrationData): Promise<SuccessResponse<null>> {
+        await this.userService.initiateRegistration(body);
+        return null as any;
+    }
+
+    /**
+     * Paso 2 del registro: Completa el registro verificando el código y creando el usuario.
+     */
+    @Post("/register/complete")
     @SuccessResponseDecorator(201, "Created")
-    @Response<FailResponseFromError<UserAlreadyExistsError>>(409, "Email o username ya registrado")
-    @Response<RegisterValidationFailResponse>(422, "Error de validación")
-    public async createUser(@Body() body: RegisterData): Promise<SuccessResponse<CreateUserResponseData>> {
-        const user = await this.userService.createUser(body);
-        return this.sanitizeUser(user) satisfies CreateUserResponseData as any;
+    @Response<FailResponseFromError<EmailAlreadyInUseError> | FailResponseFromError<UsernameAlreadyInUseError>>(409, "Email ya registrado")
+    @Response<FailResponseFromError<EmailVerificationCodeInvalidOrExpiredError>>(400, "Código inválido o expirado")
+    @Response<CompleteRegistrationRequestValidationFailResponse>(422, "Error de validación")
+    public async completeRegistration(@Body() body: CompleteRegistrationData): Promise<SuccessResponse<User>> {
+        const user = await this.userService.completeRegistration(body);
+        this.setStatus(201);
+        return this.sanitizeUser(user) satisfies User as any;
     }
-
-    /**
-     * Verifica el email de un usuario usando un código.
-     */
-    @Post("/verify-email")
-    @SuccessResponseDecorator(200, "OK")
-    @Response<VerifyEmailValidationFailResponse>(422, "Código de verificación inválido")
-    @Response<VerifyEmailErrorResponse>(400, "Código de verificación inválido o expirado o Email ya verificado")
-    public async verifyEmail(@Body() body: { email: string, code: string }): Promise<SuccessResponse<VerifyEmailResponseData>> {
-        try {
-            await this.userService.verifyEmail(body.email, body.code);
-            return null as any;
-        } catch (error) {
-            if (error instanceof UserNotFoundError || error instanceof EmailAlreadyVerifiedError) {
-                return null as any;
-            }
-            throw error;
-        }
-    }
-
-    /**
-     * Reenvía el código de verificación al email del usuario.
-     */
-    @Post("/resend-verification-email")
-    @SuccessResponseDecorator(200, "OK")
-    @Response<VerifyEmailErrorResponse>(400, "El email ya está verificado o el usuario no existe")
-    public async resendVerificationEmail(@Body() body: ResendVerificationEmailRequest): Promise<SuccessResponse<null>> {
-        try {
-            await this.userService.resendVerificationEmail(body.email);
-            return null as any;
-        } catch (error) {
-            if (error instanceof UserNotFoundError || error instanceof EmailAlreadyVerifiedError) {
-                return null as any;
-            }
-            throw error;
-        }
-    }
-
 
     /**
      * Obtiene los datos del usuario autenticado.
@@ -74,19 +68,19 @@ export class UsersController extends Controller {
     @Get("/me")
     @Security("jwt")
     @Response<AuthFailResponse>(401, "No autenticado")
-    public getUser(@RequestProp('user') user: AuthenticatedUser): SuccessResponse<GetUserResponseData> {
-        const { token, ...cleanUser } = user;
-        return cleanUser satisfies GetUserResponseData as any;
+    public async getSelfUser(@RequestProp('user') user: AuthenticatedUser): Promise<SuccessResponse<GetUserResponseData>> {
+        const freshUser = await this.userService.getUser(user._id, true);
+        return this.sanitizePopulatedUser(freshUser) satisfies GetUserResponseData as any;
     }
 
     /**
-     * Actualiza los datos del usuario autenticado.
+     * Actualiza los datos del usuario autenticado (sin incluir email).
      */
     @Patch("/me")
     @Security("jwt")
     @Response<AuthFailResponse>(401, "No autenticado")
     @Response<FailResponseFromError<UserNotFoundError>>(404, "Usuario no encontrado")
-    @Response<FailResponseFromError<UserAlreadyExistsError>>(409, "Email o username ya en uso")
+    @Response<FailResponseFromError<UsernameAlreadyInUseError>>(409, "El nombre de usuario ya está en uso")
     @Response<UpdateUserValidationFailResponse>(422, "Error de validación")
     public async updateUser(@RequestProp('user') user: AuthenticatedUser, @Body() body: UpdateUserData): Promise<SuccessResponse<UpdateUserResponseData>> {
         const updatedUser = await this.userService.updateUser(user._id, body);
@@ -94,19 +88,56 @@ export class UsersController extends Controller {
     }
 
     /**
-     * Busca usuarios por regex en username.
+     * Inicia el proceso de cambio de email enviando códigos al email antiguo y al nuevo.
+     */
+    @Post("/me/change-email/initiate")
+    @Security("jwt")
+    @Response<AuthFailResponse>(401, "No autenticado")
+    @Response<FailResponseFromError<EmailAlreadyInUseError>>(409, "El nuevo email ya está en uso")
+    @Response<InitiateEmailChangeRequestValidationFailResponse>(422, "Error de validación")
+    public async initiateEmailChange(@RequestProp('user') user: AuthenticatedUser, @Body() body: InitiateEmailChangeData): Promise<SuccessResponse<null>> {
+        await this.userService.initiateEmailChange(user._id, body);
+        return null as any;
+    }
+
+    /**
+     * Completa el cambio de email verificando ambos códigos.
+     */
+    @Post("/me/change-email/complete")
+    @Security("jwt")
+    @Response<AuthFailResponse>(401, "No autenticado")
+    @Response<FailResponseFromError<EmailVerificationCodeInvalidOrExpiredError>>(400, "Códigos inválidos o expirados")
+    @Response<CompleteEmailChangeRequestValidationFailResponse>(422, "Error de validación")
+    public async completeEmailChange(@RequestProp('user') user: AuthenticatedUser, @Body() body: CompleteEmailChangeData): Promise<SuccessResponse<User>> {
+        const updatedUser = await this.userService.completeEmailChange(user._id, body);
+        return this.sanitizeUser(updatedUser) satisfies User as any;
+    }
+
+    /**
+     * Cancela el cambio de email pendiente.
+     */
+    @Post("/me/change-email/cancel")
+    @Security("jwt")
+    @Response<AuthFailResponse>(401, "No autenticado")
+    @Response<FailResponseFromError<UserNotFoundError>>(404, "Usuario no encontrado")
+    public async cancelEmailChange(@RequestProp('user') user: AuthenticatedUser): Promise<SuccessResponse<null>> {
+        await this.userService.cancelEmailChange(user._id);
+        return null as any;
+    }
+
+    /**
+     * Busca usuarios.
      */
     @Get("/search")
     @Security("jwt")
     @Response<AuthFailResponse>(401, "No autenticado")
     public async searchUsers(@Query() q: string, @RequestProp('user') user: AuthenticatedUser): Promise<SuccessResponse<PublicUser[]>> {
         if (!q || !q.trim()) return [] satisfies PublicUser[] as any;
-        const foundUsers = await this.userService.searchUsers(q.trim());
+        const foundUsers = await this.userService.searchUsers(q.trim(), user._id);
         const mappedUsers = foundUsers
-            .filter(u => u._id.toString() !== user._id.toString())
             .map(u => {
-                const sentReq = user.sent_friend_requests.some(req => (typeof req === 'string' ? req : req._id?.toString() || req.toString()) === u._id.toString());
-                const recReq = user.received_friend_requests.some(req => (typeof req === 'string' ? req : req._id?.toString() || req.toString()) === u._id.toString());
+                const sentReq = user.sent_friend_requests.some(req => (typeof req === 'string' ? req : req._id) === u._id);
+                const recReq = user.received_friend_requests.some(req => (typeof req === 'string' ? req : req._id) === u._id);
                 return this.sanitizePublicUser(u, sentReq, recReq);
             });
         return mappedUsers satisfies PublicUser[] as any;
@@ -120,73 +151,63 @@ export class UsersController extends Controller {
     @Response<AuthFailResponse>(401, "No autenticado")
     @Response<FailResponseFromError<UserNotFoundError>>(404, "Usuario no encontrado")
     public async getUserById(@Path() id: string, @RequestProp('user') user: AuthenticatedUser): Promise<SuccessResponse<GetUserByIdResponseData>> {
-        const targetUser = await this.userService.getUserById(id);
-        if (targetUser._id === user._id) {
-            return this.sanitizeUser(targetUser) satisfies GetUserByIdResponseData as any;
+        if (id === user._id) {
+            const cleanUser = this.sanitizeAuthenticatedUser(user);
+            return cleanUser satisfies GetUserByIdResponseData as any;
         }
-        if (targetUser.friends.some(f => (typeof f.user === 'string' ? f.user : (f.user as any)._id?.toString() || f.user.toString()) === user._id)) {
-            return this.sanitizeFriendUser(targetUser) satisfies GetUserByIdResponseData as any;
+
+        const targetUser = await this.userService.getUser(id);
+
+        const friendship = targetUser.friends.find(f => f.user === user._id);
+
+        if (friendship) {
+            return this.sanitizeFriendUser(targetUser, friendship.friend_since) satisfies GetUserByIdResponseData as any;
         }
-        if (targetUser.sent_friend_requests.some(f => (typeof f === 'string' ? f : f._id) === user._id)) {
-            return this.sanitizePublicUser(targetUser, true, false) satisfies GetUserByIdResponseData as any;
-        }
-        if (targetUser.received_friend_requests.some(f => (typeof f === 'string' ? f : f._id) === user._id)) {
-            return this.sanitizePublicUser(targetUser, false, true) satisfies GetUserByIdResponseData as any;
-        }
-        return this.sanitizePublicUser(targetUser, false, false) satisfies GetUserByIdResponseData as any;
+
+        const sentReq = user.sent_friend_requests.some(req => (typeof req === 'string' ? req : req._id) === id);
+        const recReq = user.received_friend_requests.some(req => (typeof req === 'string' ? req : req._id) === id);
+
+        return this.sanitizePublicUser(targetUser, sentReq, recReq) satisfies GetUserByIdResponseData as any;
     }
 
     @Post("/{id}/send-friend-request")
     @Security("jwt")
     @Response<AuthFailResponse>(401, "No autenticado")
     @Response<FailResponseFromError<UserNotFoundError>>(404, "Usuario no encontrado")
-    @Response<FriendRequestErrorResponse>(400, "Error en la solicitud de amistad (mismo usuario, ya amigos o solicitud ya existente)")
+    @Response<FriendRequestErrorResponse>(400, "Error en la solicitud de amistad")
     public async sendFriendRequest(@Path() id: string, @RequestProp('user') user: AuthenticatedUser): Promise<SuccessResponse<null>> {
-
-
-        if (id === user._id) throw new SelfFriendRequestError();
-        if (user.friends.some(f => f._id === id)) throw new AlreadyFriendsError();
-        if (user.sent_friend_requests.some(req => req._id === id)) throw new FriendRequestAlreadySentError();
-        if (user.received_friend_requests.some(req => req._id === id)) throw new FriendRequestAlreadyReceivedError();
-
         await this.userService.sendFriendRequest(user._id, id);
-        return {} as any;
+        return null as any;
     }
 
     @Post("/{id}/cancel-friend-request")
     @Security("jwt")
     @Response<AuthFailResponse>(401, "No autenticado")
     @Response<FailResponseFromError<UserNotFoundError>>(404, "Usuario no encontrado")
-    @Response<FailResponseFromError<NoPendingFriendRequestError>>(400, "No hay solicitud pendiente con este usuario")
+    @Response<FailResponseFromError<NoPendingFriendRequestError>>(400, "No hay solicitud pendiente")
     public async cancelFriendRequest(@Path() id: string, @RequestProp('user') user: AuthenticatedUser): Promise<SuccessResponse<null>> {
-        if (!user.sent_friend_requests.some(req => req._id === id)) throw new NoPendingFriendRequestError();
-
         await this.userService.cancelFriendRequest(user._id, id);
-        return {} as any;
+        return null as any;
     }
 
     @Post("/{id}/accept-friend-request")
     @Security("jwt")
     @Response<AuthFailResponse>(401, "No autenticado")
     @Response<FailResponseFromError<UserNotFoundError>>(404, "Usuario no encontrado")
-    @Response<FailResponseFromError<NoReceivedFriendRequestError>>(400, "No tienes ninguna solicitud de este usuario")
+    @Response<FailResponseFromError<NoReceivedFriendRequestError>>(400, "No has recibido solicitud de esta persona")
     public async acceptFriendRequest(@Path() id: string, @RequestProp('user') user: AuthenticatedUser): Promise<SuccessResponse<null>> {
-        if (!user.received_friend_requests.some(req => req._id === id)) throw new NoReceivedFriendRequestError();
-
         await this.userService.acceptFriendRequest(user._id, id);
-        return {} as any;
+        return null as any;
     }
 
     @Post("/{id}/reject-friend-request")
     @Security("jwt")
     @Response<AuthFailResponse>(401, "No autenticado")
     @Response<FailResponseFromError<UserNotFoundError>>(404, "Usuario no encontrado")
-    @Response<FailResponseFromError<NoReceivedFriendRequestError>>(400, "No tienes ninguna solicitud de este usuario para rechazar")
+    @Response<FailResponseFromError<NoReceivedFriendRequestError>>(400, "No has recibido solicitud de esta persona")
     public async rejectFriendRequest(@Path() id: string, @RequestProp('user') user: AuthenticatedUser): Promise<SuccessResponse<null>> {
-        if (!user.received_friend_requests.some(req => req._id === id)) throw new NoReceivedFriendRequestError();
-
         await this.userService.rejectFriendRequest(user._id, id);
-        return {} as any;
+        return null as any;
     }
 
     @Post("/{id}/remove-friend")
@@ -195,10 +216,27 @@ export class UsersController extends Controller {
     @Response<FailResponseFromError<UserNotFoundError>>(404, "Usuario no encontrado")
     @Response<FailResponseFromError<NotFriendsError>>(400, "No tienes agregada a esa persona")
     public async removeFriend(@Path() id: string, @RequestProp('user') user: AuthenticatedUser): Promise<SuccessResponse<null>> {
-        if (!user.friends.some(f => f._id === id)) throw new NotFriendsError();
-
         await this.userService.removeFriend(user._id, id);
-        return {} as any;
+        return null as any;
+    }
+
+    private sanitizeAuthenticatedUser(user: AuthenticatedUser): PopulatedUser {
+        return {
+            _id: user._id,
+            type: 'self',
+            username: user.username,
+            public: user.public,
+            email: user.email,
+            role: user.role,
+            preferences: user.preferences,
+            created_at: user.created_at,
+            last_seen_at: user.last_seen_at,
+            auth_version: user.auth_version,
+            friends: user.friends,
+            sent_friend_requests: user.sent_friend_requests,
+            received_friend_requests: user.received_friend_requests,
+            pending_email: user.pending_email
+        } satisfies PopulatedUser as any;
     }
 
     private sanitizeUser(user: IUser): User {
@@ -208,7 +246,6 @@ export class UsersController extends Controller {
             public: user.public,
             username: user.username,
             email: user.email,
-            email_verified: user.email_verified,
             role: user.role,
             preferences: user.preferences,
             created_at: user.created_at.toISOString(),
@@ -216,11 +253,12 @@ export class UsersController extends Controller {
             auth_version: user.auth_version,
             friends: user.friends.map(f => this.friendPopulatedDocToString(f)),
             sent_friend_requests: user.sent_friend_requests.map(p => this.userPopulatedDocToString(p)),
-            received_friend_requests: user.received_friend_requests.map(p => this.userPopulatedDocToString(p))
+            received_friend_requests: user.received_friend_requests.map(p => this.userPopulatedDocToString(p)),
+            pending_email: user.email_change_request?.new_email
         };
     }
 
-    private userPopulatedDocToString(user: PopulatedDoc<IUser, string>): string {
+    private userPopulatedDocToString(user: string | IUser): string {
         if (typeof user === 'string') return user;
         return user._id;
     }
@@ -237,19 +275,19 @@ export class UsersController extends Controller {
             public: user.public,
             username: user.username,
             email: user.email,
-            email_verified: user.email_verified,
             role: user.role,
             preferences: user.preferences,
             created_at: user.created_at.toISOString(),
             last_seen_at: user.last_seen_at.toISOString(),
             auth_version: user.auth_version,
-            friends: user.friends.filter(f => typeof f.user !== 'string').map(f => this.sanitizeFriendUser(f.user as IUser)),
-            sent_friend_requests: user.sent_friend_requests.filter((f): f is IUser => typeof f !== 'string').map(f => this.sanitizePublicUser(f, true, false)),
-            received_friend_requests: user.received_friend_requests.filter((f): f is IUser => typeof f !== 'string').map(f => this.sanitizePublicUser(f, false, true))
+            friends: user.friends.filter((f): f is IFriendPopulated => typeof f.user !== 'string').map(f => this.sanitizeFriendUser(f.user, f.friend_since)),
+            sent_friend_requests: user.sent_friend_requests.filter((f): f is IUserUnpopulated => typeof f !== 'string').map(f => this.sanitizePublicUser(f, true, false)),
+            received_friend_requests: user.received_friend_requests.filter((f): f is IUserUnpopulated => typeof f !== 'string').map(f => this.sanitizePublicUser(f, false, true)),
+            pending_email: user.email_change_request?.new_email
         };
     }
 
-    private sanitizePublicUser(user: IUser, sentFriendRequest: boolean, receivedFriendRequest: boolean): PublicUser {
+    private sanitizePublicUser(user: IUserUnpopulated, sentFriendRequest: boolean, receivedFriendRequest: boolean): PublicUser {
         return {
             _id: user._id,
             type: 'public',
@@ -263,7 +301,7 @@ export class UsersController extends Controller {
         };
     }
 
-    private sanitizeFriendUser(user: IUser): FriendUser {
+    private sanitizeFriendUser(user: IUserUnpopulated, friendSince?: Date): FriendUser {
         return {
             _id: user._id,
             type: 'friend',
@@ -271,7 +309,7 @@ export class UsersController extends Controller {
             role: user.role,
             created_at: user.created_at.toISOString(),
             last_seen_at: user.last_seen_at.toISOString(),
-            friend_since: user.friends.find(f => f.user.toString() === user._id.toString())?.friend_since.toISOString() || new Date().toISOString()
+            friend_since: friendSince ? friendSince.toISOString() : user.friends.find(f => f.user.toString() === user._id.toString())!.friend_since.toISOString()
         };
     }
 
