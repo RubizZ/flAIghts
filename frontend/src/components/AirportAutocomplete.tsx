@@ -1,13 +1,7 @@
 import { useState, useEffect, useRef } from "react";
-import { Plane } from "lucide-react";
-import { AXIOS_INSTANCE } from "../api/axios-instance";
-
-interface Airport {
-    iata_code: string;
-    name: string;
-    city: string;
-    country: string;
-}
+import { Plane, Loader2 } from "lucide-react";
+import { useSearchAirports } from "@/api/generated/airports/airports";
+import type { AirportResponse } from "@/api/generated/model";
 
 interface AirportAutocompleteProps {
     value: string;
@@ -18,9 +12,22 @@ interface AirportAutocompleteProps {
 
 export default function AirportAutocomplete({ value, onChange, placeholder, className }: AirportAutocompleteProps) {
     const [query, setQuery] = useState(value);
-    const [suggestions, setSuggestions] = useState<Airport[]>([]);
+    const [debouncedQuery, setDebouncedQuery] = useState(value);
     const [isOpen, setIsOpen] = useState(false);
     const wrapperRef = useRef<HTMLDivElement>(null);
+
+    const { data, isFetching } = useSearchAirports(
+        { q: debouncedQuery },
+        {
+            query: {
+                enabled: debouncedQuery.length >= 2 && debouncedQuery !== value,
+                staleTime: 5 * 60 * 1000, // Keep results fresh for 5 minutes.
+                refetchOnWindowFocus: false, 
+            },
+        }
+    );
+    
+    const suggestions = data ?? [];
 
     // Sync internal state with prop value (e.g. when swapping origin/dest)
     useEffect(() => {
@@ -38,38 +45,20 @@ export default function AirportAutocomplete({ value, onChange, placeholder, clas
         return () => document.removeEventListener("mousedown", handleClickOutside);
     }, []);
 
-    // Debounce search to avoid too many requests
+    // Debounce query input to avoid excessive API calls
     useEffect(() => {
-        const delayDebounceFn = setTimeout(async () => {
-            // Only fetch if query is different from current selected value (to avoid refetching on selection)
-            // and has at least 2 characters
-            if (query && query !== value && query.length >= 2) {
-                try {
-                    const response = await AXIOS_INSTANCE.get<{ data: Airport[] }>(
-                        `/airports?q=${encodeURIComponent(query)}`,
-                        { baseURL: import.meta.env.VITE_BACKEND_API_BASE_URL }
-                    );
-                    // The backend wraps responses in { status: 'success', data: [...] }.
-                    // The base AXIOS_INSTANCE doesn't unwrap this, so we access response.data.data.
-                    setSuggestions(response.data.data);
-                    setIsOpen(true);
-                } catch (error) {
-                    console.error("Failed to fetch airports", error);
-                    setSuggestions([]);
-                    setIsOpen(false);
-                }
-            } else if (query.length < 2) {
-                setSuggestions([]);
-                setIsOpen(false);
-            }
+        const timer = setTimeout(() => {
+            setDebouncedQuery(query);
         }, 300);
 
-        return () => clearTimeout(delayDebounceFn);
-    }, [query, value]);
+        return () => clearTimeout(timer);
+    }, [query]);
 
-    const handleSelect = (airport: Airport) => {
-        setQuery(airport.iata_code);
-        onChange(airport.iata_code);
+    const handleSelect = (airport: AirportResponse) => {
+        onChange(airport.iata_code); // Update parent state with the selected airport's IATA code
+        /* Sync input value with selection. This will make `debouncedQuery` equal to `value` and 
+        the hook's `enabled` condition will become `false`, preventing a reload */
+        setQuery(airport.iata_code); 
         setIsOpen(false);
     };
 
@@ -84,8 +73,13 @@ export default function AirportAutocomplete({ value, onChange, placeholder, clas
                     setQuery(e.target.value);
                     if (e.target.value === "") onChange("");
                 }}
-                onFocus={() => suggestions.length > 0 && setIsOpen(true)}
+                onFocus={() => setIsOpen(true)}
             />
+            {isFetching && (
+                <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                    <Loader2 className="animate-spin h-4 w-4 text-gray-400" />
+                </div>
+            )}
             {isOpen && suggestions.length > 0 && (
                 <ul className="absolute z-50 w-full mt-1 bg-white text-black border border-gray-200 rounded-md shadow-lg max-h-60 overflow-auto text-left">
                     {suggestions.map((airport) => (
