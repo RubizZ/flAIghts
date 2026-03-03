@@ -14,7 +14,20 @@ function SearchFlight() {
     const [tripType, setTripType] = useState("roundTrip");
 
     const navigate = useNavigate();
-    const { mutate: searchRequest, isPending } = useSearchRequest();
+    
+    const { mutate: searchRequest, isPending } = useSearchRequest({
+        mutation: {
+            onSuccess: (data) => {
+                // Axios unwraps the response, so data is already the response body
+                toast.success("Búsqueda iniciada");
+                navigate(`/search/${data.id}`);
+            },
+            onError: (error) => {
+                console.error(error);
+                toast.error(error?.message || "Error al buscar vuelos");
+            }
+        }
+    });
 
     const handleSwitch = () => {
         const temp = origin;
@@ -45,8 +58,6 @@ function SearchFlight() {
             criteria: {
                 priority: "balanced" as const,
             },
-            // Searches created by anonymous users must be shared to be retrieved later by URL
-            shared: true,
             departure_date: departureDate,
             // Ensure we only send return_date if it's a round trip and the date is not empty
             return_date: (tripType === "roundTrip" && returnDate) ? returnDate : undefined,
@@ -54,23 +65,6 @@ function SearchFlight() {
 
         searchRequest({
             data: requestData
-        }, {
-            onSuccess: (response) => {
-                // The react-query mutator from Orval likely unwraps the server response.
-                // `response` is the actual search object, not the full Axios response.
-                const searchId = response.id;
-                if (!searchId) {
-                    console.error("Error: searchId not found in the response.", response);
-                    toast.error("La respuesta del servidor no contenía un ID de búsqueda.");
-                    return;
-                }
-                toast.success("Búsqueda iniciada");
-                navigate(`/search/${searchId}`);
-            },
-            onError: (error) => {
-                console.error(error);
-                toast.error("Error al buscar vuelos");
-            }
         });
     }
 
