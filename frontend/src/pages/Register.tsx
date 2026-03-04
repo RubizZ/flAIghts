@@ -22,14 +22,17 @@ export default function Register() {
         code: "",
         username: "",
         password: "",
-        confirmPassword: ""
+        confirmPassword: "",
+        acceptedTerms: false
     });
+    const [isHoveringLink, setIsHoveringLink] = useState(false);
     const [errors, setErrors] = useState({
         email: "",
         code: "",
         username: "",
         password: "",
-        confirmPassword: ""
+        confirmPassword: "",
+        acceptedTerms: ""
     });
 
     useEffect(() => {
@@ -114,12 +117,13 @@ export default function Register() {
             code: !formData.code ? "El código es obligatorio" : "",
             username: !formData.username ? "El nombre de usuario es obligatorio" : "",
             password: !formData.password ? "La contraseña es obligatoria" : formData.password.length < 8 ? "Mínimo 8 caracteres" : "",
-            confirmPassword: formData.password !== formData.confirmPassword ? "Las contraseñas no coinciden" : ""
+            confirmPassword: formData.password !== formData.confirmPassword ? "Las contraseñas no coinciden" : "",
+            acceptedTerms: !formData.acceptedTerms ? "Debes aceptar los términos y condiciones" : ""
         };
 
         setErrors(newErrors);
 
-        if (newErrors.code || newErrors.username || newErrors.password || newErrors.confirmPassword) {
+        if (newErrors.code || newErrors.username || newErrors.password || newErrors.confirmPassword || newErrors.acceptedTerms) {
             return;
         }
 
@@ -134,8 +138,9 @@ export default function Register() {
     };
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const { name, value } = e.target;
-        setFormData(prev => ({ ...prev, [name]: value }));
+        const { name, value, type, checked } = e.target;
+        const finalValue = type === 'checkbox' ? checked : value;
+        setFormData(prev => ({ ...prev, [name]: finalValue }));
         if (errors[name as keyof typeof errors]) {
             setErrors(prev => ({ ...prev, [name]: "" }));
         }
@@ -251,9 +256,34 @@ export default function Register() {
                                 icon={<Lock size={18} />}
                             />
 
-                            <p className="text-xs text-center text-gray-500">
-                                Al registrarte, aceptas los <a href="/terms" target="_blank" rel="noopener noreferrer" className="text-accent hover:underline">Términos</a> y la <a href="/privacy" target="_blank" rel="noopener noreferrer" className="text-accent hover:underline">Privacidad</a>.
-                            </p>
+                            <div className="flex flex-col gap-2">
+                                <label className="flex items-center gap-3 cursor-pointer group">
+                                    <div className="relative w-5 h-5 flex items-center justify-center shrink-0">
+                                        <input
+                                            type="checkbox"
+                                            name="acceptedTerms"
+                                            id="acceptedTerms"
+                                            checked={formData.acceptedTerms}
+                                            onChange={handleChange}
+                                            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                                        />
+                                        <div className={`w-5 h-5 border rounded-md transition-all flex items-center justify-center ${formData.acceptedTerms ? 'bg-accent border-themed text-on-accent animate-fade-in animate-duration-200' : `bg-primary border-themed ${!isHoveringLink ? 'group-hover:border-gray-400' : ''}`}`}>
+                                            {formData.acceptedTerms && (
+                                                <svg
+                                                    className="w-3.5 h-3.5 fill-none stroke-current stroke-3 pointer-events-none"
+                                                    viewBox="0 0 24 24"
+                                                >
+                                                    <polyline points="20 6 9 17 4 12" />
+                                                </svg>
+                                            )}
+                                        </div>
+                                    </div>
+                                    <span className="text-xs text-secondary leading-tight select-none">
+                                        Acepto los <a href="/terms" target="_blank" rel="noopener noreferrer" className="text-accent hover:underline font-bold relative z-20" onClick={(e) => e.stopPropagation()} onMouseEnter={() => setIsHoveringLink(true)} onMouseLeave={() => setIsHoveringLink(false)}>Términos de Servicio</a> y la <a href="/privacy" target="_blank" rel="noopener noreferrer" className="text-accent hover:underline font-bold relative z-20" onClick={(e) => e.stopPropagation()} onMouseEnter={() => setIsHoveringLink(true)} onMouseLeave={() => setIsHoveringLink(false)}>Política de Privacidad</a>
+                                    </span>
+                                </label>
+                                {errors.acceptedTerms && <p className="text-[10px] text-red-500 ml-8 font-bold animate-shake">{errors.acceptedTerms}</p>}
+                            </div>
 
                             <button
                                 type="button"
