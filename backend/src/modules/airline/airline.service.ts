@@ -1,10 +1,10 @@
 import { singleton } from "tsyringe";
 import { Airline } from "./airline.model.js";
-import type { IAirline } from "./airline.model.js";
+import type { AirlineResponse } from "./airline.types.js";
 
 @singleton()
 export class AirlineService {
-    public async searchAirlines(query: string): Promise<IAirline[]> {
+    public async searchAirlines(query: string): Promise<AirlineResponse[]> {
         if (!query || query.length < 2) return [];
 
         const regex = new RegExp(query, 'i');

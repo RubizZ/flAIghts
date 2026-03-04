@@ -15,8 +15,9 @@ export class AirportController extends Controller {
 
     @Get("/")
     @Response<SuccessResponse<AirportResponse[]>>(200, "Aeropuertos encontrados")
-    public async search(@Query() q: string): Promise<SuccessResponse<AirportResponse[]>> {
+    public async searchAirports(@Query() q: string): Promise<SuccessResponse<AirportResponse[]>> {
         const results = await this.airportService.searchAirports(q);
+        console.log("results: ", results);
         return results satisfies AirportResponse[] as any;
     }
 }
