@@ -2,12 +2,14 @@ import { inject, singleton } from "tsyringe";
 import type { HydratedDocument } from "mongoose";
 import { MongoServerError } from "mongodb";
 import crypto from "node:crypto";
+import { fileTypeFromBuffer } from 'file-type';
 import type {
     InitiateRegistrationData,
     CompleteRegistrationData,
     InitiateEmailChangeData,
     CompleteEmailChangeData,
-    UpdateUserData
+    UpdateUserData,
+    SetProfilePictureData
 } from "./user.types.js";
 import { User, type IUser, type IUserDocument, type IUserPopulated, type IUserUnpopulated } from "./models/user.model.js";
 import { PreRegistration } from "./models/pre-registration.model.js";
@@ -23,10 +25,13 @@ import {
     NoPendingFriendRequestError,
     NoReceivedFriendRequestError,
     NotFriendsError,
-    EmailVerificationCodeInvalidOrExpiredError
+    EmailVerificationCodeInvalidOrExpiredError,
+    InvalidProfilePictureError,
+    ProfilePictureTooLargeError
 } from "./user.errors.js";
 import { MailService } from "@/services/mail.service.js";
 import { MailTemplates } from "@/services/mail.templates.js";
+import { S3Service, S3FileTooLargeError } from "@/services/s3.service.js";
 
 export class EmailVerificationService {
     public static generateCode() {
@@ -41,7 +46,10 @@ export class EmailVerificationService {
 @singleton()
 export class UserService {
 
-    constructor(@inject(MailService) private mailService: MailService) { }
+    constructor(
+        @inject(MailService) private mailService: MailService,
+        @inject(S3Service) private s3Service: S3Service
+    ) { }
 
     public async initiateRegistration(data: InitiateRegistrationData): Promise<void> {
         // Check if user already exists
@@ -173,6 +181,7 @@ export class UserService {
 
     public async getUser(userId: string, populate: true): Promise<IUserPopulated>;
     public async getUser(userId: string, populate?: false): Promise<IUserUnpopulated>;
+    public async getUser(userId: string, populate: boolean): Promise<IUser>;
     public async getUser(userId: string, populate: boolean = false): Promise<IUser> {
         let query = User.findById(userId);
         if (populate) {
@@ -331,6 +340,64 @@ export class UserService {
             if (!target) throw new UserNotFoundError(targetId);
 
             if (!requester.friends.some(f => (typeof f.user === 'string' ? f.user : f.user._id) === targetId)) throw new NotFriendsError();
+        }
+    }
+
+    public async getProfilePictureUrl(userId: string): Promise<string> {
+        const user = await User.findById(userId);
+        if (!user || !user.profile_picture) throw new UserNotFoundError(userId);
+        return await this.s3Service.getDownloadUrl(user.profile_picture);
+    }
+
+    public async setProfilePicture(userId: string, data: SetProfilePictureData | Buffer): Promise<IUserDocument> {
+        const user = await User.findById(userId);
+        if (!user) throw new UserNotFoundError(userId);
+
+        // Extract buffer
+        let buffer: Buffer;
+        if (Buffer.isBuffer(data)) {
+            buffer = data;
+        } else {
+            // Decode base64 (remove data:image/xxx;base64, if exists)
+            buffer = Buffer.from(data.image.includes(",") ? data.image.split(",").pop()! : data.image, "base64");
+        }
+
+        // Detect type from buffer
+        const fileType = await fileTypeFromBuffer(buffer);
+        if (!fileType || !fileType.mime.startsWith("image/")) {
+            throw new InvalidProfilePictureError();
+        }
+
+        // Validación de negocio: Limite de 5MB para avatares
+        const AVATAR_MAX_SIZE = 5 * 1024 * 1024;
+        if (buffer.length > AVATAR_MAX_SIZE) {
+            throw new ProfilePictureTooLargeError(buffer.length, AVATAR_MAX_SIZE);
+        }
+
+        try {
+            // Remove old picture from S3 if exists
+            if (user.profile_picture) {
+                await this.s3Service.delete(user.profile_picture);
+            }
+
+            // Upload to S3 with correct extension and MIME type
+            const key = await this.s3Service.upload(
+                `avatars/${userId}-${Date.now()}.${fileType.ext}`,
+                buffer,
+                fileType.mime
+            );
+
+            user.profile_picture = key;
+            await user.save();
+            return user;
+        } catch (error: any) {
+            // Transformamos solo errores de negocio (AppError) a dominio
+            if (error instanceof S3FileTooLargeError) {
+                throw new ProfilePictureTooLargeError(error.details.size, error.details.maxSize);
+            }
+            // Cualquier otro error de S3 (red, credenciales, etc.) lo simplemente relanzamos
+            // ya que son Error y el global handler los trata como 500
+            throw error;
         }
     }
 

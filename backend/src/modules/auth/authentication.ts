@@ -51,68 +51,16 @@ export async function expressAuthentication(
         user.last_seen_at = new Date();
         await user.save();
 
-        await user.populate('friends.user', 'username role created_at last_seen_at');
-        await user.populate('sent_friend_requests', 'username role created_at last_seen_at public');
-        await user.populate('received_friend_requests', 'username role created_at last_seen_at public');
-
-        const userObj = user.toObject();
-        const safeUser = {
-            _id: userObj._id,
-            type: 'self',
-            username: userObj.username,
-            email: userObj.email,
-            role: userObj.role,
-            preferences: userObj.preferences,
-            public: userObj.public,
-            created_at: user.created_at.toISOString(),
-            last_seen_at: user.last_seen_at.toISOString(),
-            auth_version: userObj.auth_version,
-            friends: userObj.friends.map(f => {
-                const user = f.user as IUser;
-                return {
-                    _id: user._id,
-                    type: 'friend',
-                    username: user.username,
-                    role: user.role,
-                    created_at: user.created_at.toISOString(),
-                    last_seen_at: user.last_seen_at.toISOString(),
-                    friend_since: f.friend_since.toISOString()
-                } satisfies FriendUser;
-            }),
-            sent_friend_requests: userObj.sent_friend_requests.map(u => {
-                const user = u as IUser;
-                return {
-                    _id: user._id,
-                    type: 'public',
-                    username: user.username,
-                    role: user.role,
-                    public: user.public,
-                    created_at: user.created_at.toISOString(),
-                    last_seen_at: user.last_seen_at.toISOString(),
-                    sent_friend_request: true,
-                    received_friend_request: false
-                } satisfies PublicUser;
-            }),
-            received_friend_requests: userObj.received_friend_requests.map(u => {
-                const user = u as IUser;
-                return {
-                    _id: user._id,
-                    type: 'public',
-                    username: user.username,
-                    role: user.role,
-                    public: user.public,
-                    created_at: user.created_at.toISOString(),
-                    last_seen_at: user.last_seen_at.toISOString(),
-                    sent_friend_request: false,
-                    received_friend_request: true
-                } satisfies PublicUser;
-            })
-        } satisfies PopulatedUser;
-
-        return {
-            ...safeUser,
+        const safeUser: AuthenticatedUser = {
+            _id: user._id.toString(),
+            username: user.username,
+            email: user.email,
+            role: user.role,
+            auth_version: user.auth_version,
             token: token,
         };
+
+        return safeUser;
     };
 
     try {

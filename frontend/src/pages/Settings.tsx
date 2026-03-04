@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
-import { useUpdateUser, getGetSelfUserQueryKey, useInitiateEmailChange, useCompleteEmailChange, useCancelEmailChange } from "@/api/generated/users/users";
+import { useUpdateUser, getGetSelfUserQueryKey, useInitiateEmailChange, useCompleteEmailChange, useCancelEmailChange, getGetUserByIdQueryKey, useSetProfilePicture } from "@/api/generated/users/users";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import {
@@ -17,11 +17,14 @@ import {
     Eye,
     EyeOff,
     Mail,
-    ShieldCheck
+    ShieldCheck,
+    Camera,
+    Upload
 } from "lucide-react";
 import { useTheme } from "@/context/ThemeContext";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useChangePassword } from "@/api/generated/auth/auth";
+import UserAvatar from "@/components/ui/UserAvatar";
 
 export default function Settings() {
     const { user, logout, refetch, isAuthenticated, isLoading } = useAuth();
@@ -61,8 +64,6 @@ export default function Settings() {
     // Email change verification state
     const [oldEmailCode, setOldEmailCode] = useState("");
     const [newEmailCode, setNewEmailCode] = useState("");
-    const [isVerifyingEmail, setIsVerifyingEmail] = useState(false);
-
     useEffect(() => {
         if (user?.pending_email && activeTab === 'seguridad') {
             toast.info("Tienes un cambio de email pendiente de verificación", {
@@ -88,6 +89,9 @@ export default function Settings() {
             onSuccess: () => {
                 toast.success("Perfil actualizado con éxito");
                 queryClient.invalidateQueries({ queryKey: getGetSelfUserQueryKey() });
+                if (user?._id) {
+                    queryClient.invalidateQueries({ queryKey: getGetUserByIdQueryKey(user._id) });
+                }
                 refetch();
             },
             onError: (error) => {
@@ -102,7 +106,6 @@ export default function Settings() {
                 toast.success("Solicitud de cambio de email iniciada. Introduce los códigos enviados.");
                 queryClient.invalidateQueries({ queryKey: getGetSelfUserQueryKey() });
                 refetch();
-                setIsVerifyingEmail(true);
             },
             onError: (error) => {
                 if (error.code === "EMAIL_ALREADY_IN_USE") {
@@ -120,8 +123,10 @@ export default function Settings() {
                 toast.success("Email actualizado correctamente");
                 setOldEmailCode("");
                 setNewEmailCode("");
-                setIsVerifyingEmail(false);
                 queryClient.invalidateQueries({ queryKey: getGetSelfUserQueryKey() });
+                if (user?._id) {
+                    queryClient.invalidateQueries({ queryKey: getGetUserByIdQueryKey(user._id) });
+                }
                 refetch();
             },
             onError: (error) => {
@@ -164,6 +169,22 @@ export default function Settings() {
         }
     });
 
+    const { mutate: uploadAvatar, isPending: isUploadingAvatar } = useSetProfilePicture({
+        mutation: {
+            onSuccess: () => {
+                toast.success("Foto de perfil actualizada correctamente");
+                queryClient.invalidateQueries({ queryKey: getGetSelfUserQueryKey() });
+                if (user?._id) {
+                    queryClient.invalidateQueries({ queryKey: getGetUserByIdQueryKey(user._id) });
+                }
+                refetch();
+            },
+            onError: (error) => {
+                toast.error(error.message || "Error al subir la imagen");
+            }
+        }
+    });
+
 
     const hasProfileChanged = user ? (username !== user.username || isPublic !== user.public) : false;
     const hasPreferencesChanged = user ? (
@@ -188,6 +209,28 @@ export default function Settings() {
                 }
             }
         });
+    };
+
+    const handleAvatarFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        // Limite de 5MB
+        if (file.size > 5 * 1024 * 1024) {
+            toast.error("La imagen es demasiado grande (máx. 5MB)");
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.onloadend = () => {
+            const base64String = reader.result as string;
+            uploadAvatar({
+                data: {
+                    image: base64String
+                }
+            });
+        };
+        reader.readAsDataURL(file);
     };
 
     const handleVerifyEmailChange = () => {
@@ -268,11 +311,7 @@ export default function Settings() {
                 <aside className="md:col-span-1">
                     <div className="md:sticky md:top-24 h-fit z-10 p-4 bg-primary border border-themed rounded-3xl shadow-sm">
                         <div className="flex flex-col items-center text-center gap-4 mb-6">
-                            <img
-                                src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${user._id}`}
-                                className="w-24 h-24 rounded-full border-4 border-themed shadow-sm bg-secondary"
-                                alt="Avatar"
-                            />
+                            <UserAvatar user={user} size={96} className="border-4 border-themed shadow-sm bg-secondary" />
                             <div>
                                 <h2 className="font-bold text-xl">{user.username}</h2>
                                 <p className="text-sm text-secondary opacity-70">{user.email}</p>
@@ -325,6 +364,43 @@ export default function Settings() {
                                 </div>
 
                                 <div className="space-y-6">
+                                    <div className="flex flex-col items-center sm:flex-row gap-6 p-6 bg-secondary/30 rounded-3xl border border-themed mb-6">
+                                        <div className="relative group">
+                                            <UserAvatar user={user} size={100} className="border-4 border-themed shadow-md" />
+                                            <label className="absolute inset-0 flex items-center justify-center bg-black/40 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
+                                                <Camera size={24} />
+                                                <input
+                                                    type="file"
+                                                    accept="image/*"
+                                                    className="hidden"
+                                                    onChange={handleAvatarFileChange}
+                                                    disabled={isUploadingAvatar}
+                                                />
+                                            </label>
+                                            {isUploadingAvatar && (
+                                                <div className="absolute inset-0 flex items-center justify-center bg-black/20 rounded-full">
+                                                    <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-white"></div>
+                                                </div>
+                                            )}
+                                        </div>
+                                        <div className="flex flex-col gap-2 text-center sm:text-left">
+                                            <h3 className="font-bold text-lg">Tu foto de perfil</h3>
+                                            <p className="text-xs text-secondary opacity-70 mb-2">Máximo 5MB.</p>
+                                            <div className="flex flex-wrap gap-2 justify-center sm:justify-start">
+                                                <label className="px-4 py-2 bg-accent text-on-accent rounded-xl text-xs font-bold hover:opacity-90 transition-all cursor-pointer flex items-center gap-2">
+                                                    <Upload size={14} /> Seleccionar nueva foto
+                                                    <input
+                                                        type="file"
+                                                        accept="image/*"
+                                                        className="hidden"
+                                                        onChange={handleAvatarFileChange}
+                                                        disabled={isUploadingAvatar}
+                                                    />
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+
                                     <div className="grid grid-cols-1 gap-4">
                                         <div className="space-y-2">
                                             <label className="text-sm font-bold text-secondary ml-1">Nombre de usuario</label>

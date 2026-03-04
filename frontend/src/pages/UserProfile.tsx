@@ -14,6 +14,7 @@ import { toast } from "sonner";
 import { useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/context/AuthContext";
 import { Lock, MessageCircle, UserMinus } from "lucide-react";
+import UserAvatar from "@/components/ui/UserAvatar";
 
 export default function UserProfile() {
     const { id } = useParams();
@@ -163,7 +164,7 @@ export default function UserProfile() {
             <div className="flex flex-col gap-6">
                 <div className="flex flex-col text-center gap-4 bg-primary p-8 rounded-3xl border border-themed shadow-sm shrink-0 w-fit sticky top-8">
                     <div className="relative self-center">
-                        <img className="w-64 h-64 rounded-full border-4 border-themed p-1 bg-primary" src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${user._id}`} alt="" />
+                        <UserAvatar user={user} size={256} className="border-4 border-themed p-1 bg-primary" />
                         {lastSeenAt + 5 * 60 * 1000 >= now ? (
                             <div className="absolute bottom-6 right-6 w-8 h-8 bg-green-500 rounded-full border-4 border-themed shadow-sm" title="Online"></div>
                         ) : (

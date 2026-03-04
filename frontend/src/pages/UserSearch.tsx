@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useSearchUsers } from "@/api/generated/users/users";
 import { Search, Clock } from "lucide-react";
+import UserAvatar from "@/components/ui/UserAvatar";
 
 export default function UserSearch() {
     const [query, setQuery] = useState("");
@@ -55,9 +56,7 @@ export default function UserSearch() {
                         {users.map((u) => (
                             <Link key={u._id} to={`/user/${u._id}`} className="flex items-center justify-between bg-secondary p-4 rounded-xl shadow-sm border border-themed hover:border-themed transition-colors group">
                                 <div className="flex items-center gap-4">
-                                    <div className="w-12 h-12 rounded-full bg-accent flex items-center justify-center text-on-accent font-bold text-xl transition-all">
-                                        <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${u._id}`} className="w-12 h-12 rounded-full bg-secondary border border-themed" alt="Avatar" />
-                                    </div>
+                                    <UserAvatar user={u} size={48} />
                                     <div>
                                         <p className="font-bold text-primary transition-colors text-lg">
                                             {u.username}

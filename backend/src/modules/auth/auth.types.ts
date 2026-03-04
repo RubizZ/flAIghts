@@ -18,7 +18,12 @@ export type AuthFailResponse =
     | FailResponseFromError<TokenUserNotFoundError>
     | FailResponseFromError<AuthenticationVersionMismatchError>;
 
-export interface AuthenticatedUser extends PopulatedUser {
+export interface AuthenticatedUser {
+    _id: string;
+    username: string;
+    email: string;
+    role: "user" | "admin";
+    auth_version: number;
     token: string;
 }
 
