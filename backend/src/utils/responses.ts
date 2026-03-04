@@ -5,7 +5,7 @@ import type { AppError } from "./errors.js";
 /**
  * Wrapper de éxito JSend (aplicado por el middleware global).
  */
-export interface SuccessResponse<T = null> {
+export interface SuccessResponse<T = {}> {
     status: 'success';
     data: T;
 }

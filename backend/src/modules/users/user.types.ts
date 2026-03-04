@@ -1,5 +1,5 @@
 import type { ValidationDetails, RequestValidationFailResponse, DatabaseValidationFailResponse, FailResponseFromError } from "../../utils/responses.js";
-import type { EmailVerificationCodeInvalidOrExpiredError, EmailAlreadyVerifiedError, SelfFriendRequestError, AlreadyFriendsError, FriendRequestAlreadySentError, FriendRequestAlreadyReceivedError } from "./user.errors.js";
+import type { EmailVerificationCodeInvalidOrExpiredError, EmailAlreadyVerifiedError, SelfFriendRequestError, AlreadyFriendsError, FriendRequestAlreadySentError, FriendRequestAlreadyReceivedError, InvalidProfilePictureError, ProfilePictureTooLargeError } from "./user.errors.js";
 
 // ==================== TIPOS DE USUARIO ====================
 
@@ -23,6 +23,7 @@ export interface User {
     sent_friend_requests: string[];
     received_friend_requests: string[];
     pending_email?: string;
+    profile_picture?: string;
 }
 
 export interface PopulatedUser extends Omit<User, 'friends' | 'sent_friend_requests' | 'received_friend_requests'> {
@@ -48,6 +49,7 @@ export interface FriendUser {
      * @isDateTime
      */
     friend_since: string;
+    profile_picture?: string;
 }
 
 export interface PublicUser {
@@ -66,6 +68,7 @@ export interface PublicUser {
     last_seen_at: string;
     sent_friend_request: boolean;
     received_friend_request: boolean;
+    profile_picture?: string;
 }
 
 // ==================== TIPOS DE RESPUESTA POR ENDPOINT ====================
@@ -171,6 +174,16 @@ export interface CompleteEmailChangeData {
     newEmailCode: string;
 }
 
+export interface SetProfilePictureData {
+    /**
+     * Base64 representation of the image
+     */
+    image: string;
+}
+
+// Tipo para soportar tanto JSON (Base64) como Binario (Buffer)
+export type SetProfilePictureRequest = SetProfilePictureData | Buffer;
+
 // ==================== TIPOS DE ERROR ====================
 
 export type RegisterRequestValidationFailResponse = RequestValidationFailResponse<ValidationDetails<
@@ -243,3 +256,6 @@ export type VerifyEmailValidationFailResponse = VerifyEmailRequestValidationFail
 // Respuestas de error consolidadas para TSOA (evitar stack overflow)
 export type VerifyEmailErrorResponse = FailResponseFromError<EmailVerificationCodeInvalidOrExpiredError> | FailResponseFromError<EmailAlreadyVerifiedError>;
 export type FriendRequestErrorResponse = FailResponseFromError<SelfFriendRequestError> | FailResponseFromError<AlreadyFriendsError> | FailResponseFromError<FriendRequestAlreadySentError> | FailResponseFromError<FriendRequestAlreadyReceivedError>;
+export type ProfilePictureErrorResponse =
+    | FailResponseFromError<InvalidProfilePictureError>
+    | FailResponseFromError<ProfilePictureTooLargeError>;

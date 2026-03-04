@@ -25,6 +25,7 @@ export interface IUserFields {
     new_email_code: string;
     expires: Date;
   };
+  profile_picture?: string;
 }
 
 export interface IFriendUnpopulated {
@@ -132,7 +133,8 @@ const UserSchema = new Schema<IUserDocument>({
     old_email_code: { type: String, select: false },
     new_email_code: { type: String, select: false },
     expires: { type: Date, select: false }
-  }
+  },
+  profile_picture: { type: String }
 });
 
 // Índice único case-insensitive para username

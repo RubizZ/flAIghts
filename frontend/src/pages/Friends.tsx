@@ -11,6 +11,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { UserMinus, Check, X, Clock, Users, UserPlus, MessageCircle, UserSearch } from "lucide-react";
 import { useState } from "react";
+import UserAvatar from "@/components/ui/UserAvatar";
 
 export default function Friends() {
     const { user, isAuthenticated, isLoading } = useAuth();
@@ -135,7 +136,7 @@ export default function Friends() {
                                     <div key={friend._id} className="flex flex-col p-5 bg-primary rounded-3xl border border-themed shadow-xs hover:border-accent hover:shadow-md transition-all group">
                                         <div className="flex items-center gap-4">
                                             <Link to={`/user/${friend._id}`} className="shrink-0 relative">
-                                                <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${friend._id}`} alt={friend.username} className="w-16 h-16 rounded-full bg-secondary border border-themed transition-transform group-hover:scale-105" />
+                                                <UserAvatar user={friend} size={64} className="transition-transform group-hover:scale-105" />
                                             </Link>
                                             <div className="flex flex-col flex-1 overflow-hidden">
                                                 <Link to={`/user/${friend._id}`} className="font-bold text-lg text-primary truncate hover:text-accent transition-colors">
@@ -188,7 +189,7 @@ export default function Friends() {
                                         <div key={req._id} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 bg-primary rounded-2xl border border-themed shadow-sm gap-4">
                                             <div className="flex items-center gap-4">
                                                 <Link to={`/user/${req._id}`}>
-                                                    <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${req._id}`} alt={req.username} className="w-12 h-12 rounded-full bg-secondary border border-themed" />
+                                                    <UserAvatar user={req} size={48} />
                                                 </Link>
                                                 <Link to={`/user/${req._id}`} className="font-bold text-primary text-lg hover:text-accent transition-colors">
                                                     {req.username}
@@ -230,7 +231,7 @@ export default function Friends() {
                                         <div key={req._id} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 bg-primary rounded-2xl border border-themed border-opacity-50 gap-4 opacity-80 hover:opacity-100 transition-opacity">
                                             <div className="flex items-center gap-4">
                                                 <Link to={`/user/${req._id}`}>
-                                                    <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${req._id}`} alt={req.username} className="w-10 h-10 rounded-full bg-secondary border border-themed grayscale opacity-70" />
+                                                    <UserAvatar user={req} size={40} className="grayscale opacity-70" />
                                                 </Link>
                                                 <div className="flex flex-col">
                                                     <Link to={`/user/${req._id}`} className="font-bold text-primary hover:text-accent transition-colors">

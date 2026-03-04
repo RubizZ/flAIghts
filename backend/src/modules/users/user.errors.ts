@@ -119,3 +119,23 @@ export class EmailAlreadyVerifiedError extends AppError<'EMAIL_ALREADY_VERIFIED'
         this.details = undefined;
     }
 }
+
+export class InvalidProfilePictureError extends AppError<'INVALID_PROFILE_PICTURE', undefined> {
+    public readonly code = 'INVALID_PROFILE_PICTURE';
+    public readonly statusCode: number = 400;
+
+    constructor() {
+        super("El archivo proporcionado no es una imagen válida o el formato no está soportado");
+        this.details = undefined;
+    }
+}
+
+export class ProfilePictureTooLargeError extends AppError<'PROFILE_PICTURE_TOO_LARGE', { size: number; maxSize: number }> {
+    public readonly code = 'PROFILE_PICTURE_TOO_LARGE';
+    public readonly statusCode: number = 413;
+
+    constructor(size: number, maxSize: number) {
+        super(`La imagen es demasiado grande. Máximo permitido: ${maxSize / (1024 * 1024)}MB`);
+        this.details = { size, maxSize };
+    }
+}

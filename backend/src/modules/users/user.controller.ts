@@ -1,4 +1,5 @@
-import { Body, Controller, Get, Patch, Path, Post, Query, RequestProp, Response, Route, Security, SuccessResponse as SuccessResponseDecorator, Tags } from "tsoa";
+import { Body, Controller, Get, Patch, Path, Post, Query, RequestProp, Response, Route, Security, SuccessResponse as SuccessResponseDecorator, Tags, Request } from "tsoa";
+import express from 'express';
 import type {
     InitiateRegistrationData,
     CompleteRegistrationData,
@@ -17,7 +18,9 @@ import type {
     PublicUser,
     GetUserByIdResponseData,
     FriendUser,
-    FriendRequestErrorResponse
+    FriendRequestErrorResponse,
+    SetProfilePictureRequest,
+    ProfilePictureErrorResponse
 } from "./user.types.js";
 import { inject, injectable } from "tsyringe";
 import { UserService } from "./user.service.js";
@@ -43,9 +46,9 @@ export class UsersController extends Controller {
     @SuccessResponseDecorator(200, "OK")
     @Response<FailResponseFromError<EmailAlreadyInUseError>>(409, "Email ya registrado")
     @Response<InitiateRegistrationRequestValidationFailResponse>(422, "Error de validación")
-    public async initiateRegistration(@Body() body: InitiateRegistrationData): Promise<SuccessResponse<null>> {
+    public async initiateRegistration(@Body() body: InitiateRegistrationData): Promise<SuccessResponse> {
         await this.userService.initiateRegistration(body);
-        return null as any;
+        return {} satisfies {} as any;
     }
 
     /**
@@ -95,9 +98,9 @@ export class UsersController extends Controller {
     @Response<AuthFailResponse>(401, "No autenticado")
     @Response<FailResponseFromError<EmailAlreadyInUseError>>(409, "El nuevo email ya está en uso")
     @Response<InitiateEmailChangeRequestValidationFailResponse>(422, "Error de validación")
-    public async initiateEmailChange(@RequestProp('user') user: AuthenticatedUser, @Body() body: InitiateEmailChangeData): Promise<SuccessResponse<null>> {
+    public async initiateEmailChange(@RequestProp('user') user: AuthenticatedUser, @Body() body: InitiateEmailChangeData): Promise<SuccessResponse> {
         await this.userService.initiateEmailChange(user._id, body);
-        return null as any;
+        return {} satisfies {} as any;
     }
 
     /**
@@ -120,9 +123,9 @@ export class UsersController extends Controller {
     @Security("jwt")
     @Response<AuthFailResponse>(401, "No autenticado")
     @Response<FailResponseFromError<UserNotFoundError>>(404, "Usuario no encontrado")
-    public async cancelEmailChange(@RequestProp('user') user: AuthenticatedUser): Promise<SuccessResponse<null>> {
+    public async cancelEmailChange(@RequestProp('user') user: AuthenticatedUser): Promise<SuccessResponse> {
         await this.userService.cancelEmailChange(user._id);
-        return null as any;
+        return {} satisfies {} as any;
     }
 
     /**
@@ -134,10 +137,12 @@ export class UsersController extends Controller {
     public async searchUsers(@Query() q: string, @RequestProp('user') user: AuthenticatedUser): Promise<SuccessResponse<PublicUser[]>> {
         if (!q || !q.trim()) return [] satisfies PublicUser[] as any;
         const foundUsers = await this.userService.searchUsers(q.trim(), user._id);
+
         const mappedUsers = foundUsers
             .map(u => {
-                const sentReq = user.sent_friend_requests.some(req => (typeof req === 'string' ? req : req._id) === u._id);
-                const recReq = user.received_friend_requests.some(req => (typeof req === 'string' ? req : req._id) === u._id);
+                const sentReq = u.received_friend_requests.some(reqId => reqId.toString() === user._id);
+                const recReq = u.sent_friend_requests.some(reqId => reqId.toString() === user._id);
+
                 return this.sanitizePublicUser(u, sentReq, recReq);
             });
         return mappedUsers satisfies PublicUser[] as any;
@@ -152,22 +157,21 @@ export class UsersController extends Controller {
     @Response<FailResponseFromError<UserNotFoundError>>(404, "Usuario no encontrado")
     public async getUserById(@Path() id: string, @RequestProp('user') user: AuthenticatedUser): Promise<SuccessResponse<GetUserByIdResponseData>> {
         if (id === user._id) {
-            const cleanUser = this.sanitizeAuthenticatedUser(user);
-            return cleanUser satisfies GetUserByIdResponseData as any;
+            const targetUser = await this.userService.getUser(id, true);
+            return this.sanitizePopulatedUser(targetUser) satisfies GetUserByIdResponseData as any;
+        } else {
+            const targetUser = await this.userService.getUser(id, false);
+            const friendship = targetUser.friends.find(f => f.user === user._id);
+
+            if (friendship) {
+                return this.sanitizeFriendUser(targetUser, friendship.friend_since) satisfies GetUserByIdResponseData as any;
+            }
+
+            const sentReq = targetUser.received_friend_requests.some(req => req === user._id);
+            const recReq = targetUser.sent_friend_requests.some(req => req === user._id);
+
+            return this.sanitizePublicUser(targetUser, sentReq, recReq) satisfies GetUserByIdResponseData as any;
         }
-
-        const targetUser = await this.userService.getUser(id);
-
-        const friendship = targetUser.friends.find(f => f.user === user._id);
-
-        if (friendship) {
-            return this.sanitizeFriendUser(targetUser, friendship.friend_since) satisfies GetUserByIdResponseData as any;
-        }
-
-        const sentReq = user.sent_friend_requests.some(req => (typeof req === 'string' ? req : req._id) === id);
-        const recReq = user.received_friend_requests.some(req => (typeof req === 'string' ? req : req._id) === id);
-
-        return this.sanitizePublicUser(targetUser, sentReq, recReq) satisfies GetUserByIdResponseData as any;
     }
 
     @Post("/{id}/send-friend-request")
@@ -175,9 +179,9 @@ export class UsersController extends Controller {
     @Response<AuthFailResponse>(401, "No autenticado")
     @Response<FailResponseFromError<UserNotFoundError>>(404, "Usuario no encontrado")
     @Response<FriendRequestErrorResponse>(400, "Error en la solicitud de amistad")
-    public async sendFriendRequest(@Path() id: string, @RequestProp('user') user: AuthenticatedUser): Promise<SuccessResponse<null>> {
+    public async sendFriendRequest(@Path() id: string, @RequestProp('user') user: AuthenticatedUser): Promise<SuccessResponse> {
         await this.userService.sendFriendRequest(user._id, id);
-        return null as any;
+        return {} satisfies {} as any;
     }
 
     @Post("/{id}/cancel-friend-request")
@@ -185,9 +189,9 @@ export class UsersController extends Controller {
     @Response<AuthFailResponse>(401, "No autenticado")
     @Response<FailResponseFromError<UserNotFoundError>>(404, "Usuario no encontrado")
     @Response<FailResponseFromError<NoPendingFriendRequestError>>(400, "No hay solicitud pendiente")
-    public async cancelFriendRequest(@Path() id: string, @RequestProp('user') user: AuthenticatedUser): Promise<SuccessResponse<null>> {
+    public async cancelFriendRequest(@Path() id: string, @RequestProp('user') user: AuthenticatedUser): Promise<SuccessResponse> {
         await this.userService.cancelFriendRequest(user._id, id);
-        return null as any;
+        return {} satisfies {} as any;
     }
 
     @Post("/{id}/accept-friend-request")
@@ -195,9 +199,9 @@ export class UsersController extends Controller {
     @Response<AuthFailResponse>(401, "No autenticado")
     @Response<FailResponseFromError<UserNotFoundError>>(404, "Usuario no encontrado")
     @Response<FailResponseFromError<NoReceivedFriendRequestError>>(400, "No has recibido solicitud de esta persona")
-    public async acceptFriendRequest(@Path() id: string, @RequestProp('user') user: AuthenticatedUser): Promise<SuccessResponse<null>> {
+    public async acceptFriendRequest(@Path() id: string, @RequestProp('user') user: AuthenticatedUser): Promise<SuccessResponse> {
         await this.userService.acceptFriendRequest(user._id, id);
-        return null as any;
+        return {} satisfies {} as any;
     }
 
     @Post("/{id}/reject-friend-request")
@@ -205,9 +209,9 @@ export class UsersController extends Controller {
     @Response<AuthFailResponse>(401, "No autenticado")
     @Response<FailResponseFromError<UserNotFoundError>>(404, "Usuario no encontrado")
     @Response<FailResponseFromError<NoReceivedFriendRequestError>>(400, "No has recibido solicitud de esta persona")
-    public async rejectFriendRequest(@Path() id: string, @RequestProp('user') user: AuthenticatedUser): Promise<SuccessResponse<null>> {
+    public async rejectFriendRequest(@Path() id: string, @RequestProp('user') user: AuthenticatedUser): Promise<SuccessResponse> {
         await this.userService.rejectFriendRequest(user._id, id);
-        return null as any;
+        return {} satisfies {} as any;
     }
 
     @Post("/{id}/remove-friend")
@@ -215,28 +219,35 @@ export class UsersController extends Controller {
     @Response<AuthFailResponse>(401, "No autenticado")
     @Response<FailResponseFromError<UserNotFoundError>>(404, "Usuario no encontrado")
     @Response<FailResponseFromError<NotFriendsError>>(400, "No tienes agregada a esa persona")
-    public async removeFriend(@Path() id: string, @RequestProp('user') user: AuthenticatedUser): Promise<SuccessResponse<null>> {
+    public async removeFriend(@Path() id: string, @RequestProp('user') user: AuthenticatedUser): Promise<SuccessResponse> {
         await this.userService.removeFriend(user._id, id);
-        return null as any;
+        return {} satisfies {} as any;
     }
 
-    private sanitizeAuthenticatedUser(user: AuthenticatedUser): PopulatedUser {
-        return {
-            _id: user._id,
-            type: 'self',
-            username: user.username,
-            public: user.public,
-            email: user.email,
-            role: user.role,
-            preferences: user.preferences,
-            created_at: user.created_at,
-            last_seen_at: user.last_seen_at,
-            auth_version: user.auth_version,
-            friends: user.friends,
-            sent_friend_requests: user.sent_friend_requests,
-            received_friend_requests: user.received_friend_requests,
-            pending_email: user.pending_email
-        } satisfies PopulatedUser as any;
+    @Post("/me/profile-picture")
+    @Security("jwt")
+    @Response<AuthFailResponse>(401, "No autenticado")
+    @Response<ProfilePictureErrorResponse>(400, "Error en la imagen")
+    public async setProfilePicture(
+        @RequestProp('user') user: AuthenticatedUser,
+        @Request() request: express.Request,
+        @Body() body: SetProfilePictureRequest
+    ): Promise<SuccessResponse> {
+        const data = Buffer.isBuffer(request.body) ? request.body : body;
+        await this.userService.setProfilePicture(user._id, data);
+        return {} satisfies {} as any;
+    }
+
+    /**
+     * Obtiene el avatar del usuario y redirige a la URL firmada de S3.
+     */
+    @Get("/{id}/avatar")
+    @SuccessResponseDecorator(302, "Redirect to S3")
+    @Response<FailResponseFromError<UserNotFoundError>>(404, "Usuario no encontrado")
+    public async getUserAvatar(@Path() id: string, @Request() request: express.Request): Promise<void> {
+        const url = await this.userService.getProfilePictureUrl(id);
+        const res = request.res!;
+        res.redirect(url);
     }
 
     private sanitizeUser(user: IUser): User {
@@ -254,7 +265,8 @@ export class UsersController extends Controller {
             friends: user.friends.map(f => this.friendPopulatedDocToString(f)),
             sent_friend_requests: user.sent_friend_requests.map(p => this.userPopulatedDocToString(p)),
             received_friend_requests: user.received_friend_requests.map(p => this.userPopulatedDocToString(p)),
-            pending_email: user.email_change_request?.new_email
+            pending_email: user.email_change_request?.new_email,
+            profile_picture: this.getAvatarUrl(user)
         };
     }
 
@@ -283,7 +295,8 @@ export class UsersController extends Controller {
             friends: user.friends.filter((f): f is IFriendPopulated => typeof f.user !== 'string').map(f => this.sanitizeFriendUser(f.user, f.friend_since)),
             sent_friend_requests: user.sent_friend_requests.filter((f): f is IUserUnpopulated => typeof f !== 'string').map(f => this.sanitizePublicUser(f, true, false)),
             received_friend_requests: user.received_friend_requests.filter((f): f is IUserUnpopulated => typeof f !== 'string').map(f => this.sanitizePublicUser(f, false, true)),
-            pending_email: user.email_change_request?.new_email
+            pending_email: user.email_change_request?.new_email,
+            profile_picture: this.getAvatarUrl(user)
         };
     }
 
@@ -297,7 +310,8 @@ export class UsersController extends Controller {
             created_at: user.created_at.toISOString(),
             last_seen_at: user.last_seen_at.toISOString(),
             sent_friend_request: sentFriendRequest,
-            received_friend_request: receivedFriendRequest
+            received_friend_request: receivedFriendRequest,
+            profile_picture: this.getAvatarUrl(user)
         };
     }
 
@@ -309,8 +323,19 @@ export class UsersController extends Controller {
             role: user.role,
             created_at: user.created_at.toISOString(),
             last_seen_at: user.last_seen_at.toISOString(),
-            friend_since: friendSince ? friendSince.toISOString() : user.friends.find(f => f.user.toString() === user._id.toString())!.friend_since.toISOString()
+            friend_since: friendSince ? friendSince.toISOString() : user.friends.find(f => f.user.toString() === user._id.toString())!.friend_since.toISOString(),
+            profile_picture: this.getAvatarUrl(user)
         };
+    }
+
+    private getAvatarUrl(user: { _id: string; profile_picture?: string }): string | undefined {
+        if (!user.profile_picture) return undefined;
+
+        // Extraemos el timestamp de la key (ej: media/avatars/uuid-TIMESTAMP.jpg)
+        const parts = user.profile_picture.split('-');
+        const hash = parts[parts.length - 1]?.split('.')[0] || Date.now();
+
+        return `/users/${user._id}/avatar?v=${hash}`;
     }
 
 }

@@ -17,6 +17,7 @@ import {
     Bell
 } from "lucide-react";
 import { PopulatedUser } from "@/api/generated/model";
+import UserAvatar from "@/components/ui/UserAvatar";
 
 export default function Navbar() {
     const navigate = useNavigate();
@@ -87,7 +88,7 @@ export default function Navbar() {
                     {user?.received_friend_requests?.map((req) => (
                         <div key={req._id} className="flex items-center justify-between p-2 hover:bg-secondary/80 rounded-lg transition-colors cursor-pointer group" onClick={() => { setIsOpen(false); navigate(`/user/${req._id}`); }}>
                             <div className="flex items-center gap-2">
-                                <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${req._id}`} className="w-8 h-8 rounded-full bg-secondary border border-themed" alt="Avatar" />
+                                <UserAvatar user={req} size={32} />
                                 <span className="font-bold text-sm text-primary">{req.username}</span>
                             </div>
                             <span className="text-[10px] font-bold text-accent bg-accent/10 px-2 py-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity">Ver</span>
@@ -319,17 +320,7 @@ export default function Navbar() {
                             }}
                             trigger={
                                 <div className="flex items-center gap-2 bg-secondary hover:bg-secondary/80 border border-themed p-1 pr-3 rounded-full transition-all group">
-                                    {
-                                        true ? ( // TODO Implementar avatar
-                                            <img
-                                                src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${user?._id}`}
-                                                className="w-7 h-7 rounded-full shadow-inner bg-secondary border border-themed"
-                                                alt="Avatar"
-                                            />
-                                        ) : (
-                                            <User size={16} />
-                                        )
-                                    }
+                                    <UserAvatar user={user} size={28} />
                                     <span className="text-primary text-sm font-bold hidden sm:block max-w-24 truncate">
                                         {user?.username}
                                     </span>
