@@ -259,17 +259,17 @@ export default function Navbar({ onToggleSidebar, isSidebarOpen }: { onToggleSid
     };
 
     return (
-        <nav className="flex items-center justify-between w-full bg-main h-16 py-2 px-3 sm:px-6 shadow-sm border-b border-line relative z-50">
-            <div className="flex items-center gap-3 sm:gap-6 shrink-0 z-10">
+        <nav className="flex items-center justify-between w-full bg-main h-16 py-2 px-2 shadow-sm border-b border-line relative z-50">
+            <div className="flex items-center gap-3 shrink-0 z-10">
                 <button
                     onClick={onToggleSidebar}
-                    className={`p-2 hover:bg-surface rounded-xl transition-colors cursor-pointer text-content-muted group`}
+                    className={`p-3 hover:bg-surface rounded-2xl transition-colors cursor-pointer text-content-muted group`}
                     aria-label="Toggle Sidebar"
                 >
                     {isSidebarOpen ? (
-                        <X size={20} className="group-hover:text-content transition-colors" />
+                        <X size={22} className="group-hover:text-content transition-colors" />
                     ) : (
-                        <Menu size={20} className="group-hover:text-content transition-colors" />
+                        <Menu size={22} className="group-hover:text-content transition-colors" />
                     )}
                 </button>
             </div>

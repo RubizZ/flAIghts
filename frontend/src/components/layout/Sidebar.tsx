@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import {
@@ -16,6 +17,7 @@ interface SidebarProps {
 
 export default function Sidebar({ isOpen, onClose }: SidebarProps) {
     const { isAuthenticated, isLoading } = useAuth();
+    const [clickedItem, setClickedItem] = useState<string | null>(null);
     const location = useLocation();
 
     const navItems = [
@@ -73,7 +75,11 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                                 <Link
                                     key={item.path}
                                     to={item.path}
-                                    onClick={() => onClose?.()}
+                                    onMouseEnter={() => setClickedItem(null)}
+                                    onClick={() => {
+                                        onClose?.();
+                                        setClickedItem(item.path);
+                                    }}
                                     className={`flex items-center rounded-2xl transition-all duration-200 group relative w-full px-3 py-3 justify-start animate-fade-in animate-duration-250
                                     ${isActive
                                             ? 'bg-brand text-content-on-brand shadow-md'
@@ -95,7 +101,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                                         {item.label}
                                     </span>
 
-                                    {!isOpen && (
+                                    {!isOpen && clickedItem !== item.path && (
                                         <div className={`absolute left-full ml-3 px-3 py-1.5 backdrop-blur-md border rounded-xl text-xs font-bold shadow-2xl pointer-events-none z-50 whitespace-nowrap opacity-0
                                             group-hover:opacity-100 group-hover:animate-expand-vertically group-hover:animate-duration-200 group-hover:animate-delay-400
                                             ${isActive
