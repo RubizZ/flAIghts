@@ -11,7 +11,7 @@ export default function MainLayout() {
     const closeSidebar = () => setIsSidebarOpen(false);
 
     return (
-        <div className="flex flex-col min-h-screen w-full bg-primary text-primary transition-colors">
+        <div className="flex flex-col min-h-screen w-full bg-main text-content transition-colors">
             <header className="sticky top-0 z-50 w-full">
                 <Navbar onToggleSidebar={toggleSidebar} isSidebarOpen={isSidebarOpen} />
             </header>
@@ -27,7 +27,7 @@ export default function MainLayout() {
 
                 <main
                     onClick={() => isSidebarOpen && closeSidebar()}
-                    className="grow w-full max-w-full bg-secondary p-4 sm:pl-16 transition-all duration-300 overflow-auto"
+                    className="grow w-full max-w-full bg-surface p-4 sm:pl-16 transition-all duration-300 overflow-auto"
                 >
                     <div className={isSidebarOpen ? 'pointer-events-none' : 'transition-all duration-300'}>
                         <Outlet />

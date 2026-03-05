@@ -30,7 +30,7 @@ export default function Footer() {
             {/* Boton de apertura/cierre del footer */}
             <button
                 onClick={() => setIsExpanded(!isExpanded)}
-                className={`fixed bottom-6 right-6 z-50 p-3 bg-accent text-on-accent rounded-full shadow-2xl hover:scale-110 active:scale-95 transition-all duration-500 cursor-pointer border border-white/20 group ${showButton ? "translate-y-0 opacity-100 scale-100" : "translate-y-20 opacity-0 scale-50 pointer-events-none"
+                className={`fixed bottom-6 right-6 z-50 p-3 bg-brand text-content-on-brand rounded-full shadow-2xl hover:scale-110 active:scale-95 transition-all duration-500 cursor-pointer border border-white/20 group ${showButton ? "translate-y-0 opacity-100 scale-100" : "translate-y-20 opacity-0 scale-50 pointer-events-none"
                     }`}
                 aria-label="Toggle information"
             >
@@ -43,7 +43,7 @@ export default function Footer() {
 
             {/* Footer extensible */}
             <footer
-                className={`fixed bottom-0 left-0 w-full bg-accent/90 backdrop-blur-2xl text-on-accent transition-all duration-700 ease-[cubic-bezier(0.23,1,0.32,1)] z-40 transform ${isExpanded ? "translate-y-0 shadow-[0_-20px_100px_-20px_rgba(0,0,0,0.7)]" : "translate-y-full"
+                className={`fixed bottom-0 left-0 w-full bg-brand/90 backdrop-blur-2xl text-content-on-brand transition-all duration-700 ease-[cubic-bezier(0.23,1,0.32,1)] z-40 transform ${isExpanded ? "translate-y-0 shadow-[0_-20px_100px_-20px_rgba(0,0,0,0.7)]" : "translate-y-full"
                     } border-t border-white/30`}
                 style={{
                     maskImage: 'linear-gradient(to bottom, transparent, black 15%)',

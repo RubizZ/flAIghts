@@ -34,27 +34,27 @@ const FloatingLabelInput = forwardRef<HTMLInputElement, FloatingLabelInputProps>
                         w-full
                         rounded-lg
                         border
-                        ${props.disabled ? 'bg-secondary' : 'bg-primary'}
+                        ${props.disabled ? 'bg-surface' : 'bg-main'}
                         ${icon ? 'pl-11' : 'pl-2.5'}
                         pb-2.5
                         pt-5
                         pr-10
                         text-sm
-                        ${props.disabled ? 'text-secondary' : 'text-primary'}
+                        ${props.disabled ? 'text-content-muted' : 'text-content'}
                         outline-none
                         transition-all
                         focus:ring-2
                         focus:ring-opacity-50
                         ${isError
                             ? 'border-red-500 focus:border-red-500 focus:ring-red-500/20'
-                            : 'border-themed focus:border-accent focus:ring-accent/20'
+                            : 'border-line focus:border-brand focus:ring-brand/20'
                         }
                         
                     `}
                 />
 
                 {icon && (
-                    <div className={`absolute left-3.5 top-1/2 -translate-y-1/2 transition-colors duration-300 ${isError ? 'text-red-500' : 'text-secondary/50 peer-focus:text-accent'}`}>
+                    <div className={`absolute left-3.5 top-1/2 -translate-y-1/2 transition-colors duration-300 ${isError ? 'text-red-500' : 'text-content-muted/50 peer-focus:text-brand'}`}>
                         {icon}
                     </div>
                 )}
@@ -83,7 +83,7 @@ const FloatingLabelInput = forwardRef<HTMLInputElement, FloatingLabelInputProps>
                         peer-focus:scale-75
                         ${isError
                             ? 'text-red-500 peer-focus:text-red-500'
-                            : 'text-secondary peer-hover:text-accent peer-focus:text-accent'
+                            : 'text-content-muted peer-hover:text-brand peer-focus:text-brand'
                         }
                     `}
                 >
@@ -94,7 +94,7 @@ const FloatingLabelInput = forwardRef<HTMLInputElement, FloatingLabelInputProps>
                     <button
                         type="button"
                         onClick={() => setShowPassword(!showPassword)}
-                        className={`absolute right-3 top-1/2 -translate-y-1/2 ${showPassword ? 'text-(--color-text-primary)' : 'text-secondary'} hover:text-(--color-bg-accent) focus:outline-none transition-colors cursor-pointer`}
+                        className={`absolute right-3 top-1/2 -translate-y-1/2 ${showPassword ? 'text-content' : 'text-content-muted'} hover:text-brand focus:outline-none transition-colors cursor-pointer`}
                         tabIndex={-1} // Evita que se enfoque con el tab para no interrumpir el flujo del formulario
                     >
                         {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}

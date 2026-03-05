@@ -282,7 +282,7 @@ export default function Settings() {
     if (isLoading || !user) {
         return (
             <div className="flex h-[50vh] items-center justify-center">
-                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-accent"></div>
+                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-brand"></div>
             </div>
         );
     }
@@ -299,22 +299,22 @@ export default function Settings() {
             <div className="flex items-center gap-4 mb-8">
                 <button
                     onClick={() => navigate(-1)}
-                    className="p-2 hover:bg-secondary rounded-full transition-colors cursor-pointer group"
+                    className="p-2 hover:bg-surface rounded-full transition-colors cursor-pointer group"
                 >
                     <ArrowLeft className="group-hover:-translate-x-1 transition-transform" />
                 </button>
-                <h1 className="text-3xl font-bold text-primary">Ajustes</h1>
+                <h1 className="text-3xl font-bold text-content">Ajustes</h1>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                 {/* Sidebar Nav */}
                 <aside className="md:col-span-1">
-                    <div className="md:sticky md:top-24 h-fit z-10 p-4 bg-primary border border-themed rounded-3xl shadow-sm">
+                    <div className="md:sticky md:top-24 h-fit z-10 p-4 bg-main border border-line rounded-3xl shadow-sm">
                         <div className="flex flex-col items-center text-center gap-4 mb-6">
-                            <UserAvatar user={user} size={96} className="border-4 border-themed shadow-sm bg-secondary" />
+                            <UserAvatar user={user} size={96} className="border-4 border-line shadow-sm bg-surface" />
                             <div>
                                 <h2 className="font-bold text-xl">{user.username}</h2>
-                                <p className="text-sm text-secondary opacity-70">{user.email}</p>
+                                <p className="text-sm text-content-muted opacity-70">{user.email}</p>
                             </div>
                         </div>
 
@@ -324,14 +324,14 @@ export default function Settings() {
                                     key={tab.id}
                                     onClick={() => setActiveTab(tab.id)}
                                     className={`flex items-center gap-3 p-3 rounded-2xl font-bold transition-all cursor-pointer ${activeTab === tab.id
-                                        ? 'bg-accent/10 text-accent'
-                                        : 'bg-primary text-secondary font-medium'
+                                        ? 'bg-brand/10 text-brand'
+                                        : 'bg-main text-content-muted font-medium'
                                         }`}
                                 >
                                     <div className="relative">
                                         <tab.icon size={18} />
                                         {tab.id === 'seguridad' && user.pending_email && (
-                                            <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-accent border-2 border-white dark:border-slate-900 rounded-full animate-pulse shadow-sm" />
+                                            <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-brand border-2 border-white dark:border-slate-900 rounded-full animate-pulse shadow-sm" />
                                         )}
                                     </div>
                                     {tab.label}
@@ -339,7 +339,7 @@ export default function Settings() {
                             ))}
                         </nav>
 
-                        <div className="mt-8 pt-4 border-t border-themed">
+                        <div className="mt-8 pt-4 border-t border-line">
                             <button
                                 onClick={logout}
                                 className="w-full flex items-center gap-3 p-3 text-red-500 hover:bg-red-50 rounded-2xl transition-all font-bold cursor-pointer"
@@ -355,18 +355,18 @@ export default function Settings() {
                     {/* Seccion Perfil */}
                     {activeTab === 'perfil' && (
                         <>
-                            <section className="bg-primary border border-themed rounded-3xl shadow-sm p-6 sm:p-8 animate-fade-in animate-duration-300">
+                            <section className="bg-main border border-line rounded-3xl shadow-sm p-6 sm:p-8 animate-fade-in animate-duration-300">
                                 <div className="flex items-center gap-3 mb-6">
-                                    <div className="p-2 bg-accent/10 text-accent rounded-xl">
+                                    <div className="p-2 bg-brand/10 text-brand rounded-xl">
                                         <User size={20} />
                                     </div>
                                     <h2 className="text-xl font-bold">Información del Perfil</h2>
                                 </div>
 
                                 <div className="space-y-6">
-                                    <div className="flex flex-col items-center sm:flex-row gap-6 p-6 bg-secondary/30 rounded-3xl border border-themed mb-6">
+                                    <div className="flex flex-col items-center sm:flex-row gap-6 p-6 bg-surface/30 rounded-3xl border border-line mb-6">
                                         <div className="relative group">
-                                            <UserAvatar user={user} size={100} className="border-4 border-themed shadow-md" />
+                                            <UserAvatar user={user} size={100} className="border-4 border-line shadow-md" />
                                             <label className="absolute inset-0 flex items-center justify-center bg-black/40 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
                                                 <Camera size={24} />
                                                 <input
@@ -385,9 +385,9 @@ export default function Settings() {
                                         </div>
                                         <div className="flex flex-col gap-2 text-center sm:text-left">
                                             <h3 className="font-bold text-lg">Tu foto de perfil</h3>
-                                            <p className="text-xs text-secondary opacity-70 mb-2">Máximo 5MB.</p>
+                                            <p className="text-xs text-content-muted opacity-70 mb-2">Máximo 5MB.</p>
                                             <div className="flex flex-wrap gap-2 justify-center sm:justify-start">
-                                                <label className="px-4 py-2 bg-accent text-on-accent rounded-xl text-xs font-bold hover:opacity-90 transition-all cursor-pointer flex items-center gap-2">
+                                                <label className="px-4 py-2 bg-brand text-content-on-brand rounded-xl text-xs font-bold hover:opacity-90 transition-all cursor-pointer flex items-center gap-2">
                                                     <Upload size={14} /> Seleccionar nueva foto
                                                     <input
                                                         type="file"
@@ -403,16 +403,16 @@ export default function Settings() {
 
                                     <div className="grid grid-cols-1 gap-4">
                                         <div className="space-y-2">
-                                            <label className="text-sm font-bold text-secondary ml-1">Nombre de usuario</label>
+                                            <label className="text-sm font-bold text-content-muted ml-1">Nombre de usuario</label>
                                             <div className="relative">
                                                 <input
                                                     type="text"
                                                     value={username}
                                                     onChange={(e) => setUsername(e.target.value)}
-                                                    className="w-full px-4 py-3 bg-primary border border-themed rounded-2xl focus:ring-2 focus:ring-accent focus:border-accent outline-none transition-all pl-11"
+                                                    className="w-full px-4 py-3 bg-main border border-line rounded-2xl focus:ring-2 focus:ring-brand focus:border-brand outline-none transition-all pl-11"
                                                     placeholder="Tu nombre de usuario"
                                                 />
-                                                <div className="absolute left-4 top-1/2 -translate-y-1/2 text-secondary opacity-50">
+                                                <div className="absolute left-4 top-1/2 -translate-y-1/2 text-content-muted opacity-50">
                                                     <User size={18} />
                                                 </div>
                                             </div>
@@ -420,16 +420,16 @@ export default function Settings() {
                                     </div>
                                 </div>
 
-                                <div className="pt-4 mt-6 border-t border-themed space-y-3">
-                                    <label className="text-sm font-bold text-secondary ml-1 block">Visibilidad del perfil</label>
-                                    <div className="flex items-center justify-between p-4 bg-secondary/50 rounded-2xl border border-themed">
+                                <div className="pt-4 mt-6 border-t border-line space-y-3">
+                                    <label className="text-sm font-bold text-content-muted ml-1 block">Visibilidad del perfil</label>
+                                    <div className="flex items-center justify-between p-4 bg-surface/50 rounded-2xl border border-line">
                                         <div className="flex items-center gap-4">
                                             <div className={`p-3 rounded-full ${isPublic ? 'bg-green-100 text-green-600' : 'bg-amber-100 text-amber-600'}`}>
                                                 {isPublic ? <Globe size={20} /> : <Lock size={20} />}
                                             </div>
                                             <div>
                                                 <h3 className="font-bold">{isPublic ? "Perfil Público" : "Perfil Privado"}</h3>
-                                                <p className="text-xs text-secondary opacity-70">
+                                                <p className="text-xs text-content-muted opacity-70">
                                                     {isPublic
                                                         ? "Otros usuarios pueden ver tus búsquedas recientes y estadísticas."
                                                         : "Tus búsquedas y estadísticas son totalmente privadas."}
@@ -443,7 +443,7 @@ export default function Settings() {
                                                 checked={isPublic}
                                                 onChange={(e) => setIsPublic(e.target.checked)}
                                             />
-                                            <div className="w-11 h-6 bg-(--color-bg-secondary) peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:start-0.5 after:bg-white after:border-(--color-border) after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-(--color-bg-accent)"></div>
+                                            <div className="w-11 h-6 bg-surface peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:start-0.5 after:bg-white after:border-line after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-brand"></div>
                                         </label>
                                     </div>
                                 </div>
@@ -452,7 +452,7 @@ export default function Settings() {
                                     <button
                                         onClick={handleSaveProfile}
                                         disabled={isUpdating || !hasProfileChanged}
-                                        className="px-6 py-3 bg-accent text-on-accent rounded-2xl text-sm font-bold hover:opacity-90 transition-all disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed flex items-center gap-2"
+                                        className="px-6 py-3 bg-brand text-content-on-brand rounded-2xl text-sm font-bold hover:opacity-90 transition-all disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed flex items-center gap-2"
                                     >
                                         {isUpdating ? "Guardando..." : "Guardar cambios del perfil"}
                                     </button>
@@ -465,24 +465,24 @@ export default function Settings() {
 
                     {/* Seccion Preferencias de Vuelos */}
                     {activeTab === 'preferencias' && (
-                        <section className="bg-primary border border-themed rounded-3xl shadow-sm p-6 sm:p-8 animate-fade-in animate-duration-300">
+                        <section className="bg-main border border-line rounded-3xl shadow-sm p-6 sm:p-8 animate-fade-in animate-duration-300">
                             <div className="flex items-center justify-between mb-2">
                                 <div className="flex items-center gap-3">
-                                    <div className="p-2 bg-accent/10 text-accent rounded-xl">
+                                    <div className="p-2 bg-brand/10 text-brand rounded-xl">
                                         <Sliders size={20} />
                                     </div>
                                     <h2 className="text-xl font-bold">Pesos de búsqueda</h2>
                                 </div>
                             </div>
-                            <div className="flex flex-col gap-4 mb-8 border-b border-themed pb-6">
-                                <p className="text-sm text-secondary opacity-70">
+                            <div className="flex flex-col gap-4 mb-8 border-b border-line pb-6">
+                                <p className="text-sm text-content-muted opacity-70">
                                     Ajusta el nivel de importancia de los factores al buscar vuelos.
                                 </p>
                                 <div className="p-4 bg-amber-500/10 border border-amber-500/20 rounded-2xl flex items-start gap-3">
                                     <AlertCircle className="text-amber-500 shrink-0 mt-0.5" size={18} />
                                     <div className="flex flex-col gap-1">
                                         <p className="text-sm font-bold text-amber-500">¿Cómo ajustar los pesos?</p>
-                                        <p className="text-xs text-secondary opacity-80 leading-relaxed">
+                                        <p className="text-xs text-content-muted opacity-80 leading-relaxed">
                                             Ten en cuenta que si le das mucha más importancia a uno de los campos, debes representarlo correctamente en relación a los demás. Es decir, si te importa que el vuelo sea corto, pero te importa <strong>mucho más</strong> que el precio sea barato, no pongas la duración a 1, déjala en un valor menor para que el algoritmo priorice el precio.
                                         </p>
                                     </div>
@@ -548,9 +548,9 @@ export default function Settings() {
                                         <div className="flex justify-between items-center">
                                             <div className="flex items-center gap-2">
                                                 <span className="text-lg">{item.icon}</span>
-                                                <label className="font-bold text-primary">{item.label}</label>
+                                                <label className="font-bold text-content">{item.label}</label>
                                             </div>
-                                            <span className="bg-secondary px-3 py-1 rounded-lg border border-themed font-mono font-bold text-accent">
+                                            <span className="bg-surface px-3 py-1 rounded-lg border border-line font-mono font-bold text-brand">
                                                 {item.value.toFixed(2)}
                                             </span>
                                         </div>
@@ -563,10 +563,10 @@ export default function Settings() {
                                                     step="0.05"
                                                     value={item.value}
                                                     onChange={(e) => handleWeightChange(item.setter, e.target.value)}
-                                                    className="w-full h-2 bg-secondary rounded-lg appearance-none cursor-pointer accent-accent border border-themed relative z-10"
+                                                    className="w-full h-2 bg-surface rounded-lg appearance-none cursor-pointer accent-brand border border-line relative z-10"
                                                 />
                                             </div>
-                                            <p className="text-xs text-secondary opacity-80 h-4 font-medium transition-all duration-300">
+                                            <p className="text-xs text-content-muted opacity-80 h-4 font-medium transition-all duration-300">
                                                 {item.getDescription(item.value)}
                                             </p>
                                         </div>
@@ -578,7 +578,7 @@ export default function Settings() {
                                 <button
                                     onClick={handleSaveProfile}
                                     disabled={isUpdating || !hasPreferencesChanged}
-                                    className="px-6 py-3 bg-accent text-on-accent rounded-2xl text-sm font-bold hover:opacity-90 transition-all disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed flex items-center gap-2"
+                                    className="px-6 py-3 bg-brand text-content-on-brand rounded-2xl text-sm font-bold hover:opacity-90 transition-all disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed flex items-center gap-2"
                                 >
                                     {isUpdating ? "Guardando..." : "Guardar preferencias"}
                                 </button>
@@ -589,9 +589,9 @@ export default function Settings() {
                     {/* Seccion Seguridad */}
                     {activeTab === 'seguridad' && (
                         <div className="flex flex-col gap-8">
-                            <section className="bg-primary border border-themed rounded-3xl shadow-sm p-6 sm:p-8 animate-fade-in animate-duration-300">
+                            <section className="bg-main border border-line rounded-3xl shadow-sm p-6 sm:p-8 animate-fade-in animate-duration-300">
                                 <div className="flex items-center gap-3 mb-6">
-                                    <div className="p-2 bg-accent/10 text-accent rounded-xl">
+                                    <div className="p-2 bg-brand/10 text-brand rounded-xl">
                                         <Mail size={20} />
                                     </div>
                                     <h2 className="text-xl font-bold">Dirección de correo electrónico</h2>
@@ -599,7 +599,7 @@ export default function Settings() {
 
                                 <div className="space-y-4">
                                     <div className="space-y-1">
-                                        <p className="text-sm text-secondary opacity-70 ml-1">Utilizamos este correo principal para identificarte y para enviarte notificaciones.</p>
+                                        <p className="text-sm text-content-muted opacity-70 ml-1">Utilizamos este correo principal para identificarte y para enviarte notificaciones.</p>
                                     </div>
 
                                     {!user.pending_email ? (
@@ -609,10 +609,10 @@ export default function Settings() {
                                                     type="email"
                                                     value={email}
                                                     onChange={(e) => setEmail(e.target.value)}
-                                                    className="w-full px-4 py-3 bg-primary border border-themed rounded-2xl focus:ring-2 focus:ring-accent focus:border-accent outline-none transition-all pl-11"
+                                                    className="w-full px-4 py-3 bg-main border border-line rounded-2xl focus:ring-2 focus:ring-brand focus:border-brand outline-none transition-all pl-11"
                                                     placeholder="tu@email.com"
                                                 />
-                                                <div className="absolute left-4 top-1/2 -translate-y-1/2 text-secondary opacity-50 pointer-events-none">
+                                                <div className="absolute left-4 top-1/2 -translate-y-1/2 text-content-muted opacity-50 pointer-events-none">
                                                     <Mail size={18} />
                                                 </div>
                                             </div>
@@ -621,19 +621,19 @@ export default function Settings() {
                                                     type="button"
                                                     onClick={() => initiateEmailChange({ data: { newEmail: email } })}
                                                     disabled={isInitiatingEmailChange || email.toLowerCase() === user.email.toLowerCase()}
-                                                    className="px-6 py-3 bg-accent text-on-accent rounded-2xl text-sm font-bold hover:opacity-90 transition-all disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed flex items-center gap-2"
+                                                    className="px-6 py-3 bg-brand text-content-on-brand rounded-2xl text-sm font-bold hover:opacity-90 transition-all disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed flex items-center gap-2"
                                                 >
                                                     {isInitiatingEmailChange ? "Actualizando..." : "Actualizar correo electrónico"}
                                                 </button>
                                             </div>
                                         </div>
                                     ) : (
-                                        <div className="p-4 bg-accent/5 border border-themed rounded-2xl flex flex-col gap-4 animate-fade-in">
+                                        <div className="p-4 bg-brand/5 border border-line rounded-2xl flex flex-col gap-4 animate-fade-in">
                                             <div className="flex items-start gap-3">
-                                                <AlertCircle className="text-accent shrink-0 mt-0.5" size={18} />
+                                                <AlertCircle className="text-brand shrink-0 mt-0.5" size={18} />
                                                 <div className="flex flex-col gap-1">
-                                                    <p className="text-sm font-bold text-accent">Cambio de email pendiente</p>
-                                                    <p className="text-xs text-secondary opacity-80 leading-relaxed">
+                                                    <p className="text-sm font-bold text-brand">Cambio de email pendiente</p>
+                                                    <p className="text-xs text-content-muted opacity-80 leading-relaxed">
                                                         Hemos enviado códigos a tu email actual (<span className="font-bold">{user.email}</span>)
                                                         y al nuevo (<span className="font-bold">{user.pending_email}</span>).
                                                     </p>
@@ -642,29 +642,29 @@ export default function Settings() {
 
                                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                                 <div className="space-y-1">
-                                                    <label className="text-[10px] uppercase font-bold text-secondary/70 ml-1">Código email actual</label>
+                                                    <label className="text-[10px] uppercase font-bold text-content-muted/70 ml-1">Código email actual</label>
                                                     <div className="relative">
                                                         <input
                                                             type="text"
                                                             value={oldEmailCode}
                                                             onChange={(e) => setOldEmailCode(e.target.value)}
                                                             placeholder="000000"
-                                                            className="w-full px-3 py-2 text-sm bg-primary border border-themed rounded-xl focus:ring-2 focus:ring-accent outline-none transition-all pl-9"
+                                                            className="w-full px-3 py-2 text-sm bg-main border border-line rounded-xl focus:ring-2 focus:ring-brand outline-none transition-all pl-9"
                                                         />
-                                                        <ShieldCheck size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-secondary/50 pointer-events-none" />
+                                                        <ShieldCheck size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-content-muted/50 pointer-events-none" />
                                                     </div>
                                                 </div>
                                                 <div className="space-y-1">
-                                                    <label className="text-[10px] uppercase font-bold text-secondary/70 ml-1">Código nuevo email</label>
+                                                    <label className="text-[10px] uppercase font-bold text-content-muted/70 ml-1">Código nuevo email</label>
                                                     <div className="relative">
                                                         <input
                                                             type="text"
                                                             value={newEmailCode}
                                                             onChange={(e) => setNewEmailCode(e.target.value)}
                                                             placeholder="000000"
-                                                            className="w-full px-3 py-2 text-sm bg-primary border border-themed rounded-xl focus:ring-2 focus:ring-accent outline-none transition-all pl-9"
+                                                            className="w-full px-3 py-2 text-sm bg-main border border-line rounded-xl focus:ring-2 focus:ring-brand outline-none transition-all pl-9"
                                                         />
-                                                        <ShieldCheck size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-secondary/50 pointer-events-none" />
+                                                        <ShieldCheck size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-content-muted/50 pointer-events-none" />
                                                     </div>
                                                 </div>
                                             </div>
@@ -673,14 +673,14 @@ export default function Settings() {
                                                 <button
                                                     onClick={handleVerifyEmailChange}
                                                     disabled={isCompletingEmailChange || isCancellingEmailChange}
-                                                    className="flex-1 py-2 bg-accent text-on-accent rounded-xl text-xs font-bold hover:scale-[1.01] transition-all disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed"
+                                                    className="flex-1 py-2 bg-brand text-content-on-brand rounded-xl text-xs font-bold hover:scale-[1.01] transition-all disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed"
                                                 >
                                                     {isCompletingEmailChange ? "Verificando..." : "Confirmar cambio"}
                                                 </button>
                                                 <button
                                                     onClick={() => cancelEmailChange()}
                                                     disabled={isCancellingEmailChange || isCompletingEmailChange}
-                                                    className="py-2 px-4 bg-secondary border border-themed text-secondary rounded-xl text-xs font-bold hover:border-red-400 hover:text-red-500 transition-all disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed"
+                                                    className="py-2 px-4 bg-surface border border-line text-content-muted rounded-xl text-xs font-bold hover:border-red-400 hover:text-red-500 transition-all disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed"
                                                 >
                                                     {isCancellingEmailChange ? "Cancelando..." : "Cancelar"}
                                                 </button>
@@ -690,30 +690,30 @@ export default function Settings() {
                                 </div>
                             </section>
 
-                            <section className="bg-primary border border-themed rounded-3xl shadow-sm p-6 sm:p-8 animate-fade-in animate-duration-300">
+                            <section className="bg-main border border-line rounded-3xl shadow-sm p-6 sm:p-8 animate-fade-in animate-duration-300">
                                 <div className="flex items-center gap-3 mb-6">
-                                    <div className="p-2 bg-accent/10 text-accent rounded-xl">
+                                    <div className="p-2 bg-brand/10 text-brand rounded-xl">
                                         <Shield size={20} />
                                     </div>
                                     <h2 className="text-xl font-bold">Contraseña</h2>
                                 </div>
 
-                                <p className="text-sm text-secondary mb-8 opacity-70 border-b border-themed pb-4">
+                                <p className="text-sm text-content-muted mb-8 opacity-70 border-b border-line pb-4">
                                     Cambia tu contraseña periódicamente para mantener tu cuenta segura.
                                 </p>
 
                                 <div className="space-y-6">
                                     <div className="space-y-2">
-                                        <label className="text-sm font-bold text-secondary ml-1">Contraseña actual</label>
+                                        <label className="text-sm font-bold text-content-muted ml-1">Contraseña actual</label>
                                         <div className="relative">
                                             <input
                                                 type={showPasswords ? "text" : "password"}
                                                 value={oldPassword}
                                                 onChange={(e) => setOldPassword(e.target.value)}
-                                                className="w-full px-4 py-3 bg-primary border border-themed rounded-2xl focus:ring-2 focus:ring-accent focus:border-accent outline-none transition-all pl-11"
+                                                className="w-full px-4 py-3 bg-main border border-line rounded-2xl focus:ring-2 focus:ring-brand focus:border-brand outline-none transition-all pl-11"
                                                 placeholder="••••••••"
                                             />
-                                            <div className="absolute left-4 top-1/2 -translate-y-1/2 text-secondary opacity-50 pointer-events-none">
+                                            <div className="absolute left-4 top-1/2 -translate-y-1/2 text-content-muted opacity-50 pointer-events-none">
                                                 <Lock size={18} />
                                             </div>
                                         </div>
@@ -721,31 +721,31 @@ export default function Settings() {
 
                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                         <div className="space-y-2">
-                                            <label className="text-sm font-bold text-secondary ml-1">Nueva contraseña</label>
+                                            <label className="text-sm font-bold text-content-muted ml-1">Nueva contraseña</label>
                                             <div className="relative">
                                                 <input
                                                     type={showPasswords ? "text" : "password"}
                                                     value={newPassword}
                                                     onChange={(e) => setNewPassword(e.target.value)}
-                                                    className="w-full px-4 py-3 bg-primary border border-themed rounded-2xl focus:ring-2 focus:ring-accent focus:border-accent outline-none transition-all pl-11"
+                                                    className="w-full px-4 py-3 bg-main border border-line rounded-2xl focus:ring-2 focus:ring-brand focus:border-brand outline-none transition-all pl-11"
                                                     placeholder="••••••••"
                                                 />
-                                                <div className="absolute left-4 top-1/2 -translate-y-1/2 text-secondary opacity-50 pointer-events-none">
+                                                <div className="absolute left-4 top-1/2 -translate-y-1/2 text-content-muted opacity-50 pointer-events-none">
                                                     <Shield size={18} />
                                                 </div>
                                             </div>
                                         </div>
                                         <div className="space-y-2">
-                                            <label className="text-sm font-bold text-secondary ml-1">Confirmar nueva contraseña</label>
+                                            <label className="text-sm font-bold text-content-muted ml-1">Confirmar nueva contraseña</label>
                                             <div className="relative">
                                                 <input
                                                     type={showPasswords ? "text" : "password"}
                                                     value={confirmPassword}
                                                     onChange={(e) => setConfirmPassword(e.target.value)}
-                                                    className="w-full px-4 py-3 bg-primary border border-themed rounded-2xl focus:ring-2 focus:ring-accent focus:border-accent outline-none transition-all pl-11"
+                                                    className="w-full px-4 py-3 bg-main border border-line rounded-2xl focus:ring-2 focus:ring-brand focus:border-brand outline-none transition-all pl-11"
                                                     placeholder="••••••••"
                                                 />
-                                                <div className="absolute left-4 top-1/2 -translate-y-1/2 text-secondary opacity-50 pointer-events-none">
+                                                <div className="absolute left-4 top-1/2 -translate-y-1/2 text-content-muted opacity-50 pointer-events-none">
                                                     <Shield size={18} />
                                                 </div>
                                             </div>
@@ -756,7 +756,7 @@ export default function Settings() {
                                         <button
                                             type="button"
                                             onClick={() => setShowPasswords(!showPasswords)}
-                                            className="text-xs font-bold text-accent hover:underline flex items-center gap-2 cursor-pointer"
+                                            className="text-xs font-bold text-brand hover:underline flex items-center gap-2 cursor-pointer"
                                         >
                                             {showPasswords ? <EyeOff size={14} /> : <Eye size={14} />}
                                             {showPasswords ? "Ocultar contraseñas" : "Mostrar contraseñas"}
@@ -765,15 +765,15 @@ export default function Settings() {
                                         <button
                                             type="button"
                                             onClick={() => navigate("/forgot-password")}
-                                            className="text-xs font-bold text-secondary hover:text-accent transition-colors underline decoration-dotted underline-offset-4 cursor-pointer"
+                                            className="text-xs font-bold text-content-muted hover:text-brand transition-colors underline decoration-dotted underline-offset-4 cursor-pointer"
                                         >
                                             ¿Has olvidado tu contraseña?
                                         </button>
                                     </div>
 
-                                    <div className="mt-4 p-4 bg-accent/5 rounded-2xl border border-themed">
-                                        <h4 className="text-xs font-bold text-accent uppercase tracking-wider mb-2">Requisitos:</h4>
-                                        <ul className="text-xs text-secondary space-y-1 list-disc ml-4 opacity-80">
+                                    <div className="mt-4 p-4 bg-brand/5 rounded-2xl border border-line">
+                                        <h4 className="text-xs font-bold text-brand uppercase tracking-wider mb-2">Requisitos:</h4>
+                                        <ul className="text-xs text-content-muted space-y-1 list-disc ml-4 opacity-80">
                                             <li>Mínimo 8 caracteres</li>
                                             <li>Debe ser diferente a la actual</li>
                                             <li>Recomendamos incluir números y símbolos</li>
@@ -784,7 +784,7 @@ export default function Settings() {
                                         <button
                                             onClick={handleSavePassword}
                                             disabled={isChangingPassword || !oldPassword || !newPassword || !confirmPassword}
-                                            className="px-6 py-3 bg-accent text-on-accent rounded-2xl text-sm font-bold hover:opacity-90 transition-all disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed flex items-center gap-2"
+                                            className="px-6 py-3 bg-brand text-content-on-brand rounded-2xl text-sm font-bold hover:opacity-90 transition-all disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed flex items-center gap-2"
                                         >
                                             {isChangingPassword ? "Actualizando..." : "Actualizar contraseña"}
                                         </button>
@@ -796,9 +796,9 @@ export default function Settings() {
 
                     {/* Seccion Apariencia */}
                     {activeTab === 'apariencia' && (
-                        <section className="bg-primary border border-themed rounded-3xl shadow-sm p-6 sm:p-8 animate-fade-in animate-duration-300">
+                        <section className="bg-main border border-line rounded-3xl shadow-sm p-6 sm:p-8 animate-fade-in animate-duration-300">
                             <div className="flex items-center gap-3 mb-6">
-                                <div className="p-2 bg-accent/10 text-accent rounded-xl">
+                                <div className="p-2 bg-brand/10 text-brand rounded-xl">
                                     <Sun size={20} />
                                 </div>
                                 <h2 className="text-xl font-bold">Apariencia</h2>
@@ -807,21 +807,21 @@ export default function Settings() {
                             <div className="grid grid-cols-2 gap-4">
                                 <button
                                     onClick={() => setTheme('light')}
-                                    className={`flex flex-col items-center gap-4 p-6 rounded-3xl border-2 transition-all cursor-pointer ${theme === 'light' ? 'border-(--color-bg-accent) bg-accent' : 'border-themed bg-secondary hover:border-(--color-bg-accent)/50'}`}
+                                    className={`flex flex-col items-center gap-4 p-6 rounded-3xl border-2 transition-all cursor-pointer ${theme === 'light' ? 'border-brand bg-brand' : 'border-line bg-surface hover:border-brand/50'}`}
                                 >
                                     <div className="p-4 bg-white rounded-full shadow-md text-orange-500">
                                         <Sun size={32} />
                                     </div>
-                                    <span className={`font-bold ${theme === 'light' ? 'text-on-accent' : 'text-primary'}`}>Modo Claro</span>
+                                    <span className={`font-bold ${theme === 'light' ? 'text-content-on-brand' : 'text-content'}`}>Modo Claro</span>
                                 </button>
                                 <button
                                     onClick={() => setTheme('dark')}
-                                    className={`flex flex-col items-center gap-4 p-6 rounded-3xl border-2 transition-all cursor-pointer ${theme === 'dark' ? 'border-(--color-bg-accent) bg-accent' : 'border-themed bg-secondary hover:border-(--color-bg-accent)/50'}`}
+                                    className={`flex flex-col items-center gap-4 p-6 rounded-3xl border-2 transition-all cursor-pointer ${theme === 'dark' ? 'border-brand bg-brand' : 'border-line bg-surface hover:border-brand/50'}`}
                                 >
                                     <div className="p-4 bg-slate-900 rounded-full shadow-md text-blue-400">
                                         <Moon size={32} />
                                     </div>
-                                    <span className={`font-bold ${theme === 'dark' ? 'text-on-accent' : 'text-primary'}`}>Modo Oscuro</span>
+                                    <span className={`font-bold ${theme === 'dark' ? 'text-content-on-brand' : 'text-content'}`}>Modo Oscuro</span>
                                 </button>
                             </div>
                         </section>

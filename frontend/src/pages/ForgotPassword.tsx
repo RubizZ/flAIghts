@@ -51,7 +51,7 @@ export default function ForgotPassword(): JSX.Element {
         <AuthLayout>
             <AuthCard title="Forgot Password">
                 <form action="" className="flex flex-col gap-4">
-                    <p className="text-center text-secondary text-sm text-muted-foreground">
+                    <p className="text-center text-content-muted text-sm text-muted-foreground">
                         Escribe tu email y te enviaremos un enlace para restablecer tu contraseña.
                     </p>
                     <FloatingLabelInput
@@ -72,7 +72,7 @@ export default function ForgotPassword(): JSX.Element {
                             }
                         }}
                     />
-                    <button disabled={isPending} onClick={handleSubmit} type="button" className="mt-2 rounded-lg bg-accent p-3 text-on-accent font-bold hover:scale-[1.02] active:scale-95 transition-all shadow-lg shadow-accent/20 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed disabled:scale-100">
+                    <button disabled={isPending} onClick={handleSubmit} type="button" className="mt-2 rounded-lg bg-brand p-3 text-content-on-brand font-bold hover:scale-[1.02] active:scale-95 transition-all shadow-lg shadow-brand/20 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed disabled:scale-100">
                         {isPending ? 'Enviando...' : 'Enviar'}
                     </button>
                 </form>

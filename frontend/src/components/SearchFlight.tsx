@@ -14,7 +14,7 @@ function SearchFlight() {
     const [tripType, setTripType] = useState("roundTrip");
 
     const navigate = useNavigate();
-    
+
     const { mutate: searchRequest, isPending } = useSearchRequest({
         mutation: {
             onSuccess: (data) => {
@@ -74,35 +74,35 @@ function SearchFlight() {
                 <div className='flex flex-col gap-2.5'>
                     <AirportAutocomplete
                         placeholder="Origin"
-                        className='border border-themed bg-primary text-primary px-2 py-1.5 rounded-md focus:outline-none focus:ring-2 focus:ring-accent'
+                        className='border border-line bg-main text-content px-2 py-1.5 rounded-md focus:outline-none focus:ring-2 focus:ring-brand'
                         value={origin}
                         onChange={setOrigin}
                     />
                     <input
                         type="date"
                         placeholder="Date"
-                        className='border border-themed bg-primary text-primary px-2 py-1.5 rounded-md focus:outline-none focus:ring-2 focus:ring-accent'
+                        className='border border-line bg-main text-content px-2 py-1.5 rounded-md focus:outline-none focus:ring-2 focus:ring-brand'
                         value={departureDate}
                         onChange={(e) => setDepartureDate(e.target.value)}
                     />
                 </div>
                 <button
                     onClick={handleSwitch}
-                    className="hover:bg-secondary text-primary p-2 rounded-full transition cursor-pointer"
+                    className="hover:bg-surface text-content p-2 rounded-full transition cursor-pointer"
                 >
                     <ArrowLeftRight />
                 </button>
                 <div className='flex flex-col gap-2.5'>
                     <AirportAutocomplete
                         placeholder="Destination"
-                        className='border border-themed bg-primary text-primary px-2 py-1.5 rounded-md focus:outline-none focus:ring-2 focus:ring-accent'
+                        className='border border-line bg-main text-content px-2 py-1.5 rounded-md focus:outline-none focus:ring-2 focus:ring-brand'
                         value={destination}
                         onChange={setDestination}
                     />
                     <input
                         type="date"
                         placeholder="Date"
-                        className='border border-themed bg-primary text-primary px-2 py-1.5 rounded-md focus:outline-none focus:ring-2 focus:ring-accent'
+                        className='border border-line bg-main text-content px-2 py-1.5 rounded-md focus:outline-none focus:ring-2 focus:ring-brand'
                         value={returnDate}
                         onChange={(e) => setReturnDate(e.target.value)}
                         disabled={tripType === "oneWay"}
@@ -110,15 +110,15 @@ function SearchFlight() {
                 </div>
                 <div className='flex flex-col gap-3 items-center justify-center'>
                     <select
-                        className='border border-themed bg-primary text-primary hover:bg-secondary rounded-full px-2 py-1.5 cursor-pointer focus:outline-none focus:ring-2 focus:ring-accent'
+                        className='border border-line bg-main text-content hover:bg-surface rounded-full px-2 py-1.5 cursor-pointer focus:outline-none focus:ring-2 focus:ring-brand'
                         value={tripType}
                         onChange={(e) => setTripType(e.target.value)}
                     >
                         <option value="oneWay">One way</option>
                         <option value="roundTrip">Round trip</option>
                     </select>
-                    <div className='flex items-center justify-center gap-1.5 text-primary'>
-                        <button className="border border-themed rounded-full hover:bg-secondary cursor-pointer p-0.5">
+                    <div className='flex items-center justify-center gap-1.5 text-content'>
+                        <button className="border border-line rounded-full hover:bg-surface cursor-pointer p-0.5">
                             <Plus />
                         </button>
                         Add stop
@@ -129,10 +129,10 @@ function SearchFlight() {
                 onAirportSelect={handleMapSelect}
                 selectedAirports={[origin, destination]}
             />
-            <button 
+            <button
                 onClick={handleSearch}
                 disabled={isPending}
-                className='border border-themed bg-accent text-on-accent hover:bg-accent-hover rounded-full px-5 py-2 cursor-pointer font-medium transition disabled:opacity-50 disabled:cursor-not-allowed'
+                className='border border-line bg-brand text-content-on-brand hover:bg-brand-hover rounded-full px-5 py-2 cursor-pointer font-medium transition disabled:opacity-50 disabled:cursor-not-allowed'
             >
                 {isPending ? "Buscando..." : "Buscar vuelos"}
             </button>

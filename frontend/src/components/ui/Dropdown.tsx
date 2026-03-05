@@ -150,7 +150,7 @@ export default function Dropdown({
                         onAnimationEnd={handleAnimationEnd}
                         className={`
                             absolute ${align === 'right' ? 'right-0' : 'left-0'} 
-                            mt-2 min-w-48 bg-primary border border-themed 
+                            mt-2 min-w-48 bg-main border border-line
                             rounded-2xl shadow-2xl overflow-hidden 
                             ${isOpen ? entryAnimation : exitAnimation}
                             z-100 ${contentClassName}

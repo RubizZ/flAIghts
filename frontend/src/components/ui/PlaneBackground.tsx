@@ -10,7 +10,7 @@ export default function PlaneBackground({ className = "" }: PlaneBackgroundProps
     const encodedPlane = encodeURIComponent(planeIcon).replace(/'/g, "%27").replace(/"/g, "%22");
 
     return (
-        <div className={`absolute inset-0 pointer-events-none text-primary ${className}`}>
+        <div className={`absolute inset-0 pointer-events-none text-content ${className}`}>
             <div
                 className="absolute inset-0 bg-current transition-opacity duration-300 opacity-5"
                 style={{

@@ -107,21 +107,21 @@ export default function Login() {
                         onKeyDown={enterKeyPress}
                     />
 
-                    <span className="text-sm text-primary text-right">
-                        <a href="/forgot-password" className="text-accent hover:underline">¿Olvidaste tu contraseña?</a>
+                    <span className="text-sm text-content text-right">
+                        <a href="/forgot-password" className="text-brand hover:underline">¿Olvidaste tu contraseña?</a>
                     </span>
 
                     <button
                         type="button"
                         onClick={login}
                         disabled={isPending}
-                        className={`mt-2 rounded-lg bg-accent p-3 text-on-accent font-bold hover:scale-[1.02] active:scale-95 transition-all shadow-lg shadow-accent/20 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed disabled:scale-100`}
+                        className={`mt-2 rounded-lg bg-brand p-3 text-content-on-brand font-bold hover:scale-[1.02] active:scale-95 transition-all shadow-lg shadow-brand/20 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed disabled:scale-100`}
                     >
                         {isPending ? "Conectando..." : "Login"}
                     </button>
 
-                    <span className="text-sm text-primary text-center">
-                        ¿No tienes cuenta? <a href="/register" className="text-accent font-bold hover:underline">Regístrate</a>
+                    <span className="text-sm text-content text-center">
+                        ¿No tienes cuenta? <a href="/register" className="text-brand font-bold hover:underline">Regístrate</a>
                     </span>
                 </form>
             </AuthCard>
