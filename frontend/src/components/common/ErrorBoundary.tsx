@@ -77,23 +77,23 @@ class ErrorBoundary extends Component<Props, State> {
             // Si es un error de autenticación, mostrar UI específica
             if (this.state.isAuthError) {
                 return (
-                    <div className="w-full min-h-screen flex items-center justify-center p-6 bg-primary relative overflow-hidden group">
+                    <div className="w-full min-h-screen flex items-center justify-center p-6 bg-main relative overflow-hidden group">
                         {/* Background decoration */}
                         <div className="absolute top-0 left-0 w-full h-1 bg-linear-to-r from-transparent via-amber-500/50 to-transparent shadow-[0_0_15px_rgba(245,158,11,0.5)]" />
-                        <div className="absolute -bottom-20 -right-20 w-64 h-64 bg-accent/5 blur-[100px] rounded-full" />
-                        <div className="absolute -top-20 -left-20 w-64 h-64 bg-accent/5 blur-[100px] rounded-full" />
+                        <div className="absolute -bottom-20 -right-20 w-64 h-64 bg-brand/5 blur-[100px] rounded-full" />
+                        <div className="absolute -top-20 -left-20 w-64 h-64 bg-brand/5 blur-[100px] rounded-full" />
 
                         <div className="max-w-xl w-full text-center space-y-8 relative z-10 transition-all duration-500">
                             <div className="relative inline-block">
                                 <div className="absolute inset-0 bg-amber-500/10 blur-2xl rounded-full scale-150 animate-pulse" />
-                                <div className="relative bg-secondary p-6 rounded-full border border-amber-500/20 shadow-2xl">
+                                <div className="relative bg-surface p-6 rounded-full border border-amber-500/20 shadow-2xl">
                                     <LogIn size={48} className="text-amber-500" />
                                 </div>
                             </div>
 
                             <div className="space-y-3">
-                                <h2 className="text-2xl font-bold text-primary tracking-tight">Sesión expirada</h2>
-                                <p className="text-secondary leading-relaxed">
+                                <h2 className="text-2xl font-bold text-content tracking-tight">Sesión expirada</h2>
+                                <p className="text-content-muted leading-relaxed">
                                     Tu sesión ha expirado o no tienes permisos para acceder a este recurso. Por favor, inicia sesión de nuevo.
                                 </p>
                             </div>
@@ -101,7 +101,7 @@ class ErrorBoundary extends Component<Props, State> {
                             <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
                                 <button
                                     onClick={this.redirectToLogin}
-                                    className="flex items-center gap-2 px-6 py-3 bg-accent text-on-accent rounded-full font-semibold hover:bg-accent-hover transition-all duration-300 shadow-md active:scale-95 group/btn cursor-pointer"
+                                    className="flex items-center gap-2 px-6 py-3 bg-brand text-content-on-brand rounded-full font-semibold hover:bg-brand/90 transition-all duration-300 shadow-md active:scale-95 group/btn cursor-pointer"
                                 >
                                     <LogIn size={18} />
                                     Iniciar sesión
@@ -109,7 +109,7 @@ class ErrorBoundary extends Component<Props, State> {
 
                                 <button
                                     onClick={() => window.location.href = '/'}
-                                    className="flex items-center gap-2 px-6 py-3 bg-secondary text-primary rounded-full border border-themed hover:bg-secondary/80 transition-all duration-300 active:scale-95 cursor-pointer"
+                                    className="flex items-center gap-2 px-6 py-3 bg-surface text-content rounded-full border border-line hover:bg-surface/80 transition-all duration-300 active:scale-95 cursor-pointer"
                                 >
                                     <Home size={18} />
                                     Volver al inicio
@@ -121,23 +121,23 @@ class ErrorBoundary extends Component<Props, State> {
             }
 
             return (
-                <div className="w-full min-h-screen flex items-center justify-center p-6 bg-primary relative overflow-hidden group">
+                <div className="w-full min-h-screen flex items-center justify-center p-6 bg-main relative overflow-hidden group">
                     {/* Background decoration */}
                     <div className="absolute top-0 left-0 w-full h-1 bg-linear-to-r from-transparent via-red-500/50 to-transparent shadow-[0_0_15px_rgba(239,68,68,0.5)]" />
-                    <div className="absolute -bottom-20 -right-20 w-64 h-64 bg-accent/5 blur-[100px] rounded-full" />
-                    <div className="absolute -top-20 -left-20 w-64 h-64 bg-accent/5 blur-[100px] rounded-full" />
+                    <div className="absolute -bottom-20 -right-20 w-64 h-64 bg-brand/5 blur-[100px] rounded-full" />
+                    <div className="absolute -top-20 -left-20 w-64 h-64 bg-brand/5 blur-[100px] rounded-full" />
 
                     <div className="max-w-xl w-full text-center space-y-8 relative z-10 transition-all duration-500">
                         <div className="relative inline-block">
                             <div className="absolute inset-0 bg-red-500/10 blur-2xl rounded-full scale-150 animate-pulse" />
-                            <div className="relative bg-secondary p-6 rounded-full border border-red-500/20 shadow-2xl">
+                            <div className="relative bg-surface p-6 rounded-full border border-red-500/20 shadow-2xl">
                                 <TriangleAlert size={48} className="text-red-500" />
                             </div>
                         </div>
 
                         <div className="space-y-3">
-                            <h2 className="text-2xl font-bold text-primary tracking-tight">Vuelo interrumpido</h2>
-                            <p className="text-secondary leading-relaxed">
+                            <h2 className="text-2xl font-bold text-content tracking-tight">Vuelo interrumpido</h2>
+                            <p className="text-content-muted leading-relaxed">
                                 Parece que hemos encontrado una turbulencia inesperada en el sistema. No hemos podido completar tu solicitud.
                             </p>
                         </div>
@@ -147,17 +147,17 @@ class ErrorBoundary extends Component<Props, State> {
                             <div className="w-full text-left">
                                 <button
                                     onClick={this.toggleDetails}
-                                    className="flex items-center gap-2 text-xs font-mono text-secondary hover:text-primary transition-colors mx-auto mb-2 cursor-pointer"
+                                    className="flex items-center gap-2 text-xs font-mono text-content-muted hover:text-content transition-colors mx-auto mb-2 cursor-pointer"
                                 >
                                     {this.state.showDetails ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
                                     {this.state.showDetails ? "Ocultar detalles técnicos" : "Ver detalles técnicos"}
                                 </button>
 
                                 {this.state.showDetails && (
-                                    <div className="bg-secondary/50 border border-red-500/10 rounded-xl p-4 overflow-hidden relative group/code animate-in fade-in slide-in-from-top-2 duration-200">
+                                    <div className="bg-surface/50 border border-red-500/10 rounded-xl p-4 overflow-hidden relative group/code animate-in fade-in slide-in-from-top-2 duration-200">
                                         <button
                                             onClick={this.copyErrorToClipboard}
-                                            className="absolute top-2 right-2 p-2 bg-primary/50 rounded-md hover:bg-primary text-secondary hover:text-primary transition-all opacity-0 group-hover/code:opacity-100"
+                                            className="absolute top-2 right-2 p-2 bg-main/50 rounded-md hover:bg-main text-content-muted hover:text-content transition-all opacity-0 group-hover/code:opacity-100"
                                             title="Copiar error"
                                         >
                                             <Copy size={14} />
@@ -166,7 +166,7 @@ class ErrorBoundary extends Component<Props, State> {
                                             <p className="text-sm font-bold text-red-400 mb-2">
                                                 {this.state.error.toString()}
                                             </p>
-                                            <pre className="text-[10px] font-mono text-secondary whitespace-pre-wrap wrap-break-word">
+                                            <pre className="text-[10px] font-mono text-content-muted whitespace-pre-wrap wrap-break-word">
                                                 {this.state.errorInfo?.componentStack}
                                             </pre>
                                         </div>
@@ -178,7 +178,7 @@ class ErrorBoundary extends Component<Props, State> {
                         <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
                             <button
                                 onClick={this.handleReset}
-                                className="flex items-center gap-2 px-6 py-3 bg-accent text-on-accent rounded-full font-semibold hover:bg-accent-hover transition-all duration-300 shadow-md active:scale-95 group/btn cursor-pointer"
+                                className="flex items-center gap-2 px-6 py-3 bg-brand text-content-on-brand rounded-full font-semibold hover:bg-brand/90 transition-all duration-300 shadow-md active:scale-95 group/btn cursor-pointer"
                             >
                                 <RefreshCcw size={18} className="group-hover/btn:rotate-180 transition-transform duration-500" />
                                 Recargar la pagina
@@ -186,7 +186,7 @@ class ErrorBoundary extends Component<Props, State> {
 
                             <button
                                 onClick={() => window.location.href = '/'}
-                                className="flex items-center gap-2 px-6 py-3 bg-secondary text-primary rounded-full border border-themed hover:bg-secondary/80 transition-all duration-300 active:scale-95 cursor-pointer"
+                                className="flex items-center gap-2 px-6 py-3 bg-surface text-content rounded-full border border-line hover:bg-surface/80 transition-all duration-300 active:scale-95 cursor-pointer"
                             >
                                 <Home size={18} />
                                 Volver al inicio

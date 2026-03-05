@@ -106,7 +106,7 @@ export default function UserProfile() {
     if (isAuthLoading || isLoading) {
         return (
             <div className="flex h-[50vh] items-center justify-center">
-                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-accent"></div>
+                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-brand"></div>
             </div>
         );
     }
@@ -118,12 +118,12 @@ export default function UserProfile() {
                     <Lock className="w-12 h-12 text-red-500" />
                 </div>
                 <div className="text-center gap-2 flex flex-col items-center">
-                    <h1 className="text-3xl font-bold text-primary">Inicia sesión para ver perfiles</h1>
-                    <p className="text-secondary max-w-sm">
+                    <h1 className="text-3xl font-bold text-content">Inicia sesión para ver perfiles</h1>
+                    <p className="text-content-muted max-w-sm">
                         Debes tener una cuenta en <span className="font-bold">flAIghts</span> para ver el perfil de otros viajeros y contactar con ellos.
                     </p>
                 </div>
-                <Link to="/login" className="px-8 py-3 bg-accent bg-accent-hover text-on-accent rounded-full hover:bg-accent-hover transition-all shadow-xl active:scale-95 cursor-pointer font-bold">
+                <Link to="/login" className="px-8 py-3 bg-brand text-content-on-brand rounded-full hover:bg-brand/90 transition-all shadow-xl active:scale-95 cursor-pointer font-bold">
                     Iniciar sesión
                 </Link>
             </div>
@@ -139,14 +139,14 @@ export default function UserProfile() {
                     </svg>
                 </div>
                 <div className="text-center gap-2 flex flex-col">
-                    <h1 className="text-3xl font-bold text-primary">Usuario no encontrado</h1>
-                    <p className="text-secondary max-w-sm">
+                    <h1 className="text-3xl font-bold text-content">Usuario no encontrado</h1>
+                    <p className="text-content-muted max-w-sm">
                         Lo sentimos, el perfil con ID <span className="font-mono font-bold text-red-500">{id}</span> no pudo ser localizado.
                     </p>
                 </div>
                 <button
                     onClick={() => navigate("/")}
-                    className="px-8 py-3 bg-accent text-on-accent rounded-full hover:bg-accent-hover transition-all shadow-xl active:scale-95"
+                    className="px-8 py-3 bg-brand text-content-on-brand rounded-full hover:bg-brand/90 transition-all shadow-xl active:scale-95"
                 >
                     Volver al inicio
                 </button>
@@ -162,35 +162,35 @@ export default function UserProfile() {
     return (
         <div className="flex p-8 gap-8 justify-center w-full max-w-6xl mx-auto items-start h-[calc(100vh-100px)]">
             <div className="flex flex-col gap-6">
-                <div className="flex flex-col text-center gap-4 bg-primary p-8 rounded-3xl border border-themed shadow-sm shrink-0 w-fit sticky top-8">
+                <div className="flex flex-col text-center gap-4 bg-main p-8 rounded-3xl border border-line shadow-sm shrink-0 w-fit sticky top-8">
                     <div className="relative self-center">
-                        <UserAvatar user={user} size={256} className="border-4 border-themed p-1 bg-primary" />
+                        <UserAvatar user={user} size={256} className="border-4 border-line p-1 bg-main" />
                         {lastSeenAt + 5 * 60 * 1000 >= now ? (
-                            <div className="absolute bottom-6 right-6 w-8 h-8 bg-green-500 rounded-full border-4 border-themed shadow-sm" title="Online"></div>
+                            <div className="absolute bottom-6 right-6 w-8 h-8 bg-green-500 rounded-full border-4 border-line shadow-sm" title="Online"></div>
                         ) : (
-                            <div className="absolute bottom-6 right-6 w-8 h-8 bg-red-500 rounded-full border-4 border-themed shadow-sm" title="Offline"></div>
+                            <div className="absolute bottom-6 right-6 w-8 h-8 bg-red-500 rounded-full border-4 border-line shadow-sm" title="Offline"></div>
                         )}
                     </div>
                     <div>
-                        <h1 className="text-3xl font-bold text-primary">{user.username}</h1>
+                        <h1 className="text-3xl font-bold text-content">{user.username}</h1>
                         {user.type === "friend" ? (
-                            <p className="text-secondary text-sm">Amigo desde {new Date(user.friend_since).toLocaleDateString()}</p>
+                            <p className="text-content-muted text-sm">Amigo desde {new Date(user.friend_since).toLocaleDateString()}</p>
                         ) : user.type === "public" && user.sent_friend_request ? (
-                            <p className="text-secondary text-sm">Solicitud de amistad enviada</p>
+                            <p className="text-content-muted text-sm">Solicitud de amistad enviada</p>
                         ) : user.type === "public" && user.received_friend_request ? (
-                            <p className="text-secondary text-sm">Solicitud de amistad recibida</p>
+                            <p className="text-content-muted text-sm">Solicitud de amistad recibida</p>
                         ) : null}
-                        <p className="text-secondary text-sm">Miembro desde {new Date(user.created_at).toLocaleDateString()}</p>
+                        <p className="text-content-muted text-sm">Miembro desde {new Date(user.created_at).toLocaleDateString()}</p>
                     </div>
                 </div>
 
                 {user.type === "self" ? (
-                    <button onClick={() => navigate("/settings")} className="px-8 py-3 bg-accent text-on-accent rounded-full hover:bg-accent-hover transition-all shadow-xl active:scale-95 cursor-pointer">
+                    <button onClick={() => navigate("/settings")} className="px-8 py-3 bg-brand text-content-on-brand rounded-full hover:bg-brand/90 transition-all shadow-xl active:scale-95 cursor-pointer">
                         Editar mi perfil
                     </button>
                 ) : user.type === "friend" ? (
                     <div className="flex gap-4">
-                        <Link to={`/chat/${id}`} onClick={(e) => e.preventDefault()} className="flex-1 justify-center flex items-center gap-2 px-8 py-3 bg-accent text-on-accent rounded-full shadow-xl font-bold hover:cursor-not-allowed opacity-50">
+                        <Link to={`/chat/${id}`} onClick={(e) => e.preventDefault()} className="flex-1 justify-center flex items-center gap-2 px-8 py-3 bg-brand text-content-on-brand rounded-full shadow-xl font-bold hover:cursor-not-allowed opacity-50">
                             <MessageCircle size={18} />
                             Mensaje
                         </Link>
@@ -200,26 +200,26 @@ export default function UserProfile() {
                         </button>
                     </div>
                 ) : user.type === "public" && user.received_friend_request ? (
-                    <button onClick={() => acceptFriendRequest({ id })} className="px-8 py-3 bg-green-500 text-on-accent rounded-full hover:bg-green-600 transition-all shadow-xl active:scale-95 cursor-pointer">
+                    <button onClick={() => acceptFriendRequest({ id })} className="px-8 py-3 bg-green-500 text-content-on-brand rounded-full hover:bg-green-600 transition-all shadow-xl active:scale-95 cursor-pointer">
                         Aceptar solicitud de amistad
                     </button>
                 ) : user.type === "public" && user.sent_friend_request ? (
-                    <button onClick={() => cancelFriendRequest({ id })} className="px-8 py-3 bg-accent text-on-accent rounded-full hover:bg-accent-hover transition-all shadow-xl active:scale-95 cursor-pointer">
+                    <button onClick={() => cancelFriendRequest({ id })} className="px-8 py-3 bg-brand text-content-on-brand rounded-full hover:bg-brand/90 transition-all shadow-xl active:scale-95 cursor-pointer">
                         Cancelar solicitud de amistad
                     </button>
                 ) : (
-                    <button onClick={() => sendFriendRequest({ id })} className="px-8 py-3 bg-accent text-on-accent rounded-full hover:bg-accent-hover transition-all shadow-xl active:scale-95 cursor-pointer">
+                    <button onClick={() => sendFriendRequest({ id })} className="px-8 py-3 bg-brand text-content-on-brand rounded-full hover:bg-brand/90 transition-all shadow-xl active:scale-95 cursor-pointer">
                         Enviar solicitud de amistad
                     </button>
                 )}
 
             </div>
 
-            <div className="flex-1 bg-primary rounded-3xl border border-themed shadow-sm p-8 flex flex-col h-full max-h-full">
-                <h1 className="text-3xl font-bold text-primary mb-6">Últimas búsquedas</h1>
+            <div className="flex-1 bg-main rounded-3xl border border-line shadow-sm p-8 flex flex-col h-full max-h-full">
+                <h1 className="text-3xl font-bold text-content mb-6">Últimas búsquedas</h1>
 
                 {user.type === "public" && !user.public ? (
-                    <div className="flex-1 flex flex-col items-center justify-center gap-4 text-secondary opacity-70">
+                    <div className="flex-1 flex flex-col items-center justify-center gap-4 text-content-muted opacity-70">
                         <svg className="w-16 h-16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                         </svg>
@@ -233,10 +233,10 @@ export default function UserProfile() {
                     >
                         {isSearchesLoading ? (
                             <div className="flex justify-center p-8">
-                                <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-accent"></div>
+                                <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-brand"></div>
                             </div>
                         ) : searchesData?.pages[0]?.items?.length === 0 ? (
-                            <div className="text-center p-8 text-secondary border-2 border-dashed border-themed rounded-2xl">
+                            <div className="text-center p-8 text-content-muted border-2 border-dashed border-line rounded-2xl">
                                 Este usuario aún no tiene búsquedas de vuelos guardadas.
                             </div>
                         ) : (
@@ -246,20 +246,20 @@ export default function UserProfile() {
                                         {page.items.map((search) => (
                                             <div
                                                 key={search._id}
-                                                className="p-5 border border-themed rounded-3xl hover:border-accent hover:shadow-md cursor-pointer transition-all bg-secondary flex flex-col gap-3 group"
+                                                className="p-5 border border-line rounded-3xl hover:border-brand hover:shadow-md cursor-pointer transition-all bg-surface flex flex-col gap-3 group"
                                             >
                                                 <div className="flex justify-between items-center">
-                                                    <div className="flex items-center gap-2 text-lg font-bold">
+                                                    <div className="flex items-center gap-2 text-lg font-bold text-content">
                                                         <span>{search.origins.join(', ')}</span>
-                                                        <span className="text-accent group-hover:px-1 transition-all">→</span>
+                                                        <span className="text-brand group-hover:px-1 transition-all">→</span>
                                                         <span>{search.destinations.join(', ')}</span>
                                                     </div>
-                                                    <div className="px-3 py-1 bg-accent/10 text-accent text-xs font-bold rounded-full uppercase tracking-wider">
+                                                    <div className="px-3 py-1 bg-brand/10 text-brand text-xs font-bold rounded-full uppercase tracking-wider">
                                                         {search.criteria?.priority || 'Balanced'}
                                                     </div>
                                                 </div>
 
-                                                <div className="flex items-center gap-6 text-sm text-secondary font-medium">
+                                                <div className="flex items-center gap-6 text-sm text-content-muted font-medium">
                                                     <div className="flex items-center gap-2">
                                                         <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
@@ -289,12 +289,12 @@ export default function UserProfile() {
 
                                 {isFetchingNextPage && (
                                     <div className="flex justify-center p-4">
-                                        <div className="animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 border-accent"></div>
+                                        <div className="animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 border-brand"></div>
                                     </div>
                                 )}
 
                                 {!hasNextPage && (searchesData?.pages[0]?.items?.length ?? 0) > 0 && (
-                                    <div className="text-center p-4 text-xs text-secondary/60 uppercase tracking-widest font-bold">
+                                    <div className="text-center p-4 text-xs text-content-muted/60 uppercase tracking-widest font-bold">
                                         No hay más búsquedas
                                     </div>
                                 )}

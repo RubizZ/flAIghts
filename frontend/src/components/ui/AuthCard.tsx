@@ -14,7 +14,7 @@ export default function AuthCard({ children, title = "fl/AI\\ghts" }: AuthCardPr
     }, []);
 
     return (
-        <div className="relative overflow-hidden animate-fade-in-down bg-linear-to-br from-(--color-bg-primary) to-(--color-bg-secondary) w-full rounded-xl border-3 border-themed shadow-2xl opacity-95">
+        <div className="relative overflow-hidden animate-fade-in-down bg-linear-to-br from-main to-surface w-full rounded-xl border-3 border-line shadow-2xl opacity-95">
             <PlaneBackground />
             <div className="relative z-10 flex flex-col gap-6 p-8">
                 {/* Header */}
@@ -22,14 +22,14 @@ export default function AuthCard({ children, title = "fl/AI\\ghts" }: AuthCardPr
                     <button
                         type="button"
                         onClick={(e) => { e.stopPropagation(); window.history.back() }}
-                        className={hasBack ? "absolute left-0 text-(--color-text-secondary)/70 hover:text-(--color-text-primary) transition-colors cursor-pointer" : "hidden"}
+                        className={hasBack ? "absolute left-0 text-content-muted/70 hover:text-content transition-colors cursor-pointer" : "hidden"}
                     >
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={3} stroke="currentColor" className="size-7">
                             <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
                         </svg>
                     </button>
 
-                    <span className="pb-2 font-bold text-3xl tracking-tighter bg-clip-text text-transparent bg-linear-to-b from-(--color-text-primary) to-(--color-text-primary)/70 drop-shadow-sm">
+                    <span className="pb-2 font-bold text-3xl tracking-tighter bg-clip-text text-transparent bg-linear-to-b from-content to-content/70 drop-shadow-sm">
                         {title}
                     </span>
                 </div>

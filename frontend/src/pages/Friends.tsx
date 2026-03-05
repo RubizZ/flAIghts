@@ -53,7 +53,7 @@ export default function Friends() {
     if (isLoading) {
         return (
             <div className="flex h-[50vh] items-center justify-center relative">
-                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-accent"></div>
+                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-brand"></div>
             </div>
         );
     }
@@ -64,8 +64,8 @@ export default function Friends() {
                 <div className="p-4 bg-red-50 rounded-full border border-red-100">
                     <UserPlus className="w-12 h-12 text-red-500" />
                 </div>
-                <h1 className="text-3xl font-bold text-primary">No has iniciado sesión</h1>
-                <Link to="/login" className="px-8 py-3 bg-accent bg-accent-hover text-on-accent rounded-full hover:bg-accent-hover transition-all shadow-xl active:scale-95">
+                <h1 className="text-3xl font-bold text-content">No has iniciado sesión</h1>
+                <Link to="/login" className="px-8 py-3 bg-brand text-content-on-brand rounded-full hover:bg-brand/90 transition-all shadow-xl active:scale-95">
                     Iniciar sesión
                 </Link>
             </div>
@@ -82,39 +82,39 @@ export default function Friends() {
     return (
         <div className="flex flex-col max-w-5xl mx-auto w-full p-6 sm:p-8 gap-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
             <header className="flex flex-col gap-2">
-                <h1 className="text-4xl font-extrabold text-primary tracking-tight">Amigos</h1>
-                <p className="text-secondary text-lg">Gestiona a las personas con las que compartes tus viajes.</p>
+                <h1 className="text-4xl font-extrabold text-content tracking-tight">Amigos</h1>
+                <p className="text-content-muted text-lg">Gestiona a las personas con las que compartes tus viajes.</p>
             </header>
 
-            <div className="flex gap-4 border-b border-themed">
+            <div className="flex gap-4 border-b border-line">
                 <button
                     onClick={() => setActiveTab('friends')}
-                    className={`flex items-center gap-2 pb-4 text-lg font-medium transition-all relative cursor-pointer ${activeTab === 'friends' ? 'text-accent' : 'text-secondary hover:text-primary'}`}
+                    className={`flex items-center gap-2 pb-4 text-lg font-medium transition-all relative cursor-pointer ${activeTab === 'friends' ? 'text-brand' : 'text-content-muted hover:text-content'}`}
                 >
                     <Users size={20} />
                     <span>Mis Amigos</span>
-                    <span className="bg-secondary/10 px-2 py-0.5 rounded-full text-xs font-bold text-primary ml-1">{friends.length}</span>
+                    <span className="bg-surface/10 px-2 py-0.5 rounded-full text-xs font-bold text-content ml-1">{friends.length}</span>
                     {activeTab === 'friends' && (
-                        <span className="absolute bottom-0 left-0 right-0 h-1 bg-accent rounded-t-full transition-all" />
+                        <span className="absolute bottom-0 left-0 right-0 h-1 bg-brand rounded-t-full transition-all" />
                     )}
                 </button>
                 <button
                     onClick={() => setActiveTab('requests')}
-                    className={`flex items-center gap-2 pb-4 text-lg font-medium transition-all relative cursor-pointer ${activeTab === 'requests' ? 'text-accent' : 'text-secondary hover:text-primary'}`}
+                    className={`flex items-center gap-2 pb-4 text-lg font-medium transition-all relative cursor-pointer ${activeTab === 'requests' ? 'text-brand' : 'text-content-muted hover:text-content'}`}
                 >
                     <UserPlus size={20} />
                     <span>Solicitudes</span>
                     {totalRequests > 0 && (
-                        <span className="bg-accent text-white px-2 py-0.5 rounded-full text-xs font-bold ml-1">{totalRequests}</span>
+                        <span className="bg-brand text-content-on-brand px-2 py-0.5 rounded-full text-xs font-bold ml-1">{totalRequests}</span>
                     )}
                     {activeTab === 'requests' && (
-                        <span className="absolute bottom-0 left-0 right-0 h-1 bg-accent rounded-t-full transition-all" />
+                        <span className="absolute bottom-0 left-0 right-0 h-1 bg-brand rounded-t-full transition-all" />
                     )}
                 </button>
 
                 <Link
                     to="/user/search"
-                    className="ml-auto mb-4 flex items-center gap-2 bg-accent text-white px-4 py-2 rounded-xl font-bold hover:opacity-90 transition-all shadow-lg shadow-accent/20"
+                    className="ml-auto mb-4 flex items-center gap-2 bg-brand text-content-on-brand px-4 py-2 rounded-xl font-bold hover:opacity-90 transition-all shadow-lg shadow-brand/20"
                 >
                     <UserSearch size={18} />
                     <span>Añadir amigo</span>
@@ -125,30 +125,30 @@ export default function Friends() {
                 {activeTab === 'friends' && (
                     <section className="animate-in fade-in slide-in-from-right-4 duration-300">
                         {friends.length === 0 ? (
-                            <div className="flex flex-col items-center justify-center py-20 bg-secondary/10 rounded-3xl border border-dashed border-themed">
-                                <Users size={48} className="text-secondary opacity-50 mb-4" />
-                                <h3 className="text-xl font-bold text-primary">Aún no tienes amigos</h3>
-                                <p className="text-secondary text-center mt-2 max-w-sm">Busca a otros viajeros conectando con ellos y agregándolos a tu lista para planear viajes juntos.</p>
+                            <div className="flex flex-col items-center justify-center py-20 bg-surface/10 rounded-3xl border border-dashed border-line">
+                                <Users size={48} className="text-content-muted opacity-50 mb-4" />
+                                <h3 className="text-xl font-bold text-content">Aún no tienes amigos</h3>
+                                <p className="text-content-muted text-center mt-2 max-w-sm">Busca a otros viajeros conectando con ellos y agregándolos a tu lista para planear viajes juntos.</p>
                             </div>
                         ) : (
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                                 {friends.map((friend: any) => (
-                                    <div key={friend._id} className="flex flex-col p-5 bg-primary rounded-3xl border border-themed shadow-xs hover:border-accent hover:shadow-md transition-all group">
+                                    <div key={friend._id} className="flex flex-col p-5 bg-main rounded-3xl border border-line shadow-xs hover:border-brand hover:shadow-md transition-all group">
                                         <div className="flex items-center gap-4">
                                             <Link to={`/user/${friend._id}`} className="shrink-0 relative">
                                                 <UserAvatar user={friend} size={64} className="transition-transform group-hover:scale-105" />
                                             </Link>
                                             <div className="flex flex-col flex-1 overflow-hidden">
-                                                <Link to={`/user/${friend._id}`} className="font-bold text-lg text-primary truncate hover:text-accent transition-colors">
+                                                <Link to={`/user/${friend._id}`} className="font-bold text-lg text-content truncate hover:text-brand transition-colors">
                                                     {friend.username}
                                                 </Link>
                                             </div>
                                         </div>
-                                        <div className="mt-4 pt-4 border-t border-themed flex justify-end gap-2">
+                                        <div className="mt-4 pt-4 border-t border-line flex justify-end gap-2">
                                             <Link
                                                 to={`/chat/${friend._id}`}
                                                 onClick={(e) => e.preventDefault()}
-                                                className="flex items-center gap-2 px-4 py-2 bg-accent text-on-accent rounded-full text-sm font-bold opacity-50 hover:cursor-not-allowed"
+                                                className="flex items-center gap-2 px-4 py-2 bg-brand text-content-on-brand rounded-full text-sm font-bold opacity-50 hover:cursor-not-allowed"
                                                 title="Enviar mensaje"
                                             >
                                                 <MessageCircle size={16} />
@@ -175,23 +175,23 @@ export default function Friends() {
 
                         {/* Recibidas */}
                         <div className="flex flex-col gap-4">
-                            <h2 className="text-xl font-bold text-primary flex items-center gap-2">
+                            <h2 className="text-xl font-bold text-content flex items-center gap-2">
                                 Solicitudes Recibidas
-                                <span className="bg-accent/10 text-accent px-2 py-0.5 rounded-full text-xs font-bold">{received.length}</span>
+                                <span className="bg-brand/10 text-brand px-2 py-0.5 rounded-full text-xs font-bold">{received.length}</span>
                             </h2>
                             {received.length === 0 ? (
-                                <div className="p-8 text-center text-secondary bg-secondary/5 rounded-2xl border border-dashed border-themed">
+                                <div className="p-8 text-center text-content-muted bg-surface/5 rounded-2xl border border-dashed border-line">
                                     No tienes solicitudes de amistad pendientes.
                                 </div>
                             ) : (
                                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                                     {received.map((req: any) => (
-                                        <div key={req._id} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 bg-primary rounded-2xl border border-themed shadow-sm gap-4">
+                                        <div key={req._id} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 bg-main rounded-2xl border border-line shadow-sm gap-4">
                                             <div className="flex items-center gap-4">
                                                 <Link to={`/user/${req._id}`}>
                                                     <UserAvatar user={req} size={48} />
                                                 </Link>
-                                                <Link to={`/user/${req._id}`} className="font-bold text-primary text-lg hover:text-accent transition-colors">
+                                                <Link to={`/user/${req._id}`} className="font-bold text-content text-lg hover:text-brand transition-colors">
                                                     {req.username}
                                                 </Link>
                                             </div>
@@ -217,34 +217,34 @@ export default function Friends() {
 
                         {/* Enviadas */}
                         <div className="flex flex-col gap-4">
-                            <h2 className="text-xl font-bold text-primary flex items-center gap-2">
+                            <h2 className="text-xl font-bold text-content flex items-center gap-2">
                                 Solicitudes Enviadas
-                                <span className="bg-secondary/10 text-primary px-2 py-0.5 rounded-full text-xs font-bold">{sent.length}</span>
+                                <span className="bg-surface/10 text-content px-2 py-0.5 rounded-full text-xs font-bold">{sent.length}</span>
                             </h2>
                             {sent.length === 0 ? (
-                                <div className="p-8 text-center text-secondary bg-secondary/5 rounded-2xl border border-dashed border-themed">
+                                <div className="p-8 text-center text-content-muted bg-surface/5 rounded-2xl border border-dashed border-line">
                                     No has enviado solicitudes de amistad.
                                 </div>
                             ) : (
                                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                                     {sent.map((req: any) => (
-                                        <div key={req._id} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 bg-primary rounded-2xl border border-themed border-opacity-50 gap-4 opacity-80 hover:opacity-100 transition-opacity">
+                                        <div key={req._id} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 bg-main rounded-2xl border border-line border-opacity-50 gap-4 opacity-80 hover:opacity-100 transition-opacity">
                                             <div className="flex items-center gap-4">
                                                 <Link to={`/user/${req._id}`}>
                                                     <UserAvatar user={req} size={40} className="grayscale opacity-70" />
                                                 </Link>
                                                 <div className="flex flex-col">
-                                                    <Link to={`/user/${req._id}`} className="font-bold text-primary hover:text-accent transition-colors">
+                                                    <Link to={`/user/${req._id}`} className="font-bold text-content hover:text-brand transition-colors">
                                                         {req.username}
                                                     </Link>
-                                                    <span className="text-xs text-secondary flex items-center gap-1">
+                                                    <span className="text-xs text-content-muted flex items-center gap-1">
                                                         <Clock size={12} /> Esperando respuesta...
                                                     </span>
                                                 </div>
                                             </div>
                                             <button
                                                 onClick={() => cancelRequest({ id: req._id })}
-                                                className="w-full sm:w-auto px-4 py-2 bg-secondary/20 hover:bg-red-100 hover:text-red-600 text-secondary rounded-xl font-bold transition-colors text-sm cursor-pointer"
+                                                className="w-full sm:w-auto px-4 py-2 bg-surface/20 hover:bg-red-100 hover:text-red-600 text-content-muted rounded-xl font-bold transition-colors text-sm cursor-pointer"
                                             >
                                                 Cancelar
                                             </button>

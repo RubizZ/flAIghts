@@ -46,8 +46,8 @@ export default function Navbar({ onToggleSidebar, isSidebarOpen }: { onToggleSid
         const { pushMenu } = useDropdown();
         return (
             <div className="p-2 min-w-70 max-w-sm whitespace-normal">
-                <div className="p-2 border-b border-themed mb-1">
-                    <p className="text-[10px] uppercase tracking-widest text-secondary font-bold opacity-50">Notificaciones</p>
+                <div className="p-2 border-b border-line mb-1">
+                    <p className="text-[10px] uppercase tracking-widest text-content-muted font-bold opacity-50">Notificaciones</p>
                 </div>
                 {user?.received_friend_requests && user.received_friend_requests.length > 0 ? (
                     <button
@@ -55,16 +55,16 @@ export default function Navbar({ onToggleSidebar, isSidebarOpen }: { onToggleSid
                             e.stopPropagation();
                             pushMenu('friend_requests');
                         }}
-                        className="w-full flex items-center justify-between px-3 py-3 text-sm text-primary hover:bg-(--color-bg-secondary)/70 rounded-xl transition-all cursor-pointer group text-left font-medium bg-accent/5"
+                        className="w-full flex items-center justify-between px-3 py-3 text-sm text-content hover:bg-surface/70 rounded-xl transition-all cursor-pointer group text-left font-medium bg-brand/5"
                     >
                         <div className="flex flex-col">
-                            <span className="text-accent font-bold">Solicitudes de amistad</span>
-                            <span className="text-xs text-secondary opacity-80">Tienes {user.received_friend_requests.length} nueva{user.received_friend_requests.length > 1 ? 's' : ''}</span>
+                            <span className="text-brand font-bold">Solicitudes de amistad</span>
+                            <span className="text-xs text-content-muted opacity-80">Tienes {user.received_friend_requests.length} nueva{user.received_friend_requests.length > 1 ? 's' : ''}</span>
                         </div>
-                        <ChevronDown size={14} className="-rotate-90 group-hover:translate-x-1 transition-transform text-accent" />
+                        <ChevronDown size={14} className="-rotate-90 group-hover:translate-x-1 transition-transform text-brand" />
                     </button>
                 ) : (
-                    <div className="p-4 text-center text-secondary opacity-50 text-sm">
+                    <div className="p-4 text-center text-content-muted opacity-50 text-sm">
                         No tienes notificaciones
                     </div>
                 )}
@@ -81,19 +81,19 @@ export default function Navbar({ onToggleSidebar, isSidebarOpen }: { onToggleSid
                         e.stopPropagation();
                         popMenu();
                     }}
-                    className="px-3 py-2 text-[10px] uppercase tracking-widest text-primary font-bold hover:text-accent transition-colors flex items-center gap-2 cursor-pointer w-full text-left border-b border-themed mb-2"
+                    className="px-3 py-2 text-[10px] uppercase tracking-widest text-content font-bold hover:text-brand transition-colors flex items-center gap-2 cursor-pointer w-full text-left border-b border-line mb-2"
                 >
                     <ChevronDown size={12} className="rotate-90" />
                     Volver
                 </button>
                 <div className="max-h-60 overflow-y-auto pr-1">
                     {user?.received_friend_requests?.map((req) => (
-                        <div key={req._id} className="flex items-center justify-between p-2 hover:bg-secondary/80 rounded-lg transition-colors cursor-pointer group" onClick={() => { setIsOpen(false); navigate(`/user/${req._id}`); }}>
+                        <div key={req._id} className="flex items-center justify-between p-2 hover:bg-surface/80 rounded-lg transition-colors cursor-pointer group" onClick={() => { setIsOpen(false); navigate(`/user/${req._id}`); }}>
                             <div className="flex items-center gap-2">
                                 <UserAvatar user={req} size={32} />
-                                <span className="font-bold text-sm text-primary">{req.username}</span>
+                                <span className="font-bold text-sm text-content">{req.username}</span>
                             </div>
-                            <span className="text-[10px] font-bold text-accent bg-accent/10 px-2 py-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity">Ver</span>
+                            <span className="text-[10px] font-bold text-brand bg-brand/10 px-2 py-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity">Ver</span>
                         </div>
                     ))}
                 </div>
@@ -105,18 +105,18 @@ export default function Navbar({ onToggleSidebar, isSidebarOpen }: { onToggleSid
         const { pushMenu, setIsOpen } = useDropdown();
         return (
             <div className="w-64">
-                <div className="p-3 border-b border-themed bg-secondary/50">
-                    <p className="text-[10px] uppercase tracking-widest text-secondary font-bold mb-1 opacity-50">Cuenta</p>
-                    <p className="text-sm font-bold text-primary truncate">{user?.email}</p>
+                <div className="p-3 border-b border-line bg-surface/50">
+                    <p className="text-[10px] uppercase tracking-widest text-content-muted font-bold mb-1 opacity-50">Cuenta</p>
+                    <p className="text-sm font-bold text-content truncate">{user?.email}</p>
                 </div>
                 <div className="p-1">
-                    <button onClick={() => { setIsOpen(false); navigate(`/user/${user?._id}`) }} className="w-full flex items-center justify-between text-primary px-3 py-2 text-sm rounded-xl transition-all group text-left hover:bg-(--color-bg-secondary)/70 hover:cursor-pointer font-medium">
+                    <button onClick={() => { setIsOpen(false); navigate(`/user/${user?._id}`) }} className="w-full flex items-center justify-between text-content px-3 py-2 text-sm rounded-xl transition-all group text-left hover:bg-surface/70 hover:cursor-pointer font-medium">
                         <div className="flex items-center gap-3">
                             <User size={16} className="shrink-0" />
                             <span className="leading-none">Mi Perfil</span>
                         </div>
                     </button>
-                    <button onClick={() => { setIsOpen(false); navigate('/settings') }} className="w-full flex items-center justify-between text-primary px-3 py-2 text-sm rounded-xl transition-all group text-left hover:bg-(--color-bg-secondary)/70 hover:cursor-pointer font-medium">
+                    <button onClick={() => { setIsOpen(false); navigate('/settings') }} className="w-full flex items-center justify-between text-content px-3 py-2 text-sm rounded-xl transition-all group text-left hover:bg-surface/70 hover:cursor-pointer font-medium">
                         <div className="flex items-center gap-3">
                             <Settings size={16} className="shrink-0" />
                             <span className="leading-none">Ajustes</span>
@@ -136,19 +136,19 @@ export default function Navbar({ onToggleSidebar, isSidebarOpen }: { onToggleSid
                             e.stopPropagation();
                             pushMenu('theme');
                         }}
-                        className="w-full flex items-center justify-between px-3 py-2 text-sm text-primary hover:bg-(--color-bg-secondary)/70 rounded-xl transition-all cursor-pointer group text-left font-medium"
+                        className="w-full flex items-center justify-between px-3 py-2 text-sm text-content hover:bg-surface/70 rounded-xl transition-all cursor-pointer group text-left font-medium"
                     >
                         <div className="flex items-center gap-3">
                             <Palette size={16} className="shrink-0" />
                             <span className="leading-none">Tema</span>
                         </div>
-                        <div className="flex items-center gap-1.5 text-[10px] text-primary opacity-60 font-bold transition-colors">
+                        <div className="flex items-center gap-1.5 text-[10px] text-content opacity-60 font-bold transition-colors">
                             <span className="leading-none">{themeLabels[theme as keyof typeof themeLabels]}</span>
                             <ChevronDown size={12} className="-rotate-90 group-hover:rotate-0 transition-transform shrink-0" />
                         </div>
                     </button>
                 </div>
-                <div className="p-1 border-t border-themed">
+                <div className="p-1 border-t border-line">
                     <button
                         onClick={() => {
                             setIsOpen(false);
@@ -173,7 +173,7 @@ export default function Navbar({ onToggleSidebar, isSidebarOpen }: { onToggleSid
                         e.stopPropagation();
                         popMenu();
                     }}
-                    className="w-full flex items-center gap-3 text-secondary px-3 py-2 text-sm rounded-xl transition-all group text-left hover:bg-(--color-bg-secondary)/70 hover:cursor-pointer font-medium mb-1"
+                    className="w-full flex items-center gap-3 text-content-muted px-3 py-2 text-sm rounded-xl transition-all group text-left hover:bg-surface/70 hover:cursor-pointer font-medium mb-1"
                 >
                     <ChevronDown size={16} className="rotate-90 shrink-0" />
                     <span className="leading-none">Volver</span>
@@ -191,21 +191,21 @@ export default function Navbar({ onToggleSidebar, isSidebarOpen }: { onToggleSid
                             className={`w-full flex items-center justify-between px-3 py-2 text-sm rounded-xl transition-all group text-left font-medium ${t === 'system'
                                 ? 'opacity-30 cursor-not-allowed grayscale'
                                 : theme === t
-                                    ? 'bg-(--color-bg-secondary)/70 text-primary cursor-pointer'
-                                    : 'text-secondary hover:bg-(--color-bg-secondary)/70 hover:cursor-pointer'
+                                    ? 'bg-surface/70 text-content cursor-pointer'
+                                    : 'text-content-muted hover:bg-surface/70 hover:cursor-pointer'
                                 }`}
                         >
                             <div className="flex items-center gap-3">
-                                <div className={`${theme === t ? 'text-primary' : 'text-secondary group-hover:text-primary'} transition-colors shrink-0`}>
+                                <div className={`${theme === t ? 'text-content' : 'text-content-muted group-hover:text-content'} transition-colors shrink-0`}>
                                     {(themeIcons as any)[t]}
                                 </div>
                                 <span className="leading-none">{(themeLabels as any)[t]}</span>
                                 {t === 'system' && (
-                                    <span className="text-[10px] bg-secondary/10 px-1.5 py-0.5 rounded uppercase tracking-tighter">Pronto</span>
+                                    <span className="text-[10px] bg-surface/10 px-1.5 py-0.5 rounded uppercase tracking-tighter">Pronto</span>
                                 )}
                             </div>
                             {t !== 'system' && theme === t && (
-                                <div className="w-1.5 h-1.5 rounded-full bg-accent shadow-[0_0_8px_rgba(var(--color-accent),0.6)]" />
+                                <div className="w-1.5 h-1.5 rounded-full bg-brand shadow-[0_0_8px_rgba(var(--color-brand),0.6)]" />
                             )}
                         </button>
                     ))}
@@ -219,37 +219,37 @@ export default function Navbar({ onToggleSidebar, isSidebarOpen }: { onToggleSid
         return (
             <div className="w-64 p-1">
                 {/* Mobile Auth Options */}
-                <div className="sm:hidden mb-2 pb-2 border-b border-themed">
-                    <p className="px-3 py-2 text-[10px] uppercase tracking-widest text-secondary font-bold opacity-50">Autenticación</p>
+                <div className="sm:hidden mb-2 pb-2 border-b border-line">
+                    <p className="px-3 py-2 text-[10px] uppercase tracking-widest text-content-muted font-bold opacity-50">Autenticación</p>
                     <button
                         onClick={() => { setIsOpen(false); navigate('/login'); }}
-                        className="w-full flex items-center gap-3 px-3 py-2 text-sm text-primary hover:bg-(--color-bg-secondary)/70 rounded-xl transition-colors cursor-pointer font-medium"
+                        className="w-full flex items-center gap-3 px-3 py-2 text-sm text-content hover:bg-surface/70 rounded-xl transition-colors cursor-pointer font-medium"
                     >
-                        <User size={16} className="text-accent" />
+                        <User size={16} className="text-brand" />
                         Log in
                     </button>
                     <button
                         onClick={() => { setIsOpen(false); navigate('/register'); }}
-                        className="w-full flex items-center gap-3 px-3 py-2 text-sm text-primary hover:bg-(--color-bg-secondary)/70 rounded-xl transition-colors cursor-pointer font-medium"
+                        className="w-full flex items-center gap-3 px-3 py-2 text-sm text-content hover:bg-surface/70 rounded-xl transition-colors cursor-pointer font-medium"
                     >
-                        <ShieldCheck size={16} className="text-accent" />
+                        <ShieldCheck size={16} className="text-brand" />
                         Register
                     </button>
                 </div>
 
-                <p className="hidden sm:block px-3 py-2 text-[10px] uppercase tracking-widest text-secondary font-bold opacity-50">Opciones</p>
+                <p className="hidden sm:block px-3 py-2 text-[10px] uppercase tracking-widest text-content-muted font-bold opacity-50">Opciones</p>
                 <button
                     onClick={(e) => {
                         e.stopPropagation();
                         pushMenu('theme');
                     }}
-                    className="w-full flex items-center justify-between px-3 py-2 text-sm text-primary hover:text-primary hover:bg-(--color-bg-secondary)/70 rounded-xl transition-colors cursor-pointer group text-left font-medium"
+                    className="w-full flex items-center justify-between px-3 py-2 text-sm text-content hover:text-content hover:bg-surface/70 rounded-xl transition-colors cursor-pointer group text-left font-medium"
                 >
                     <div className="flex items-center gap-3">
-                        <Palette size={16} className="group-hover:text-accent transition-colors" />
+                        <Palette size={16} className="group-hover:text-brand transition-colors" />
                         Tema
                     </div>
-                    <div className="flex items-center gap-1 text-[10px] text-secondary opacity-60 font-bold">
+                    <div className="flex items-center gap-1 text-[10px] text-content-muted opacity-60 font-bold">
                         {themeLabels[theme as keyof typeof themeLabels]}
                         <ChevronDown size={12} className="-rotate-90" />
                     </div>
@@ -259,31 +259,31 @@ export default function Navbar({ onToggleSidebar, isSidebarOpen }: { onToggleSid
     };
 
     return (
-        <nav className="flex items-center justify-between w-full bg-primary h-16 py-2 px-3 sm:px-6 shadow-sm border-b border-themed relative z-50">
+        <nav className="flex items-center justify-between w-full bg-main h-16 py-2 px-3 sm:px-6 shadow-sm border-b border-line relative z-50">
             <div className="flex items-center gap-3 sm:gap-6 shrink-0 z-10">
                 <button
                     onClick={onToggleSidebar}
-                    className={`p-2 hover:bg-secondary rounded-xl transition-colors cursor-pointer text-secondary group`}
+                    className={`p-2 hover:bg-surface rounded-xl transition-colors cursor-pointer text-content-muted group`}
                     aria-label="Toggle Sidebar"
                 >
                     {isSidebarOpen ? (
-                        <X size={20} className="group-hover:text-(--color-text-primary) transition-colors" />
+                        <X size={20} className="group-hover:text-content transition-colors" />
                     ) : (
-                        <Menu size={20} className="group-hover:text-(--color-text-primary) transition-colors" />
+                        <Menu size={20} className="group-hover:text-content transition-colors" />
                     )}
                 </button>
             </div>
 
             <div className="hidden min-[400px]:flex items-center justify-center absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
-                <Link to="/" className="text-secondary hover:text-(--color-accent) transition-colors font-bold text-lg sm:text-xl tracking-tighter">flAIghts</Link>
+                <Link to="/" className="text-content-muted hover:text-brand transition-colors font-bold text-lg sm:text-xl tracking-tighter">flAIghts</Link>
             </div>
 
-            <div className="flex items-center justify-end gap-2 sm:gap-4 shrink-0 z-10 bg-primary">
+            <div className="flex items-center justify-end gap-2 sm:gap-4 shrink-0 z-10 bg-main">
                 {isLoading ? (
                     <div className="flex items-center gap-2">
-                        <div className="hidden sm:block w-16 h-8 bg-secondary rounded-full animate-pulse opacity-50" />
-                        <div className="hidden sm:block w-20 h-8 bg-secondary rounded-full animate-pulse opacity-50" />
-                        <div className="w-9 h-9 bg-secondary rounded-full animate-pulse opacity-50" />
+                        <div className="hidden sm:block w-16 h-8 bg-surface rounded-full animate-pulse opacity-50" />
+                        <div className="hidden sm:block w-20 h-8 bg-surface rounded-full animate-pulse opacity-50" />
+                        <div className="w-9 h-9 bg-surface rounded-full animate-pulse opacity-50" />
                     </div>
                 ) : isAuthenticated ? (
                     <div className="flex items-center gap-2">
@@ -297,10 +297,10 @@ export default function Navbar({ onToggleSidebar, isSidebarOpen }: { onToggleSid
                                 }
                             }}
                             trigger={
-                                <div className="relative flex items-center justify-center p-2 bg-secondary hover:bg-secondary/80 border border-themed rounded-full transition-all group cursor-pointer w-9 h-9">
-                                    <Bell size={18} className="text-primary group-hover:text-accent transition-colors" />
+                                <div className="relative flex items-center justify-center p-2 bg-surface hover:bg-surface/80 border border-line rounded-full transition-all group cursor-pointer w-9 h-9">
+                                    <Bell size={18} className="text-content group-hover:text-brand transition-colors" />
                                     {user?.received_friend_requests && user.received_friend_requests.length > 0 && (
-                                        <div className="absolute top-0 right-0 w-2.5 h-2.5 bg-accent rounded-full border-2 border-themed" />
+                                        <div className="absolute top-0 right-0 w-2.5 h-2.5 bg-brand rounded-full border-2 border-line" />
                                     )}
                                 </div>
                             }
@@ -328,12 +328,12 @@ export default function Navbar({ onToggleSidebar, isSidebarOpen }: { onToggleSid
                                 }
                             }}
                             trigger={
-                                <div className="flex items-center gap-2 bg-secondary hover:bg-secondary/80 border border-themed p-1 pr-3 rounded-full transition-all group">
+                                <div className="flex items-center gap-2 bg-surface hover:bg-surface/80 border border-line p-1 pr-3 rounded-full transition-all group">
                                     <UserAvatar user={user} size={28} />
-                                    <span className="text-primary text-sm font-bold hidden sm:block max-w-24 truncate">
+                                    <span className="text-content text-sm font-bold hidden sm:block max-w-24 truncate">
                                         {user?.username}
                                     </span>
-                                    <ChevronDown size={14} className={`text-secondary opacity-60 transition-transform duration-200 ${isUserMenuOpen ? 'rotate-180' : ''}`} />
+                                    <ChevronDown size={14} className={`text-content-muted opacity-60 transition-transform duration-200 ${isUserMenuOpen ? 'rotate-180' : ''}`} />
                                 </div>
                             }
                             menus={{
@@ -357,8 +357,8 @@ export default function Navbar({ onToggleSidebar, isSidebarOpen }: { onToggleSid
                     </div>
                 ) : (
                     <div className="hidden sm:flex gap-2">
-                        <Link to="/login" className="bg-secondary text-primary hover:bg-secondary/80 px-5 py-1.5 rounded-full transition-colors cursor-pointer font-medium text-sm">Log in</Link>
-                        <Link to="/register" className="bg-accent bg-accent-hover text-on-accent hover:bg-accent-hover px-5 py-1.5 rounded-full transition-colors cursor-pointer font-medium text-sm text-center">Register</Link>
+                        <Link to="/login" className="bg-surface text-content hover:bg-surface/80 px-5 py-1.5 rounded-full transition-colors cursor-pointer font-medium text-sm">Log in</Link>
+                        <Link to="/register" className="bg-brand text-content-on-brand hover:bg-brand-hover px-5 py-1.5 rounded-full transition-colors cursor-pointer font-medium text-sm text-center">Register</Link>
                     </div>
                 )}
 
@@ -374,7 +374,7 @@ export default function Navbar({ onToggleSidebar, isSidebarOpen }: { onToggleSid
                             }
                         }}
                         trigger={
-                            <div className="w-9 h-9 flex items-center justify-center bg-secondary hover:bg-secondary/80 border border-themed rounded-full text-primary transition-all active:scale-90 cursor-pointer">
+                            <div className="w-9 h-9 flex items-center justify-center bg-surface hover:bg-surface/80 border border-line rounded-full text-content transition-all active:scale-90 cursor-pointer">
                                 <User size={20} className="sm:hidden" />
                                 <MoreHorizontal size={20} className="hidden sm:block" />
                             </div>

@@ -15,7 +15,7 @@ export default function UserAvatar({ user, className = "", size = 32 }: UserAvat
     return (
         <img
             src={avatarUrl}
-            className={`rounded-full shadow-inner bg-secondary border border-themed object-cover ${className}`}
+            className={`rounded-full shadow-inner bg-surface border border-line object-cover ${className}`}
             style={{ width: size, height: size }}
             alt={`${user?.username || 'User'}'s avatar`}
         />

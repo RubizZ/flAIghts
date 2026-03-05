@@ -159,7 +159,7 @@ export default function Register() {
                 <div className="flex flex-col gap-5">
                     {step === 1 ? (
                         <>
-                            <p className="text-sm text-center text-secondary">
+                            <p className="text-sm text-center text-content-muted">
                                 Introduce tu email para recibir un código de verificación.
                             </p>
                             <FloatingLabelInput
@@ -177,19 +177,19 @@ export default function Register() {
                                 type="button"
                                 onClick={handleNextStep}
                                 disabled={isInitiating}
-                                className="mt-4 rounded-lg bg-accent p-3 text-on-accent font-bold hover:scale-[1.02] active:scale-95 transition-all shadow-lg shadow-accent/20 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                                className="mt-4 rounded-lg bg-brand p-3 text-content-on-brand font-bold hover:scale-[1.02] active:scale-95 transition-all shadow-lg shadow-brand/20 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                                 {isInitiating ? "Enviando código..." : "Continuar"}
                             </button>
                         </>
                     ) : (
                         <>
-                            <p className="text-sm text-center text-primary/70">
-                                Hemos enviado un código a <span className="font-bold text-accent">{formData.email}</span>.
+                            <p className="text-sm text-center text-content/70">
+                                Hemos enviado un código a <span className="font-bold text-brand">{formData.email}</span>.
                             </p>
 
                             <div className="flex justify-between items-center gap-4">
-                                <FloatingLabelInput className="flex-1 bg-secondary!"
+                                <FloatingLabelInput className="flex-1 bg-surface!"
                                     disabled={true}
                                     value={formData.email}
                                     type="email"
@@ -201,7 +201,7 @@ export default function Register() {
                                 />
                                 <button
                                     onClick={() => setStep(1)}
-                                    className="shrink-0 text-secondary hover:underline hover:cursor-pointer text-xs"
+                                    className="shrink-0 text-content-muted hover:underline hover:cursor-pointer text-xs"
                                 >
                                     Cambiar email
                                 </button>
@@ -267,7 +267,7 @@ export default function Register() {
                                             onChange={handleChange}
                                             className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
                                         />
-                                        <div className={`w-5 h-5 border rounded-md transition-all flex items-center justify-center ${formData.acceptedTerms ? 'bg-accent border-themed text-on-accent animate-fade-in animate-duration-200' : `bg-primary border-themed ${!isHoveringLink ? 'group-hover:border-gray-400' : ''}`}`}>
+                                        <div className={`w-5 h-5 border rounded-md transition-all flex items-center justify-center ${formData.acceptedTerms ? 'bg-brand border-line text-content-on-brand animate-fade-in animate-duration-200' : `bg-main border-line ${!isHoveringLink ? 'group-hover:border-gray-400' : ''}`}`}>
                                             {formData.acceptedTerms && (
                                                 <svg
                                                     className="w-3.5 h-3.5 fill-none stroke-current stroke-3 pointer-events-none"
@@ -278,8 +278,8 @@ export default function Register() {
                                             )}
                                         </div>
                                     </div>
-                                    <span className="text-xs text-secondary leading-tight select-none">
-                                        Acepto los <a href="/terms" target="_blank" rel="noopener noreferrer" className="text-accent hover:underline font-bold relative z-20" onClick={(e) => e.stopPropagation()} onMouseEnter={() => setIsHoveringLink(true)} onMouseLeave={() => setIsHoveringLink(false)}>Términos de Servicio</a> y la <a href="/privacy" target="_blank" rel="noopener noreferrer" className="text-accent hover:underline font-bold relative z-20" onClick={(e) => e.stopPropagation()} onMouseEnter={() => setIsHoveringLink(true)} onMouseLeave={() => setIsHoveringLink(false)}>Política de Privacidad</a>
+                                    <span className="text-xs text-content-muted leading-tight select-none">
+                                        Acepto los <a href="/terms" target="_blank" rel="noopener noreferrer" className="text-brand hover:underline font-bold relative z-20" onClick={(e) => e.stopPropagation()} onMouseEnter={() => setIsHoveringLink(true)} onMouseLeave={() => setIsHoveringLink(false)}>Términos de Servicio</a> y la <a href="/privacy" target="_blank" rel="noopener noreferrer" className="text-brand hover:underline font-bold relative z-20" onClick={(e) => e.stopPropagation()} onMouseEnter={() => setIsHoveringLink(true)} onMouseLeave={() => setIsHoveringLink(false)}>Política de Privacidad</a>
                                     </span>
                                 </label>
                                 {errors.acceptedTerms && <p className="text-[10px] text-red-500 ml-8 font-bold animate-shake">{errors.acceptedTerms}</p>}
@@ -289,7 +289,7 @@ export default function Register() {
                                 type="button"
                                 onClick={handleRegister}
                                 disabled={isCompleting}
-                                className="mt-4 rounded-lg bg-accent p-3 text-on-accent font-bold hover:scale-[1.02] active:scale-95 transition-all shadow-lg shadow-accent/20 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                                className="mt-4 rounded-lg bg-brand p-3 text-content-on-brand font-bold hover:scale-[1.02] active:scale-95 transition-all shadow-lg shadow-brand/20 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                                 {isCompleting ? "Creando cuenta..." : "Completar Registro"}
                             </button>
@@ -298,8 +298,8 @@ export default function Register() {
 
 
 
-                    <span className="text-sm text-primary text-center">
-                        ¿Ya tienes cuenta? <a href="/login" className="text-accent font-bold hover:underline">Inicia sesión</a>
+                    <span className="text-sm text-content text-center">
+                        ¿Ya tienes cuenta? <a href="/login" className="text-brand font-bold hover:underline">Inicia sesión</a>
                     </span>
                 </div>
             </AuthCard>
