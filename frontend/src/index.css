@@ -12,7 +12,7 @@ body,
 /* ===== THEME SYSTEM ===== */
 
 @theme {
-  /* Light theme (default) */
+  /* Theme Variables Definition */
   --color-main: #ffffff;
   --color-surface: #f3f4f6;
   --color-brand: #4f46e5;
@@ -24,21 +24,21 @@ body,
 
   --color-line: #e5e7eb;
   --color-loading: #fbbf24;
+}
 
-  /* Dark theme override */
-  @variant dark {
-    --color-main: #111827;
-    --color-surface: #1f2937;
-    --color-brand: #6366f1;
-    --color-brand-hover: #818cf8;
+/* Dark theme overrides */
+.dark {
+  --color-main: #111827;
+  --color-surface: #1f2937;
+  --color-brand: #6366f1;
+  --color-brand-hover: #818cf8;
 
-    --color-content: #f9fafb;
-    --color-content-muted: #9ca3af;
-    --color-content-on-brand: #ffffff;
+  --color-content: #f9fafb;
+  --color-content-muted: #9ca3af;
+  --color-content-on-brand: #ffffff;
 
-    --color-line: #374151;
-    --color-loading: #fbbf24;
-  }
+  --color-line: #374151;
+  --color-loading: #fbbf24;
 }
 
 /* ===== UTILITY CLASSES ===== */
