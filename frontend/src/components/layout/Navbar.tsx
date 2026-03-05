@@ -14,12 +14,14 @@ import {
     Monitor,
     Palette,
     ShieldCheck,
-    Bell
+    Bell,
+    Menu,
+    X
 } from "lucide-react";
 import { PopulatedUser } from "@/api/generated/model";
 import UserAvatar from "@/components/ui/UserAvatar";
 
-export default function Navbar() {
+export default function Navbar({ onToggleSidebar, isSidebarOpen }: { onToggleSidebar?: () => void, isSidebarOpen?: boolean }) {
     const navigate = useNavigate();
     const { user, isAuthenticated, isLoading, logout } = useAuth();
     const { theme, setTheme } = useTheme();
@@ -259,10 +261,17 @@ export default function Navbar() {
     return (
         <nav className="flex items-center justify-between w-full bg-primary h-16 py-2 px-3 sm:px-6 shadow-sm border-b border-themed relative z-50">
             <div className="flex items-center gap-3 sm:gap-6 shrink-0 z-10">
-                <Link to="/" className="cursor-pointer text-primary hover:text-accent hover:underline transition-colors font-medium text-sm sm:text-base whitespace-nowrap">Explore</Link>
-                {isAuthenticated && (
-                    <Link to="/friends" className="cursor-pointer text-primary hover:text-accent hover:underline transition-colors font-medium text-sm sm:text-base whitespace-nowrap">Amigos</Link>
-                )}
+                <button
+                    onClick={onToggleSidebar}
+                    className={`p-2 hover:bg-secondary rounded-xl transition-colors cursor-pointer text-secondary group`}
+                    aria-label="Toggle Sidebar"
+                >
+                    {isSidebarOpen ? (
+                        <X size={20} className="group-hover:text-(--color-text-primary) transition-colors" />
+                    ) : (
+                        <Menu size={20} className="group-hover:text-(--color-text-primary) transition-colors" />
+                    )}
+                </button>
             </div>
 
             <div className="hidden min-[400px]:flex items-center justify-center absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
