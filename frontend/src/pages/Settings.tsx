@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useUpdateUser, getGetSelfUserQueryKey, useInitiateEmailChange, useCompleteEmailChange, useCancelEmailChange, getGetUserByIdQueryKey, useSetProfilePicture } from "@/api/generated/users/users";
 import { useQueryClient } from "@tanstack/react-query";
@@ -36,7 +36,7 @@ export default function Settings() {
     const activeTab = searchParams.get("tab") || "perfil";
 
     const setActiveTab = (tab: string) => {
-        setSearchParams({ tab });
+        setSearchParams({ tab }, { replace: true });
     };
 
     useEffect(() => {
@@ -64,8 +64,13 @@ export default function Settings() {
     // Email change verification state
     const [oldEmailCode, setOldEmailCode] = useState("");
     const [newEmailCode, setNewEmailCode] = useState("");
+    const isInitiatingRequest = useRef(false);
     useEffect(() => {
         if (user?.pending_email && activeTab === 'seguridad') {
+            if (isInitiatingRequest.current) {
+                isInitiatingRequest.current = false;
+                return;
+            }
             toast.info("Tienes un cambio de email pendiente de verificación", {
                 id: "pending-email-toast"
             });
@@ -103,7 +108,10 @@ export default function Settings() {
     const { mutate: initiateEmailChange, isPending: isInitiatingEmailChange } = useInitiateEmailChange({
         mutation: {
             onSuccess: () => {
-                toast.success("Solicitud de cambio de email iniciada. Introduce los códigos enviados.");
+                isInitiatingRequest.current = true;
+                toast.success("Solicitud de cambio de email iniciada. Introduce los códigos enviados.", {
+                    id: "pending-email-toast"
+                });
                 queryClient.invalidateQueries({ queryKey: getGetSelfUserQueryKey() });
                 refetch();
             },
@@ -289,62 +297,67 @@ export default function Settings() {
 
     return (
         <div className="max-w-4xl mx-auto p-4 sm:p-8">
-            <div className="flex items-center gap-4 mb-8">
-                <button
-                    onClick={() => navigate(-1)}
-                    className="p-2 rounded-full cursor-pointer group"
-                >
-                    <ArrowLeft className="group-hover:-translate-x-1 transition-transform" />
-                </button>
-                <h1 className="text-3xl font-bold text-content">Ajustes</h1>
-            </div>
-
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                 {/* Sidebar Nav */}
                 <aside className="md:col-span-1">
-                    <div className="md:sticky md:top-24 h-fit z-10 p-4 bg-main border border-line rounded-3xl shadow-sm">
-                        <div className="flex flex-col items-center text-center gap-4 mb-6">
-                            <UserAvatar user={user} size={96} className="border-4 border-line shadow-sm bg-surface" />
-                            <div>
-                                <h2 className="font-bold text-xl">{user.username}</h2>
-                                <p className="text-sm text-content-muted opacity-70">{user.email}</p>
-                            </div>
+                    <div className="md:sticky md:top-8 h-fit z-10">
+                        {/* Header fuera de la card */}
+                        <div className="flex items-center gap-4 mb-6 px-2">
+                            <button
+                                onClick={() => navigate(-1)}
+                                className="p-2 rounded-full cursor-pointer group hover:bg-surface transition-colors"
+                            >
+                                <ArrowLeft size={20} className="group-hover:-translate-x-1 transition-transform" />
+                            </button>
+                            <h1 className="text-2xl font-bold text-content">Ajustes</h1>
                         </div>
 
-                        <nav className="flex flex-col gap-1">
-                            {tabs.map((tab) => (
-                                <button
-                                    key={tab.id}
-                                    onClick={() => setActiveTab(tab.id)}
-                                    className={`flex items-center gap-3 p-3 rounded-2xl font-bold transition-all cursor-pointer ${activeTab === tab.id
-                                        ? 'bg-brand/10 text-brand'
-                                        : 'bg-main text-content-muted font-medium'
-                                        }`}
-                                >
-                                    <div className="relative">
-                                        <tab.icon size={18} />
-                                        {tab.id === 'seguridad' && user.pending_email && (
-                                            <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-brand border-2 border-white dark:border-slate-900 rounded-full animate-pulse shadow-sm" />
-                                        )}
-                                    </div>
-                                    {tab.label}
-                                </button>
-                            ))}
-                        </nav>
+                        {/* Card de navegación */}
+                        <div className="p-6 bg-main border border-line rounded-3xl shadow-sm">
 
-                        <div className="mt-8 pt-4 border-t border-line">
-                            <button
-                                onClick={logout}
-                                className="w-full flex items-center gap-3 p-3 text-red-500 hover:bg-red-50 rounded-2xl transition-all font-bold cursor-pointer"
-                            >
-                                <LogOut size={18} /> Cerrar sesión
-                            </button>
+                            <div className="flex flex-col items-center text-center gap-4 mb-8">
+                                <UserAvatar user={user} size={96} className="border-4 border-line shadow-sm bg-surface" />
+                                <div>
+                                    <h2 className="font-bold text-xl">{user.username}</h2>
+                                    <p className="text-sm text-content-muted opacity-70">{user.email}</p>
+                                </div>
+                            </div>
+
+                            <nav className="flex flex-col gap-1">
+                                {tabs.map((tab) => (
+                                    <button
+                                        key={tab.id}
+                                        onClick={() => setActiveTab(tab.id)}
+                                        className={`flex items-center gap-3 p-3 rounded-2xl font-bold transition-all cursor-pointer ${activeTab === tab.id
+                                            ? 'bg-brand/10 text-brand'
+                                            : 'bg-main text-content-muted font-medium hover:bg-surface'
+                                            }`}
+                                    >
+                                        <div className="relative">
+                                            <tab.icon size={18} />
+                                            {tab.id === 'seguridad' && user.pending_email && (
+                                                <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-brand border-2 border-white dark:border-slate-900 rounded-full animate-pulse shadow-sm" />
+                                            )}
+                                        </div>
+                                        {tab.label}
+                                    </button>
+                                ))}
+                            </nav>
+
+                            <div className="mt-8 pt-4 border-t border-line">
+                                <button
+                                    onClick={logout}
+                                    className="w-full flex items-center gap-3 p-3 text-red-500 hover:bg-red-50 rounded-2xl transition-all font-bold cursor-pointer"
+                                >
+                                    <LogOut size={18} /> Cerrar sesión
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </aside>
 
                 {/* Main Content */}
-                <div className="md:col-span-2 flex flex-col gap-8 min-h-[60vh]">
+                <div className="md:col-span-2 flex flex-col gap-8 min-h-[60vh] md:pt-15">
                     {/* Seccion Perfil */}
                     {activeTab === 'perfil' && (
                         <>
