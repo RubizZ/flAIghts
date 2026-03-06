@@ -2206,29 +2206,9 @@
 					}
 				]
 			},
-			"SetProfilePictureData": {
-				"properties": {
-					"image": {
-						"type": "string",
-						"description": "Base64 representation of the image"
-					}
-				},
-				"required": [
-					"image"
-				],
-				"type": "object",
-				"additionalProperties": false
-			},
 			"SetProfilePictureRequest": {
-				"anyOf": [
-					{
-						"$ref": "#/components/schemas/SetProfilePictureData"
-					},
-					{
-						"type": "string",
-						"format": "byte"
-					}
-				]
+				"type": "string",
+				"format": "byte"
 			},
 			"LegResponse": {
 				"properties": {
@@ -4494,7 +4474,7 @@
 				"requestBody": {
 					"required": true,
 					"content": {
-						"application/json": {
+						"application/octet-stream": {
 							"schema": {
 								"$ref": "#/components/schemas/SetProfilePictureRequest"
 							}

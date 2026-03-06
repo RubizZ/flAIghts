@@ -174,15 +174,8 @@ export interface CompleteEmailChangeData {
     newEmailCode: string;
 }
 
-export interface SetProfilePictureData {
-    /**
-     * Base64 representation of the image
-     */
-    image: string;
-}
-
-// Tipo para soportar tanto JSON (Base64) como Binario (Buffer)
-export type SetProfilePictureRequest = SetProfilePictureData | Buffer;
+// Tipo para soportar solo Binario (Buffer)
+export type SetProfilePictureRequest = Buffer;
 
 // ==================== TIPOS DE ERROR ====================
 
