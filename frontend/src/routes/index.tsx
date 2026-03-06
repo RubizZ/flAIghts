@@ -7,6 +7,7 @@ import Home from "../pages/Home.tsx";
 import NotFound from "../pages/NotFound.tsx";
 import Login from "../pages/Login.tsx";
 import Register from "../pages/Register.tsx";
+import SearchResults from "../pages/SearchResults.tsx";
 
 // Layouts
 import MainLayout from "../components/layout/MainLayout.tsx";
@@ -32,6 +33,7 @@ export const routes: RouteObject[] = [
                 element: <MainLayout />,
                 children: [
                     { path: "/", element: <Home /> },
+                    { path: "/search/:id", element: <SearchResults /> },
                     { path: "*", element: <NotFound /> },
                 ]
             }
