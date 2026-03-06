@@ -8,8 +8,7 @@ import type {
     CompleteRegistrationData,
     InitiateEmailChangeData,
     CompleteEmailChangeData,
-    UpdateUserData,
-    SetProfilePictureData
+    UpdateUserData
 } from "./user.types.js";
 import { User, type IUser, type IUserDocument, type IUserPopulated, type IUserUnpopulated } from "./models/user.model.js";
 import { PreRegistration } from "./models/pre-registration.model.js";
@@ -349,36 +348,11 @@ export class UserService {
         return await this.s3Service.getDownloadUrl(user.profile_picture);
     }
 
-    public async setProfilePicture(userId: string, data: SetProfilePictureData | Buffer): Promise<IUserDocument> {
+    public async setProfilePicture(userId: string, data: Buffer): Promise<IUserDocument> {
         const user = await User.findById(userId);
         if (!user) throw new UserNotFoundError(userId);
 
-        // Extract buffer
-        let buffer: Buffer;
-        if (Buffer.isBuffer(data)) {
-            buffer = data;
-        } else {
-            // Validate runtime shape of incoming data before accessing string methods
-            if (
-                data === null ||
-                typeof data !== "object" ||
-                Array.isArray(data) ||
-                typeof (data as any).image !== "string" ||
-                Array.isArray((data as any).image)
-            ) {
-                throw new InvalidProfilePictureError();
-            }
-
-            const imageBase64 = (data as any).image as string;
-            // Decode base64 (remove data:image/xxx;base64, if exists)
-            const base64Payload = imageBase64.includes(",") ? imageBase64.split(",").pop()! : imageBase64;
-            try {
-                buffer = Buffer.from(base64Payload, "base64");
-            } catch {
-                // If base64 decoding fails, consider the profile picture invalid
-                throw new InvalidProfilePictureError();
-            }
-        }
+        const buffer = data;
 
         // Detect type from buffer
         const fileType = await fileTypeFromBuffer(buffer);

@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Patch, Path, Post, Query, RequestProp, Response, Route, Security, SuccessResponse as SuccessResponseDecorator, Tags, Request } from "tsoa";
+import { Body, Controller, Get, Patch, Path, Post, Query, RequestProp, Response, Route, Security, SuccessResponse as SuccessResponseDecorator, Tags, Request, Consumes } from "tsoa";
 import express from 'express';
 import type {
     InitiateRegistrationData,
@@ -28,7 +28,7 @@ import type { AuthenticatedUser } from "../auth/auth.types.js";
 import type { IFriend, IFriendPopulated, IUser, IUserUnpopulated } from "./models/user.model.js";
 import type { SuccessResponse, FailResponseFromError } from "../../utils/responses.js";
 import type { AuthFailResponse } from "../auth/auth.types.js";
-import { EmailAlreadyInUseError, UsernameAlreadyInUseError, UserNotFoundError, NoPendingFriendRequestError, NoReceivedFriendRequestError, NotFriendsError, EmailVerificationCodeInvalidOrExpiredError } from "./user.errors.js";
+import { EmailAlreadyInUseError, UsernameAlreadyInUseError, UserNotFoundError, NoPendingFriendRequestError, NoReceivedFriendRequestError, NotFriendsError, EmailVerificationCodeInvalidOrExpiredError, InvalidProfilePictureError } from "./user.errors.js";
 
 @injectable()
 @Route("users")
@@ -225,18 +225,15 @@ export class UsersController extends Controller {
     }
 
     @Post("/me/profile-picture")
+    @Consumes("application/octet-stream")
     @Security("jwt")
     @Response<AuthFailResponse>(401, "No autenticado")
     @Response<ProfilePictureErrorResponse>(400, "Error en la imagen")
     public async setProfilePicture(
         @RequestProp('user') user: AuthenticatedUser,
-        @Request() request: express.Request,
         @Body() body: SetProfilePictureRequest
     ): Promise<SuccessResponse> {
-        // Prefer the parsed body provided by TSOA, but allow raw Buffer uploads.
-        const raw = request.body;
-        const data: SetProfilePictureRequest | Buffer = Buffer.isBuffer(raw) ? raw : body;
-        await this.userService.setProfilePicture(user._id, data);
+        await this.userService.setProfilePicture(user._id, body);
         return {} satisfies {} as any;
     }
 

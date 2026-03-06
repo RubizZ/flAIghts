@@ -221,16 +221,9 @@ export default function Settings() {
             return;
         }
 
-        const reader = new FileReader();
-        reader.onloadend = () => {
-            const base64String = reader.result as string;
-            uploadAvatar({
-                data: {
-                    image: base64String
-                }
-            });
-        };
-        reader.readAsDataURL(file);
+        uploadAvatar({
+            data: file
+        });
     };
 
     const handleVerifyEmailChange = () => {
