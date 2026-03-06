@@ -233,7 +233,9 @@ export class UsersController extends Controller {
         @Request() request: express.Request,
         @Body() body: SetProfilePictureRequest
     ): Promise<SuccessResponse> {
-        const data: SetProfilePictureRequest | Buffer = Buffer.isBuffer(request.body) ? request.body : body;
+        // Prefer the parsed body provided by TSOA, but allow raw Buffer uploads.
+        const raw = request.body;
+        const data: SetProfilePictureRequest | Buffer = Buffer.isBuffer(raw) ? raw : body;
         await this.userService.setProfilePicture(user._id, data);
         return {} satisfies {} as any;
     }
