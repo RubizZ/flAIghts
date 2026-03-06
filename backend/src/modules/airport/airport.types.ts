@@ -10,3 +10,8 @@ export interface AirportResponse {
         coordinates: number[];
     }
 }
+
+export interface ScoredAirport {
+  iata: string;
+  score: number;
+}

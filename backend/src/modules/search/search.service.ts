@@ -3,19 +3,20 @@ import type { SearchRequest, SearchResponseData, LegResponse} from "./search.typ
 import { Itinerary } from "./models/itinerary.model.js";
 import { SerpApiClient } from "@/services/serpapi/serpapi.client.js";
 import { Search, type ISearch } from "./models/search.model.js";
-import "./models/itinerary.model.js";
+import "./models/itinerary.model.js"; // Necesario para .populate("itineraries")
 import { SearchNotFoundError, SearchNotAuthorizedError } from "./search.errors.js";
 import { SerpapiStorageService } from "../serpapi-storage/serpapi-storage.service.js";
 import { Dijkstra, parseEdgeDateTime } from "@/algorithms/dijkstra.js";
-import type { DijkstraFlightEdge } from "../serpapi-storage/dijkstra.types.js";
+import type { DijkstraFlightEdge } from "@/algorithms/dijkstra.js";
 import type { ApiRequestParameters, SerpApiResponse, FlightRoute } from "@/services/serpapi/serpapi.types.js";
-import { getCandidateLayovers } from "./candidate-layovers.js";
 import { getOriginalNode } from "typescript";
+import { AirportService } from "../airport/airport.service.js";
 
 @singleton()
 export class SearchService {
     constructor(
         @inject(SerpapiStorageService) private readonly storageService: SerpapiStorageService, 
+        @inject (AirportService) private readonly airportService: AirportService,
         @inject(SerpApiClient) private readonly serpApiClient: SerpApiClient,
         @inject(Dijkstra) private readonly dijkstra: Dijkstra
     ) {}
@@ -93,7 +94,7 @@ export class SearchService {
             const stayDays = layoverDays[i] ?? 1;
             const searchDate = i === 0 ? currentDate : addDays(currentDate, stayDays);
 
-            const candidatos = await getCandidateLayovers(puntoA, puntoB);
+            const candidatos = await this.airportService.getCandidateLayovers(puntoA, puntoB);
             let originArray = [puntoA];
             let destinationArray = candidatos.length > 0 ? candidatos : [puntoB];
             const originToLayoversEdges = (await this.getFlightsFromSerpApi(originArray, destinationArray, searchDate)).filter(edge => isValidNextFlight(edge.date, searchDate));

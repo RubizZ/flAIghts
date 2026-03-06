@@ -1,6 +1,19 @@
 import { singleton } from "tsyringe";
-import type { DijkstraFlightEdge } from "../modules/serpapi-storage/dijkstra.types.js";
 import { PriorityQueue } from "../structures/priority-queue.js";
+
+export interface DijkstraFlightEdge {
+    id: string; // booking_token o un ID único
+    from: string;           
+    to: string;             
+    price: number;          
+    duration: number;       
+    stops: number;   
+    date: string; //YYYY-MM-DD
+    airline: string;
+    airline_logo?: string;
+    departure_time: string;
+    arrival_time: string;
+}
 
 @singleton()
 export class Dijkstra {
@@ -21,6 +34,15 @@ export class Dijkstra {
             nodos.add(e.from);
             nodos.add(e.to);
         });
+        const adjacencyList = new Map<string, DijkstraFlightEdge[]>();
+
+        for (const edge of edges) {
+            if (!adjacencyList.has(edge.from)) {
+                adjacencyList.set(edge.from, []);
+            }
+
+            adjacencyList.get(edge.from)!.push(edge);
+        }
 
         for (const nodo of nodos) {
             distancias[nodo] = Infinity;
@@ -38,7 +60,7 @@ export class Dijkstra {
             const u = pq.dequeue();
             if (!u || u === fin) break;
 
-            const aristasVecinas = edges.filter(e => e.from === u);
+            const aristasVecinas = adjacencyList.get(u) || [];
 
             for (const edge of aristasVecinas) {
                 const departureDate = parseEdgeDateTime(edge.departure_time);
@@ -46,15 +68,9 @@ export class Dijkstra {
                     continue;
                 }
 
-                const baseWeight = this.calculateWeight(edge, priority);
                 const waitMinutes = Math.max(0, departureDate.getTime() - arrivalTimes[u]!.getTime()) / 60000;
-                let alt = distancias[u]! + baseWeight;
-
-                if (priority === "fast") {
-                    alt += edge.duration + waitMinutes;
-                } else if (priority === "balanced") {
-                    alt += (edge.duration + waitMinutes) / 10;
-                }
+                const weight = this.calculateWeight(edge, waitMinutes, priority);
+                const alt = distancias[u]! + weight;
 
                 if (alt < distancias[edge.to]!) {
                     distancias[edge.to] = alt;
@@ -68,7 +84,7 @@ export class Dijkstra {
         return this.reconstructPath(prevEdge, fin);
     }
 
-    private calculateWeight(edge: DijkstraFlightEdge, priority: string): number {
+    private calculateWeight(edge: DijkstraFlightEdge, waitMinutes: number, priority: "cheap" | "fast" | "balanced"): number {
         switch (priority) {
             case "cheap":
                 return edge.price;
