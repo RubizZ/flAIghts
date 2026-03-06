@@ -233,7 +233,7 @@ export class UsersController extends Controller {
         @Request() request: express.Request,
         @Body() body: SetProfilePictureRequest
     ): Promise<SuccessResponse> {
-        const data = Buffer.isBuffer(request.body) ? request.body : body;
+        const data: SetProfilePictureRequest | Buffer = Buffer.isBuffer(request.body) ? request.body : body;
         await this.userService.setProfilePicture(user._id, data);
         return {} satisfies {} as any;
     }

@@ -358,8 +358,19 @@ export class UserService {
         if (Buffer.isBuffer(data)) {
             buffer = data;
         } else {
+            // Validate runtime shape of incoming data before accessing string methods
+            if (
+                data === null ||
+                typeof data !== "object" ||
+                typeof (data as any).image !== "string"
+            ) {
+                throw new InvalidProfilePictureError();
+            }
+
+            const imageBase64 = (data as any).image as string;
             // Decode base64 (remove data:image/xxx;base64, if exists)
-            buffer = Buffer.from(data.image.includes(",") ? data.image.split(",").pop()! : data.image, "base64");
+            const base64Payload = imageBase64.includes(",") ? imageBase64.split(",").pop()! : imageBase64;
+            buffer = Buffer.from(base64Payload, "base64");
         }
 
         // Detect type from buffer
