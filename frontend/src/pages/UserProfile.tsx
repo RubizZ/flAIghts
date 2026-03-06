@@ -146,7 +146,7 @@ export default function UserProfile() {
                 </div>
                 <button
                     onClick={() => navigate("/")}
-                    className="px-8 py-3 bg-brand text-content-on-brand rounded-full hover:bg-brand/90 transition-all shadow-xl active:scale-95"
+                    className="px-8 py-3 bg-brand text-content-on-brand rounded-full hover:bg-brand/90 transition-all shadow-xl active:scale-95 cursor-pointer hover:scale-[1.02] text-bold"
                 >
                     Volver al inicio
                 </button>
@@ -185,30 +185,30 @@ export default function UserProfile() {
                 </div>
 
                 {user.type === "self" ? (
-                    <button onClick={() => navigate("/settings")} className="px-8 py-3 bg-brand text-content-on-brand rounded-full hover:bg-brand/90 transition-all shadow-xl active:scale-95 cursor-pointer">
+                    <button onClick={() => navigate("/settings")} className="px-8 py-3 bg-brand text-content-on-brand rounded-full hover:bg-brand/90 transition-all shadow-xl active:scale-95 cursor-pointer font-bold hover:scale-[1.02]">
                         Editar mi perfil
                     </button>
                 ) : user.type === "friend" ? (
                     <div className="flex gap-4">
-                        <Link to={`/chat/${id}`} onClick={(e) => e.preventDefault()} className="flex-1 justify-center flex items-center gap-2 px-8 py-3 bg-brand text-content-on-brand rounded-full shadow-xl font-bold hover:cursor-not-allowed opacity-50">
+                        <Link to={`/chat/${id}`} onClick={(e) => e.preventDefault()} className="flex-1 justify-center flex items-center gap-2 px-8 py-3 bg-brand text-content-on-brand rounded-full transition-all shadow-xl active:scale-95 cursor-pointer font-bold hover:scale-[1.02]">
                             <MessageCircle size={18} />
                             Mensaje
                         </Link>
-                        <button onClick={() => removeFriend({ id })} className="flex-1 justify-center flex items-center gap-2 px-8 py-3 bg-red-50 text-red-600 hover:bg-red-100 rounded-full transition-all shadow-xl active:scale-95 cursor-pointer font-bold">
+                        <button onClick={() => removeFriend({ id })} className="flex-1 justify-center flex items-center gap-2 px-8 py-3 bg-red-50 text-red-600 hover:bg-red-100 rounded-full transition-all shadow-xl active:scale-95 cursor-pointer font-bold hover:scale-[1.02]">
                             <UserMinus size={18} />
                             Eliminar
                         </button>
                     </div>
                 ) : user.type === "public" && user.received_friend_request ? (
-                    <button onClick={() => acceptFriendRequest({ id })} className="px-8 py-3 bg-green-500 text-content-on-brand rounded-full hover:bg-green-600 transition-all shadow-xl active:scale-95 cursor-pointer">
+                    <button onClick={() => acceptFriendRequest({ id })} className="px-8 py-3 bg-green-500 text-content-on-brand rounded-full hover:bg-green-600 transition-all shadow-xl active:scale-95 cursor-pointer font-bold hover:scale-[1.02]">
                         Aceptar solicitud de amistad
                     </button>
                 ) : user.type === "public" && user.sent_friend_request ? (
-                    <button onClick={() => cancelFriendRequest({ id })} className="px-8 py-3 bg-brand text-content-on-brand rounded-full hover:bg-brand/90 transition-all shadow-xl active:scale-95 cursor-pointer">
+                    <button onClick={() => cancelFriendRequest({ id })} className="px-8 py-3 bg-brand text-content-on-brand rounded-full hover:bg-brand/90 transition-all shadow-xl active:scale-95 cursor-pointer font-bold hover:scale-[1.02]">
                         Cancelar solicitud de amistad
                     </button>
                 ) : (
-                    <button onClick={() => sendFriendRequest({ id })} className="px-8 py-3 bg-brand text-content-on-brand rounded-full hover:bg-brand/90 transition-all shadow-xl active:scale-95 cursor-pointer">
+                    <button onClick={() => sendFriendRequest({ id })} className="px-8 py-3 bg-brand text-content-on-brand rounded-full hover:bg-brand/90 transition-all shadow-xl active:scale-95 cursor-pointer font-bold hover:scale-[1.02]">
                         Enviar solicitud de amistad
                     </button>
                 )}

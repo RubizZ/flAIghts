@@ -80,7 +80,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                                         onClose?.();
                                         setClickedItem(item.path);
                                     }}
-                                    className={`flex items-center rounded-2xl transition-all duration-200 group relative w-full px-3 py-3 justify-start animate-fade-in animate-duration-250
+                                    className={`flex items-center rounded-2xl transition-all duration-300 group relative w-full px-3 py-3 justify-start animate-fade-in animate-duration-250
                                     ${isActive
                                             ? 'bg-brand text-content-on-brand shadow-md'
                                             : 'text-content-muted hover:bg-surface hover:text-content'
@@ -130,7 +130,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                         <Link
                             to="/about"
                             onClick={() => onClose?.()}
-                            className="block text-[10px] uppercase tracking-widest text-content-muted font-bold opacity-50 whitespace-nowrap text-center hover:text-brand hover:opacity-100 transition-all"
+                            className="block text-[10px] uppercase tracking-widest text-content-muted font-bold opacity-50 whitespace-nowrap text-center hover:text-brand hover:opacity-100 transition-all duration-300"
                         >
                             flAIghts
                         </Link>

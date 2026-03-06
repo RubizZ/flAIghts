@@ -32,7 +32,7 @@ export default function UserSearch() {
                 <input
                     type="search"
                     placeholder="Buscar por usuario..."
-                    className="w-full bg-surface placeholder-content-muted outline-none px-4 py-3 pl-10 rounded-xl font-medium border border-line focus:border-line transition-all shadow-sm"
+                    className="w-full bg-surface placeholder-content-muted outline-none px-4 py-3 pl-10 rounded-xl font-medium border border-line focus:border-brand shadow-sm"
                     value={query}
                     onChange={(e) => setQuery(e.target.value)}
                 />
@@ -54,11 +54,11 @@ export default function UserSearch() {
                 ) : (
                     <div className="flex flex-col gap-3">
                         {users.map((u) => (
-                            <Link key={u._id} to={`/user/${u._id}`} className="flex items-center justify-between bg-surface p-4 rounded-xl shadow-sm border border-line hover:border-line transition-colors group">
+                            <Link key={u._id} to={`/user/${u._id}`} className="flex items-center justify-between bg-surface p-4 rounded-xl shadow-sm border border-line hover:border-brand group">
                                 <div className="flex items-center gap-4">
                                     <UserAvatar user={u} size={48} />
                                     <div>
-                                        <p className="font-bold text-content transition-colors text-lg">
+                                        <p className="font-bold text-content text-lg">
                                             {u.username}
                                         </p>
                                     </div>
