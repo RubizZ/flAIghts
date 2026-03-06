@@ -299,7 +299,7 @@ export default function Settings() {
             <div className="flex items-center gap-4 mb-8">
                 <button
                     onClick={() => navigate(-1)}
-                    className="p-2 hover:bg-surface rounded-full transition-colors cursor-pointer group"
+                    className="p-2 rounded-full cursor-pointer group"
                 >
                     <ArrowLeft className="group-hover:-translate-x-1 transition-transform" />
                 </button>
@@ -443,7 +443,7 @@ export default function Settings() {
                                                 checked={isPublic}
                                                 onChange={(e) => setIsPublic(e.target.checked)}
                                             />
-                                            <div className="w-11 h-6 bg-surface peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:start-0.5 after:bg-white after:border-line after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-brand"></div>
+                                            <div className="w-11 h-6 bg-surface peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:start-0.5 after:bg-white after:border-line after:border after:rounded-full after:h-5 after:w-5 peer-checked:bg-brand"></div>
                                         </label>
                                     </div>
                                 </div>
@@ -452,7 +452,7 @@ export default function Settings() {
                                     <button
                                         onClick={handleSaveProfile}
                                         disabled={isUpdating || !hasProfileChanged}
-                                        className="px-6 py-3 bg-brand text-content-on-brand rounded-2xl text-sm font-bold hover:opacity-90 transition-all disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed flex items-center gap-2"
+                                        className="px-6 py-3 bg-brand text-content-on-brand rounded-2xl text-sm font-bold hover:opacity-90 transition-all disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed flex items-center gap-2 hover:scale-[1.02] active:scale-95"
                                     >
                                         {isUpdating ? "Guardando..." : "Guardar cambios del perfil"}
                                     </button>
@@ -566,7 +566,7 @@ export default function Settings() {
                                                     className="w-full h-2 bg-surface rounded-lg appearance-none cursor-pointer accent-brand border border-line relative z-10"
                                                 />
                                             </div>
-                                            <p className="text-xs text-content-muted opacity-80 h-4 font-medium transition-all duration-300">
+                                            <p className="text-xs text-content-muted opacity-80 h-4 font-medium">
                                                 {item.getDescription(item.value)}
                                             </p>
                                         </div>
@@ -578,7 +578,7 @@ export default function Settings() {
                                 <button
                                     onClick={handleSaveProfile}
                                     disabled={isUpdating || !hasPreferencesChanged}
-                                    className="px-6 py-3 bg-brand text-content-on-brand rounded-2xl text-sm font-bold hover:opacity-90 transition-all disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed flex items-center gap-2"
+                                    className="px-6 py-3 bg-brand text-content-on-brand rounded-2xl text-sm font-bold hover:opacity-90 transition-all disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed flex items-center gap-2 hover:scale-[1.02] active:scale-95"
                                 >
                                     {isUpdating ? "Guardando..." : "Guardar preferencias"}
                                 </button>
@@ -621,7 +621,7 @@ export default function Settings() {
                                                     type="button"
                                                     onClick={() => initiateEmailChange({ data: { newEmail: email } })}
                                                     disabled={isInitiatingEmailChange || email.toLowerCase() === user.email.toLowerCase()}
-                                                    className="px-6 py-3 bg-brand text-content-on-brand rounded-2xl text-sm font-bold hover:opacity-90 transition-all disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed flex items-center gap-2"
+                                                    className="px-6 py-3 bg-brand text-content-on-brand rounded-2xl text-sm font-bold hover:opacity-90 transition-all disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed flex items-center gap-2 hover:scale-[1.02] active:scale-95"
                                                 >
                                                     {isInitiatingEmailChange ? "Actualizando..." : "Actualizar correo electrónico"}
                                                 </button>
@@ -673,14 +673,14 @@ export default function Settings() {
                                                 <button
                                                     onClick={handleVerifyEmailChange}
                                                     disabled={isCompletingEmailChange || isCancellingEmailChange}
-                                                    className="flex-1 py-2 bg-brand text-content-on-brand rounded-xl text-xs font-bold hover:scale-[1.01] transition-all disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed"
+                                                    className="flex-1 py-2 bg-brand text-content-on-brand rounded-xl text-xs font-bold hover:scale-[1.01] transition-all disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed active:scale-95"
                                                 >
                                                     {isCompletingEmailChange ? "Verificando..." : "Confirmar cambio"}
                                                 </button>
                                                 <button
                                                     onClick={() => cancelEmailChange()}
                                                     disabled={isCancellingEmailChange || isCompletingEmailChange}
-                                                    className="py-2 px-4 bg-surface border border-line text-content-muted rounded-xl text-xs font-bold hover:border-red-400 hover:text-red-500 transition-all disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed"
+                                                    className="py-2 px-4 bg-surface border border-line text-content-muted rounded-xl text-xs font-bold hover:border-red-400 hover:text-red-500 transition-all disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed active:scale-95"
                                                 >
                                                     {isCancellingEmailChange ? "Cancelando..." : "Cancelar"}
                                                 </button>
@@ -784,7 +784,7 @@ export default function Settings() {
                                         <button
                                             onClick={handleSavePassword}
                                             disabled={isChangingPassword || !oldPassword || !newPassword || !confirmPassword}
-                                            className="px-6 py-3 bg-brand text-content-on-brand rounded-2xl text-sm font-bold hover:opacity-90 transition-all disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed flex items-center gap-2"
+                                            className="px-6 py-3 bg-brand text-content-on-brand rounded-2xl text-sm font-bold hover:opacity-90 transition-all disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed flex items-center gap-2 hover:scale-[1.02] active:scale-95"
                                         >
                                             {isChangingPassword ? "Actualizando..." : "Actualizar contraseña"}
                                         </button>
@@ -804,10 +804,10 @@ export default function Settings() {
                                 <h2 className="text-xl font-bold">Apariencia</h2>
                             </div>
 
-                            <div className="grid grid-cols-2 gap-4">
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                                 <button
                                     onClick={() => setTheme('light')}
-                                    className={`flex flex-col items-center gap-4 p-6 rounded-3xl border-2 transition-all cursor-pointer ${theme === 'light' ? 'border-brand bg-brand' : 'border-line bg-surface hover:border-brand/50'}`}
+                                    className={`flex flex-col items-center gap-4 p-6 rounded-3xl border-2 transition-all hover:scale-[1.02] cursor-pointer ${theme === 'light' ? 'border-brand bg-brand' : 'border-line bg-surface hover:bg-surface/80'}`}
                                 >
                                     <div className="p-4 bg-white rounded-full shadow-md text-orange-500">
                                         <Sun size={32} />
@@ -816,12 +816,21 @@ export default function Settings() {
                                 </button>
                                 <button
                                     onClick={() => setTheme('dark')}
-                                    className={`flex flex-col items-center gap-4 p-6 rounded-3xl border-2 transition-all cursor-pointer ${theme === 'dark' ? 'border-brand bg-brand' : 'border-line bg-surface hover:border-brand/50'}`}
+                                    className={`flex flex-col items-center gap-4 p-6 rounded-3xl border-2 transition-all hover:scale-[1.02] cursor-pointer ${theme === 'dark' ? 'border-brand bg-brand' : 'border-line bg-surface hover:bg-surface/80'}`}
                                 >
                                     <div className="p-4 bg-slate-900 rounded-full shadow-md text-blue-400">
                                         <Moon size={32} />
                                     </div>
                                     <span className={`font-bold ${theme === 'dark' ? 'text-content-on-brand' : 'text-content'}`}>Modo Oscuro</span>
+                                </button>
+                                <button
+                                    onClick={() => setTheme('system')}
+                                    className={`flex flex-col items-center gap-4 p-6 rounded-3xl border-2 transition-all hover:scale-[1.02] cursor-pointer ${theme === 'system' ? 'border-brand bg-brand' : 'border-line bg-surface hover:bg-surface/80'}`}
+                                >
+                                    <div className="p-4 bg-main rounded-full shadow-md text-brand">
+                                        <Sliders size={32} />
+                                    </div>
+                                    <span className={`font-bold ${theme === 'system' ? 'text-content-on-brand' : 'text-content'}`}>Sistema</span>
                                 </button>
                             </div>
                         </section>

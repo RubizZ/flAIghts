@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 
-export type Theme = 'light' | 'dark';
+export type Theme = 'light' | 'dark' | 'system';
 
 interface ThemeContextType {
     theme: Theme;
@@ -17,8 +17,23 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
     const [theme, setTheme] = useState<Theme>(() => {
         const saved = localStorage.getItem('theme') as Theme;
         if (saved) return saved;
-        return 'dark'; // Valor por defecto
+        return 'system'; // Valor por defecto
     });
+
+    const [systemTheme, setSystemTheme] = useState<'light' | 'dark'>(() =>
+        window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+    );
+
+    useEffect(() => {
+        const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+
+        const handleChange = (e: MediaQueryListEvent) => {
+            setSystemTheme(e.matches ? 'dark' : 'light');
+        };
+
+        mediaQuery.addEventListener('change', handleChange);
+        return () => mediaQuery.removeEventListener('change', handleChange);
+    }, []);
 
     useEffect(() => {
         const root = document.documentElement;
@@ -26,14 +41,19 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
         root.classList.add('theme-transition');
 
         root.classList.remove('light', 'dark');
-        root.classList.add(theme);
+        if (theme === 'system') {
+            root.classList.add(systemTheme);
+        } else {
+            root.classList.add(theme);
+        }
         localStorage.setItem('theme', theme);
 
         const timeout = setTimeout(() => {
-            root.classList.remove('theme-transition')
-        }, 400);
+            root.classList.remove('theme-transition');
+        }, 500);
+
         return () => clearTimeout(timeout);
-    }, [theme]);
+    }, [theme, systemTheme]);
 
     return (
         <ThemeContext.Provider value={{ theme, setTheme }}>

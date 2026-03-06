@@ -65,7 +65,7 @@ export default function Friends() {
                     <UserPlus className="w-12 h-12 text-red-500" />
                 </div>
                 <h1 className="text-3xl font-bold text-content">No has iniciado sesión</h1>
-                <Link to="/login" className="px-8 py-3 bg-brand text-content-on-brand rounded-full hover:bg-brand/90 transition-all shadow-xl active:scale-95">
+                <Link to="/login" className="px-8 py-3 bg-brand text-content-on-brand rounded-full hover:bg-brand/90 transition-all shadow-xl active:scale-95 font-bold hover:scale-[1.02]">
                     Iniciar sesión
                 </Link>
             </div>
@@ -114,7 +114,7 @@ export default function Friends() {
 
                 <Link
                     to="/user/search"
-                    className="ml-auto mb-4 flex items-center gap-2 bg-brand text-content-on-brand px-4 py-2 rounded-xl font-bold hover:opacity-90 transition-all shadow-lg shadow-brand/20"
+                    className="ml-auto mb-4 flex items-center gap-2 bg-brand text-content-on-brand px-4 py-2 rounded-xl font-bold hover:opacity-90 transition-all shadow-lg shadow-brand/20 hover:scale-105 active:scale-95"
                 >
                     <UserSearch size={18} />
                     <span>Añadir amigo</span>
@@ -132,7 +132,7 @@ export default function Friends() {
                             </div>
                         ) : (
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                                {friends.map((friend: any) => (
+                                {friends.map((friend) => (
                                     <div key={friend._id} className="flex flex-col p-5 bg-main rounded-3xl border border-line shadow-xs hover:border-brand hover:shadow-md transition-all group">
                                         <div className="flex items-center gap-4">
                                             <Link to={`/user/${friend._id}`} className="shrink-0 relative">
@@ -156,7 +156,7 @@ export default function Friends() {
                                             </Link>
                                             <button
                                                 onClick={() => removeFriend({ id: friend._id })}
-                                                className="flex items-center gap-2 px-4 py-2 bg-red-50 hover:bg-red-100 text-red-600 rounded-full text-sm font-bold transition-colors cursor-pointer"
+                                                className="flex items-center gap-2 px-4 py-2 bg-red-50 hover:bg-red-100 text-red-600 rounded-full text-sm font-bold transition-colors cursor-pointer hover:scale-105 active:scale-95"
                                                 title="Eliminar amigo"
                                             >
                                                 <UserMinus size={16} />
@@ -185,8 +185,8 @@ export default function Friends() {
                                 </div>
                             ) : (
                                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                                    {received.map((req: any) => (
-                                        <div key={req._id} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 bg-main rounded-2xl border border-line shadow-sm gap-4">
+                                    {received.map((req) => (
+                                        <div key={req._id} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 bg-main rounded-2xl border border-line shadow-sm gap-4 transition-all hover:scale-[1.02]">
                                             <div className="flex items-center gap-4">
                                                 <Link to={`/user/${req._id}`}>
                                                     <UserAvatar user={req} size={48} />
@@ -198,13 +198,13 @@ export default function Friends() {
                                             <div className="flex gap-2 w-full sm:w-auto mt-2 sm:mt-0">
                                                 <button
                                                     onClick={() => acceptRequest({ id: req._id })}
-                                                    className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-4 py-2 bg-green-500 text-white rounded-xl font-bold hover:bg-green-600 transition-colors shadow-sm active:scale-95 cursor-pointer"
+                                                    className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-4 py-2 bg-green-500 text-white rounded-xl font-bold hover:bg-green-600 transition-colors hover:scale-105 active:scale-95 cursor-pointer"
                                                 >
                                                     <Check size={18} /> Aceptar
                                                 </button>
                                                 <button
                                                     onClick={() => rejectRequest({ id: req._id })}
-                                                    className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-4 py-2 bg-red-100 text-red-600 rounded-xl font-bold hover:bg-red-200 transition-colors active:scale-95 cursor-pointer"
+                                                    className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-4 py-2 bg-red-100 text-red-600 rounded-xl font-bold hover:bg-red-200 transition-colors hover:scale-105 active:scale-95 cursor-pointer"
                                                 >
                                                     <X size={18} /> Rechazar
                                                 </button>
@@ -227,14 +227,14 @@ export default function Friends() {
                                 </div>
                             ) : (
                                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                                    {sent.map((req: any) => (
-                                        <div key={req._id} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 bg-main rounded-2xl border border-line border-opacity-50 gap-4 opacity-80 hover:opacity-100 transition-opacity">
+                                    {sent.map((req) => (
+                                        <div key={req._id} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 bg-main rounded-2xl transition-all hover:scale-[1.02] border border-line border-opacity-50 gap-4 opacity-80 hover:opacity-100">
                                             <div className="flex items-center gap-4">
                                                 <Link to={`/user/${req._id}`}>
                                                     <UserAvatar user={req} size={40} className="grayscale opacity-70" />
                                                 </Link>
                                                 <div className="flex flex-col">
-                                                    <Link to={`/user/${req._id}`} className="font-bold text-content hover:text-brand transition-colors">
+                                                    <Link to={`/user/${req._id}`} className="font-bold text-content hover:text-brand">
                                                         {req.username}
                                                     </Link>
                                                     <span className="text-xs text-content-muted flex items-center gap-1">
@@ -244,7 +244,7 @@ export default function Friends() {
                                             </div>
                                             <button
                                                 onClick={() => cancelRequest({ id: req._id })}
-                                                className="w-full sm:w-auto px-4 py-2 bg-surface/20 hover:bg-red-100 hover:text-red-600 text-content-muted rounded-xl font-bold transition-colors text-sm cursor-pointer"
+                                                className="w-full sm:w-auto px-4 py-2 bg-surface/20 hover:bg-red-100 hover:text-red-600 text-content-muted rounded-xl font-bold transition-all text-sm cursor-pointer hover:scale-105 active:scale-95"
                                             >
                                                 Cancelar
                                             </button>

@@ -166,6 +166,9 @@ export default function Navbar({ onToggleSidebar, isSidebarOpen }: { onToggleSid
 
     const ThemeMenuView = ({ theme, setTheme }: { theme: Theme, setTheme: (theme: Theme) => void }) => {
         const { popMenu } = useDropdown();
+        const isSystemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        const systemThemeStatus = isSystemDark ? themeLabels.dark : themeLabels.light;
+
         return (
             <div className="w-64 flex flex-col p-1">
                 <button
@@ -173,7 +176,7 @@ export default function Navbar({ onToggleSidebar, isSidebarOpen }: { onToggleSid
                         e.stopPropagation();
                         popMenu();
                     }}
-                    className="w-full flex items-center gap-3 text-content-muted px-3 py-2 text-sm rounded-xl transition-all group text-left hover:bg-surface/70 hover:cursor-pointer font-medium mb-1"
+                    className="w-full flex items-center gap-3 text-content-muted px-3 py-2 text-sm rounded-xl transition-[background-color_300ms,border-color_150ms,color_300ms,transform_300ms,opacity_300ms,box-shadow_300ms] group text-left hover:bg-surface/70 hover:cursor-pointer font-medium mb-1"
                 >
                     <ChevronDown size={16} className="rotate-90 shrink-0" />
                     <span className="leading-none">Volver</span>
@@ -182,29 +185,25 @@ export default function Navbar({ onToggleSidebar, isSidebarOpen }: { onToggleSid
                     {(['light', 'dark', 'system'] as const).map((t) => (
                         <button
                             key={t}
-                            disabled={t === 'system'}
-                            onClick={() => {
-                                if (t !== 'system') {
-                                    setTheme(t as any);
-                                }
-                            }}
-                            className={`w-full flex items-center justify-between px-3 py-2 text-sm rounded-xl transition-all group text-left font-medium ${t === 'system'
-                                ? 'opacity-30 cursor-not-allowed grayscale'
-                                : theme === t
+                            onClick={() => setTheme(t)}
+                            className={`w-full flex items-center justify-between px-3 py-2 text-sm rounded-xl transition-all group text-left font-medium
+                                ${theme === t
                                     ? 'bg-surface/70 text-content cursor-pointer'
                                     : 'text-content-muted hover:bg-surface/70 hover:cursor-pointer'
                                 }`}
                         >
                             <div className="flex items-center gap-3">
                                 <div className={`${theme === t ? 'text-content' : 'text-content-muted group-hover:text-content'} transition-colors shrink-0`}>
-                                    {(themeIcons as any)[t]}
+                                    {themeIcons[t]}
                                 </div>
-                                <span className="leading-none">{(themeLabels as any)[t]}</span>
-                                {t === 'system' && (
-                                    <span className="text-[10px] bg-surface/10 px-1.5 py-0.5 rounded uppercase tracking-tighter">Pronto</span>
-                                )}
+                                <span className="leading-none">
+                                    {themeLabels[t]}
+                                    {t === 'system' && (
+                                        <span className="ml-1 opacity-50 font-normal">({systemThemeStatus})</span>
+                                    )}
+                                </span>
                             </div>
-                            {t !== 'system' && theme === t && (
+                            {theme === t && (
                                 <div className="w-1.5 h-1.5 rounded-full bg-brand shadow-[0_0_8px_rgba(var(--color-brand),0.6)]" />
                             )}
                         </button>
@@ -333,7 +332,7 @@ export default function Navbar({ onToggleSidebar, isSidebarOpen }: { onToggleSid
                                     <span className="text-content text-sm font-bold hidden sm:block max-w-24 truncate">
                                         {user?.username}
                                     </span>
-                                    <ChevronDown size={14} className={`text-content-muted opacity-60 transition-transform duration-200 ${isUserMenuOpen ? 'rotate-180' : ''}`} />
+                                    <ChevronDown size={14} className={`text-content-muted opacity-60 transition-all ${isUserMenuOpen ? 'rotate-180' : ''}`} />
                                 </div>
                             }
                             menus={{
