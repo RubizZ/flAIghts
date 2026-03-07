@@ -140,7 +140,8 @@ export class S3Service {
             Bucket: this.bucket,
             Key: key,
             Body: buffer,
-            ContentType: usedMime
+            ContentType: usedMime,
+            CacheControl: 'public, max-age=31536000, immutable'
         })
 
         try {

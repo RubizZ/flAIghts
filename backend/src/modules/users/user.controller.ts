@@ -263,6 +263,8 @@ export class UsersController extends Controller {
     public async getUserAvatar(@Path() id: string, @Request() request: express.Request): Promise<void> {
         const url = await this.userService.getProfilePictureUrl(id);
         const res = request.res!;
+        // Cachear el redireccionamiento para que el navegador no pregunte al backend en 1 hora
+        res.setHeader('Cache-Control', 'private, max-age=3600');
         res.redirect(url);
     }
 
