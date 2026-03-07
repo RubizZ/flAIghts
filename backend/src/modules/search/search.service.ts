@@ -122,7 +122,7 @@ export class SearchService {
 
                 if (!tramo) {
                     console.warn(`Tramo inalcanzable: ${puntoA} -> ${puntoB}`);
-                    await Search.updateOne({ id: searchId }, { status: "failed" });
+                    await Search.updateOne({ _id: searchId }, { status: "failed" });
                     return;
                 }
                 currentDate = tramo[tramo.length - 1]!.date;
@@ -169,7 +169,7 @@ export class SearchService {
                     previousArrival = arrive;
                 }
 
-                await Itinerary.create({
+                const itinerary = await Itinerary.create({
                     total_price: totalPrice,
                     total_duration: totalDuration,
                     legs: legs,
@@ -179,18 +179,21 @@ export class SearchService {
                 });
 
                 await Search.updateOne(
-                    { id: searchId },
-                    { status: "completed" }
+                    { _id: searchId },
+                    {
+                        status: "completed",
+                        $push: { departure_itineraries: itinerary._id }
+                    }
                 );
 
                 console.log(`Exploración finalizada para ${searchId}: ${fullPath.length} vuelos encontrados.`);
             } else {
-                await Search.updateOne({ id: searchId }, { status: "failed" });
+                await Search.updateOne({ _id: searchId }, { status: "failed" });
             }
 
         } catch (error) {
             console.error(`Error en exploración ${searchId}:`, error);
-            await Search.updateOne({ id: searchId }, { status: "failed" });
+            await Search.updateOne({ _id: searchId }, { status: "failed" });
         }
     }
 
@@ -231,15 +234,15 @@ export class SearchService {
 
 
 
-    private formatSearchResponse(data: any): SearchResponseData {
+    private formatSearchResponse(data: ISearch): SearchResponseData {
         return {
             ...data,
             created_at: data.created_at instanceof Date ? data.created_at.toISOString() : data.created_at,
-            departure_itineraries: data.departure_itineraries?.map((itinerary: any) => ({
+            departure_itineraries: data.departure_itineraries?.map((itinerary) => ({
                 ...itinerary,
                 created_at: itinerary.created_at instanceof Date ? itinerary.created_at.toISOString() : itinerary.created_at
             })),
-            return_itineraries: data.return_itineraries?.map((itinerary: any) => ({
+            return_itineraries: data.return_itineraries?.map((itinerary) => ({
                 ...itinerary,
                 created_at: itinerary.created_at instanceof Date ? itinerary.created_at.toISOString() : itinerary.created_at
             }))
