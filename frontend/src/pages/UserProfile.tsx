@@ -244,8 +244,9 @@ export default function UserProfile() {
                                 {searchesData?.pages.map((page, i) => (
                                     <div key={i} className="flex flex-col gap-4">
                                         {page.items.map((search) => (
-                                            <div
+                                            <Link
                                                 key={search._id}
+                                                to={`/search/${search._id}`}
                                                 className="p-5 border border-line rounded-3xl hover:border-brand hover:shadow-md cursor-pointer transition-all bg-surface flex flex-col gap-3 group"
                                             >
                                                 <div className="flex justify-between items-center">
@@ -282,7 +283,7 @@ export default function UserProfile() {
                                                         </div>
                                                     )}
                                                 </div>
-                                            </div>
+                                            </Link>
                                         ))}
                                     </div>
                                 ))}
