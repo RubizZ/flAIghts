@@ -22,11 +22,11 @@ export default function AirportAutocomplete({ value, onChange, placeholder, clas
             query: {
                 enabled: debouncedQuery.length >= 2 && debouncedQuery !== value,
                 staleTime: 5 * 60 * 1000, // Keep results fresh for 5 minutes.
-                refetchOnWindowFocus: false, 
+                refetchOnWindowFocus: false,
             },
         }
     );
-    
+
     const suggestions = data ?? [];
 
     // Sync internal state with prop value (e.g. when swapping origin/dest)
@@ -58,7 +58,7 @@ export default function AirportAutocomplete({ value, onChange, placeholder, clas
         onChange(airport.iata_code); // Update parent state with the selected airport's IATA code
         /* Sync input value with selection. This will make `debouncedQuery` equal to `value` and 
         the hook's `enabled` condition will become `false`, preventing a reload */
-        setQuery(airport.iata_code); 
+        setQuery(airport.iata_code);
         setIsOpen(false);
     };
 
@@ -77,25 +77,25 @@ export default function AirportAutocomplete({ value, onChange, placeholder, clas
             />
             {isFetching && (
                 <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                    <Loader2 className="animate-spin h-4 w-4 text-gray-400" />
+                    <Loader2 className="animate-spin h-4 w-4 text-content-muted" />
                 </div>
             )}
             {isOpen && suggestions.length > 0 && (
-                <ul className="absolute z-50 w-full mt-1 bg-white text-black border border-gray-200 rounded-md shadow-lg max-h-60 overflow-auto text-left">
+                <ul className="absolute z-50 w-full mt-1 bg-main text-content border border-line rounded-md shadow-lg max-h-60 overflow-auto text-left">
                     {suggestions.map((airport) => (
                         <li
                             key={airport.iata_code}
-                            className="px-3 py-2 hover:bg-gray-100 cursor-pointer flex items-center gap-3 border-b border-gray-50 last:border-0"
+                            className="px-3 py-2 hover:bg-surface cursor-pointer flex items-center gap-3 border-b border-line last:border-0"
                             onClick={() => handleSelect(airport)}
                         >
-                            <div className="bg-gray-100 p-1.5 rounded-full shrink-0">
-                                <Plane size={14} className="text-gray-600" />
+                            <div className="bg-surface p-1.5 rounded-full shrink-0">
+                                <Plane size={14} className="text-content-muted" />
                             </div>
                             <div className="flex flex-col overflow-hidden">
                                 <span className="text-sm font-semibold truncate">
-                                    {airport.city} <span className="text-gray-500 font-normal">({airport.iata_code})</span>
+                                    {airport.city} <span className="text-content-muted font-normal">({airport.iata_code})</span>
                                 </span>
-                                <span className="text-xs text-gray-500 truncate">
+                                <span className="text-xs text-content-muted truncate">
                                     {airport.name}
                                 </span>
                             </div>
