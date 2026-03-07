@@ -26,6 +26,11 @@ export interface SearchRequest {
          */
         max_price?: number;
     };
+
+    layover_days?: number[];
+
+    
+
 }
 
 export interface LegResponse {
@@ -35,6 +40,11 @@ export interface LegResponse {
     destination: string;
     price: number;
     duration: number;
+    airline: string;
+    airline_logo?: string;
+    departure_time: string;
+    arrival_time: string;
+    wait_time?: number;
 }
 
 export interface ItineraryResponse {
@@ -50,7 +60,7 @@ export interface ItineraryResponse {
 }
 
 export interface SearchResponseData {
-    public_id: string;
+    id: string;
     user_id?: string;
     origins: string[];
     destinations: string[];
