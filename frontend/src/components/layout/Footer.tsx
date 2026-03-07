@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { Info, X } from "lucide-react";
 import DottedBackground from "../ui/DottedBackground";
 
-export default function Footer() {
+export default function Footer({ isSidebarOpen = false }: { isSidebarOpen?: boolean }) {
     const [isExpanded, setIsExpanded] = useState(false);
     const [showButton, setShowButton] = useState(false);
 
@@ -43,8 +43,8 @@ export default function Footer() {
 
             {/* Footer extensible */}
             <footer
-                className={`fixed bottom-0 left-0 w-full bg-brand/90 backdrop-blur-2xl text-content-on-brand transition-all duration-700 ease-[cubic-bezier(0.23,1,0.32,1)] z-40 transform ${isExpanded ? "translate-y-0 shadow-[0_-20px_100px_-20px_rgba(0,0,0,0.7)]" : "translate-y-full"
-                    } border-t border-white/30`}
+                className={`fixed bottom-0 right-0 bg-brand/90 backdrop-blur-2xl text-content-on-brand transition-all duration-700 ease-[cubic-bezier(0.23,1,0.32,1)] z-40 transform ${isExpanded ? "translate-y-0 shadow-[0_-20px_100px_-20px_rgba(0,0,0,0.7)]" : "translate-y-full"
+                    } border-t border-white/30 ${isSidebarOpen ? 'left-0 sm:left-64' : 'left-0 sm:left-16'}`}
                 style={{
                     maskImage: 'linear-gradient(to bottom, transparent, black 15%)',
                     WebkitMaskImage: 'linear-gradient(to bottom, transparent, black 15%)'
