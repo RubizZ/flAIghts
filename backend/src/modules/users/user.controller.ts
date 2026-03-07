@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Patch, Path, Post, Query, RequestProp, Response, Route, Security, SuccessResponse as SuccessResponseDecorator, Tags, Request, Consumes } from "tsoa";
+import { Body, Controller, Get, Patch, Path, Post, Query, RequestProp, Response, Route, Security, SuccessResponse as SuccessResponseDecorator, Tags, Request, Consumes, Middlewares } from "tsoa";
 import express from 'express';
 import type {
     InitiateRegistrationData,
@@ -18,9 +18,8 @@ import type {
     PublicUser,
     GetUserByIdResponseData,
     FriendUser,
-    FriendRequestErrorResponse,
     SetProfilePictureRequest,
-    ProfilePictureErrorResponse
+    RateLimitFailResponse
 } from "./user.types.js";
 import { inject, injectable } from "tsyringe";
 import { UserService } from "./user.service.js";
@@ -28,7 +27,22 @@ import type { AuthenticatedUser } from "../auth/auth.types.js";
 import type { IFriend, IFriendPopulated, IUser, IUserUnpopulated } from "./models/user.model.js";
 import type { SuccessResponse, FailResponseFromError } from "../../utils/responses.js";
 import type { AuthFailResponse } from "../auth/auth.types.js";
-import { EmailAlreadyInUseError, UsernameAlreadyInUseError, UserNotFoundError, NoPendingFriendRequestError, NoReceivedFriendRequestError, NotFriendsError, EmailVerificationCodeInvalidOrExpiredError, InvalidProfilePictureError } from "./user.errors.js";
+import {
+    EmailAlreadyInUseError,
+    UsernameAlreadyInUseError,
+    UserNotFoundError,
+    NoPendingFriendRequestError,
+    NoReceivedFriendRequestError,
+    NotFriendsError,
+    EmailVerificationCodeInvalidOrExpiredError,
+    InvalidProfilePictureError,
+    SelfFriendRequestError,
+    AlreadyFriendsError,
+    FriendRequestAlreadySentError,
+    FriendRequestAlreadyReceivedError,
+    ProfilePictureTooLargeError
+} from "./user.errors.js";
+import { profilePictureRateLimit } from "../../middlewares/rate-limit.middleware.js";
 
 @injectable()
 @Route("users")
@@ -178,7 +192,7 @@ export class UsersController extends Controller {
     @Security("jwt")
     @Response<AuthFailResponse>(401, "No autenticado")
     @Response<FailResponseFromError<UserNotFoundError>>(404, "Usuario no encontrado")
-    @Response<FriendRequestErrorResponse>(400, "Error en la solicitud de amistad")
+    @Response<FailResponseFromError<SelfFriendRequestError> | FailResponseFromError<AlreadyFriendsError> | FailResponseFromError<FriendRequestAlreadySentError> | FailResponseFromError<FriendRequestAlreadyReceivedError>>(400, "Error en la solicitud de amistad")
     public async sendFriendRequest(@Path() id: string, @RequestProp('user') user: AuthenticatedUser): Promise<SuccessResponse> {
         await this.userService.sendFriendRequest(user._id, id);
         return {} satisfies {} as any;
@@ -225,10 +239,13 @@ export class UsersController extends Controller {
     }
 
     @Post("/me/profile-picture")
+    @Middlewares(profilePictureRateLimit)
     @Consumes("application/octet-stream")
     @Security("jwt")
     @Response<AuthFailResponse>(401, "No autenticado")
-    @Response<ProfilePictureErrorResponse>(400, "Error en la imagen")
+    @Response<FailResponseFromError<InvalidProfilePictureError>>(400, "Error en la imagen")
+    @Response<FailResponseFromError<ProfilePictureTooLargeError>>(413, "Imagen demasiado grande")
+    @Response<RateLimitFailResponse>(429, "Límite de peticiones excedido")
     public async setProfilePicture(
         @RequestProp('user') user: AuthenticatedUser,
         @Body() body: SetProfilePictureRequest

@@ -1,5 +1,5 @@
-import type { ValidationDetails, RequestValidationFailResponse, DatabaseValidationFailResponse, FailResponseFromError } from "../../utils/responses.js";
-import type { EmailVerificationCodeInvalidOrExpiredError, EmailAlreadyVerifiedError, SelfFriendRequestError, AlreadyFriendsError, FriendRequestAlreadySentError, FriendRequestAlreadyReceivedError, InvalidProfilePictureError, ProfilePictureTooLargeError } from "./user.errors.js";
+import type { ValidationDetails, RequestValidationFailResponse, DatabaseValidationFailResponse, FailResponseFromError, RateLimitFailResponse } from "../../utils/responses.js";
+export type { RateLimitFailResponse };
 
 // ==================== TIPOS DE USUARIO ====================
 
@@ -245,10 +245,3 @@ export type UpdateUserValidationFailResponse = UpdateUserRequestValidationFailRe
 
 // Unión de todas las posibles respuestas 422 para verify-email
 export type VerifyEmailValidationFailResponse = VerifyEmailRequestValidationFailResponse | DatabaseValidationFailResponse;
-
-// Respuestas de error consolidadas para TSOA (evitar stack overflow)
-export type VerifyEmailErrorResponse = FailResponseFromError<EmailVerificationCodeInvalidOrExpiredError> | FailResponseFromError<EmailAlreadyVerifiedError>;
-export type FriendRequestErrorResponse = FailResponseFromError<SelfFriendRequestError> | FailResponseFromError<AlreadyFriendsError> | FailResponseFromError<FriendRequestAlreadySentError> | FailResponseFromError<FriendRequestAlreadyReceivedError>;
-export type ProfilePictureErrorResponse =
-    | FailResponseFromError<InvalidProfilePictureError>
-    | FailResponseFromError<ProfilePictureTooLargeError>;

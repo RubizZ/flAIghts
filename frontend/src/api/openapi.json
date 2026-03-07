@@ -1958,22 +1958,6 @@
 				"$ref": "#/components/schemas/FailResponse_FRIEND_REQUEST_ALREADY_RECEIVED.undefined_",
 				"description": "Extrae automáticamente code y details de una clase AppError.\r\n\r\nEjemplo:\r\n- FailResponseFromError<UserAlreadyExistsError> → { status: 'fail', data: { code: 'CONFLICT', message: string, details: { field, value } } }\r\n- FailResponseFromError<UserNotFoundError> → { status: 'fail', data: { code: 'NOT_FOUND', message: string, details: { userId } } }"
 			},
-			"FriendRequestErrorResponse": {
-				"anyOf": [
-					{
-						"$ref": "#/components/schemas/FailResponseFromError_SelfFriendRequestError_"
-					},
-					{
-						"$ref": "#/components/schemas/FailResponseFromError_AlreadyFriendsError_"
-					},
-					{
-						"$ref": "#/components/schemas/FailResponseFromError_FriendRequestAlreadySentError_"
-					},
-					{
-						"$ref": "#/components/schemas/FailResponseFromError_FriendRequestAlreadyReceivedError_"
-					}
-				]
-			},
 			"FailResponse_NO_PENDING_FRIEND_REQUEST.undefined_": {
 				"properties": {
 					"data": {
@@ -2196,15 +2180,41 @@
 				"$ref": "#/components/schemas/FailResponse_PROFILE_PICTURE_TOO_LARGE._size-number--maxSize-number__",
 				"description": "Extrae automáticamente code y details de una clase AppError.\r\n\r\nEjemplo:\r\n- FailResponseFromError<UserAlreadyExistsError> → { status: 'fail', data: { code: 'CONFLICT', message: string, details: { field, value } } }\r\n- FailResponseFromError<UserNotFoundError> → { status: 'fail', data: { code: 'NOT_FOUND', message: string, details: { userId } } }"
 			},
-			"ProfilePictureErrorResponse": {
-				"anyOf": [
-					{
-						"$ref": "#/components/schemas/FailResponseFromError_InvalidProfilePictureError_"
+			"RateLimitFailResponse": {
+				"properties": {
+					"data": {
+						"properties": {
+							"message": {
+								"type": "string"
+							},
+							"code": {
+								"type": "string",
+								"enum": [
+									"RATE_LIMIT_EXCEEDED"
+								],
+								"nullable": false
+							}
+						},
+						"required": [
+							"message",
+							"code"
+						],
+						"type": "object"
 					},
-					{
-						"$ref": "#/components/schemas/FailResponseFromError_ProfilePictureTooLargeError_"
+					"status": {
+						"type": "string",
+						"enum": [
+							"fail"
+						],
+						"nullable": false
 					}
-				]
+				},
+				"required": [
+					"data",
+					"status"
+				],
+				"type": "object",
+				"description": "Respuesta específica para el límite de tasa (rate limit).\r\nNo incluye el campo 'details' ya que no es relevante para este error."
 			},
 			"SetProfilePictureRequest": {
 				"type": "string",
@@ -4147,7 +4157,20 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/FriendRequestErrorResponse"
+									"anyOf": [
+										{
+											"$ref": "#/components/schemas/FailResponseFromError_SelfFriendRequestError_"
+										},
+										{
+											"$ref": "#/components/schemas/FailResponseFromError_AlreadyFriendsError_"
+										},
+										{
+											"$ref": "#/components/schemas/FailResponseFromError_FriendRequestAlreadySentError_"
+										},
+										{
+											"$ref": "#/components/schemas/FailResponseFromError_FriendRequestAlreadyReceivedError_"
+										}
+									]
 								}
 							}
 						}
@@ -4472,7 +4495,7 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/ProfilePictureErrorResponse"
+									"$ref": "#/components/schemas/FailResponseFromError_InvalidProfilePictureError_"
 								}
 							}
 						}
@@ -4483,6 +4506,26 @@
 							"application/json": {
 								"schema": {
 									"$ref": "#/components/schemas/AuthFailResponse"
+								}
+							}
+						}
+					},
+					"413": {
+						"description": "Imagen demasiado grande",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/FailResponseFromError_ProfilePictureTooLargeError_"
+								}
+							}
+						}
+					},
+					"429": {
+						"description": "Límite de peticiones excedido",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/RateLimitFailResponse"
 								}
 							}
 						}

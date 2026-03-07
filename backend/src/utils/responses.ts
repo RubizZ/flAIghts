@@ -45,6 +45,18 @@ export type FailResponseFromError<T extends AppError<any, any>> =
     ? FailResponse<TCode, TDetails>
     : never;
 
+/**
+ * Respuesta específica para el límite de tasa (rate limit).
+ * No incluye el campo 'details' ya que no es relevante para este error.
+ */
+export type RateLimitFailResponse = {
+    status: 'fail';
+    data: {
+        code: 'RATE_LIMIT_EXCEEDED';
+        message: string;
+    };
+};
+
 // Patrón para las claves de detalle de validación (el "regex" de TypeScript)
 type ValidationKey = `body.${string}` | `query.${string}` | `path.${string}` | `header.${string}` | `formData.${string}` | `body` | `query` | `path` | `header` | `formData`;
 
