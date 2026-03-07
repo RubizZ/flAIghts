@@ -167,7 +167,22 @@ export class S3Service {
             Bucket: this.bucket,
             Key: key
         })
-        return await getSignedUrl(this.signerClient, command, { expiresIn: expiresInSeconds })
+
+        let signedUrl = await getSignedUrl(this.signerClient, command, { expiresIn: expiresInSeconds })
+
+        // Si el host público ya apunta a la raíz del bucket, el nombre del bucket sobra en la URL
+        if (process.env.S3_PUBLIC_HOST_IS_ROOT_MAPPED === 'true') {
+            const url = new URL(signedUrl);
+
+            // Explicación: El SDK añade /${this.bucket}/ al principio del pathname.
+            // Lo eliminamos para que coincida con el mapeo directo de Cloudflare.
+            if (url.pathname.startsWith(`/${this.bucket}`)) {
+                url.pathname = url.pathname.replace(`/${this.bucket}`, '');
+                signedUrl = url.toString();
+            }
+        }
+
+        return signedUrl
     }
 
     async delete(key: string): Promise<boolean> {
