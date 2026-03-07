@@ -2232,6 +2232,22 @@
 					"duration": {
 						"type": "number",
 						"format": "double"
+					},
+					"airline": {
+						"type": "string"
+					},
+					"airline_logo": {
+						"type": "string"
+					},
+					"departure_time": {
+						"type": "string"
+					},
+					"arrival_time": {
+						"type": "string"
+					},
+					"wait_time": {
+						"type": "number",
+						"format": "double"
 					}
 				},
 				"required": [
@@ -2240,7 +2256,10 @@
 					"origin",
 					"destination",
 					"price",
-					"duration"
+					"duration",
+					"airline",
+					"departure_time",
+					"arrival_time"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -2567,6 +2586,13 @@
 							"priority"
 						],
 						"type": "object"
+					},
+					"layover_days": {
+						"items": {
+							"type": "number",
+							"format": "double"
+						},
+						"type": "array"
 					}
 				},
 				"required": [
