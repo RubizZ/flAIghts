@@ -34,7 +34,7 @@ export default function MainLayout() {
                     </div>
                 </main>
             </div>
-            <Footer />
+            <Footer isSidebarOpen={isSidebarOpen} />
         </div>
     );
 }
