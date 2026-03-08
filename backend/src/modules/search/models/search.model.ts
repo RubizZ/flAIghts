@@ -64,11 +64,9 @@ const SearchSchema = new Schema<ISearch>({
   created_at: { type: Date, default: Date.now }
 }, {
   toJSON: {
-    virtuals: true,
     versionKey: false
   },
   toObject: {
-    virtuals: true,
     versionKey: false
   }
 });
