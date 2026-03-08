@@ -1,11 +1,11 @@
-import "dotenv/config";
 import { injectable } from "tsyringe";
 import type { ApiRequestParameters, SerpApiResponse } from "./serpapi.types.js";
 import mongoose, { Schema } from "mongoose";
+import { ServerConfig } from "../../config/server.config.js";
 
 const requestsPerDaySchema = new Schema<{ date: string; count: number }>({
     date: { type: String, required: true, unique: true },
-    count: { type: Number, required: true, default: 0, max: 1000 },
+    count: { type: Number, required: true, default: 0, max: 2500 },
 });
 
 export const RequestsPerDay = mongoose.model<{ date: string; count: number }>("RequestsPerDay", requestsPerDaySchema);
@@ -14,7 +14,8 @@ export const RequestsPerDay = mongoose.model<{ date: string; count: number }>("R
 export class SerpApiClient {
 
     private baseUrl = "https://serpapi.com";
-    private apiKey = process.env.SERPAPI_API_KEY!;
+
+    constructor(private config: ServerConfig) { }
 
     private maxRequestPerDay = 1000;
 
@@ -41,7 +42,7 @@ export class SerpApiClient {
 
         const query = new URLSearchParams({
             engine: "google_flights",
-            api_key: this.apiKey,
+            api_key: this.config.SERPAPI_API_KEY,
             ...parameters as any
         });
 
