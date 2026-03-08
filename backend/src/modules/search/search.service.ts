@@ -232,8 +232,6 @@ export class SearchService {
         };
     }
 
-
-
     private formatSearchResponse(data: ISearch): SearchResponseData {
         return {
             ...data,

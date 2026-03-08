@@ -20,7 +20,7 @@ function SearchFlight() {
             onSuccess: (data) => {
                 // Axios unwraps the response, so data is already the response body
                 toast.success("Búsqueda iniciada");
-                navigate(`/search/${data.id}`);
+                navigate(`/search/${data._id}`);
             },
             onError: (error) => {
                 console.error(error);
