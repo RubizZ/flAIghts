@@ -7,7 +7,7 @@
   "type": "module",
   "main": "dist/index.js",
   "scripts": {
-    "dev": "vite",
+    "dev": "npm run orval && vite",
     "build": "npm run orval && vite build",
     "preview": "vite preview",
     "test": "echo \"Error: no test specified\" && exit 1",
@@ -26,6 +26,8 @@
     "tailwindcss": "^4.1.18",
     "typescript": "^5.9.3",
     "vite": "^7.3.1",
+    "vite-plugin-checker": "^0.12.0",
+    "vite-plugin-run": "^0.6.1",
     "vite-tsconfig-paths": "^6.0.5"
   },
   "dependencies": {
@@ -42,15 +44,15 @@
     "three": "^0.182.0"
   },
   "optionalDependencies": {
-    "lightningcss-linux-x64-gnu": "1.30.2",
-    "lightningcss-linux-x64-musl": "1.30.2",
-    "lightningcss-darwin-x64": "1.30.2",
-    "lightningcss-darwin-arm64": "1.30.2",
-    "lightningcss-win32-x64-msvc": "1.30.2",
-    "@tailwindcss/oxide-linux-x64-gnu": "4.1.18",
-    "@tailwindcss/oxide-linux-x64-musl": "4.1.18",
     "@tailwindcss/oxide-darwin-arm64": "4.1.18",
     "@tailwindcss/oxide-darwin-x64": "4.1.18",
-    "@tailwindcss/oxide-win32-x64-msvc": "4.1.18"
+    "@tailwindcss/oxide-linux-x64-gnu": "4.1.18",
+    "@tailwindcss/oxide-linux-x64-musl": "4.1.18",
+    "@tailwindcss/oxide-win32-x64-msvc": "4.1.18",
+    "lightningcss-darwin-arm64": "1.30.2",
+    "lightningcss-darwin-x64": "1.30.2",
+    "lightningcss-linux-x64-gnu": "1.30.2",
+    "lightningcss-linux-x64-musl": "1.30.2",
+    "lightningcss-win32-x64-msvc": "1.30.2"
   }
 }
