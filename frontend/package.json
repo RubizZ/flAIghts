@@ -7,7 +7,7 @@
   "type": "module",
   "main": "dist/index.js",
   "scripts": {
-    "dev": "vite",
+    "dev": "npm run orval && vite",
     "build": "npm run orval && vite build",
     "preview": "vite preview",
     "test": "echo \"Error: no test specified\" && exit 1",
@@ -26,6 +26,8 @@
     "tailwindcss": "^4.1.18",
     "typescript": "^5.9.3",
     "vite": "^7.3.1",
+    "vite-plugin-checker": "^0.12.0",
+    "vite-plugin-run": "^0.6.1",
     "vite-tsconfig-paths": "^6.0.5"
   },
   "dependencies": {
