@@ -1,7 +1,7 @@
 import { useEffect, useRef } from "react";
 import * as THREE from "three";
 import Papa from "papaparse";
-import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
+import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 
 interface GlobeProps {
     onAirportSelect: (iata: string) => void;
@@ -62,7 +62,7 @@ export default function Globe({ onAirportSelect, selectedAirports }: GlobeProps)
         // Airports
         const airportGroup = new THREE.Group();
         scene.add(airportGroup);
-        
+
         Papa.parse("/airports_data.csv", {
             header: true,
             download: true,
@@ -70,7 +70,7 @@ export default function Globe({ onAirportSelect, selectedAirports }: GlobeProps)
                 result.data.forEach((a: any) => {
                     const lat = Number(a.lat);
                     const lon = Number(a.lon);
-                    
+
                     if (!isFinite(lat) || !isFinite(lon)) return;
 
                     const phi = (90 - lat) * (Math.PI / 180);
@@ -116,12 +116,14 @@ export default function Globe({ onAirportSelect, selectedAirports }: GlobeProps)
             raycaster.setFromCamera(mouse, camera);
             const intersects = raycaster.intersectObjects(airportGroup.children);
 
-            if (intersects.length > 0) {
+            if (intersects.length > 0 && intersects[0]) {
                 const a = intersects[0].object.userData;
-                popupRef.current.style.left = x + "px";
-                popupRef.current.style.top = y + "px";
-                popupRef.current.innerHTML = `<b>${a.name} (${a.iata})</b>`;
-                popupRef.current.style.display = "block";
+                if (popupRef.current) {
+                    popupRef.current.style.left = x + "px";
+                    popupRef.current.style.top = y + "px";
+                    popupRef.current.innerHTML = `<b>${a.name} (${a.iata})</b>`;
+                    popupRef.current.style.display = "block";
+                }
 
                 if (a.iata) {
                     onAirportSelect(a.iata);
@@ -155,7 +157,7 @@ export default function Globe({ onAirportSelect, selectedAirports }: GlobeProps)
         renderer.domElement.addEventListener("mousemove", onMouseMove);
 
         const handleResize = () => {
-            if(!mount) return;
+            if (!mount) return;
 
             const newWidth = mount.clientWidth;
             const newHeight = mount.clientHeight;
@@ -192,7 +194,9 @@ export default function Globe({ onAirportSelect, selectedAirports }: GlobeProps)
     useEffect(() => {
         Object.keys(airportsMap.current).forEach(iata => {
             const mesh = airportsMap.current[iata];
+            if (!mesh) return;
             const material = mesh.material as THREE.MeshBasicMaterial;
+            if (!material) return;
 
             if (selectedAirports.includes(iata)) {
                 material.color.setHex(0x00ff00);
@@ -204,26 +208,26 @@ export default function Globe({ onAirportSelect, selectedAirports }: GlobeProps)
         });
     }, [selectedAirports]);
 
-  return (
-    <div className='w-full h-[60vh] min-h-[400px] flex items-center justify-center bg-black'>
-        <div ref={mountRef} className='w-full h-full relative' >
-            <div
-                ref={popupRef}
-                style={{
-                position: "absolute",
-                top: 0,
-                left: 0,
-                zIndex: 10,
-                background: "white",
-                color: "black",
-                padding: "6px",
-                borderRadius: "6px",
-                border: "1px solid #555",
-                display: "none",
-                pointerEvents: "none"
-                }}
-            />
+    return (
+        <div className='w-full h-[60vh] min-h-[400px] flex items-center justify-center bg-black'>
+            <div ref={mountRef} className='w-full h-full relative' >
+                <div
+                    ref={popupRef}
+                    style={{
+                        position: "absolute",
+                        top: 0,
+                        left: 0,
+                        zIndex: 10,
+                        background: "white",
+                        color: "black",
+                        padding: "6px",
+                        borderRadius: "6px",
+                        border: "1px solid #555",
+                        display: "none",
+                        pointerEvents: "none"
+                    }}
+                />
+            </div>
         </div>
-    </div>
-  );
+    );
 }
