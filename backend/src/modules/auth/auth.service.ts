@@ -29,25 +29,15 @@ export class ResetTokenService {
     }
 }
 
+import { ServerConfig } from "../../config/server.config.js";
+
 @singleton()
 export class AuthService {
-    private readonly jwtSecret: string;
-    private readonly jwtExpiration: number;
-    private readonly frontendUrl: string;
 
-    constructor(@inject(MailService) private mailService: MailService) {
-
-        if (!process.env.JWT_SECRET) {
-            throw new Error("JWT_SECRET is not defined");
-        }
-        if (!process.env.FRONTEND_URL) {
-            throw new Error("FRONTEND_URL is not defined");
-        }
-
-        this.jwtSecret = process.env.JWT_SECRET;
-        this.frontendUrl = process.env.FRONTEND_URL;
-        this.jwtExpiration = process.env.JWT_EXPIRATION ? Math.floor(ms(process.env.JWT_EXPIRATION as ms.StringValue) / 1000) : 2592000; // 30 days
-    }
+    constructor(
+        @inject(MailService) private mailService: MailService,
+        private config: ServerConfig
+    ) { }
 
     public async login(identifier: string, password: string): Promise<LoginResponseData> {
         const user = await User.findOne({ $or: [{ email: identifier }, { username: identifier }] })
@@ -69,8 +59,8 @@ export class AuthService {
                 userId: user._id,
                 version: user.auth_version
             } as JWTPayload,
-            this.jwtSecret,
-            { expiresIn: this.jwtExpiration }
+            this.config.JWT_SECRET,
+            { expiresIn: this.config.JWT_EXPIRATION }
         );
 
         return {
@@ -119,7 +109,7 @@ export class AuthService {
 
         if (!user) return false;
 
-        const resetUrl = `${this.frontendUrl}/reset-password?token=${resetToken}`;
+        const resetUrl = `${this.config.FRONTEND_URL}/reset-password?token=${resetToken}`;
         const template = MailTemplates.passwordReset(resetUrl);
 
         this.mailService.sendMail(user.email, template.subject, template.html);
