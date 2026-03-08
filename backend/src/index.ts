@@ -16,18 +16,23 @@ import { Error as MongooseError } from 'mongoose';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const PORT = process.env.PORT || 3000;
+import { container } from 'tsyringe';
+import { ServerConfig } from './config/server.config.js';
+const config = container.resolve(ServerConfig);
+
+const PORT = config.PORT;
 
 const app = express();
 app.use(compression());
 
 
-const origins = process.env.ALLOWED_ORIGINS?.split(',').map(o => o.trim().replace(/\/$/, '')) || [];
-if (process.env.FRONTEND_URL) {
-    origins.unshift(process.env.FRONTEND_URL.replace(/\/$/, ''));
+const origins = config.ALLOWED_ORIGINS || [];
+if (config.FRONTEND_URL) {
+    origins.unshift(config.FRONTEND_URL);
 }
+const allOrigins = Array.from(new Set(origins));
 
-const originRegexes = origins.map(o => {
+const originRegexes = allOrigins.map(o => {
     const pattern = o
         .replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
         .replace(/\\\*/g, '.*');
@@ -55,7 +60,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
 // Connect to database
-connectDB();
+connectDB(config.MONGODB_URI);
 
 // Middleware to wrap all successful responses in JSend format
 app.use((req, res, next) => {
@@ -78,7 +83,7 @@ app.use((req, res, next) => {
 });
 
 // Swagger UI documentation (only in development)
-if (process.env.NODE_ENV !== 'production') {
+if (config.NODE_ENV !== 'production') {
     const openApiSpec = JSON.parse(fs.readFileSync(path.join(__dirname, '../build/openapi.json'), 'utf8'));
     app.use('/docs', swaggerUi.serve, swaggerUi.setup(openApiSpec));
 }

@@ -2,21 +2,21 @@ import type { FlightRoute, ApiRequestParameters } from "../../services/serpapi/s
 import { singleton, inject } from "tsyringe";
 import { SerpapiStorage } from "./serpapi-storage.model.js";
 import { SerpApiClient } from "../../services/serpapi/serpapi.client.js";
+import ms from "ms";
+
+import { ServerConfig } from "../../config/server.config.js";
 
 @singleton()
 export class SerpapiStorageService {
     constructor(
-        @inject(SerpApiClient) private readonly serpApiClient: SerpApiClient
-    ) {}
-
-    private get CACHE_TTL_HOURS() {
-        return Number(process.env.FLIGHT_CACHE_TTL_HOURS) || 24;
-    }
+        @inject(SerpApiClient) private readonly serpApiClient: SerpApiClient,
+        private config: ServerConfig
+    ) { }
 
     public async getAllFlights(departure: string, arrival: string, date: string): Promise<FlightRoute[]> {
-        
-        const freshnessLimit = new Date();
-        freshnessLimit.setHours(freshnessLimit.getHours() - this.CACHE_TTL_HOURS);
+
+        const warmthPeriodMs = ms(this.config.FLIGHT_CACHE_TTL);
+        const freshnessLimit = new Date(Date.now() - warmthPeriodMs);
 
         const record = await SerpapiStorage.findOne({
             "search_parameters.departure_id": departure,
@@ -44,7 +44,7 @@ export class SerpapiStorageService {
 
         // Concatenate best flights and other flights
         const allFlights: FlightRoute[] = [
-            ...(record.best_flights || []), 
+            ...(record.best_flights || []),
             ...(record.other_flights || [])
         ];
 
