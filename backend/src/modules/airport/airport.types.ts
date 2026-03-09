@@ -15,3 +15,10 @@ export interface ScoredAirport {
   iata: string;
   score: number;
 }
+
+export interface PaginatedAirportResponse {
+    items: AirportResponse[];
+    total: number;
+    page: number;
+    totalPages: number;
+}
