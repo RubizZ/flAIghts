@@ -1,6 +1,7 @@
 import { singleton } from "tsyringe";
 import { Airport, type IAirport } from "./airport.model.js";
 import type { AirportResponse, PaginatedAirportResponse, ScoredAirport } from "./airport.types.js";
+import type { PipelineStage } from "mongoose";
 
 // Parámetros para la función de búsqueda de aeropuertos candidatos
 // Radios base (km)
@@ -48,7 +49,7 @@ export class AirportService {
             }
         };
 
-        const dataPipeline = [
+        const dataPipeline: PipelineStage[] = [
             { $match: findQuery },
             scoreStage,
             { $sort: { _sortScore: -1 } },
