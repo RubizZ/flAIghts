@@ -16,6 +16,13 @@ export interface ScoredAirport {
   score: number;
 }
 
+export interface PaginatedAirportResponse {
+    items: AirportResponse[];
+    total: number;
+    page: number;
+    totalPages: number;
+}
+
 /**
  * Compact format for globe visualization
  */

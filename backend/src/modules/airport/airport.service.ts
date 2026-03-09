@@ -1,7 +1,7 @@
 import { singleton } from "tsyringe";
 import fuzzysort from "fuzzysort";
 import { Airport, type IAirport } from "./airport.model.js";
-import type { AirportResponse, ScoredAirport, GlobeAirportResponse } from "./airport.types.js";
+import type { AirportResponse, PaginatedAirportResponse, ScoredAirport, GlobeAirportResponse } from "./airport.types.js";
 
 // Radios base (km) para búsqueda de rutas
 const MIN_RADIUS_KM = 150;

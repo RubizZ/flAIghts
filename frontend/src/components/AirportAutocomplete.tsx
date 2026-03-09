@@ -53,7 +53,25 @@ export default function AirportAutocomplete({ value, onChange, placeholder, clas
         }
     }, [resolvedData, shouldResolve, onChange]);
 
-    const suggestions = data ?? [];
+    // Resolve IATA code if only IATA is provided in value
+    const shouldResolve = !!(value && value.iata_code && value.iata_code.length === 3 && !value.city && !value.name);
+    const { data: resolvedData, isFetching: isResolving } = useGetAirportByIata(
+        value?.iata_code || "",
+        {
+            query: {
+                enabled: shouldResolve,
+                staleTime: Infinity,
+            }
+        }
+    );
+
+    useEffect(() => {
+        if (resolvedData && shouldResolve) {
+            onChange(resolvedData);
+        }
+    }, [resolvedData, shouldResolve, onChange]);
+
+    const suggestions = data?.items ?? [];
 
     const groupedSuggestions = useMemo(() => {
         const groups: Record<string, AirportResponse[]> = {};
