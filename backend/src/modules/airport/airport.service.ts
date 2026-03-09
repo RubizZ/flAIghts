@@ -1,6 +1,6 @@
 import { singleton } from "tsyringe";
 import { Airport, type IAirport } from "./airport.model.js";
-import type { AirportResponse, ScoredAirport } from "./airport.types.js";
+import type { AirportResponse, PaginatedAirportResponse, ScoredAirport } from "./airport.types.js";
 
 // Parámetros para la función de búsqueda de aeropuertos candidatos
 // Radios base (km)
@@ -11,58 +11,63 @@ const MAX_LAYOVERS = 6;
 
 @singleton()
 export class AirportService {
-    public async searchAirports(query: string): Promise<AirportResponse[]> {
+    public async searchAirports(query: string, page: number = 1, limit: number = 10): Promise<PaginatedAirportResponse> {
         const cleanQuery = query?.trim();
 
-        if (!cleanQuery || cleanQuery.length < 2) return [];
+        if (!cleanQuery || cleanQuery.length < 2) {
+            return { items: [], total: 0, page, totalPages: 0 };
+        }
 
         const escapedQuery = cleanQuery.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
         const regex = new RegExp(escapedQuery, 'i');
+        const qUpper = cleanQuery.toUpperCase();
+        const escapedUpperQuery = qUpper.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
-        const airports = await Airport.find({
+        const findQuery = {
             $or: [
                 { iata_code: regex },
                 { city: regex },
                 { name: regex },
                 { country: regex }
             ]
-        }).limit(50).lean();
+        };
 
-        const scoredAirports = airports.map(airport => {
-            let score = airport.importance_score || 0;
-            const qUpper = cleanQuery.toUpperCase();
-            
-            const iata = airport.iata_code?.toUpperCase();
-            const city = airport.city?.toUpperCase();
-            const name = airport.name?.toUpperCase();
-            const country = airport.country?.toUpperCase();
-
-            if (iata === qUpper) {
-                score += 1000;
+        const scoreStage = {
+            $addFields: {
+                _sortScore: {
+                    $add: [
+                        { $ifNull: ["$importance_score", 0] },
+                        { $cond: [{ $eq: ["$iata_code", qUpper] }, 1000, 0] },
+                        { $cond: [{ $eq: [{ $toUpper: "$city" }, qUpper] }, 500, 0] },
+                        { $cond: [{ $regexMatch: { input: { $toUpper: "$city" }, regex: `^${escapedUpperQuery}` } }, 200, 0] },
+                        { $cond: [{ $regexMatch: { input: { $toUpper: "$name" }, regex: `^${escapedUpperQuery}` } }, 100, 0] },
+                        { $cond: [{ $eq: [{ $toUpper: "$country" }, qUpper] }, 300, 0] },
+                        { $cond: [{ $regexMatch: { input: { $toUpper: "$country" }, regex: `^${escapedUpperQuery}` } }, 100, 0] },
+                    ]
+                }
             }
+        };
 
-            if (city === qUpper) {
-                score += 500;
-            } else if (city?.startsWith(qUpper)) {
-                score += 200;
-            }
+        const dataPipeline = [
+            { $match: findQuery },
+            scoreStage,
+            { $sort: { _sortScore: -1 } },
+            { $skip: (page - 1) * limit },
+            { $limit: limit },
+            { $project: { _sortScore: 0 } }
+        ];
 
-            if (name?.startsWith(qUpper)) {
-                score += 100;
-            }
+        const [total, items] = await Promise.all([
+            Airport.countDocuments(findQuery),
+            Airport.aggregate<AirportResponse>(dataPipeline)
+        ]);
 
-            if (country === qUpper) {
-                score += 300;
-            } else if (country?.startsWith(qUpper)) {
-                score += 100;
-            }
-
-            return { ...airport, _sortScore: score };
-        });
-
-        scoredAirports.sort((a, b) => b._sortScore - a._sortScore);
-
-        return scoredAirports.slice(0, 10).map(({ _sortScore, ...airport }) => airport);
+        return {
+            items,
+            total,
+            page,
+            totalPages: Math.ceil(total / limit)
+        };
     }
 
 

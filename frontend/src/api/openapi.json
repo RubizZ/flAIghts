@@ -3524,7 +3524,37 @@
 				"type": "object",
 				"additionalProperties": false
 			},
-			"SuccessResponse_AirportResponse-Array_": {
+			"PaginatedAirportResponse": {
+				"properties": {
+					"items": {
+						"items": {
+							"$ref": "#/components/schemas/AirportResponse"
+						},
+						"type": "array"
+					},
+					"total": {
+						"type": "number",
+						"format": "double"
+					},
+					"page": {
+						"type": "number",
+						"format": "double"
+					},
+					"totalPages": {
+						"type": "number",
+						"format": "double"
+					}
+				},
+				"required": [
+					"items",
+					"total",
+					"page",
+					"totalPages"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"SuccessResponse_PaginatedAirportResponse_": {
 				"description": "Wrapper de éxito JSend (aplicado por el middleware global).",
 				"properties": {
 					"status": {
@@ -3535,10 +3565,7 @@
 						"nullable": false
 					},
 					"data": {
-						"items": {
-							"$ref": "#/components/schemas/AirportResponse"
-						},
-						"type": "array"
+						"$ref": "#/components/schemas/PaginatedAirportResponse"
 					}
 				},
 				"required": [
@@ -3573,7 +3600,37 @@
 				"type": "object",
 				"additionalProperties": false
 			},
-			"SuccessResponse_AirlineResponse-Array_": {
+			"PaginatedAirlineResponse": {
+				"properties": {
+					"items": {
+						"items": {
+							"$ref": "#/components/schemas/AirlineResponse"
+						},
+						"type": "array"
+					},
+					"total": {
+						"type": "number",
+						"format": "double"
+					},
+					"page": {
+						"type": "number",
+						"format": "double"
+					},
+					"totalPages": {
+						"type": "number",
+						"format": "double"
+					}
+				},
+				"required": [
+					"items",
+					"total",
+					"page",
+					"totalPages"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"SuccessResponse_PaginatedAirlineResponse_": {
 				"description": "Wrapper de éxito JSend (aplicado por el middleware global).",
 				"properties": {
 					"status": {
@@ -3584,10 +3641,7 @@
 						"nullable": false
 					},
 					"data": {
-						"items": {
-							"$ref": "#/components/schemas/AirlineResponse"
-						},
-						"type": "array"
+						"$ref": "#/components/schemas/PaginatedAirlineResponse"
 					}
 				},
 				"required": [
@@ -5170,7 +5224,7 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/SuccessResponse_AirportResponse-Array_"
+									"$ref": "#/components/schemas/SuccessResponse_PaginatedAirportResponse_"
 								}
 							}
 						}
@@ -5188,6 +5242,26 @@
 						"schema": {
 							"type": "string"
 						}
+					},
+					{
+						"in": "query",
+						"name": "page",
+						"required": false,
+						"schema": {
+							"default": 1,
+							"format": "double",
+							"type": "number"
+						}
+					},
+					{
+						"in": "query",
+						"name": "limit",
+						"required": false,
+						"schema": {
+							"default": 10,
+							"format": "double",
+							"type": "number"
+						}
 					}
 				]
 			}
@@ -5201,7 +5275,7 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/SuccessResponse_AirlineResponse-Array_"
+									"$ref": "#/components/schemas/SuccessResponse_PaginatedAirlineResponse_"
 								}
 							}
 						}
@@ -5218,6 +5292,26 @@
 						"required": true,
 						"schema": {
 							"type": "string"
+						}
+					},
+					{
+						"in": "query",
+						"name": "page",
+						"required": false,
+						"schema": {
+							"default": 1,
+							"format": "double",
+							"type": "number"
+						}
+					},
+					{
+						"in": "query",
+						"name": "limit",
+						"required": false,
+						"schema": {
+							"default": 10,
+							"format": "double",
+							"type": "number"
 						}
 					}
 				]

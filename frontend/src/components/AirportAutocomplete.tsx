@@ -27,7 +27,7 @@ export default function AirportAutocomplete({ value, onChange, placeholder, clas
         }
     );
 
-    const suggestions = data ?? [];
+    const suggestions = data?.items ?? [];
 
     // Sync internal state with prop value (e.g. when swapping origin/dest)
     useEffect(() => {
