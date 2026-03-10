@@ -21,7 +21,7 @@ import {
 import { PopulatedUser } from "@/api/generated/model";
 import UserAvatar from "@/components/ui/UserAvatar";
 
-export default function Navbar({ onToggleSidebar, isSidebarOpen }: { onToggleSidebar?: () => void, isSidebarOpen?: boolean }) {
+export default function Navbar({ variant = 'floating' }: { variant?: 'floating' | 'flat' }) {
     const navigate = useNavigate();
     const { user, isAuthenticated, isLoading, logout } = useAuth();
     const { theme, setTheme } = useTheme();
@@ -258,26 +258,11 @@ export default function Navbar({ onToggleSidebar, isSidebarOpen }: { onToggleSid
     };
 
     return (
-        <nav className="flex items-center justify-between w-full bg-main h-16 py-2 px-2 shadow-sm border-b border-line relative z-50">
-            <div className="flex items-center gap-3 shrink-0 z-10">
-                <button
-                    onClick={onToggleSidebar}
-                    className={`p-3 hover:bg-surface rounded-2xl transition-colors cursor-pointer text-content-muted group`}
-                    aria-label="Toggle Sidebar"
-                >
-                    {isSidebarOpen ? (
-                        <X size={22} className="group-hover:text-content transition-colors" />
-                    ) : (
-                        <Menu size={22} className="group-hover:text-content transition-colors" />
-                    )}
-                </button>
-            </div>
-
-            <div className="hidden min-[400px]:flex items-center justify-center absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
-                <Link to="/" className="text-content-muted hover:text-brand transition-colors font-bold text-lg sm:text-xl tracking-tighter">flAIghts</Link>
-            </div>
-
-            <div className="flex items-center justify-end gap-2 sm:gap-4 shrink-0 z-10 bg-main">
+        <nav className={variant === 'floating' ? "flex items-center justify-end w-full h-10 px-4 relative z-50 pointer-events-none" : "contents"}>
+            <div className={variant === 'floating'
+                ? "flex items-center justify-end p-1.5 gap-2 sm:gap-4 shrink-0 z-10 bg-main/40 backdrop-blur-md border border-line rounded-3xl pointer-events-auto shadow-2xl"
+                : "flex items-center gap-2 sm:gap-4 pointer-events-auto"
+            }>
                 {isLoading ? (
                     <div className="flex items-center gap-2">
                         <div className="hidden sm:block w-16 h-8 bg-surface rounded-full animate-pulse opacity-50" />

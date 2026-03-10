@@ -3548,6 +3548,46 @@
 				"type": "object",
 				"additionalProperties": false
 			},
+			"GlobeAirportResponse": {
+				"description": "Compact format for globe visualization",
+				"properties": {
+					"i": {
+						"type": "string"
+					},
+					"n": {
+						"type": "string"
+					},
+					"ci": {
+						"type": "string"
+					},
+					"la": {
+						"type": "number",
+						"format": "double"
+					},
+					"lo": {
+						"type": "number",
+						"format": "double"
+					},
+					"s": {
+						"type": "number",
+						"format": "double"
+					},
+					"c": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"i",
+					"n",
+					"ci",
+					"la",
+					"lo",
+					"s",
+					"c"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
 			"AirlineResponse": {
 				"properties": {
 					"code": {
@@ -5190,6 +5230,31 @@
 						}
 					}
 				]
+			}
+		},
+		"/airports/globe": {
+			"get": {
+				"operationId": "GetGlobeAirports",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"items": {
+										"$ref": "#/components/schemas/GlobeAirportResponse"
+									},
+									"type": "array"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Airports"
+				],
+				"security": [],
+				"parameters": []
 			}
 		},
 		"/airlines": {

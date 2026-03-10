@@ -24,7 +24,11 @@ function parseCSVLine(line: string) {
 }
 
 
-const EXCLUDED_KEYWORDS = ["Base", "Military", "Air Base", "Heliport", "Helipad"];
+const EXCLUDED_KEYWORDS = [
+    "Base", "Military", "Air Base", "Heliport", "Helipad",
+    "Station", "Naval", "RAF", "AFB", "Army", "Navy",
+    "Air Force", "Marine Corps", "Guard", "Coast Guard"
+];
 
 function isNonCommercial(name: string): boolean {
     return EXCLUDED_KEYWORDS.some(keyword => name.toLowerCase().includes(keyword.toLowerCase()));
@@ -32,17 +36,17 @@ function isNonCommercial(name: string): boolean {
 
 /**
  * Migra los aeropuertos de airports.csv a la base de datos
- * 
- * El archivo airports.csv contiene todos (o la mayoria de) los aeropuertos y bases aereas
- * del mundo, puesto que no se necesitan los helipuertos pequeños, las bases militares, etc,
- * se usa el archivo airports_data.csv que contiene solo aeropuertos comerciales para filtrar
- * y como fallback de aeropuertos relevantes
  */
 async function migrate(mongoUri: string) {
     try {
         console.log("Connecting to MongoDB...");
         await mongoose.connect(mongoUri);
         console.log("Connected.");
+
+        // Clear existing airports to ensure a clean migration and remove any filtered ones
+        console.log("Clearing existing airports...");
+        await Airport.deleteMany({});
+        console.log("Collection cleared.");
 
         // Cargar airports_data.csv como filtro y fallback de aeropuertos relevantes
         const iataRegistry = new Map<string, any>();
@@ -58,7 +62,13 @@ async function migrate(mongoUri: string) {
                 isFirstData = false;
                 continue;
             }
-            const parts = line.split(",");
+            // USE parseCSVLine to handle commas inside quotes/names
+            const parts = parseCSVLine(line);
+
+            // For airports_data.csv: [,name,iata,icao,lat,lon,country,alt]
+            // Shifted because of leading empty column in some CSV exports or the way it's read
+            // Actually let's check the columns based on the file view
+            // Line 2: 0,A Coruna Airport,LCG,LECO,43.302059,-8.37725,Spain,326
             const name = parts[1] || "";
             const iata = parts[2] || "";
 
@@ -69,7 +79,7 @@ async function migrate(mongoUri: string) {
 
             if (iata && iata.length === 3) {
                 iataRegistry.set(iata, {
-                    name: parts[1] || "Unknown",
+                    name: name,
                     iata: iata,
                     lat: parseFloat(parts[4] || "0"),
                     lon: parseFloat(parts[5] || "0"),
@@ -80,6 +90,7 @@ async function migrate(mongoUri: string) {
         console.log(`Filter registry loaded with ${iataRegistry.size} IATA codes.`);
 
         const processedIatas = new Set<string>();
+        const iataToIso = new Map<string, string>(); // New map for mapping IATA to ISO
         const batchSize = 100;
         let batch: any[] = [];
         let count = 0;
@@ -101,49 +112,56 @@ async function migrate(mongoUri: string) {
             const iata = parts[13];
             const name = parts[3] || "Unknown";
             const type = parts[2] || "";
+            const countryISO = parts[8] || "Unknown";
+
+            // Store IATA to ISO mapping for fallbacks regardless of commercial status
+            if (iata && iata.length === 3) {
+                iataToIso.set(iata, countryISO);
+            }
 
             const ALLOWED_TYPES = ["small_airport", "medium_airport", "large_airport"];
 
-            // Solo procesamos si tiene IATA, está en nuestra lista de filtros,
-            // el nombre es comercial y el tipo es uno de los permitidos.
-            if (
-                iata && iata.length === 3 &&
-                iataRegistry.has(iata) &&
-                !isNonCommercial(name) &&
-                ALLOWED_TYPES.includes(type)
-            ) {
-                const lat = parseFloat(parts[4] || "0");
-                const lon = parseFloat(parts[5] || "0");
-                const country = parts[8] || "Unknown";
-                const city = parts[10] || parts[3] || "Unknown";
+            if (iata && iataRegistry.has(iata)) {
+                // If it's non-commercial according to the primary source, 
+                // we mark it as processed so it doesn't get picked up by the fallback loop.
+                if (isNonCommercial(name)) {
+                    processedIatas.add(iata);
+                    continue;
+                }
 
-                let importance_score = 10;
-                if (type === "large_airport") importance_score = 100;
-                else if (type === "medium_airport") importance_score = 50;
+                if (ALLOWED_TYPES.includes(type)) {
+                    const lat = parseFloat(parts[4] || "0");
+                    const lon = parseFloat(parts[5] || "0");
+                    const city = parts[10] || parts[3] || "Unknown";
 
-                const airportDoc = {
-                    iata_code: iata,
-                    name: name,
-                    city: city,
-                    country: country,
-                    type: type,
-                    importance_score: importance_score,
-                    location: {
-                        type: "Point" as const,
-                        coordinates: [lon, lat] as [number, number],
-                    },
-                };
+                    let importance_score = 10;
+                    if (type === "large_airport") importance_score = 100;
+                    else if (type === "medium_airport") importance_score = 50;
 
-                batch.push(airportDoc);
-                processedIatas.add(iata);
+                    const airportDoc = {
+                        iata_code: iata,
+                        name: name,
+                        city: city,
+                        country: countryISO, // Use ISO code from airports.csv
+                        type: type,
+                        importance_score: importance_score,
+                        location: {
+                            type: "Point" as const,
+                            coordinates: [lon, lat] as [number, number],
+                        },
+                    };
 
-                if (batch.length >= batchSize) {
-                    await Airport.bulkWrite(batch.map(doc => ({
-                        updateOne: { filter: { iata_code: doc.iata_code }, update: { $set: doc }, upsert: true }
-                    })));
-                    count += batch.length;
-                    console.log(`Processed ${count} airports from primary source...`);
-                    batch = [];
+                    batch.push(airportDoc);
+                    processedIatas.add(iata);
+
+                    if (batch.length >= batchSize) {
+                        await Airport.bulkWrite(batch.map(doc => ({
+                            updateOne: { filter: { iata_code: doc.iata_code }, update: { $set: doc }, upsert: true }
+                        })));
+                        count += batch.length;
+                        console.log(`Processed ${count} airports from primary source...`);
+                        batch = [];
+                    }
                 }
             }
         }
@@ -152,11 +170,14 @@ async function migrate(mongoUri: string) {
         console.log("Processing fallbacks from airports_data.csv...");
         for (const [iata, data] of iataRegistry) {
             if (!processedIatas.has(iata)) {
+                // Try to get ISO from our map, fallback to data.country (which might be full name)
+                const finalCountry = iataToIso.get(iata) || data.country;
+
                 const airportDoc = {
                     iata_code: iata,
                     name: data.name,
                     city: data.name,
-                    country: data.country,
+                    country: finalCountry,
                     type: "small_airport",
                     importance_score: 10,
                     location: {
