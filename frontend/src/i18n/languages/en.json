@@ -1,0 +1,438 @@
+{
+  "forgotPassword": {
+    "title": "Forgot Password",
+    "description": "Enter your email and we will send you a password reset link.",
+    "actions": {
+      "send": "Send",
+      "sending": "Sending..."
+    },
+    "validation": {
+      "emailRequired": "Email is required",
+      "emailInvalid": "Invalid email"
+    },
+    "toast": {
+      "resetLinkSent": "An email with a password reset link has been sent",
+      "unknownError": "Unknown error sending email"
+    }
+  },
+  "friends": {
+    "title": "Friends",
+    "subtitle": "Manage the people you share your trips with.",
+
+    "tabs": {
+      "friends": "My Friends",
+      "requests": "Requests"
+    },
+
+    "addFriend": "Add Friend",
+    "removeFriend": "Remove Friend",
+    "sendMessage": "Send Message",
+
+    "notLogged": {
+      "title": "You are not logged in",
+      "login": "Login"
+    },
+
+    "emptyFriends": {
+      "title": "You don't have friends yet",
+      "description": "Find other travelers and connect with them to plan trips together."
+    },
+
+    "actions": {
+      "message": "Message",
+      "remove": "Remove",
+      "cancel": "Cancel",
+      "accept": "Accept",
+      "reject": "Reject"
+    },
+
+    "requests": {
+      "received": "Received Requests",
+      "sent": "Sent Requests",
+      "noneReceived": "You don't have pending friend requests.",
+      "noneSent": "You haven't sent any friend requests.",
+      "waiting": "Waiting for response..."
+    },
+
+    "toast": {
+      "accepted": "Friend request accepted",
+      "rejected": "Friend request rejected",
+      "cancelled": "Friend request cancelled",
+      "removed": "Friend removed"
+    }
+  },
+    "login": {
+    "title": "Login",
+    "labels": {
+      "identifier": "Email or username",
+      "password": "Password"
+    },
+    "actions": {
+      "login": "Login",
+      "loggingIn": "Connecting..."
+    },
+    "links": {
+      "forgotPassword": "Forgot your password?",
+      "register": "Register"
+    },
+    "validation": {
+      "identifierRequired": "Enter your email or username",
+      "passwordRequired": "Enter your password",
+      "fillAllFields": "Please fill in all fields"
+    },
+    "toast": {
+      "welcome": "Welcome aboard!",
+      "invalidCredentials": "Invalid credentials"
+    }
+  },
+    "notFound": {
+    "title": "Oops! Page not found",
+    "description": "The page you are looking for does not exist or has been moved.",
+    "actions": {
+      "goBack": "Go back",
+      "home": "Return to home"
+    }
+  },
+    "register": {
+    "iAccept": "I accept the ",
+    "alreadyHaveAccount": "Already have an account?",
+    "codeSent": "We have sent a code to ",
+    "steps": {
+      "step1Title": "Join flAIghts",
+      "step1Description": "Enter your email to receive a verification code.",
+      "step2Title": "Complete your profile"
+    },
+    "labels": {
+      "code": "Verification code",
+      "username": "Username",
+      "password": "Password",
+      "confirmPassword": "Confirm password",
+      "acceptedTerms": "I accept the Terms of Service and Privacy Policy"
+    },
+    "actions": {
+      "nextStep": "Continue",
+      "sendingCode": "Sending code...",
+      "completeRegistration": "Complete Registration",
+      "creatingAccount": "Creating account...",
+      "changeEmail": "Change email"
+    },
+    "links": {
+      "terms": "Terms of Service",
+      "privacy": "Privacy Policy",
+      "login": "Login"
+    },
+    "validation": {
+      "emailRequired": "Email is required",
+      "codeRequired": "Code is required",
+      "usernameRequired": "Username is required",
+      "passwordRequired": "Password is required",
+      "passwordMin": "Minimum 8 characters",
+      "confirmPasswordRequired": "Passwords do not match",
+      "acceptedTerms": "You must accept the terms and conditions",
+      "emailInUse": "This email is already registered",
+      "usernameInUse": "Username is already in use",
+      "invalidCode": "The code is invalid or has expired"
+    },
+    "toast": {
+      "verificationEmailSent": "Verification email sent. Check your inbox.",
+      "welcome": "Welcome aboard!",
+      "loginError": "You have registered successfully, but there was an error logging in. Please login."
+    }
+  },
+    "resetPassword": {
+    "title": "Reset Password",
+    "labels": {
+      "newPassword": "New Password",
+      "confirmPassword": "Confirm Password"
+    },
+    "actions": {
+      "reset": "Reset Password",
+      "resetting": "Resetting password..."
+    },
+    "validation": {
+      "passwordRequired": "Enter a password",
+      "confirmPasswordMismatch": "Passwords do not match",
+      "correctErrors": "Please correct the errors",
+      "tokenMissing": "Reset token not found"
+    },
+    "toast": {
+      "success": "Password reset successfully",
+      "tokenInvalid": "The reset token is invalid or has expired"
+    }
+  },
+    "searchResults": {
+    "title": "Search Results",
+    "loading": "Loading results...",
+    "loadingMore": "Searching for more flights...",
+    "error": {
+      "fetch": "Error fetching search results",
+      "details": "Details"
+    },
+    "itineraries": {
+      "departure": "Departure Flights",
+      "return": "Return Flights",
+      "totalPrice": "Total Price"
+    }
+  },
+  "settings": {
+    "title": "Settings",
+    "tabs": {
+      "perfil": "Profile",
+      "preferencias": "Preferences",
+      "seguridad": "Security",
+      "apariencia": "Appearance"
+    },
+    "profile": {
+      "title": "Profile Information",
+      "username": "Username",
+      "usernamePlaceholder": "Your username",
+      "profileVisibility": "Profile Visibility",
+      "public": "Public Profile",
+      "publicDesc": "Other users can see your recent searches and stats.",
+      "private": "Private Profile",
+      "privateDesc": "Your searches and stats are completely private.",
+      "save": "Save Profile Changes",
+      "saving": "Saving..."
+    },
+    "preferences": {
+      "title": "Search Weights",
+      "description": "Adjust the importance of factors when searching for flights.",
+      "infoTitle": "How to adjust the weights?",
+      "weightsInfo": "Take into account that if you give much more importance to one of the fields, you should represent it correctly in relation to the others. That is, if you care that the flight is short, but you care much more that the price is cheap, don't set the duration to 1, leave it at a lower value so the algorithm prioritizes the price.",
+      "fields": {
+        "price": "Price",
+        "duration": "Duration",
+        "stops": "Stops",
+        "airline": "Airline Quality"
+      },
+      "descriptions": {
+        "price": {
+          "0": "Price doesn't matter to me",
+          "low": "I would pay more for a better flight",
+          "medium": "I'm looking for a reasonable balance in price",
+          "high": "I usually prioritize low prices",
+          "max": "The cheaper the better"
+        },
+        "duration": {
+          "0": "Travel time doesn't matter to me",
+          "low": "I don't mind if the flight takes longer",
+          "medium": "I prefer not to be traveling too many hours",
+          "high": "I try to arrive at my destination as soon as possible",
+          "max": "I want the fastest flight possible"
+        },
+        "stops": {
+          "0": "I don't care about making many stops",
+          "low": "Making several stops is not a problem for me",
+          "medium": "I prefer routes with few stops if possible",
+          "high": "I try to avoid changing planes",
+          "max": "I'm looking for direct flights with no stops"
+        },
+        "airline": {
+          "0": "It doesn't matter which airline I fly with",
+          "low": "I can adapt to low-cost airlines without problem",
+          "medium": "I value acceptable service on board",
+          "high": "I prefer traditional and comfortable airlines",
+          "max": "I always look for the best-rated airlines"
+        }
+      },
+      "save": "Save Preferences",
+      "saving": "Saving..."
+    },
+    "security": {
+      "email": {
+        "title": "Email Address",
+        "description": "We use this email to identify you and send notifications.",
+        "placeholder": "your@email.com",
+        "update": "Update Email",
+        "updating": "Updating...",
+        "pending": "Pending email change",
+        "pendingMessage": "We have sent codes to your current email and new email",
+        "codes": {
+          "old": "Current email code",
+          "new": "New email code"
+        },
+        "verify": "Confirm Change",
+        "verifying": "Verifying...",
+        "cancel": "Cancel",
+        "cancelling": "Cancelling...",
+        "validation": {
+          "codesRequired": "Please enter both codes"
+        }
+      },
+      "password": {
+        "title": "Password",
+        "description": "Change your password periodically to keep your account secure.",
+        "current": "Current Password",
+        "new": "New Password",
+        "confirm": "Confirm New Password",
+        "show": "Show Passwords",
+        "hide": "Hide Passwords",
+        "forgot": "Forgot your password?",
+        "requirements": {
+          "title": "Requirements:",
+          "minLength": "Minimum 8 characters",
+          "different": "Must be different from current",
+          "recommended": "We recommend including numbers and symbols"
+        },
+        "update": "Update Password",
+        "updating": "Updating...",
+        "validation": {
+          "allFieldsRequired": "Please fill in all fields",
+          "passwordMismatch": "New passwords do not match",
+          "sameAsOld": "New password must be different from current",
+          "minLength": "New password must be at least 8 characters"
+        }
+      }
+    },
+    "appearance": {
+      "title": "Appearance",
+      "themeLabel": "Theme",
+      "light": "Light Mode",
+      "dark": "Dark Mode",
+      "system": "System",
+      "languageLabel": "Language",
+      "spanish": "Spanish",
+      "english": "English"
+    },
+    "avatar": {
+      "title": "Your Profile Picture",
+      "maxSize": "Maximum 5MB",
+      "selectNew": "Select New Photo",
+      "uploading": "Uploading...",
+      "validation": {
+        "fileTooBig": "Image is too large (max. 5MB)"
+      }
+    },
+    "general": {
+      "back": "Back",
+      "logout": "Log Out"
+    },
+    "toast": {
+      "pendingEmail": "You have an email change pending verification",
+      "success": "Profile updated successfully",
+      "error": "Error updating profile",
+      "pending": "Email change request initiated. Please enter the codes sent.",
+      "invalidEmail": "The new email is invalid",
+      "emailInUse": "The new email is already in use",
+      "emailUpdatedSuccess": "Email updated successfully",
+      "emailVerificationCodeInvalidOrExpired": "Email verification code is invalid or has expired",
+      "emailUpdateError": "Error updating email",
+      "emailCancelError": "Email change cancelled",
+      "passwordUpdatedSuccess": "Password updated successfully",
+      "passwordUpdateError": "Error updating password",
+      "avatarUpdatedSuccess": "Profile picture updated successfully"
+    }
+  },
+  "userProfile": {
+    "notAuthenticated": {
+      "title": "Sign in to view profiles",
+      "description": "You must have an account on flAIghts to view other travelers' profiles and contact them.",
+      "login": "Sign in"
+    },
+    "notFound": {
+      "title": "User not found",
+      "description": "Sorry, the profile with ID {{id}} could not be found.",
+      "home": "Return to home"
+    },
+    "status": {
+      "friendSince": "Friend since {{date}}",
+      "sentRequest": "Friend request sent",
+      "receivedRequest": "Friend request received",
+      "memberSince": "Member since {{date}}"
+    },
+    "actions": {
+      "editProfile": "Edit my profile",
+      "message": "Message",
+      "remove": "Remove",
+      "acceptRequest": "Accept friend request",
+      "cancelRequest": "Cancel friend request",
+      "sendRequest": "Send friend request"
+    },
+    "searches": {
+      "title": "Recent searches",
+      "private": "Private account",
+      "privateDesc": "To view {{username}}'s searches, you must be their friend.",
+      "empty": "This user has not saved any flight searches yet.",
+      "departure": "Departure: {{date}}",
+      "return": "Return: {{date}}",
+      "noMore": "No more searches"
+    },
+    "toast": {
+      "requestSent": "Friend request sent",
+      "requestAccepted": "Friend request accepted",
+      "requestCancelled": "Friend request cancelled",
+      "friendRemoved": "Friend removed"
+    }
+  },
+  "userSearch": {
+    "title": "Search Users",
+    "subtitle": "Find your friends by username.",
+    "placeholder": "Search by username...",
+    "emptyState": "Type a username to start searching.",
+    "loading": "Searching...",
+    "noResults": "No users found matching \"{{query}}\".",
+    "status": {
+      "pending": "Pending",
+      "respond": "Respond to request"
+    }
+  },
+  "searchFlight": {
+    "placeholders": {
+      "origin": "Origin",
+      "destination": "Destination",
+      "date": "Date"
+    },
+    "tripType": {
+      "oneWay": "One way",
+      "roundTrip": "Round trip"
+    },
+    "actions": {
+      "addStop": "Add stop",
+      "search": "Search flights",
+      "searching": "Searching..."
+    },
+    "validation": {
+      "completeFields": "Please complete origin, destination and departure date"
+    },
+    "toast": {
+      "searchStarted": "Search started",
+      "searchError": "Error searching for flights"
+    }
+  },
+  "floatingLabelInput": {
+    "toast": {
+      "cannotCopyPassword": "For security, you cannot copy in password fields",
+      "cannotCutPassword": "For security, you cannot cut in password fields"
+    }
+  },
+  "sidebar": {
+    "searchFlights": "Search Flights",
+    "friends": "Friends"
+  },
+  "navbar": {
+    "notifications": "Notifications",
+    "friendRequests": "Friend Requests",
+    "newFriendRequests": "You have {{count}} new{{plural}}",
+    "noNotifications": "You have no notifications",
+    "back": "Back",
+    "account": "Account",
+    "myProfile": "My Profile",
+    "settings": "Settings",
+    "adminPanel": "Admin Panel",
+    "soon": "Soon",
+    "theme": "Theme",
+    "authentication": "Authentication",
+    "options": "Options"
+  },
+  "errorBoundary": {
+    "sessionExpired": "Session Expired",
+    "sessionExpiredDesc": "Your session has expired or you don't have permissions to access this resource. Please log in again.",
+    "loginButton": "Log in",
+    "homeButton": "Return to home",
+    "errorTitle": "Flight Interrupted",
+    "errorDesc": "It seems we encountered unexpected turbulence in the system. We couldn't complete your request.",
+    "showDetails": "Show technical details",
+    "hideDetails": "Hide technical details",
+    "copyError": "Copy error"
+  }
+}

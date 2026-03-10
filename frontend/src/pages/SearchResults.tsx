@@ -9,8 +9,10 @@ import { toast } from "sonner";
 import Globe from "@/components/Globe";
 import FlightCard from "@/components/search/FlightCard";
 import SelectedFlightSummary from "@/components/search/SelectedFlightSummary";
+import { useTranslation } from "react-i18next";
 
 export default function SearchResults() {
+    const { t } = useTranslation();
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
     const [sortBy, setSortBy] = useState<'price' | 'duration'>('price');
@@ -139,13 +141,13 @@ export default function SearchResults() {
         return (
             <div className="flex flex-col items-center justify-center min-h-screen bg-main text-red-500 gap-4 p-4 text-center">
                 <AlertCircle size={48} className="opacity-80" />
-                <p className="text-lg font-medium">Error al cargar la búsqueda</p>
+                <p className="text-lg font-medium">{t("searchResults.error.fetch")}</p>
                 <p className="text-sm opacity-70 max-w-md">{error.message}</p>
                 <button
                     onClick={() => navigate('/')}
                     className="mt-4 px-6 py-2 bg-brand text-content-on-brand rounded-xl font-bold hover:bg-brand-hover transition-colors"
                 >
-                    Volver al inicio
+                    {t("searchResults.error.backToHome")}
                 </button>
             </div>
         );
@@ -427,8 +429,8 @@ export default function SearchResults() {
                                 {selectionStep === 'departure' && searchData.status === 'completed' && !departureItineraries?.length && (
                                     <div className="flex flex-col items-center justify-center py-20 bg-main/40 backdrop-blur-md rounded-3xl border border-line text-center text-content-muted mx-4">
                                         <AlertCircle size={48} className="mb-4 opacity-50 text-content" />
-                                        <h3 className="text-xl font-semibold text-content mb-2">No se encontraron vuelos</h3>
-                                        <p className="text-sm opacity-70">Intenta cambiar las fechas o los aeropuertos en la búsqueda.</p>
+                                        <h3 className="text-xl font-semibold text-content mb-2">{t("searchResults.error.noFlights")}</h3>
+                                        <p className="text-sm opacity-70">{t("searchResults.error.tryAgain")}</p>
                                     </div>
                                 )}
 

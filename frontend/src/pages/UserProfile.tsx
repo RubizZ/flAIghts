@@ -15,8 +15,10 @@ import { useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/context/AuthContext";
 import { Lock, MessageCircle, UserMinus } from "lucide-react";
 import UserAvatar from "@/components/ui/UserAvatar";
+import { useTranslation } from "react-i18next";
 
 export default function UserProfile() {
+    const { t } = useTranslation();
     const { id } = useParams();
     const navigate = useNavigate();
     const { isAuthenticated, isLoading: isAuthLoading } = useAuth();
@@ -34,7 +36,7 @@ export default function UserProfile() {
     const { mutate: sendFriendRequest } = useSendFriendRequest({
         mutation: {
             onSuccess: () => {
-                toast.success("Solicitud de amistad enviada");
+                toast.success(t("userProfile.toast.requestSent"));
                 invalidateUser();
             },
             onError: (error) => toast.error(error.message),
@@ -44,7 +46,7 @@ export default function UserProfile() {
     const { mutate: acceptFriendRequest } = useAcceptFriendRequest({
         mutation: {
             onSuccess: () => {
-                toast.success("Solicitud de amistad aceptada");
+                toast.success(t("userProfile.toast.requestAccepted"));
                 invalidateUser();
             },
             onError: (error) => toast.error(error.message),
@@ -54,7 +56,7 @@ export default function UserProfile() {
     const { mutate: cancelFriendRequest } = useCancelFriendRequest({
         mutation: {
             onSuccess: () => {
-                toast.success("Solicitud de amistad cancelada");
+                toast.success(t("userProfile.toast.requestCancelled"));
                 invalidateUser();
             },
             onError: (error) => toast.error(error.message),
@@ -64,7 +66,7 @@ export default function UserProfile() {
     const { mutate: removeFriend } = useRemoveFriend({
         mutation: {
             onSuccess: () => {
-                toast.success("Amigo eliminado");
+                toast.success(t("userProfile.toast.friendRemoved"));
                 invalidateUser();
             },
             onError: (error) => toast.error(error.message),
@@ -118,13 +120,13 @@ export default function UserProfile() {
                     <Lock className="w-12 h-12 text-red-500" />
                 </div>
                 <div className="text-center gap-2 flex flex-col items-center">
-                    <h1 className="text-3xl font-bold text-content">Inicia sesión para ver perfiles</h1>
+                    <h1 className="text-3xl font-bold text-content">{t("userProfile.notAuthenticated.title")}</h1>
                     <p className="text-content-muted max-w-sm">
-                        Debes tener una cuenta en <span className="font-bold">flAIghts</span> para ver el perfil de otros viajeros y contactar con ellos.
+                        {t("userProfile.notAuthenticated.description")}
                     </p>
                 </div>
                 <Link to="/login" className="px-8 py-3 bg-brand text-content-on-brand rounded-full hover:bg-brand/90 transition-all shadow-xl active:scale-95 cursor-pointer font-bold">
-                    Iniciar sesión
+                    {t("userProfile.notAuthenticated.login")}
                 </Link>
             </div>
         );
@@ -139,16 +141,16 @@ export default function UserProfile() {
                     </svg>
                 </div>
                 <div className="text-center gap-2 flex flex-col">
-                    <h1 className="text-3xl font-bold text-content">Usuario no encontrado</h1>
+                    <h1 className="text-3xl font-bold text-content">{t("userProfile.notFound.title")}</h1>
                     <p className="text-content-muted max-w-sm">
-                        Lo sentimos, el perfil con ID <span className="font-mono font-bold text-red-500">{id}</span> no pudo ser localizado.
+                        {t("userProfile.notFound.description", { id })}
                     </p>
                 </div>
                 <button
                     onClick={() => navigate("/")}
                     className="px-8 py-3 bg-brand text-content-on-brand rounded-full hover:bg-brand/90 transition-all shadow-xl active:scale-95 cursor-pointer hover:scale-[1.02] text-bold"
                 >
-                    Volver al inicio
+                    {t("userProfile.notFound.home")}
                 </button>
             </div>
         );
@@ -174,57 +176,57 @@ export default function UserProfile() {
                     <div>
                         <h1 className="text-3xl font-bold text-content">{user.username}</h1>
                         {user.type === "friend" ? (
-                            <p className="text-content-muted text-sm">Amigo desde {new Date(user.friend_since).toLocaleDateString()}</p>
+                            <p className="text-content-muted text-sm">{t("userProfile.status.friendSince", { date: new Date(user.friend_since).toLocaleDateString() })}</p>
                         ) : user.type === "public" && user.sent_friend_request ? (
-                            <p className="text-content-muted text-sm">Solicitud de amistad enviada</p>
+                            <p className="text-content-muted text-sm">{t("userProfile.status.sentRequest")}</p>
                         ) : user.type === "public" && user.received_friend_request ? (
-                            <p className="text-content-muted text-sm">Solicitud de amistad recibida</p>
+                            <p className="text-content-muted text-sm">{t("userProfile.status.receivedRequest")}</p>
                         ) : null}
-                        <p className="text-content-muted text-sm">Miembro desde {new Date(user.created_at).toLocaleDateString()}</p>
+                        <p className="text-content-muted text-sm">{t("userProfile.status.memberSince", { date: new Date(user.created_at).toLocaleDateString() })}</p>
                     </div>
                 </div>
 
                 {user.type === "self" ? (
                     <button onClick={() => navigate("/settings")} className="px-8 py-3 bg-brand text-content-on-brand rounded-full hover:bg-brand/90 transition-all shadow-xl active:scale-95 cursor-pointer font-bold hover:scale-[1.02]">
-                        Editar mi perfil
+                        {t("userProfile.actions.editProfile")}
                     </button>
                 ) : user.type === "friend" ? (
                     <div className="flex gap-4">
                         <Link to={`/chat/${id}`} onClick={(e) => e.preventDefault()} className="flex-1 justify-center flex items-center gap-2 px-8 py-3 bg-brand text-content-on-brand rounded-full transition-all shadow-xl active:scale-95 cursor-pointer font-bold hover:scale-[1.02]">
                             <MessageCircle size={18} />
-                            Mensaje
+                            {t("userProfile.actions.message")}
                         </Link>
                         <button onClick={() => removeFriend({ id })} className="flex-1 justify-center flex items-center gap-2 px-8 py-3 bg-red-50 text-red-600 hover:bg-red-100 rounded-full transition-all shadow-xl active:scale-95 cursor-pointer font-bold hover:scale-[1.02]">
                             <UserMinus size={18} />
-                            Eliminar
+                            {t("userProfile.actions.remove")}
                         </button>
                     </div>
                 ) : user.type === "public" && user.received_friend_request ? (
                     <button onClick={() => acceptFriendRequest({ id })} className="px-8 py-3 bg-green-500 text-content-on-brand rounded-full hover:bg-green-600 transition-all shadow-xl active:scale-95 cursor-pointer font-bold hover:scale-[1.02]">
-                        Aceptar solicitud de amistad
+                        {t("userProfile.actions.acceptRequest")}
                     </button>
                 ) : user.type === "public" && user.sent_friend_request ? (
                     <button onClick={() => cancelFriendRequest({ id })} className="px-8 py-3 bg-brand text-content-on-brand rounded-full hover:bg-brand/90 transition-all shadow-xl active:scale-95 cursor-pointer font-bold hover:scale-[1.02]">
-                        Cancelar solicitud de amistad
+                        {t("userProfile.actions.cancelRequest")}
                     </button>
                 ) : (
                     <button onClick={() => sendFriendRequest({ id })} className="px-8 py-3 bg-brand text-content-on-brand rounded-full hover:bg-brand/90 transition-all shadow-xl active:scale-95 cursor-pointer font-bold hover:scale-[1.02]">
-                        Enviar solicitud de amistad
+                        {t("userProfile.actions.sendRequest")}
                     </button>
                 )}
 
             </div>
 
             <div className="flex-1 bg-main rounded-3xl border border-line shadow-sm p-8 flex flex-col h-full max-h-full">
-                <h1 className="text-3xl font-bold text-content mb-6">Últimas búsquedas</h1>
+                <h1 className="text-3xl font-bold text-content mb-6">{t("userProfile.searches.title")}</h1>
 
                 {user.type === "public" && !user.public ? (
                     <div className="flex-1 flex flex-col items-center justify-center gap-4 text-content-muted opacity-70">
                         <svg className="w-16 h-16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                         </svg>
-                        <h2 className="text-xl font-bold">Cuenta privada</h2>
-                        <p className="max-w-xs text-center">Para ver las búsquedas de <span className="font-bold">{user.username}</span> debes ser su amigo.</p>
+                        <h2 className="text-xl font-bold">{t("userProfile.searches.private")}</h2>
+                        <p className="max-w-xs text-center">{t("userProfile.searches.privateDesc", { username: user.username })}</p>
                     </div>
                 ) : (
                     <div
@@ -237,7 +239,7 @@ export default function UserProfile() {
                             </div>
                         ) : searchesData?.pages[0]?.items?.length === 0 ? (
                             <div className="text-center p-8 text-content-muted border-2 border-dashed border-line rounded-2xl">
-                                Este usuario aún no tiene búsquedas de vuelos guardadas.
+                                {t("userProfile.searches.empty")}
                             </div>
                         ) : (
                             <>
@@ -265,7 +267,7 @@ export default function UserProfile() {
                                                         <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                                                         </svg>
-                                                        <span>Salida: {new Date(search.departure_date).toLocaleDateString()}</span>
+                                                        <span>{t("userProfile.searches.departure", { date: new Date(search.departure_date).toLocaleDateString() })}</span>
                                                     </div>
 
                                                     {search.return_date && (
@@ -273,7 +275,7 @@ export default function UserProfile() {
                                                             <svg className="w-4 h-4 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
                                                             </svg>
-                                                            <span>Regreso: {new Date(search.return_date).toLocaleDateString()}</span>
+                                                            <span>{t("userProfile.searches.return", { date: new Date(search.return_date).toLocaleDateString() })}</span>
                                                         </div>
                                                     )}
 
@@ -296,7 +298,7 @@ export default function UserProfile() {
 
                                 {!hasNextPage && (searchesData?.pages[0]?.items?.length ?? 0) > 0 && (
                                     <div className="text-center p-4 text-xs text-content-muted/60 uppercase tracking-widest font-bold">
-                                        No hay más búsquedas
+                                        {t("userProfile.searches.noMore")}
                                     </div>
                                 )}
                             </>

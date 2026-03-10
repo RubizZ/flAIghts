@@ -3,6 +3,7 @@ import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { Compass, Menu, Users, X } from "lucide-react";
 import NavIconButton from "../ui/NavIconButton";
+import { useTranslation } from "react-i18next";
 
 interface SidebarProps {
     isOpen: boolean;
@@ -19,18 +20,19 @@ interface SidebarProps {
 }
 
 export default function Sidebar({ isOpen, onClose, onToggle, variant = 'classic', className = "" }: SidebarProps) {
+    const { t } = useTranslation();
     const { isAuthenticated, isLoading } = useAuth();
     const [clickedItem, setClickedItem] = useState<string | null>(null);
     const location = useLocation();
     const navItems = [
         {
-            label: "Buscar vuelos",
+            label: t("sidebar.searchFlights"),
             path: "/",
             icon: <Compass size={20} />,
             show: true,
         },
         {
-            label: "Amigos",
+            label: t("sidebar.friends"),
             path: "/friends",
             icon: <Users size={20} />,
             show: isAuthenticated,

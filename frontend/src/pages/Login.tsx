@@ -6,8 +6,11 @@ import AuthCard from "@/components/ui/AuthCard";
 import FloatingLabelInput from "@/components/ui/FloatingLabelInput";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
+import { useTranslation } from "react-i18next";
+
 
 export default function Login() {
+    const { t } = useTranslation();
     const navigate = useNavigate();
     const { refetch, isAuthenticated, isLoading } = useAuth();
 
@@ -24,7 +27,7 @@ export default function Login() {
         mutation: {
             onSuccess: async () => {
                 // El token se guarda en una cookie HttpOnly
-                toast.success("¡Bienvenido a bordo!");
+                toast.success(t("login.toast.welcome"));
                 await refetch();
                 navigate("/");
             },
@@ -56,7 +59,7 @@ export default function Login() {
                         break;
                     }
                     case "INVALID_CREDENTIALS":
-                        toast.error("Credenciales inválidas");
+                        toast.error(t("login.toast.invalidCredentials"));
                         break;
                 }
 
@@ -67,13 +70,13 @@ export default function Login() {
 
     const login = () => {
         const newErrors = {
-            identifier: !credentials.identifier ? "Introduce tu email o nombre de usuario" : "",
-            password: !credentials.password ? "Introduce tu contraseña" : credentials.password.length < 8 ? "Mínimo 8 caracteres" : ""
+            identifier: !credentials.identifier ? t("login.validation.identifierRequired") : "",
+            password: !credentials.password ? t("login.validation.passwordRequired") : ""
         };
         setErrors(newErrors);
 
         if (newErrors.identifier || newErrors.password) {
-            toast.error("Por favor completa todos los campos");
+            toast.error(t("login.validation.fillAllFields"));
             return;
         }
 
@@ -94,7 +97,7 @@ export default function Login() {
 
     return (
         <AuthLayout>
-            <AuthCard title="Inicio de sesión">
+            <AuthCard title={t("login.title")}>
                 <form onSubmit={(e) => e.preventDefault()} className="flex flex-col gap-6">
                     {/* Form Fields */}
                     <FloatingLabelInput
@@ -106,7 +109,7 @@ export default function Login() {
                         type="text"
                         id="identifier"
                         name="identifier"
-                        label="Email o nombre de usuario"
+                        label={t("login.labels.identifier")}
                         error={errors.identifier}
                         onKeyDown={enterKeyPress}
                     />
@@ -120,13 +123,13 @@ export default function Login() {
                         type="password"
                         id="password"
                         name="password"
-                        label="Contraseña"
+                        label={t("login.labels.password")}
                         error={errors.password}
                         onKeyDown={enterKeyPress}
                     />
 
                     <span className="text-sm text-content text-right">
-                        <a href="/forgot-password" className="text-brand hover:underline">¿Olvidaste tu contraseña?</a>
+                        <a href="/forgot-password" className="text-brand hover:underline">{t("login.links.forgotPassword")}</a>
                     </span>
 
                     <button
@@ -135,11 +138,11 @@ export default function Login() {
                         disabled={isPending}
                         className={`mt-2 rounded-lg bg-brand p-3 text-content-on-brand font-bold hover:scale-[1.02] active:scale-95 transition-all shadow-lg shadow-brand/20 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed disabled:scale-100`}
                     >
-                        {isPending ? "Conectando..." : "Login"}
+                        {isPending ? t("login.actions.loggingIn") : t("login.actions.login")}
                     </button>
 
                     <span className="text-sm text-content text-center">
-                        ¿No tienes cuenta? <a href="/register" className="text-brand font-bold hover:underline">Regístrate</a>
+                        {t("login.links.noAccount")} <a href="/register" className="text-brand font-bold hover:underline">{t("login.links.register")}</a>
                     </span>
                 </form>
             </AuthCard>

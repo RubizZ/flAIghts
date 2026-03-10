@@ -5,14 +5,17 @@ import FloatingLabelInput from "@/components/ui/FloatingLabelInput";
 import { useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
+import { useTranslation } from "react-i18next";
+
 
 export default function ResetPassword() {
+    const { t } = useTranslation();
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
     const token = searchParams.get("token");
 
     if (!token) {
-        throw new Error("Token de restablecimiento no encontrado");
+        throw new Error(t("forgotPassword.validation.tokenMissing"));
     }
 
     const [password, setPassword] = useState("");
@@ -22,13 +25,13 @@ export default function ResetPassword() {
     const { mutate: performResetPassword, isPending } = useResetPassword({
         mutation: {
             onSuccess: () => {
-                toast.success("Contraseña restablecida correctamente");
+                toast.success(t("resetPassword.toast.success"));
                 navigate("/login");
             },
             onError: (error) => {
                 switch (error.code) {
                     case "RESET_TOKEN_INVALID_OR_EXPIRED":
-                        toast.error("El token de restablecimiento es inválido o ha expirado");
+                        toast.error(t("resetPassword.toast.tokenInvalid"));
                         break;
                     case "REQUEST_VALIDATION_ERROR":
                         if (error.details["body.newPassword"]) {
@@ -46,14 +49,14 @@ export default function ResetPassword() {
     const resetPassword = () => {
         const newErrors = { password: "", confirmPassword: "" };
         if (!password) {
-            newErrors.password = "Introduce una contraseña";
+            newErrors.password = t("resetPassword.validation.passwordRequired");
         }
         if (password !== confirmPassword) {
-            newErrors.confirmPassword = "Las contraseñas no coinciden";
+            newErrors.confirmPassword = t("resetPassword.validation.confirmPasswordMissmatch");
         }
         if (!password || password !== confirmPassword) {
             setErrors(newErrors);
-            toast.error("Por favor corrige los errores");
+            toast.error(t("resetPassword.toast.correctErrors"));
             return;
         }
         performResetPassword({
@@ -66,9 +69,9 @@ export default function ResetPassword() {
 
     return (
         <AuthLayout>
-            <AuthCard title="Reset Password">
+            <AuthCard title={t("resetPassword.title")}>
                 <FloatingLabelInput
-                    label="New Password"
+                    label={t("resetPassword.labels.newPassword")}
                     type="password"
                     value={password}
                     onChange={(e) => { setPassword(e.target.value); setErrors({ ...errors, password: "" }); }}
@@ -76,7 +79,7 @@ export default function ResetPassword() {
                     onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); resetPassword(); } }}
                 />
                 <FloatingLabelInput
-                    label="Confirm Password"
+                    label={t("resetPassword.labels.confirmPassword")}
                     type="password"
                     isRepeat
                     value={confirmPassword}
@@ -90,7 +93,7 @@ export default function ResetPassword() {
                     disabled={isPending}
                     className={`mt-2 rounded-lg bg-brand p-3 text-content-on-brand font-bold hover:scale-[1.02] active:scale-95 transition-all shadow-lg shadow-brand/20 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed disabled:scale-100`}
                 >
-                    {isPending ? "Restableciendo contraseña..." : "Restablecer contraseña"}
+                    {isPending ? t("resetPassword.actions.resetting") : t("resetPassword.actions.reset")}
                 </button>
             </AuthCard>
         </AuthLayout>
