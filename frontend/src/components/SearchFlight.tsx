@@ -5,8 +5,10 @@ import AirportAutocomplete from "./AirportAutocomplete.tsx";
 import { useSearchRequest } from "@/api/generated/search/search";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
+import { useTranslation } from "react-i18next";
 
 function SearchFlight() {
+    const { t } = useTranslation();
     const [origin, setOrigin] = useState("");
     const [destination, setDestination] = useState("");
     const [departureDate, setDepartureDate] = useState("");
@@ -19,12 +21,12 @@ function SearchFlight() {
         mutation: {
             onSuccess: (data) => {
                 // Axios unwraps the response, so data is already the response body
-                toast.success("Búsqueda iniciada");
+                toast.success(t("searchFlight.toast.searchStarted"));
                 navigate(`/search/${data.id}`);
             },
             onError: (error) => {
                 console.error(error);
-                toast.error(error?.message || "Error al buscar vuelos");
+                toast.error(error?.message || t("searchFlight.toast.searchError"));
             }
         }
     });
@@ -48,7 +50,7 @@ function SearchFlight() {
 
     const handleSearch = () => {
         if (!origin || !destination || !departureDate) {
-            toast.error("Por favor, completa origen, destino y fecha de salida");
+            toast.error(t("searchFlight.validation.completeFields"));
             return;
         }
 
@@ -73,14 +75,14 @@ function SearchFlight() {
             <div className='flex flex-wrap items-center justify-center gap-3 sm:gap-5 mt-5 px-4 w-full'>
                 <div className='flex flex-col gap-2.5'>
                     <AirportAutocomplete
-                        placeholder="Origin"
+                        placeholder={t("searchFlight.placeholders.origin")}
                         className='border border-line bg-main text-content px-2 py-1.5 rounded-md focus:outline-none focus:ring-2 focus:ring-brand'
                         value={origin}
                         onChange={setOrigin}
                     />
                     <input
                         type="date"
-                        placeholder="Date"
+                        placeholder={t("searchFlight.placeholders.date")}
                         className='border border-line bg-main text-content px-2 py-1.5 rounded-md focus:outline-none focus:ring-2 focus:ring-brand'
                         value={departureDate}
                         onChange={(e) => setDepartureDate(e.target.value)}
@@ -94,14 +96,14 @@ function SearchFlight() {
                 </button>
                 <div className='flex flex-col gap-2.5'>
                     <AirportAutocomplete
-                        placeholder="Destination"
+                        placeholder={t("searchFlight.placeholders.destination")}
                         className='border border-line bg-main text-content px-2 py-1.5 rounded-md focus:outline-none focus:ring-2 focus:ring-brand'
                         value={destination}
                         onChange={setDestination}
                     />
                     <input
                         type="date"
-                        placeholder="Date"
+                        placeholder={t("searchFlight.placeholders.date")}
                         className='border border-line bg-main text-content px-2 py-1.5 rounded-md focus:outline-none focus:ring-2 focus:ring-brand'
                         value={returnDate}
                         onChange={(e) => setReturnDate(e.target.value)}
@@ -114,14 +116,14 @@ function SearchFlight() {
                         value={tripType}
                         onChange={(e) => setTripType(e.target.value)}
                     >
-                        <option value="oneWay">One way</option>
-                        <option value="roundTrip">Round trip</option>
+                        <option value="oneWay">{t("searchFlight.tripType.oneWay")}</option>
+                        <option value="roundTrip">{t("searchFlight.tripType.roundTrip")}</option>
                     </select>
                     <div className='flex items-center justify-center gap-1.5 text-content'>
                         <button className="border border-line rounded-full hover:bg-surface cursor-pointer p-0.5">
                             <Plus />
                         </button>
-                        Add stop
+                        {t("searchFlight.actions.addStop")}
                     </div>
                 </div>
             </div>
@@ -134,7 +136,7 @@ function SearchFlight() {
                 disabled={isPending}
                 className='border border-line bg-brand text-content-on-brand hover:bg-brand-hover rounded-full px-5 py-2 cursor-pointer font-medium transition disabled:opacity-50 disabled:cursor-not-allowed'
             >
-                {isPending ? "Buscando..." : "Buscar vuelos"}
+                {isPending ? t("searchFlight.actions.searching") : t("searchFlight.actions.search")}
             </button>
         </div>
     )

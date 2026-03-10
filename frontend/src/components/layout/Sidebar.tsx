@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
+import { useTranslation } from "react-i18next";
 import {
     Compass,
     Users,
@@ -16,19 +17,20 @@ interface SidebarProps {
 }
 
 export default function Sidebar({ isOpen, onClose }: SidebarProps) {
+    const { t } = useTranslation();
     const { isAuthenticated, isLoading } = useAuth();
     const [clickedItem, setClickedItem] = useState<string | null>(null);
     const location = useLocation();
 
     const navItems = [
         {
-            label: "Buscar vuelos",
+            label: t("sidebar.searchFlights"),
             path: "/",
             icon: <Compass size={22} />,
             show: true
         },
         {
-            label: "Amigos",
+            label: t("sidebar.friends"),
             path: "/friends",
             icon: <Users size={22} />,
             show: isAuthenticated
