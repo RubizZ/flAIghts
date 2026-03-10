@@ -1,12 +1,12 @@
 import { useState, useEffect } from "react";
-import Globe from "./Globe.tsx"
+import Globe from "../components/Globe.tsx"
 import { ArrowLeftRight, Plus, Calendar as CalendarIcon, MapPin, Search, Bot, SlidersHorizontal, Globe as GlobeIcon, Maximize2, Info, PlaneTakeoff, PlaneLanding, AlertTriangle, X, Plane } from "lucide-react";
-import AirportAutocomplete from "./AirportAutocomplete.tsx";
+import AirportAutocomplete from "../components/AirportAutocomplete.tsx";
 import { useSearchRequest } from "@/api/generated/search/search";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
-import Calendar from "./ui/Calendar.tsx";
-import Tooltip from "./ui/Tooltip.tsx";
+import Calendar from "../components/ui/Calendar.tsx";
+import Tooltip from "../components/ui/Tooltip.tsx";
 
 function SearchFlight() {
     const [origin, setOrigin] = useState("");

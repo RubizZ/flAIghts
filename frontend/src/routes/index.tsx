@@ -3,12 +3,11 @@ import RootLayout from "@/components/layout/RootLayout";
 import AppLayout from "@/components/layout/AppLayout";
 import RouteErrorBoundary from "@/components/common/RouteErrorBoundary";
 
-// Pages
-import Home from "@/pages/Home.tsx";
 import NotFound from "@/pages/NotFound.tsx";
 import Login from "@/pages/Login.tsx";
 import Register from "@/pages/Register.tsx";
 import SearchResults from "@/pages/SearchResults.tsx";
+import SearchFlight from "@/pages/SearchFlight.tsx";
 import ForgotPassword from "@/pages/ForgotPassword.tsx";
 import ResetPassword from "@/pages/ResetPassword.tsx";
 import UserProfile from "@/pages/UserProfile.tsx";
@@ -34,7 +33,7 @@ export const routes: RouteObject[] = [
                 /* App routes */
                 element: <AppLayout />,
                 children: [
-                    { path: "/", element: <Home />, handle: { isGlobe: true } },
+                    { path: "/", element: <SearchFlight />, handle: { isGlobe: true } },
                     { path: "/search/:id", element: <SearchResults />, handle: { isGlobe: true } },
                     { path: "/friends", element: <Friends /> },
                     { path: "/user/:id", element: <UserProfile /> },
