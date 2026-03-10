@@ -1,7 +1,7 @@
 import { Controller, Get, Route, Query, Tags, Response } from "tsoa";
 import { injectable, inject } from "tsyringe";
 import { AirportService } from "./airport.service.js";
-import type { AirportResponse } from "./airport.types.js";
+import type { AirportResponse, GlobeAirportResponse } from "./airport.types.js";
 import type { SuccessResponse } from "../../utils/responses.js";
 
 @injectable()
@@ -17,7 +17,12 @@ export class AirportController extends Controller {
     @Response<SuccessResponse<AirportResponse[]>>(200, "Aeropuertos encontrados")
     public async searchAirports(@Query() q: string): Promise<SuccessResponse<AirportResponse[]>> {
         const results = await this.airportService.searchAirports(q);
-        console.log("results: ", results);
-        return results satisfies AirportResponse[] as any;
+        return results as any;
+    }
+
+    @Get("/globe")
+    @Response<GlobeAirportResponse[]>(200, "Aeropuertos para el globo")
+    public async getGlobeAirports(): Promise<GlobeAirportResponse[]> {
+        return this.airportService.getGlobeAirports();
     }
 }

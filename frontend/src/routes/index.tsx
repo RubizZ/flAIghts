@@ -1,9 +1,9 @@
 import { RouteObject } from "react-router-dom";
 import RootLayout from "@/components/layout/RootLayout";
+import AppLayout from "@/components/layout/AppLayout";
 import RouteErrorBoundary from "@/components/common/RouteErrorBoundary";
 
 // Pages
-
 import Home from "@/pages/Home.tsx";
 import NotFound from "@/pages/NotFound.tsx";
 import Login from "@/pages/Login.tsx";
@@ -15,9 +15,6 @@ import UserProfile from "@/pages/UserProfile.tsx";
 import Friends from "@/pages/Friends.tsx";
 import UserSearch from "@/pages/UserSearch.tsx";
 import Settings from "@/pages/Settings.tsx";
-
-// Layouts
-import MainLayout from "@/components/layout/MainLayout";
 
 export const routes: RouteObject[] = [
     {
@@ -32,14 +29,13 @@ export const routes: RouteObject[] = [
                     { path: "/forgot-password", element: <ForgotPassword /> },
                     { path: "/reset-password", element: <ResetPassword /> },
                 ]
-
             },
             {
-                /* Main Layout routes */
-                element: <MainLayout />,
+                /* App routes */
+                element: <AppLayout />,
                 children: [
-                    { path: "/", element: <Home /> },
-                    { path: "/search/:id", element: <SearchResults /> },
+                    { path: "/", element: <Home />, handle: { isGlobe: true } },
+                    { path: "/search/:id", element: <SearchResults />, handle: { isGlobe: true } },
                     { path: "/friends", element: <Friends /> },
                     { path: "/user/:id", element: <UserProfile /> },
                     { path: "/user/search", element: <UserSearch /> },

@@ -1,4 +1,5 @@
-import React, { useState, useRef, useEffect, ReactNode, createContext, useContext } from 'react';
+import React, { useState, useEffect, ReactNode, createContext, useContext } from 'react';
+import SmartPopover from './SmartPopover';
 
 interface DropdownContextType {
     isOpen: boolean;
@@ -22,7 +23,8 @@ export function useDropdown() {
 interface DropdownProps {
     trigger: ReactNode;
     children?: ReactNode;
-    align?: 'left' | 'right';
+    align?: 'left' | 'right' | 'center';
+    side?: 'top' | 'bottom';
     className?: string;
     contentClassName?: string;
     isOpen?: boolean;
@@ -31,11 +33,12 @@ interface DropdownProps {
     exitAnimation?: string;
     menus?: Record<string, ReactNode>;
     initialMenu?: string;
+    disabled?: boolean;
 }
 
 /**
- * Componente de menú desplegable reutilizable y premium.
- * Incluye lógica de cierre al hacer clic fuera y animaciones integradas.
+ * Reusable and premium dropdown menu component.
+ * Uses SmartPopover for intelligent positioning.
  */
 export default function Dropdown({
     trigger,
@@ -45,58 +48,25 @@ export default function Dropdown({
     contentClassName = '',
     isOpen: externalIsOpen,
     onOpenChange,
-    entryAnimation = 'animate-fade-in-down animate-duration-200',
-    exitAnimation = 'animate-fade-out-up animate-duration-200',
+    entryAnimation,
+    exitAnimation,
     menus,
-    initialMenu = 'main'
+    initialMenu = 'main',
+    disabled = false
 }: DropdownProps) {
     const [internalIsOpen, setInternalIsOpen] = useState(false);
-    const dropdownRef = useRef<HTMLDivElement>(null);
     const [menuStack, setMenuStack] = useState<string[]>([initialMenu]);
     const [animationDirection, setAnimationDirection] = useState<'forward' | 'backward' | 'none'>('none');
 
-    // Priorizar el estado controlado si se proporciona
     const isOpen = externalIsOpen !== undefined ? externalIsOpen : internalIsOpen;
+
     const setIsOpen = (value: boolean) => {
+        if (disabled) return;
         if (onOpenChange) {
             onOpenChange(value);
         } else {
             setInternalIsOpen(value);
         }
-    };
-
-    useEffect(() => {
-        function handleClickOutside(event: MouseEvent) {
-            if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-                setIsOpen(false);
-            }
-        }
-
-        if (isOpen) {
-            document.addEventListener("mousedown", handleClickOutside);
-        }
-        return () => document.removeEventListener("mousedown", handleClickOutside);
-    }, [isOpen]);
-
-    const [shouldRender, setShouldRender] = useState(isOpen);
-
-    useEffect(() => {
-        let timeout: NodeJS.Timeout;
-        if (isOpen) {
-            setShouldRender(true);
-        } else if (shouldRender) {
-            // Fallback de seguridad por si onAnimationEnd no se dispara
-            timeout = setTimeout(() => {
-                setShouldRender(false);
-            }, 250);
-        }
-        return () => {
-            if (timeout) clearTimeout(timeout);
-        };
-    }, [isOpen, shouldRender]);
-
-    const handleAnimationEnd = () => {
-        if (!isOpen) setShouldRender(false);
     };
 
     const pushMenu = (menuId: string) => {
@@ -114,11 +84,10 @@ export default function Dropdown({
         setMenuStack([initialMenu]);
     };
 
+    // Reset menu when closed
     useEffect(() => {
         if (!isOpen) {
-            const timeout = setTimeout(() => {
-                resetMenu();
-            }, 200);
+            const timeout = setTimeout(resetMenu, 200);
             return () => clearTimeout(timeout);
         }
     }, [isOpen]);
@@ -132,42 +101,45 @@ export default function Dropdown({
         resetMenu
     };
 
+    const finalEntryAnimation = entryAnimation || 'animate-fade-in-down animate-duration-200';
+    const finalExitAnimation = exitAnimation || 'animate-fade-out-up animate-duration-300';
+
     const activeMenuId = menuStack[menuStack.length - 1];
     const activeMenuContent = menus && activeMenuId ? menus[activeMenuId] : null;
 
     return (
         <DropdownContext.Provider value={contextValue}>
-            <div className={`relative inline-block ${className}`} ref={dropdownRef}>
-                <div
-                    onClick={() => setIsOpen(!isOpen)}
-                    className="cursor-pointer"
-                >
-                    {trigger}
-                </div>
-
-                {shouldRender && (
+            <SmartPopover
+                isOpen={isOpen}
+                setIsOpen={setIsOpen}
+                className={className}
+                trigger={
                     <div
-                        onAnimationEnd={handleAnimationEnd}
-                        className={`
-                            absolute ${align === 'right' ? 'right-0' : 'left-0'} 
-                            mt-2 min-w-48 bg-main border border-line
-                            rounded-2xl shadow-2xl overflow-hidden 
-                            ${isOpen ? entryAnimation : exitAnimation}
-                            z-100 ${contentClassName}
-                        `}
+                        onClick={() => !disabled && setIsOpen(!isOpen)}
+                        className={disabled ? "cursor-not-allowed" : "cursor-pointer"}
                     >
-                        {menus ? (
-                            <div className={`relative overflow-hidden w-full h-full`}>
-                                <div key={activeMenuId} className={`${animationDirection === 'forward' ? 'animate-fade-in-left' : animationDirection === 'backward' ? 'animate-fade-in-right' : ''} animate-duration-200 w-full h-full`}>
-                                    {activeMenuContent}
-                                </div>
-                            </div>
-                        ) : (
-                            children
-                        )}
+                        {trigger}
                     </div>
-                )}
-            </div>
+                }
+                preferredAlign={align}
+            >
+                <div
+                    className={`
+                        z-50 ${contentClassName} overflow-hidden
+                        ${isOpen ? finalEntryAnimation : finalExitAnimation}
+                    `}
+                >
+                    {menus ? (
+                        <div className={`relative overflow-hidden w-full h-full`}>
+                            <div key={activeMenuId} className={`${animationDirection === 'forward' ? 'animate-fade-in-left' : animationDirection === 'backward' ? 'animate-fade-in-right' : ''} animate-duration-200 w-full h-full`}>
+                                {activeMenuContent}
+                            </div>
+                        </div>
+                    ) : (
+                        children
+                    )}
+                </div>
+            </SmartPopover>
         </DropdownContext.Provider>
     );
 }
