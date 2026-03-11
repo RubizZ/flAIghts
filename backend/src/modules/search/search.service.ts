@@ -85,7 +85,7 @@ export class SearchService {
         try {
             const sequence = [criteria.origins[0], ...criteria.destinations].filter((node): node is string => !!node);
             let currentDate = criteria.departure_date.toISOString().split("T")[0]!;
-            const layoverDays = criteria.layover_days ?? [];
+            const dates = criteria.dates ?? [];
             const fullPath: DijkstraFlightEdge[] = [];
 
             for (let i = 0; i < sequence.length - 1; i++) {
@@ -95,8 +95,7 @@ export class SearchService {
 
                 if (!puntoA || !puntoB) continue;
 
-                const stayDays = layoverDays[i] ?? 1;
-                const searchDate = i === 0 ? currentDate : addDays(currentDate, stayDays);
+                const searchDate = dates[i] ?? currentDate;
 
                 const candidatos = await this.airportService.getCandidateLayovers(puntoA, puntoB);
                 let originArray = [puntoA];

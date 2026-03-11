@@ -379,10 +379,58 @@
     }
   },
   "searchFlight": {
-    "placeholders": {
+    "title": "Vuela más allá.",
+    "subtitle": "Explora destinos mundiales con flAIghts.",
+    "labels": {
       "origin": "Origen",
       "destination": "Destino",
-      "date": "Fecha"
+      "departure": "Salida",
+      "return": "Regreso",
+      "selectOnMap": "Seleccionar en el mapa"
+    },
+    "placeholders": {
+      "origin": "¿Desde dónde?",
+      "destination": "¿A dónde vas?",
+      "selectDate": "Seleccionar"
+    },
+    "tooltips": {
+      "selectFirstDate": "Selecciona primero la fecha de salida",
+      "expandMap": "Expandir mapa",
+      "selectMapTitle": "Búsqueda manual",
+      "selectAssistant": "Asistente IA"
+    },
+    "mapSelection": {
+      "selectingOrigin": "Selecciona el aeropuerto de origen en el mapa",
+      "selectingDestination": "Selecciona el aeropuerto de destino en el mapa",
+      "exploring": "Explorando el globo terráqueo",
+      "closeMap": "Cerrar mapa",
+      "cancelSelection": "Cancelar"
+    },
+    "loading": {
+      "loadingGlobe": "Cargando globo terráqueo..."
+    },
+    "mapButtons": {
+      "viewMap3D": "Ver mapa 3D",
+      "defineAsOrigin": "Definir como Origen",
+      "defineAsDestination": "Definir como Destino",
+      "reportError": "Reportar error en los datos"
+    },
+    "chatbot": {
+      "title": "Asistente flAIghts",
+      "comingSoon": "Próximamente — describe tu viaje ideal con IA",
+      "placeholder": "Ej: \"Quiero ir a Tokio en verano por menos de 600€\"",
+      "askAssistant": "Preguntar al asistente"
+    },
+    "additionalOptions": {
+      "addStop": "Añadir escala",
+      "advancedFilters": "Filtros avanzados"
+    },
+    "labels2": {
+      "name": "Nombre",
+      "city": "Ciudad / Región",
+      "latitude": "Latitud",
+      "longitude": "Longitud",
+      "airport": "Aeropuerto"
     },
     "tripType": {
       "oneWay": "Ida simple",
@@ -390,10 +438,12 @@
     },
     "actions": {
       "addStop": "Añadir parada",
-      "search": "Buscar vuelos",
+      "search": "Buscar",
+      "exploreFlights": "Explorar vuelos",
       "searching": "Buscando..."
     },
     "validation": {
+      "sameOriginDestination": "El origen y el destino no pueden ser el mismo",
       "completeFields": "Por favor, completa origen, destino y fecha de salida"
     },
     "toast": {
@@ -408,8 +458,19 @@
     }
   },
   "sidebar": {
-    "searchFlights": "Buscar vuelos",
+    "menu": "Menú",
+    "openMenu": "Abrir menú",
+    "closeMenu": "Cerrar menú",
+    "searchFlights": "Buscar Vuelos",
     "friends": "Amigos"
+  },
+  "footer": {
+    "branding": "flAIghts",
+    "copyright": "© {{year}} flAIghts. Innovando la forma en que vuelas.",
+    "aboutUs": "Sobre nosotros",
+    "contact": "Contacto",
+    "privacyPolicy": "Política de Privacidad",
+    "termsOfService": "Términos de Servicio"
   },
   "errorBoundary": {
     "sessionExpired": "Sesión expirada",

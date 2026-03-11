@@ -27,7 +27,7 @@ export interface SearchRequest {
         max_price?: number;
     };
 
-    layover_days?: number[];
+    dates?: string[];
 
 
 

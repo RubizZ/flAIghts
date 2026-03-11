@@ -1,9 +1,11 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { Info, X } from "lucide-react";
 import DottedBackground from "../ui/DottedBackground";
 
 export default function Footer() {
+    const { t } = useTranslation();
     const [isExpanded, setIsExpanded] = useState(false);
     const [showButton, setShowButton] = useState(false);
 
@@ -59,14 +61,14 @@ export default function Footer() {
                 <div className="relative pt-16 pb-12 px-6">
                     <div className="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center gap-10">
                         <div className="flex flex-col items-center md:items-start text-center md:text-left">
-                            <span className="font-bold text-3xl tracking-tighter mb-2 bg-clip-text text-transparent bg-linear-to-b from-white to-white/60">flAIghts</span>
-                            <p className="text-sm opacity-50 font-medium">© {new Date().getFullYear()} flAIghts. Innovating the way you fly.</p>
+                            <span className="font-bold text-3xl tracking-tighter mb-2 bg-clip-text text-transparent bg-linear-to-b from-white to-white/60">{t("footer.branding")}</span>
+                            <p className="text-sm opacity-50 font-medium">{t("footer.copyright", { year: new Date().getFullYear() })}</p>
                         </div>
                         <div className="flex flex-wrap justify-center gap-x-10 gap-y-6">
-                            <Link to="/about" onClick={() => setIsExpanded(false)} className="text-sm font-semibold hover:opacity-100 opacity-70 transition-all hover:-translate-y-px">About us</Link>
-                            <Link to="/contact" onClick={() => setIsExpanded(false)} className="text-sm font-semibold hover:opacity-100 opacity-70 transition-all hover:-translate-y-px">Contact</Link>
-                            <Link to="/privacy" onClick={() => setIsExpanded(false)} className="text-sm font-semibold hover:opacity-100 opacity-70 transition-all hover:-translate-y-px">Privacy Policy</Link>
-                            <Link to="/terms" onClick={() => setIsExpanded(false)} className="text-sm font-semibold hover:opacity-100 opacity-70 transition-all hover:-translate-y-px">Terms of Service</Link>
+                            <Link to="/about" onClick={() => setIsExpanded(false)} className="text-sm font-semibold hover:opacity-100 opacity-70 transition-all hover:-translate-y-px">{t("footer.aboutUs")}</Link>
+                            <Link to="/contact" onClick={() => setIsExpanded(false)} className="text-sm font-semibold hover:opacity-100 opacity-70 transition-all hover:-translate-y-px">{t("footer.contact")}</Link>
+                            <Link to="/privacy" onClick={() => setIsExpanded(false)} className="text-sm font-semibold hover:opacity-100 opacity-70 transition-all hover:-translate-y-px">{t("footer.privacyPolicy")}</Link>
+                            <Link to="/terms" onClick={() => setIsExpanded(false)} className="text-sm font-semibold hover:opacity-100 opacity-70 transition-all hover:-translate-y-px">{t("footer.termsOfService")}</Link>
                         </div>
                     </div>
                 </div>
