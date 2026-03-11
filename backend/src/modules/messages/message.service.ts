@@ -53,7 +53,7 @@ export class MessageService {
         };
     }
 
-    private formatMessageResponse(message: HydratedDocument<IMessage>): MessageResponse {
+    public formatMessageResponse(message: HydratedDocument<IMessage>): MessageResponse {
         const { _id, sender, receiver, created_at, ...rest } = message.toObject();
 
         return {
