@@ -41,7 +41,7 @@ export class SearchService {
                 destinations: data.destinations,
                 departure_date: data.departure_date,
                 return_date: data.return_date,
-                layover_days: data.layover_days,
+                dates: data.dates,
                 criteria: data.criteria
             }
         });
@@ -119,7 +119,7 @@ export class SearchService {
         try {
             const sequence = [criteria.origins[0], ...criteria.destinations].filter((node): node is string => !!node);
             let currentDate = criteria.departure_date.toISOString().split("T")[0]!;
-            const layoverDays = criteria.layover_days ?? [];
+            const dates = criteria.dates ?? [];
             const fullPath: EnrichedFlightEdge[] = [];
 
             for (let i = 0; i < sequence.length - 1; i++) {
@@ -129,8 +129,7 @@ export class SearchService {
 
                 if (!puntoA || !puntoB) continue;
 
-                const stayDays = layoverDays[i] ?? 1;
-                const searchDate = i === 0 ? currentDate : addDays(currentDate, stayDays);
+                const searchDate = dates[i] ?? currentDate;
 
                 const candidatos = await this.airportService.getCandidateLayovers(puntoA, puntoB);
                 let originArray = [puntoA];

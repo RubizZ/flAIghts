@@ -378,10 +378,58 @@
     }
   },
   "searchFlight": {
-    "placeholders": {
+    "title": "Fly beyond.",
+    "subtitle": "Explore destinations worldwide with flAIghts.",
+    "labels": {
       "origin": "Origin",
       "destination": "Destination",
-      "date": "Date"
+      "departure": "Departure",
+      "return": "Return",
+      "selectOnMap": "Select on map"
+    },
+    "placeholders": {
+      "origin": "Where from?",
+      "destination": "Where to?",
+      "selectDate": "Select"
+    },
+    "tooltips": {
+      "selectFirstDate": "Select departure date first",
+      "expandMap": "Expand map",
+      "selectMapTitle": "Manual Search",
+      "selectAssistant": "AI Assistant"
+    },
+    "mapSelection": {
+      "selectingOrigin": "Select origin airport on map",
+      "selectingDestination": "Select destination airport on map",
+      "exploring": "Exploring the globe",
+      "closeMap": "Close map",
+      "cancelSelection": "Cancel"
+    },
+    "loading": {
+      "loadingGlobe": "Loading globe..."
+    },
+    "mapButtons": {
+      "viewMap3D": "View 3D Map",
+      "defineAsOrigin": "Define as Origin",
+      "defineAsDestination": "Define as Destination",
+      "reportError": "Report data error"
+    },
+    "chatbot": {
+      "title": "flAIghts Assistant",
+      "comingSoon": "Coming soon — describe your ideal trip with AI",
+      "placeholder": "e.g. \"I want to go to Tokyo in summer for less than 600€\"",
+      "askAssistant": "Ask the assistant"
+    },
+    "additionalOptions": {
+      "addStop": "Add stop",
+      "advancedFilters": "Advanced filters"
+    },
+    "labels2": {
+      "name": "Name",
+      "city": "City / Region",
+      "latitude": "Latitude",
+      "longitude": "Longitude",
+      "airport": "Airport"
     },
     "tripType": {
       "oneWay": "One way",
@@ -389,10 +437,12 @@
     },
     "actions": {
       "addStop": "Add stop",
-      "search": "Search flights",
+      "search": "Search",
+      "exploreFlights": "Explore flights",
       "searching": "Searching..."
     },
     "validation": {
+      "sameOriginDestination": "Origin and destination cannot be the same",
       "completeFields": "Please complete origin, destination and departure date"
     },
     "toast": {
@@ -407,8 +457,19 @@
     }
   },
   "sidebar": {
+    "menu": "Menu",
+    "openMenu": "Open menu",
+    "closeMenu": "Close menu",
     "searchFlights": "Search Flights",
     "friends": "Friends"
+  },
+  "footer": {
+    "branding": "flAIghts",
+    "copyright": "© {{year}} flAIghts. Innovating the way you fly.",
+    "aboutUs": "About us",
+    "contact": "Contact",
+    "privacyPolicy": "Privacy Policy",
+    "termsOfService": "Terms of Service"
   },
   "navbar": {
     "notifications": "Notifications",

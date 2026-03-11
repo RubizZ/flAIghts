@@ -95,7 +95,7 @@ export interface AuditDetails {
             destinations: string[];
             departure_date: Date;
             return_date?: Date;
-            layover_days?: number[];
+            dates?: string[];
             criteria: {
                 priority: "balanced" | "cheap" | "fast";
                 max_price?: number;

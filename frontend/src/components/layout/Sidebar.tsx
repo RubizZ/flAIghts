@@ -57,7 +57,7 @@ export default function Sidebar({ isOpen, onClose, onToggle, variant = 'classic'
                     <NavIconButton
                         onClick={onToggle}
                         variant={variant}
-                        title="Abrir menú"
+                        title={t("sidebar.openMenu")}
                     >
                         <Menu size={20} />
                     </NavIconButton>
@@ -82,7 +82,7 @@ export default function Sidebar({ isOpen, onClose, onToggle, variant = 'classic'
                 <div className={`flex items-center shrink-0 ${isFloating ? 'h-14 px-3 border-b border-line/40' : 'h-16 px-2'}`}>
                     <button
                         onClick={onToggle}
-                        aria-label={isOpen ? "Cerrar menú" : "Abrir menú"}
+                        aria-label={isOpen ? t("sidebar.closeMenu") : t("sidebar.openMenu")}
                         className={`transition-all duration-200 cursor-pointer rounded-2xl
                             text-content-muted hover:text-content active:scale-95
                             ${isFloating
@@ -94,7 +94,7 @@ export default function Sidebar({ isOpen, onClose, onToggle, variant = 'classic'
                         {isFloating ? (
                             <>
                                 <X size={20} className="shrink-0 transition-transform duration-300 group-hover:rotate-90" />
-                                <span className="font-bold text-sm text-content">Menú</span>
+                                <span className="font-bold text-sm text-content">{t("sidebar.menu")}</span>
                             </>
                         ) : (
                             isOpen

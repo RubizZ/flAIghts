@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import Globe from "../components/Globe.tsx"
 import { Plus, Bot, SlidersHorizontal, Globe as GlobeIcon, Maximize2, PlaneTakeoff, PlaneLanding, AlertTriangle, X, Plane, ChevronDown, ChevronRight, Search, Calendar as CalendarIcon } from "lucide-react";
 import { useSearchRequest } from "@/api/generated/search/search";
@@ -10,6 +11,7 @@ import ManualSearchForm from "../components/search/ManualSearchForm.tsx";
 import NavIconButton from "../components/ui/NavIconButton.tsx";
 
 function SearchFlight() {
+    const { t } = useTranslation();
     const [origin, setOrigin] = useState<AirportResponse | null>(null);
     const [destination, setDestination] = useState<AirportResponse | null>(null);
     const [departureDate, setDepartureDate] = useState("");
@@ -66,12 +68,12 @@ function SearchFlight() {
     const { mutate: searchRequest, isPending } = useSearchRequest({
         mutation: {
             onSuccess: (data) => {
-                toast.success("Búsqueda iniciada");
+                toast.success(t("searchFlight.toast.searchStarted"));
                 navigate(`/search/${data._id}`);
             },
             onError: (error) => {
                 console.error(error);
-                toast.error(error?.message || "Error al buscar vuelos");
+                toast.error(error?.message || t("searchFlight.toast.searchError"));
             }
         }
     });
@@ -91,13 +93,13 @@ function SearchFlight() {
     const handleMapSelect = (airport: AirportResponse) => {
         if (selectingType === 'origin') {
             if (airport.iata_code === destination?.iata_code) {
-                toast.error("El origen y el destino no pueden ser el mismo");
+                toast.error(t("searchFlight.validation.sameOriginDestination"));
                 return;
             }
             setOrigin(airport);
         } else if (selectingType === 'destination') {
             if (airport.iata_code === origin?.iata_code) {
-                toast.error("El origen y el destino no pueden ser el mismo");
+                toast.error(t("searchFlight.validation.sameOriginDestination"));
                 return;
             }
             setDestination(airport);
@@ -167,7 +169,7 @@ function SearchFlight() {
 
     const handleSetOrigin = (airport: AirportResponse) => {
         if (airport.iata_code === destination?.iata_code) {
-            toast.error("El origen y el destino no pueden ser el mismo");
+            toast.error(t("searchFlight.validation.sameOriginDestination"));
             return;
         }
         setOrigin(airport);
@@ -182,7 +184,7 @@ function SearchFlight() {
 
     const handleSetDestination = (airport: AirportResponse) => {
         if (airport.iata_code === origin?.iata_code) {
-            toast.error("El origen y el destino no pueden ser el mismo");
+            toast.error(t("searchFlight.validation.sameOriginDestination"));
             return;
         }
         setDestination(airport);
@@ -197,7 +199,7 @@ function SearchFlight() {
 
     const handleSearch = () => {
         if (!origin || !destination || !departureDate) {
-            toast.error("Por favor, completa origen, destino y fecha de salida");
+            toast.error(t("searchFlight.validation.completeFields"));
             return;
         }
 
@@ -282,7 +284,7 @@ function SearchFlight() {
                     </svg>
                 </div>
                 <div className="flex flex-col items-center gap-1">
-                    <span className="text-content-muted text-xs">Cargando globo terráqueo...</span>
+                    <span className="text-content-muted text-xs">{t("searchFlight.loading.loadingGlobe")}</span>
                 </div>
                 <div className="flex gap-1.5">
                     {[0, 1, 2].map(i => (
@@ -337,12 +339,12 @@ function SearchFlight() {
                             {isPending ? (
                                 <div className="flex items-center gap-2">
                                     <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                                    <span>Buscando...</span>
+                                    <span>{t("searchFlight.actions.searching")}</span>
                                 </div>
                             ) : (
                                 <>
                                     <Search size={18} className="group-hover:scale-110 transition-transform" />
-                                    <span className="text-sm">Buscar vuelos</span>
+                                    <span className="text-sm">{t("searchFlight.search")}</span>
                                 </>
                             )}
                         </button>
@@ -366,7 +368,7 @@ function SearchFlight() {
                             className="absolute -top-4 left-1/2 -translate-x-1/2 bg-surface/90 backdrop-blur-2xl border border-line px-5 py-2.5 rounded-full shadow-xl flex items-center gap-2.5 group hover:bg-surface transition-all active:scale-95 cursor-pointer z-30 whitespace-nowrap"
                         >
                             <GlobeIcon size={14} className="text-brand" />
-                            <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-content/90">Ver mapa 3D</span>
+                            <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-content/90">{t("searchFlight.mapButtons.viewMap3D")}</span>
                         </button>
                     )}
 
@@ -375,7 +377,7 @@ function SearchFlight() {
                         <button
                             onClick={() => setIsSelectingOnMap(true)}
                             className="absolute -right-5 top-1/2 -translate-y-1/2 w-10 h-24 bg-main/90 backdrop-blur-xl border border-line rounded-2xl shadow-xl flex items-center justify-center group hover:bg-brand hover:border-brand/40 transition-all active:scale-95 cursor-pointer z-30"
-                            title="Expandir mapa"
+                            title={t("searchFlight.tooltips.expandMap")}
                         >
                             <Maximize2 size={18} className="text-content-muted group-hover:text-content-on-brand transition-colors rotate-90" />
                             <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-10 transition-opacity">
@@ -387,14 +389,14 @@ function SearchFlight() {
                     {/* Card header: title + mode toggle */}
                     <div className="flex items-start justify-between gap-4">
                         <div className="flex flex-col gap-0.5">
-                            <h1 className="text-3xl font-bold text-content tracking-tight">Vuela más allá.</h1>
-                            <p className="text-content-muted text-sm">Explora destinos mundiales con flAIghts.</p>
+                            <h1 className="text-3xl font-bold text-content tracking-tight">{t("searchFlight.title")}</h1>
+                            <p className="text-content-muted text-sm">{t("searchFlight.subtitle")}</p>
                         </div>
 
                         <div className="flex shrink-0 items-center bg-main/50 dark:bg-surface rounded-xl p-1 gap-0.5 border border-line mt-1">
                             <button
                                 onClick={() => setSearchMode('manual')}
-                                title="Búsqueda manual"
+                                title={t("searchFlight.tooltips.selectMapTitle")}
                                 className={`p-2 rounded-lg transition-all ${searchMode === 'manual'
                                     ? 'bg-brand text-content-on-brand shadow-sm'
                                     : 'text-content-muted hover:text-content cursor-pointer'
@@ -404,7 +406,7 @@ function SearchFlight() {
                             </button>
                             <button
                                 onClick={() => setSearchMode('chatbot')}
-                                title="Asistente IA"
+                                title={t("searchFlight.tooltips.selectAssistant")}
                                 className={`p-2 rounded-lg transition-all ${searchMode === 'chatbot'
                                     ? 'bg-brand text-content-on-brand shadow-sm'
                                     : 'text-content-muted hover:text-content cursor-pointer'
@@ -422,10 +424,10 @@ function SearchFlight() {
                                 <div className="flex items-center justify-center gap-4 text-xs text-content-muted">
                                     <div className="flex items-center gap-1">
                                         <Plus size={12} className="text-brand" />
-                                        <span>Añadir escala</span>
+                                        <span>{t("searchFlight.additionalOptions.addStop")}</span>
                                     </div>
                                     <div className="w-1 h-1 bg-line rounded-full" />
-                                    <span>Filtros avanzados</span>
+                                    <span>{t("searchFlight.additionalOptions.advancedFilters")}</span>
                                 </div>
                             </>
                         ) : (
@@ -576,7 +578,7 @@ function SearchFlight() {
                     <div className={`flex flex-col gap-5 transition-opacity duration-300 ${isContentVisible ? 'opacity-100' : 'opacity-0'}`}>
                         <div className="flex items-start justify-between">
                             <div className="flex flex-col gap-1">
-                                <span className="text-[10px] text-brand uppercase font-bold tracking-[0.2em]">Aeropuerto</span>
+                                <span className="text-[10px] text-brand uppercase font-bold tracking-[0.2em]">{t("searchFlight.labels2.airport")}</span>
                                 <h2 className="text-2xl font-bold text-content tracking-tight">{renderedAirport?.iata_code}</h2>
                             </div>
                             <button
@@ -589,20 +591,20 @@ function SearchFlight() {
 
                         <div className="flex flex-col gap-4">
                             <div className="flex flex-col">
-                                <span className="text-[10px] text-content-muted uppercase font-bold tracking-wider">Nombre</span>
+                                <span className="text-[10px] text-content-muted uppercase font-bold tracking-wider">{t("searchFlight.labels2.name")}</span>
                                 <span className="text-content font-medium">{renderedAirport?.name}</span>
                             </div>
                             <div className="flex flex-col">
-                                <span className="text-[10px] text-content-muted uppercase font-bold tracking-wider">Ciudad / Región</span>
+                                <span className="text-[10px] text-content-muted uppercase font-bold tracking-wider">{t("searchFlight.labels2.city")}</span>
                                 <span className="text-content font-medium">{renderedAirport?.city}</span>
                             </div>
                             <div className="grid grid-cols-2 gap-4 pt-2 border-t border-line/50">
                                 <div className="flex flex-col">
-                                    <span className="text-[10px] text-content-muted uppercase font-bold tracking-wider">Latitud</span>
+                                    <span className="text-[10px] text-content-muted uppercase font-bold tracking-wider">{t("searchFlight.labels2.latitude")}</span>
                                     <span className="text-content text-xs font-mono">{renderedAirport?.location?.coordinates[1]?.toFixed(4)}°</span>
                                 </div>
                                 <div className="flex flex-col">
-                                    <span className="text-[10px] text-content-muted uppercase font-bold tracking-wider">Longitud</span>
+                                    <span className="text-[10px] text-content-muted uppercase font-bold tracking-wider">{t("searchFlight.labels2.longitude")}</span>
                                     <span className="text-content text-xs font-mono">{renderedAirport?.location?.coordinates[0]?.toFixed(4)}°</span>
                                 </div>
                             </div>
@@ -614,21 +616,21 @@ function SearchFlight() {
                                 className="flex items-center justify-center gap-2 w-full py-3 bg-origin/10 hover:bg-origin/20 border border-origin/20 rounded-2xl text-origin text-xs font-bold transition-all group/btn cursor-pointer"
                             >
                                 <PlaneTakeoff size={14} className="group-hover/btn:-translate-y-0.5 transition-transform" />
-                                Definir como Origen
+                                {t("searchFlight.mapButtons.defineAsOrigin")}
                             </button>
                             <button
                                 onClick={() => renderedAirport && handleSetDestination(renderedAirport)}
                                 className="flex items-center justify-center gap-2 w-full py-3 bg-destination/10 hover:bg-destination/20 border border-destination/20 rounded-2xl text-destination text-xs font-bold transition-all group/btn cursor-pointer"
                             >
                                 <PlaneLanding size={14} className="group-hover/btn:translate-y-0.5 transition-transform" />
-                                Definir como Destino
+                                {t("searchFlight.mapButtons.defineAsDestination")}
                             </button>
                             <button
                                 onClick={() => { }}
                                 className="flex items-center justify-center gap-1.5 self-center mt-3 text-[9px] font-bold text-red-500/60 hover:text-red-500 transition-all cursor-pointer group/report"
                             >
                                 <AlertTriangle size={10} className="group-hover/report:animate-pulse" />
-                                <span className="italic underline-offset-2 hover:underline">Reportar error en los datos</span>
+                                <span className="italic underline-offset-2 hover:underline">{t("searchFlight.mapButtons.reportError")}</span>
                             </button>
                         </div>
                     </div>
