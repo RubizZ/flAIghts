@@ -124,7 +124,7 @@ export default function Login() {
                     </button>
 
                     <span className="text-sm text-content text-center">
-                        {t("login.links.noAccount")} <a href="/register" className="text-brand font-bold hover:underline">{t("login.links.register")}</a>
+                        {t("login.noAccount")} <a href="/register" className="text-brand font-bold hover:underline">{t("login.links.register")}</a>
                     </span>
                 </form>
             </AuthCard>

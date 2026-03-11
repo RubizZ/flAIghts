@@ -62,6 +62,7 @@
     }
   },
     "login": {
+    "noAccount": "Don't have an account?",
     "title": "Login",
     "labels": {
       "identifier": "Email or username",
