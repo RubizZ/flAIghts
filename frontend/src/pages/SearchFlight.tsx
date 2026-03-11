@@ -86,12 +86,12 @@ function SearchFlight() {
             }
             setDestination(iata);
             setDestinationDisplay(displayText);
-        } else if (selectingType.startsWith('layover-')) {
+        } else if (selectingType && selectingType.startsWith('layover-')) {
             const index = parseInt(selectingType.split('-')[1]);
             const newLayovers = [...layovers];
             if (iata === origin || iata === destination || layovers.some((l, i) => i !== index && l.iata === iata)) {
                 toast.error(t("searchFlight.validation.sameOriginDestination"));
-            } else {
+            } else if (index >= 0 && index < newLayovers.length) {
                 newLayovers[index].iata = iata;
                 newLayovers[index].display = displayText;
                 setLayovers(newLayovers);
@@ -504,9 +504,9 @@ function SearchFlight() {
             <div className="absolute inset-0 z-0 opacity-100">
                 <Globe
                     onAirportSelect={selectingType ? handleMapSelect : undefined}
-                    selectedAirports={[origin, destination, inspectedAirport?.iata].filter(Boolean) as string[]}
                     originIata={origin}
                     destinationIata={destination}
+                    layovers={[...layovers.map(l => l.iata), inspectedAirport?.iata].filter(Boolean) as string[]}
                     interactive={isSelectingOnMap}
                     horizontalOffset={isSelectingOnMap ? 0 : (isLargeScreen ? 258 : 0)}
                     onReady={() => setGlobeReady(true)}
