@@ -1,0 +1,440 @@
+{
+  "forgotPassword": {
+    "title": "Olvidé mi contraseña",
+    "description": "Introduce tu email y te enviaremos un enlace para restablecer tu contraseña.",
+    "actions": {
+      "send": "Enviar",
+      "sending": "Enviando..."
+    },
+    "validation": {
+      "emailRequired": "El email es obligatorio",
+      "emailInvalid": "El email es inválido"
+    },
+    "toast": {
+      "resetLinkSent": "Se ha enviado un correo con un enlace para restablecer tu contraseña",
+      "unknownError": "Error desconocido al enviar el correo"
+    }
+  },
+    "friends": {
+    "title": "Amigos",
+    "subtitle": "Gestiona a las personas con las que compartes tus viajes.",
+
+    "tabs": {
+      "friends": "Mis Amigos",
+      "requests": "Solicitudes"
+    },
+
+    "addFriend": "Añadir amigo",
+    "removeFriend": "Eliminar amigo",
+    "sendMessage": "Enviar mensaje",
+
+    "notLogged": {
+      "title": "No has iniciado sesión",
+      "login": "Iniciar sesión"
+    },
+
+    "emptyFriends": {
+      "title": "Aún no tienes amigos",
+      "description": "Busca a otros viajeros conectando con ellos y agregándolos a tu lista para planear viajes juntos."
+    },
+
+    "actions": {
+      "message": "Mensaje",
+      "remove": "Eliminar",
+      "cancel": "Cancelar",
+      "accept": "Aceptar",
+      "reject": "Rechazar"
+    },
+
+    "requests": {
+      "received": "Solicitudes Recibidas",
+      "sent": "Solicitudes Enviadas",
+      "noneReceived": "No tienes solicitudes de amistad pendientes.",
+      "noneSent": "No has enviado solicitudes de amistad.",
+      "waiting": "Esperando respuesta..."
+    },
+
+    "toast": {
+      "accepted": "Solicitud aceptada",
+      "rejected": "Solicitud rechazada",
+      "cancelled": "Solicitud cancelada",
+      "removed": "Amigo eliminado"
+    }
+  },
+    "login": {
+    "noAccount": "¿No tienes cuenta?",
+    "title": "Inicio de sesión",
+    "labels": {
+      "identifier": "Email o nombre de usuario",
+      "password": "Contraseña"
+    },
+    "actions": {
+      "login": "Inicia sesión",
+      "loggingIn": "Conectando..."
+    },
+    "links": {
+      "forgotPassword": "¿Olvidaste tu contraseña?",
+      "register": "Regístrate"
+    },
+    "validation": {
+      "identifierRequired": "Introduce tu email o nombre de usuario",
+      "passwordRequired": "Introduce tu contraseña",
+      "fillAllFields": "Por favor completa todos los campos"
+    },
+    "toast": {
+      "welcome": "¡Bienvenido a bordo!",
+      "invalidCredentials": "Credenciales inválidas"
+    }
+  },
+    "notFound": {
+    "title": "¡Oops! Página no encontrada",
+    "description": "La página que buscas no existe o ha sido movida.",
+    "actions": {
+      "goBack": "Página anterior",
+      "home": "Volver al inicio"
+    }
+  },
+  "register": {
+    "iAccept": "Acepto los ",
+    "alreadyHaveAccount": "¿Ya tienes cuenta?",
+    "codeSent": "Hemos enviado un código a ",
+    "steps": {
+      "step1Title": "Únete a flAIghts",
+      "step1Description": "Introduce tu email para recibir un código de verificación.",
+      "step2Title": "Regístrate"
+    },
+    "labels": {
+      "code": "Código de verificación",
+      "username": "Nombre de usuario",
+      "password": "Contraseña",
+      "confirmPassword": "Confirmar contraseña",
+      "acceptedTerms": "Acepto los Términos de Servicio y la Política de Privacidad"
+    },
+    "actions": {
+      "nextStep": "Continuar",
+      "sendingCode": "Enviando código...",
+      "completeRegistration": "Completar Registro",
+      "creatingAccount": "Creando cuenta...",
+      "changeEmail": "Cambiar email"
+    },
+    "links": {
+      "terms": "Términos de Servicio",
+      "privacy": "Política de Privacidad",
+      "login": "Inicia sesión"
+    },
+    "validation": {
+      "emailRequired": "El email es obligatorio",
+      "codeRequired": "El código es obligatorio",
+      "usernameRequired": "El nombre de usuario es obligatorio",
+      "passwordRequired": "La contraseña es obligatoria",
+      "passwordMin": "Mínimo 8 caracteres",
+      "confirmPasswordRequired": "Las contraseñas no coinciden",
+      "acceptedTerms": "Debes aceptar los términos y condiciones",
+      "emailInUse": "Este email ya está registrado",
+      "usernameInUse": "El nombre de usuario ya está en uso",
+      "invalidCode": "El código es inválido o ha expirado"
+    },
+    "toast": {
+      "verificationEmailSent": "Email de verificación enviado. Revisa tu bandeja de entrada.",
+      "welcome": "¡Bienvenido a bordo!",
+      "loginError": "Te has registrado correctamente, pero hubo un error al iniciar sesión. Por favor, identifícate."
+    }
+  },
+    "resetPassword": {
+    "title": "Restablecer contraseña",
+    "labels": {
+      "newPassword": "Nueva contraseña",
+      "confirmPassword": "Confirmar contraseña"
+    },
+    "actions": {
+      "reset": "Restablecer contraseña",
+      "resetting": "Restableciendo contraseña..."
+    },
+    "validation": {
+      "passwordRequired": "Introduce una contraseña",
+      "confirmPasswordMismatch": "Las contraseñas no coinciden",
+      "tokenMissing": "Token de restablecimiento no encontrado"
+    },
+    "toast": {
+      "success": "Contraseña restablecida correctamente",
+      "tokenInvalid": "El token de restablecimiento es inválido o ha expirado",
+        "correctErrors": "Por favor corrige los errores"
+
+    }
+  },
+    "searchResults": {
+    "title": "Resultados de búsqueda",
+    "loading": "Cargando resultados...",
+    "loadingMore": "Buscando más vuelos...",
+    "error": {
+      "fetch": "Error al cargar la búsqueda",
+      "details": "Detalles"
+    },
+    "itineraries": {
+      "departure": "Vuelos de Ida",
+      "return": "Vuelos de Vuelta",
+      "totalPrice": "Precio total"
+    }
+  },
+    "settings": {
+    "title": "Ajustes",
+    "tabs": {
+      "perfil": "Perfil",
+      "preferencias": "Preferencias",
+      "seguridad": "Seguridad",
+      "apariencia": "Apariencia"
+    },
+    "profile": {
+      "title": "Información del Perfil",
+      "username": "Nombre de usuario",
+      "usernamePlaceholder": "Tu nombre de usuario",
+      "profileVisibility": "Visibilidad del perfil",
+      "public": "Perfil Público",
+      "publicDesc": "Otros usuarios pueden ver tus búsquedas recientes y estadísticas.",
+      "private": "Perfil Privado",
+      "privateDesc": "Tus búsquedas y estadísticas son totalmente privadas.",
+      "save": "Guardar cambios del perfil",
+      "saving": "Guardando..."
+    },
+    "preferences": {
+      "title": "Pesos de búsqueda",
+      "description": "Ajusta el nivel de importancia de los factores al buscar vuelos.",
+      "infoTitle": "¿Cómo ajustar los pesos?",
+      "weightsInfo": "Ten en cuenta que si le das mucha más importancia a uno de los campos, debes representarlo correctamente en relación a los demás. Es decir, si te importa que el vuelo sea corto, pero te importa mucho más que el precio sea barato, no pongas la duración a 1, déjala en un valor menor para que el algoritmo priorice el precio.",
+      "fields": {
+        "price": "Precio",
+        "duration": "Duración",
+        "stops": "Escalas",
+        "airline": "Calidad Aerolínea"
+      },
+      "descriptions": {
+        "price": {
+          "0": "El precio me es indiferente",
+          "low": "Pagaría más por un mejor vuelo",
+          "medium": "Busco un equilibrio razonable en el precio",
+          "high": "Suelo priorizar que el precio sea bajo",
+          "max": "Cuanto más barato mejor"
+        },
+        "duration": {
+          "0": "El tiempo de viaje me es indiferente",
+          "low": "No me importa si el vuelo dura más",
+          "medium": "Prefiero no estar demasiadas horas de viaje",
+          "high": "Intento llegar lo antes posible a mi destino",
+          "max": "Quiero el vuelo más rápido posible"
+        },
+        "stops": {
+          "0": "Me da igual hacer muchas escalas",
+          "low": "Hacer varias paradas no me supone un problema",
+          "medium": "Prefiero rutas con pocas escalas si es posible",
+          "high": "Intento evitar hacer transbordos",
+          "max": "Busco vuelos directos sin paradas"
+        },
+        "airline": {
+          "0": "Me da igual con qué aerolínea volar",
+          "low": "Me adapto a aerolíneas de bajo coste sin problema",
+          "medium": "Valoro un servicio aceptable a bordo",
+          "high": "Prefiero aerolíneas tradicionales y cómodas",
+          "max": "Busco siempre las aerolíneas mejor valoradas"
+        }
+      },
+      "save": "Guardar preferencias",
+      "saving": "Guardando..."
+    },
+    "security": {
+      "email": {
+        "title": "Dirección de correo electrónico",
+        "description": "Utilizamos este correo principal para identificarte y para enviarte notificaciones.",
+        "placeholder": "tu@email.com",
+        "update": "Actualizar correo electrónico",
+        "updating": "Actualizando...",
+        "pending": "Cambio de email pendiente",
+        "pendingMessage": "Hemos enviado códigos a tu email actual y al nuevo",
+        "codes": {
+          "old": "Código email actual",
+          "new": "Código nuevo email"
+        },
+        "verify": "Confirmar cambio",
+        "verifying": "Verificando...",
+        "cancel": "Cancelar",
+        "cancelling": "Cancelando...",
+        "validation": {
+          "codesRequired": "Por favor, introduce ambos códigos"
+        }
+      },
+      "password": {
+        "title": "Contraseña",
+        "description": "Cambia tu contraseña periódicamente para mantener tu cuenta segura.",
+        "current": "Contraseña actual",
+        "new": "Nueva contraseña",
+        "confirm": "Confirmar nueva contraseña",
+        "show": "Mostrar contraseñas",
+        "hide": "Ocultar contraseñas",
+        "forgot": "¿Has olvidado tu contraseña?",
+        "requirements": {
+          "title": "Requisitos:",
+          "minLength": "Mínimo 8 caracteres",
+          "different": "Debe ser diferente a la actual",
+          "recommended": "Recomendamos incluir números y símbolos"
+        },
+        "update": "Actualizar contraseña",
+        "updating": "Actualizando...",
+        "validation": {
+          "allFieldsRequired": "Por favor, rellena todos los campos",
+          "passwordMismatch": "Las contraseñas nuevas no coinciden",
+          "sameAsOld": "La nueva contraseña debe ser diferente a la actual",
+          "minLength": "La nueva contraseña debe tener al menos 8 caracteres"
+        }
+      }
+    },
+    "appearance": {
+      "title": "Apariencia",
+      "themeLabel": "Tema",
+      "light": "Modo Claro",
+      "dark": "Modo Oscuro",
+      "system": "Sistema",
+      "languageLabel": "Idioma",
+      "spanish": "Español",
+      "english": "Inglés"
+    },
+    "avatar": {
+      "title": "Tu foto de perfil",
+      "maxSize": "Máximo 5MB",
+      "selectNew": "Seleccionar nueva foto",
+      "uploading": "Subiendo...",
+      "validation": {
+        "fileTooBig": "La imagen es demasiado grande (máx. 5MB)"
+      }
+    },
+    "general": {
+      "back": "Volver",
+      "logout": "Cerrar sesión"
+    },
+    "toast": {
+      "pendingEmail": "Tienes un cambio de email pendiente de verificación",
+      "success": "Perfil actualizado con éxito",
+      "error": "Error al actualizar el perfil",
+      "pending": "Solicitud de cambio de email iniciada. Introduce los códigos enviados.",
+      "invalidEmail": "El nuevo email es inválido",
+      "emailInUse": "El nuevo email ya está en uso",
+      "emailUpdatedSuccess": "Email actualizado correctamente",
+      "emailVerificationCodeInvalidOrExpired": "El código de verificación del email es inválido o ha expirado",
+      "emailUpdateError": "Error al actualizar el email",
+      "emailCancelError": "Cambio de email cancelado",
+      "passwordUpdatedSuccess": "Contraseña actualizada correctamente",
+      "passwordUpdateError": "Error al actualizar la contraseña",
+      "avatarUpdatedSuccess": "Foto de perfil actualizada correctamente"
+    }
+  },
+  "userProfile": {
+    "notAuthenticated": {
+      "title": "Inicia sesión para ver perfiles",
+      "description": "Debes tener una cuenta en flAIghts para ver el perfil de otros viajeros y contactar con ellos.",
+      "login": "Iniciar sesión"
+    },
+    "notFound": {
+      "title": "Usuario no encontrado",
+      "description": "Lo sentimos, el perfil con ID {{id}} no pudo ser localizado.",
+      "home": "Volver al inicio"
+    },
+    "status": {
+      "friendSince": "Amigo desde {{date}}",
+      "sentRequest": "Solicitud de amistad enviada",
+      "receivedRequest": "Solicitud de amistad recibida",
+      "memberSince": "Miembro desde {{date}}"
+    },
+    "actions": {
+      "editProfile": "Editar mi perfil",
+      "message": "Mensaje",
+      "remove": "Eliminar",
+      "acceptRequest": "Aceptar solicitud de amistad",
+      "cancelRequest": "Cancelar solicitud de amistad",
+      "sendRequest": "Enviar solicitud de amistad"
+    },
+    "searches": {
+      "title": "Últimas búsquedas",
+      "private": "Cuenta privada",
+      "privateDesc": "Para ver las búsquedas de {{username}} debes ser su amigo.",
+      "empty": "Este usuario aún no tiene búsquedas de vuelos guardadas.",
+      "departure": "Salida: {{date}}",
+      "return": "Regreso: {{date}}",
+      "noMore": "No hay más búsquedas"
+    },
+    "toast": {
+      "requestSent": "Solicitud de amistad enviada",
+      "requestAccepted": "Solicitud de amistad aceptada",
+      "requestCancelled": "Solicitud de amistad cancelada",
+      "friendRemoved": "Amigo eliminado"
+    }
+  },
+  "userSearch": {
+    "title": "Buscar usuarios",
+    "subtitle": "Encuentra a tus amigos por nombre de usuario.",
+    "placeholder": "Buscar por usuario...",
+    "emptyState": "Escribe un nombre de usuario para comenzar a buscar.",
+    "loading": "Buscando...",
+    "noResults": "No se han encontrado usuarios que coincidan con \"{{query}}\".",
+    "status": {
+      "pending": "Pendiente",
+      "respond": "Responder solicitud"
+    }
+  },
+  "searchFlight": {
+    "placeholders": {
+      "origin": "Origen",
+      "destination": "Destino",
+      "date": "Fecha"
+    },
+    "tripType": {
+      "oneWay": "Ida simple",
+      "roundTrip": "Ida y vuelta"
+    },
+    "actions": {
+      "addStop": "Añadir parada",
+      "search": "Buscar vuelos",
+      "searching": "Buscando..."
+    },
+    "validation": {
+      "completeFields": "Por favor, completa origen, destino y fecha de salida"
+    },
+    "toast": {
+      "searchStarted": "Búsqueda iniciada",
+      "searchError": "Error al buscar vuelos"
+    }
+  },
+  "floatingLabelInput": {
+    "toast": {
+      "cannotCopyPassword": "Por seguridad, no se puede copiar en campos de contraseña",
+      "cannotCutPassword": "Por seguridad, no se puede cortar en campos de contraseña"
+    }
+  },
+  "sidebar": {
+    "searchFlights": "Buscar vuelos",
+    "friends": "Amigos"
+  },
+  "errorBoundary": {
+    "sessionExpired": "Sesión expirada",
+    "sessionExpiredDesc": "Tu sesión ha expirado o no tienes permisos para acceder a este recurso. Por favor, inicia sesión de nuevo.",
+    "loginButton": "Iniciar sesión",
+    "homeButton": "Volver al inicio",
+    "errorTitle": "Vuelo interrumpido",
+    "errorDesc": "Parece que hemos encontrado una turbulencia inesperada en el sistema. No hemos podido completar tu solicitud.",
+    "showDetails": "Ver detalles técnicos",
+    "hideDetails": "Ocultar detalles técnicos",
+    "copyError": "Copiar error"
+  },
+  "navbar": {
+    "notifications": "Notificaciones",
+    "friendRequests": "Solicitudes de amistad",
+    "newFriendRequests": "Tienes {{count}} nueva{{plural}}",
+    "noNotifications": "No tienes notificaciones",
+    "back": "Volver",
+    "account": "Cuenta",
+    "myProfile": "Mi Perfil",
+    "settings": "Ajustes",
+    "adminPanel": "Panel Admin",
+    "soon": "Soon",
+    "theme": "Tema",
+    "authentication": "Autenticación",
+    "options": "Opciones"
+  }
+}

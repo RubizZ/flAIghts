@@ -3,8 +3,10 @@ import { Link } from "react-router-dom";
 import { useSearchUsers } from "@/api/generated/users/users";
 import { Search, Clock } from "lucide-react";
 import UserAvatar from "@/components/ui/UserAvatar";
+import { useTranslation } from "react-i18next";
 
 export default function UserSearch() {
+    const { t } = useTranslation();
     const [query, setQuery] = useState("");
 
     const { data: searchResponse, isLoading } = useSearchUsers(
@@ -21,8 +23,8 @@ export default function UserSearch() {
     return (
         <div className="flex flex-col gap-6 max-w-4xl mx-auto w-full pt-8 px-4 md:px-0">
             <div className="flex flex-col gap-2">
-                <h1 className="text-3xl font-bold">Buscar usuarios</h1>
-                <p className="text-content-muted text-sm">Encuentra a tus amigos por nombre de usuario.</p>
+                <h1 className="text-3xl font-bold">{t("userSearch.title")}</h1>
+                <p className="text-content-muted text-sm">{t("userSearch.subtitle")}</p>
             </div>
 
             <div className="relative w-full">
@@ -31,7 +33,7 @@ export default function UserSearch() {
                 </div>
                 <input
                     type="search"
-                    placeholder="Buscar por usuario..."
+                    placeholder={t("userSearch.placeholder")}
                     className="w-full bg-surface placeholder-content-muted outline-none px-4 py-3 pl-10 rounded-xl font-medium border border-line focus:border-brand shadow-sm"
                     value={query}
                     onChange={(e) => setQuery(e.target.value)}
@@ -41,15 +43,15 @@ export default function UserSearch() {
             <div className="flex flex-col gap-4 mt-2">
                 {query.trim() === "" ? (
                     <div className="text-content-muted text-center py-12 bg-surface rounded-xl border border-dashed border-line">
-                        Escribe un nombre de usuario para comenzar a buscar.
+                        {t("userSearch.emptyState")}
                     </div>
                 ) : isLoading ? (
                     <div className="text-content-muted text-center py-12 font-bold animate-pulse bg-surface rounded-xl border border-line">
-                        Buscando...
+                        {t("userSearch.loading")}
                     </div>
                 ) : users.length === 0 ? (
                     <div className="text-content-muted text-center py-12 bg-surface rounded-xl border border-dashed border-line">
-                        No se han encontrado usuarios que coincidan con &quot;<span className="font-bold">{query}</span>&quot;.
+                        {t("userSearch.noResults", { query })}
                     </div>
                 ) : (
                     <div className="flex flex-col gap-3">
@@ -66,13 +68,13 @@ export default function UserSearch() {
 
                                 <div className="flex items-center gap-2">
                                     {u.sent_friend_request ? (
-                                        <div className="flex items-center gap-2 text-content-muted bg-surface rounded-xl px-3 py-2 text-sm font-medium" title="Solicitud enviada">
+                                        <div className="flex items-center gap-2 text-content-muted bg-surface rounded-xl px-3 py-2 text-sm font-medium" title={t("userSearch.status.pending")}>
                                             <Clock size={18} />
-                                            <span className="hidden sm:inline">Pendiente</span>
+                                            <span className="hidden sm:inline">{t("userSearch.status.pending")}</span>
                                         </div>
                                     ) : u.received_friend_request ? (
-                                        <div className="flex items-center gap-2 text-content bg-surface rounded-xl px-3 py-2 text-sm font-bold border border-line" title="Tienes una solicitud pendiente">
-                                            <span className="hidden sm:inline">Responder solicitud</span>
+                                        <div className="flex items-center gap-2 text-content bg-surface rounded-xl px-3 py-2 text-sm font-bold border border-line" title={t("userSearch.status.respond")}>
+                                            <span className="hidden sm:inline">{t("userSearch.status.respond")}</span>
                                         </div>
                                     ) : null}
                                 </div>

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
+import { useTranslation } from "react-i18next";
 import { Menu, X } from "lucide-react";
 import { useNavItems } from "./useNavItems";
 
@@ -18,6 +19,7 @@ interface SidebarProps {
 }
 
 export default function Sidebar({ isOpen, onClose, onToggle, variant = 'classic' }: SidebarProps) {
+    const { t } = useTranslation();
     const { isLoading } = useAuth();
     const [clickedItem, setClickedItem] = useState<string | null>(null);
     const location = useLocation();

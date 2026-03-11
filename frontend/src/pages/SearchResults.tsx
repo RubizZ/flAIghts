@@ -2,8 +2,11 @@ import { useParams } from "react-router-dom";
 import { useSearchResult } from "@/api/generated/search/search";
 import { Loader2, Plane } from "lucide-react";
 import type { ItineraryResponse } from "@/api/generated/model";
+import { useTranslation } from "react-i18next";
+
 
 export default function SearchResults() {
+    const { t } = useTranslation();
     const { id } = useParams<{ id: string }>();
 
     // Fetch search results with polling enabled while status is 'searching'
@@ -24,7 +27,7 @@ export default function SearchResults() {
         return (
             <div className="flex flex-col items-center justify-center min-h-[50vh] gap-4">
                 <Loader2 className="w-8 h-8 animate-spin text-brand" />
-                <p className="text-lg font-medium text-content">Cargando resultados...</p>
+                <p className="text-lg font-medium text-content">{t("searchResults.loading")}</p>
             </div>
         );
     }
@@ -32,7 +35,7 @@ export default function SearchResults() {
     if (error) {
         return (
             <div className="flex flex-col items-center justify-center min-h-[50vh] gap-4 text-red-500">
-                <p className="text-lg font-medium">Error al cargar la búsqueda</p>
+                <p className="text-lg font-medium">{t("searchResults.error.fetch")}</p>
                 <p className="text-sm">{error.message}</p>
             </div>
         );
@@ -92,7 +95,7 @@ export default function SearchResults() {
                             </div>
                             <div className="ml-6 flex flex-col items-end justify-center h-full border-l border-line pl-6">
                                 <span className="text-2xl font-bold text-brand">{itinerary.total_price} €</span>
-                                <span className="text-xs text-content-muted">Precio total</span>
+                                <span className="text-xs text-content-muted">{t("searchResults.itineraries.totalPrice")}</span>
                             </div>
                         </div>
                     </div>
@@ -104,17 +107,17 @@ export default function SearchResults() {
     return (
         <div className="max-w-4xl mx-auto p-6 space-y-8 text-content">
             <div className="flex items-center justify-between">
-                <h1 className="text-2xl font-bold">Resultados de búsqueda</h1>
+                <h1 className="text-2xl font-bold">{t("searchResults.title")}</h1>
                 {searchData.status === 'searching' && (
                     <div className="flex items-center gap-2 text-brand animate-pulse">
                         <Loader2 className="w-4 h-4 animate-spin" />
-                        <span className="text-sm font-medium">Buscando más vuelos...</span>
+                        <span className="text-sm font-medium">{t("searchResults.loadingMore")}</span>
                     </div>
                 )}
             </div>
 
-            {renderItineraries("Vuelos de Ida", searchData.departure_itineraries)}
-            {renderItineraries("Vuelos de Vuelta", searchData.return_itineraries)}
+            {renderItineraries(t("searchResults.itineraries.departure"), searchData.departure_itineraries)}
+            {renderItineraries(t("searchResults.itineraries.return"), searchData.return_itineraries)}
         </div>
     );
 }

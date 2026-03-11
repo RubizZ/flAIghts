@@ -10,8 +10,10 @@ import { useQueryClient } from "@tanstack/react-query";
 import { getGetSelfUserQueryKey } from "@/api/generated/users/users";
 import { useAuth } from "@/context/AuthContext";
 import { Mail, ShieldCheck, User as UserIcon, Lock } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 export default function Register() {
+    const { t } = useTranslation();
     const navigate = useNavigate();
     const queryClient = useQueryClient();
     const { isAuthenticated, isLoading } = useAuth();
@@ -45,11 +47,11 @@ export default function Register() {
         mutation: {
             onSuccess: () => {
                 queryClient.invalidateQueries({ queryKey: getGetSelfUserQueryKey() });
-                toast.success("¡Bienvenido a bordo!");
+                toast.success(t("register.toast.welcome"));
                 navigate("/");
             },
             onError: () => {
-                toast.error("Te has registrado correctamente, pero hubo un error al iniciar sesión. Por favor, identifícate.");
+                toast.error(t("register.toast.loginError"));
                 navigate("/login");
             }
         }
@@ -58,15 +60,15 @@ export default function Register() {
     const { mutate: initiateRegistration, isPending: isInitiating } = useInitiateRegistration({
         mutation: {
             onSuccess: () => {
-                toast.success("Email de verificación enviado. Revisa tu bandeja de entrada.");
+                toast.success(t("register.toast.verificationEmailSent"));
                 setStep(2);
             },
             onError: (error) => {
                 const newErrors = { ...errors };
                 if (error.code === "EMAIL_ALREADY_IN_USE") {
-                    newErrors.email = "Este email ya está registrado";
+                    newErrors.email = t("register.validation.emailInUse");
                 } else if (error.code === "REQUEST_VALIDATION_ERROR") {
-                    if (error.details["body.email"]) newErrors.email = "El email no es válido";
+                    if (error.details["body.email"]) newErrors.email = t("register.validation.emailInvalid");
                 }
                 setErrors(newErrors);
             }
@@ -92,12 +94,12 @@ export default function Register() {
                     if (error.details["body.code"]) newErrors.code = error.details["body.code"].message;
                     setErrors(newErrors);
                 } else if (error.code === "EMAIL_VERIFICATION_CODE_INVALID_OR_EXPIRED") {
-                    setErrors(prev => ({ ...prev, code: "El código es inválido o ha expirado" }));
+                    setErrors(prev => ({ ...prev, code: t("register.validation.invalidCode") }));
                 } else if (error.code === "EMAIL_ALREADY_IN_USE") {
                     setStep(1);
-                    setErrors(prev => ({ ...prev, email: "El email ya está en uso" }));
+                    setErrors(prev => ({ ...prev, email: t("register.validation.emailInUse") }));
                 } else if (error.code === "USERNAME_ALREADY_IN_USE") {
-                    setErrors(prev => ({ ...prev, username: "El nombre de usuario ya está en uso" }));
+                    setErrors(prev => ({ ...prev, username: t("register.validation.usernameInUse") }));
                 }
             }
         }
@@ -105,7 +107,7 @@ export default function Register() {
 
     const handleNextStep = () => {
         if (!formData.email) {
-            setErrors(prev => ({ ...prev, email: "El email es obligatorio" }));
+            setErrors(prev => ({ ...prev, email: t("register.validation.emailRequired") }));
             return;
         }
         initiateRegistration({ data: { email: formData.email } });
@@ -114,11 +116,11 @@ export default function Register() {
     const handleRegister = () => {
         const newErrors = {
             email: "",
-            code: !formData.code ? "El código es obligatorio" : "",
-            username: !formData.username ? "El nombre de usuario es obligatorio" : "",
-            password: !formData.password ? "La contraseña es obligatoria" : formData.password.length < 8 ? "Mínimo 8 caracteres" : "",
-            confirmPassword: formData.password !== formData.confirmPassword ? "Las contraseñas no coinciden" : "",
-            acceptedTerms: !formData.acceptedTerms ? "Debes aceptar los términos y condiciones" : ""
+            code: !formData.code ? t("register.validation.codeRequired") : "",
+            username: !formData.username ? t("register.validation.usernameRequired") : "",
+            password: !formData.password ? t("register.validation.passwordRequired") : formData.password.length < 8 ? t("register.validation.passwordMin") : "",
+            confirmPassword: formData.password !== formData.confirmPassword ? t("register.validation.confirmPasswordRequired") : "",
+            acceptedTerms: !formData.acceptedTerms ? t("register.validation.acceptedTerms") : ""
         };
 
         setErrors(newErrors);
@@ -155,12 +157,12 @@ export default function Register() {
 
     return (
         <AuthLayout>
-            <AuthCard title={step === 1 ? "Únete a flAIghts" : "Completa tu perfil"}>
+            <AuthCard title={step === 1 ? t("register.steps.step1Title") : t("register.steps.step2Title")}>
                 <div className="flex flex-col gap-5">
                     {step === 1 ? (
                         <>
                             <p className="text-sm text-center text-content-muted">
-                                Introduce tu email para recibir un código de verificación.
+                                {t("register.steps.step1Description")}
                             </p>
                             <FloatingLabelInput
                                 value={formData.email}
@@ -179,13 +181,13 @@ export default function Register() {
                                 disabled={isInitiating}
                                 className="mt-4 rounded-lg bg-brand p-3 text-content-on-brand font-bold hover:scale-[1.02] active:scale-95 transition-all shadow-lg shadow-brand/20 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                             >
-                                {isInitiating ? "Enviando código..." : "Continuar"}
+                                {isInitiating ? t("register.actions.sendingCode") : t("register.actions.nextStep")}
                             </button>
                         </>
                     ) : (
                         <>
                             <p className="text-sm text-center text-content/70">
-                                Hemos enviado un código a <span className="font-bold text-brand">{formData.email}</span>.
+                                {t("register.codeSent")} <span className="font-bold text-brand">{formData.email}</span>.
                             </p>
 
                             <div className="flex justify-between items-center gap-4">
@@ -203,7 +205,7 @@ export default function Register() {
                                     onClick={() => setStep(1)}
                                     className="shrink-0 text-content-muted hover:underline hover:cursor-pointer text-xs"
                                 >
-                                    Cambiar email
+                                    {t("register.actions.changeEmail")}
                                 </button>
                             </div>
 
@@ -213,7 +215,7 @@ export default function Register() {
                                 type="text"
                                 id="code"
                                 name="code"
-                                label="Código de verificación"
+                                label={t("register.labels.code")}
                                 error={errors.code}
                                 onKeyDown={enterKeyPress}
                                 icon={<ShieldCheck size={18} />}
@@ -225,7 +227,7 @@ export default function Register() {
                                 type="text"
                                 id="username"
                                 name="username"
-                                label="Nombre de usuario"
+                                label={t("register.labels.username")}
                                 error={errors.username}
                                 onKeyDown={enterKeyPress}
                                 icon={<UserIcon size={18} />}
@@ -237,7 +239,7 @@ export default function Register() {
                                 type="password"
                                 id="password"
                                 name="password"
-                                label="Contraseña"
+                                label={t("register.labels.password")}
                                 error={errors.password}
                                 onKeyDown={enterKeyPress}
                                 icon={<Lock size={18} />}
@@ -250,7 +252,7 @@ export default function Register() {
                                 isRepeat
                                 id="confirmPassword"
                                 name="confirmPassword"
-                                label="Confirmar contraseña"
+                                label={t("register.labels.confirmPassword")}
                                 error={errors.confirmPassword}
                                 onKeyDown={enterKeyPress}
                                 icon={<Lock size={18} />}
@@ -279,7 +281,7 @@ export default function Register() {
                                         </div>
                                     </div>
                                     <span className="text-xs text-content-muted leading-tight select-none">
-                                        Acepto los <a href="/terms" target="_blank" rel="noopener noreferrer" className="text-brand hover:underline font-bold relative z-20" onClick={(e) => e.stopPropagation()} onMouseEnter={() => setIsHoveringLink(true)} onMouseLeave={() => setIsHoveringLink(false)}>Términos de Servicio</a> y la <a href="/privacy" target="_blank" rel="noopener noreferrer" className="text-brand hover:underline font-bold relative z-20" onClick={(e) => e.stopPropagation()} onMouseEnter={() => setIsHoveringLink(true)} onMouseLeave={() => setIsHoveringLink(false)}>Política de Privacidad</a>
+                                        {t("register.iAccept")} <a href="/terms" target="_blank" rel="noopener noreferrer" className="text-brand hover:underline font-bold relative z-20" onClick={(e) => e.stopPropagation()} onMouseEnter={() => setIsHoveringLink(true)} onMouseLeave={() => setIsHoveringLink(false)}>{t("register.links.terms")}</a> y la <a href="/privacy" target="_blank" rel="noopener noreferrer" className="text-brand hover:underline font-bold relative z-20" onClick={(e) => e.stopPropagation()} onMouseEnter={() => setIsHoveringLink(true)} onMouseLeave={() => setIsHoveringLink(false)}>{t("register.links.privacy")}</a>
                                     </span>
                                 </label>
                                 {errors.acceptedTerms && <p className="text-[10px] text-red-500 ml-8 font-bold animate-shake">{errors.acceptedTerms}</p>}
@@ -291,7 +293,7 @@ export default function Register() {
                                 disabled={isCompleting}
                                 className="mt-4 rounded-lg bg-brand p-3 text-content-on-brand font-bold hover:scale-[1.02] active:scale-95 transition-all shadow-lg shadow-brand/20 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                             >
-                                {isCompleting ? "Creando cuenta..." : "Completar Registro"}
+                                {isCompleting ? t("register.actions.creatingAccount") : t("register.actions.completeRegistration")}
                             </button>
                         </>
                     )}
@@ -299,7 +301,7 @@ export default function Register() {
 
 
                     <span className="text-sm text-content text-center">
-                        ¿Ya tienes cuenta? <a href="/login" className="text-brand font-bold hover:underline">Inicia sesión</a>
+                        {t("register.alreadyHaveAccount")} <a href="/login" className="text-brand font-bold hover:underline">{t("register.links.login")}</a>
                     </span>
                 </div>
             </AuthCard>

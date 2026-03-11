@@ -1,5 +1,6 @@
 import React, { Component, ErrorInfo, ReactNode } from "react";
 import { TriangleAlert, RefreshCcw, Home, ChevronDown, ChevronUp, Copy, LogIn } from "lucide-react";
+import i18n from "@/i18n/i18n";
 import { AuthFailError } from "@/api/axios-instance";
 
 interface Props {
@@ -92,9 +93,9 @@ class ErrorBoundary extends Component<Props, State> {
                             </div>
 
                             <div className="space-y-3">
-                                <h2 className="text-2xl font-bold text-content tracking-tight">Sesión expirada</h2>
+                                <h2 className="text-2xl font-bold text-content tracking-tight">{i18n.t("errorBoundary.sessionExpired")}</h2>
                                 <p className="text-content-muted leading-relaxed">
-                                    Tu sesión ha expirado o no tienes permisos para acceder a este recurso. Por favor, inicia sesión de nuevo.
+                                    {i18n.t("errorBoundary.sessionExpiredDesc")}
                                 </p>
                             </div>
 
@@ -104,7 +105,7 @@ class ErrorBoundary extends Component<Props, State> {
                                     className="flex items-center gap-2 px-6 py-3 bg-brand text-content-on-brand rounded-full font-semibold hover:bg-brand/90 transition-all duration-300 shadow-md active:scale-95 group/btn cursor-pointer"
                                 >
                                     <LogIn size={18} />
-                                    Iniciar sesión
+                                    {i18n.t("errorBoundary.loginButton")}
                                 </button>
 
                                 <button
@@ -112,7 +113,7 @@ class ErrorBoundary extends Component<Props, State> {
                                     className="flex items-center gap-2 px-6 py-3 bg-surface text-content rounded-full border border-line hover:bg-surface/80 transition-all duration-300 active:scale-95 cursor-pointer"
                                 >
                                     <Home size={18} />
-                                    Volver al inicio
+                                    {i18n.t("errorBoundary.homeButton")}
                                 </button>
                             </div>
                         </div>
@@ -136,9 +137,9 @@ class ErrorBoundary extends Component<Props, State> {
                         </div>
 
                         <div className="space-y-3">
-                            <h2 className="text-2xl font-bold text-content tracking-tight">Vuelo interrumpido</h2>
+                            <h2 className="text-2xl font-bold text-content tracking-tight">{i18n.t("errorBoundary.errorTitle")}</h2>
                             <p className="text-content-muted leading-relaxed">
-                                Parece que hemos encontrado una turbulencia inesperada en el sistema. No hemos podido completar tu solicitud.
+                                {i18n.t("errorBoundary.errorDesc")}
                             </p>
                         </div>
 
@@ -150,7 +151,7 @@ class ErrorBoundary extends Component<Props, State> {
                                     className="flex items-center gap-2 text-xs font-mono text-content-muted hover:text-content transition-colors mx-auto mb-2 cursor-pointer"
                                 >
                                     {this.state.showDetails ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
-                                    {this.state.showDetails ? "Ocultar detalles técnicos" : "Ver detalles técnicos"}
+                                    {this.state.showDetails ? i18n.t("errorBoundary.hideDetails") : i18n.t("errorBoundary.showDetails")}
                                 </button>
 
                                 {this.state.showDetails && (
@@ -158,7 +159,7 @@ class ErrorBoundary extends Component<Props, State> {
                                         <button
                                             onClick={this.copyErrorToClipboard}
                                             className="absolute top-2 right-2 p-2 bg-main/50 rounded-md hover:bg-main text-content-muted hover:text-content transition-all opacity-0 group-hover/code:opacity-100"
-                                            title="Copiar error"
+                                            title={i18n.t("errorBoundary.copyError")}
                                         >
                                             <Copy size={14} />
                                         </button>
