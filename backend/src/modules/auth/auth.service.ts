@@ -6,8 +6,8 @@ import ms from 'ms'
 import crypto from "node:crypto";
 import { MailService } from "../../services/mail.service.js";
 import { MailTemplates } from "../../services/mail.templates.js";
-import { ResetTokenInvalidOrExpiredError, LoginUserNotFoundError, InvalidPasswordError, NewPasswordSameAsOldError } from "./auth.errors.js";
-import type { LoginResponseData, JWTPayload } from "./auth.types.js";
+import { ResetTokenInvalidOrExpiredError, LoginUserNotFoundError, InvalidPasswordError, NewPasswordSameAsOldError, InvalidTokenError, TokenUserNotFoundError, AuthenticationVersionMismatchError } from "./auth.errors.js";
+import type { LoginResponseData, JWTPayload, AuthenticatedUser } from "./auth.types.js";
 
 export class PasswordService {
     public static hashPassword(password: string) {
@@ -148,5 +148,38 @@ export class AuthService {
         }
 
         return true;
+    }
+
+    public async verifyToken(token: string): Promise<AuthenticatedUser> {
+        let decoded: JWTPayload;
+        try {
+            decoded = jwt.verify(token, this.jwtSecret) as JWTPayload;
+        } catch (err) {
+            const message = err instanceof Error ? err.message : 'Unknown JWT error';
+            throw new InvalidTokenError(message);
+        }
+
+        const user = await User.findById(decoded.userId);
+        if (!user) {
+            throw new TokenUserNotFoundError(decoded.userId);
+        }
+
+        if (user.auth_version !== decoded.version) {
+            throw new AuthenticationVersionMismatchError(decoded.userId, user.auth_version, decoded.version);
+        }
+
+        user.last_seen_at = new Date();
+        await user.save();
+
+        const safeUser: AuthenticatedUser = {
+            _id: user._id.toString(),
+            username: user.username,
+            email: user.email,
+            role: user.role,
+            auth_version: user.auth_version,
+            token: token,
+        };
+
+        return safeUser;
     }
 }

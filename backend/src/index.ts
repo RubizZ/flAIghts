@@ -1,5 +1,6 @@
 import 'dotenv/config'
 import 'reflect-metadata'
+import { createServer } from 'http';
 import express from 'express';
 import cors from 'cors';
 import { connectDB } from './config/database.js';
@@ -13,6 +14,8 @@ import { fileURLToPath } from 'node:url';
 import cookieParser from 'cookie-parser';
 import compression from 'compression';
 import { Error as MongooseError } from 'mongoose';
+import { container } from 'tsyringe';
+import { SocketService } from './services/socket.service.js';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
@@ -157,6 +160,12 @@ app.use((err: any, req: express.Request, res: express.Response, next: express.Ne
     next();
 });
 
-app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
+const httpServer = createServer(app);
+
+// Initialize Socket.IO and attach it to the server
+const socketService = container.resolve(SocketService);
+socketService.initialize(httpServer);
+
+httpServer.listen(PORT, () => {
+    console.log(`⚡️ Server is running on port ${PORT}`);
 });
