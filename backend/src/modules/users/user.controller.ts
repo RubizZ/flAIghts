@@ -42,7 +42,7 @@ import {
     FriendRequestAlreadyReceivedError,
     ProfilePictureTooLargeError
 } from "./user.errors.js";
-import { profilePictureRateLimit } from "../../middlewares/rate-limit.middleware.js";
+import { profilePictureRateLimit } from "../../middlewares/rateLimiter.js";
 
 @injectable()
 @Route("users")

@@ -62,6 +62,7 @@
     }
   },
     "login": {
+    "noAccount": "¿No tienes cuenta?",
     "title": "Inicio de sesión",
     "labels": {
       "identifier": "Email o nombre de usuario",

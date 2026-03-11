@@ -16,6 +16,12 @@ import { container } from 'tsyringe';
 import { ServerConfig } from './config/server.config.js';
 import { contextStorage, type RequestContext } from './utils/context.js';
 import logger from './utils/logger.js';
+import {
+    globalApiLimiter,
+    authLimiter,
+    registrationLimiter,
+    searchLimiter
+} from './middlewares/rateLimiter.js';
 
 
 logger.info(`
@@ -114,6 +120,22 @@ if (config.NODE_ENV !== 'production') {
     const openApiSpec = JSON.parse(fs.readFileSync(path.join(__dirname, '../build/openapi.json'), 'utf8'));
     app.use('/docs', swaggerUi.serve, swaggerUi.setup(openApiSpec));
 }
+
+
+// Authentication endpoints rate limiter (5 req/min)
+app.post('/auth/login', authLimiter);
+app.post('/auth/forgot-password', authLimiter);
+app.post('/auth/reset-password', authLimiter);
+
+// Registration endpoints rate limiter (3 req/min)
+app.post('/users/register/initiate', registrationLimiter);
+app.post('/users/register/complete', registrationLimiter);
+
+// Search endpoint rate limiter (20 req/min)
+app.post('/search', searchLimiter);
+
+// Global API rate limiter (100 req/min)
+app.use(globalApiLimiter);
 
 // Register routes from tsoa
 RegisterRoutes(app)
