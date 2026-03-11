@@ -312,9 +312,10 @@ function SearchFlight() {
             <div className={`absolute inset-0 z-0 transition-opacity duration-700 ${!isLargeScreen && !isSelectingOnMap ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
                 <Globe
                     onAirportSelect={selectingType ? handleMapSelect : undefined}
-                    selectedAirports={[origin?.iata_code, destination?.iata_code, inspectedAirport?.iata_code].filter(Boolean) as string[]}
                     origin={origin}
                     destination={destination}
+                    layovers={layovers}
+                    selectedAirports={[...layovers.map(l => l.airport?.iata_code).filter(Boolean) as string[], inspectedAirport?.iata_code].filter(Boolean) as string[]}
                     interactive={isSelectingOnMap && !(inspectedAirport && !isLargeScreen)}
                     horizontalOffset={isSelectingOnMap ? 0 : (isLargeScreen ? 258 : 0)}
                     onReady={() => setGlobeReady(true)}

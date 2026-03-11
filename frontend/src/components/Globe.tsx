@@ -5,6 +5,7 @@ import { gsap } from "gsap";
 import { PlaneTakeoff, PlaneLanding, X } from "lucide-react";
 import { useGetGlobeAirports } from "@/api/generated/airports/airports";
 import { COUNTRY_NAMES } from "@/constants/countries";
+import type { Layover } from "./search/ManualSearchForm";
 import type { AirportResponse } from "@/api/generated/model";
 
 interface AirportData {
@@ -28,6 +29,7 @@ interface GlobeProps {
     onAirportClick?: (airport: AirportResponse | null) => void;
     onMovementChange?: (isMoving: boolean, isUserInteracting: boolean) => void;
     focusIata?: string;
+    layovers?: Layover[];
 }
 
 export default function Globe({
@@ -42,7 +44,8 @@ export default function Globe({
     onSetDestination,
     onAirportClick,
     onMovementChange,
-    focusIata
+    focusIata,
+    layovers = []
 }: GlobeProps) {
     const originIata = origin?.iata_code;
     const destinationIata = destination?.iata_code;
@@ -95,11 +98,12 @@ export default function Globe({
 
     // Stable key for airports that must NOT be clustered (sorted to ignore order in swaps)
     const forcedAirportsKey = useMemo(() => {
-        return [originIata, destinationIata, ...selectedAirports]
+        const layoverIatas = layovers.map(l => l.airport?.iata_code).filter(Boolean) as string[];
+        return [originIata, destinationIata, ...selectedAirports, ...layoverIatas]
             .filter(Boolean)
             .sort()
             .join(',');
-    }, [originIata, destinationIata, selectedAirports]);
+    }, [originIata, destinationIata, selectedAirports, layovers]);
     const lastCamQuatRef = useRef<THREE.Quaternion>(new THREE.Quaternion());
     const lastMoveTimeRef = useRef(0);
     const isUserInteractingRef = useRef(false);
@@ -158,6 +162,7 @@ export default function Globe({
 
     // Update refs for the animation loop to prevent stale closures
     const selectedAirportsSetRef = useRef<Set<string>>(new Set());
+    const layoversSetRef = useRef<Set<string>>(new Set());
     const interactiveRef = useRef(interactive);
 
     const getThemeColorString = (varName: string, defaultVal: string): string => {
@@ -239,7 +244,9 @@ export default function Globe({
         onAirportClickRef.current = onAirportClick;
         selectedAirportsRef.current = selectedAirports;
         selectedAirportsSetRef.current = new Set(selectedAirports);
-    }, [originIata, destinationIata, onAirportSelect, onAirportClick, selectedAirports]);
+        const layoverIatas = (layovers || []).map(l => l.airport?.iata_code).filter(Boolean) as string[];
+        layoversSetRef.current = new Set(layoverIatas);
+    }, [originIata, destinationIata, onAirportSelect, onAirportClick, selectedAirports, layovers]);
 
     useEffect(() => {
         interactiveRef.current = interactive;
@@ -621,6 +628,7 @@ export default function Globe({
                 const activeOrigin = activeOriginRef.current;
                 const activeDest = activeDestRef.current;
                 const selSet = selectedAirportsSetRef.current;
+                const layoversSet = layoversSetRef.current;
 
                 const distFactor = camDist / 3.2;
                 // Linear scaling ensures constant screen size (Perspective projection offset)
@@ -645,13 +653,13 @@ export default function Globe({
                     if (item.isCluster) {
                         for (let i = 0; i < item.airports.length; i++) {
                             const iata = item.airports[i].iata;
-                            if (iata === activeOrigin || iata === activeDest || selSet.has(iata)) {
+                            if (iata === activeOrigin || iata === activeDest || selSet.has(iata) || layoversSet.has(iata)) {
                                 isSpecial = true;
                                 break;
                             }
                         }
                     } else {
-                        isSpecial = item.iata === activeOrigin || item.iata === activeDest || selSet.has(item.iata);
+                        isSpecial = item.iata === activeOrigin || item.iata === activeDest || selSet.has(item.iata) || layoversSet.has(item.iata);
                     }
 
                     let targetOpacity = 0;
@@ -1234,8 +1242,10 @@ export default function Globe({
         const brandColor = getThemeColorHex('--color-brand', 0x4f46e5);
         const originColor = getThemeColorHex('--color-origin', 0x0891b2);
         const destColor = getThemeColorHex('--color-destination', 0xc026d3);
+        const layoverColor = 0x00ff00; // Consistent color for layovers
 
         const selSet = new Set(selectedAirports);
+        const layoverSet = new Set(layovers.map(l => l.airport?.iata_code).filter(Boolean) as string[]);
 
         airportGroupRef.current.children.forEach(child => {
             const mesh = child as THREE.Mesh;
@@ -1247,6 +1257,10 @@ export default function Globe({
                     mat.color.setHex(item.iata === originIata ? originColor : destColor);
                     mat.opacity = 1;
                     mesh.scale.setScalar(12);
+                } else if (layoverSet.has(item.iata)) {
+                    mat.color.setHex(layoverColor);
+                    mat.opacity = 1;
+                    mesh.scale.setScalar(10);
                 } else if (selSet.has(item.iata)) {
                     mat.color.setHex(0x00ff00);
                     mat.opacity = 1;
@@ -1257,11 +1271,15 @@ export default function Globe({
             } else {
                 // Determine if cluster contains a special airport
                 let hasOriginOrDest = false;
+                let hasLayover = false;
                 let hasSelected = false;
                 for (let i = 0; i < item.airports.length; i++) {
                     const iata = item.airports[i].iata;
                     if (iata === originIata || iata === destinationIata) {
                         hasOriginOrDest = true;
+                    }
+                    if (layoverSet.has(iata)) {
+                        hasLayover = true;
                     }
                     if (selSet.has(iata)) {
                         hasSelected = true;
@@ -1272,6 +1290,10 @@ export default function Globe({
                     mat.color.setHex(brandColor);
                     mat.opacity = 0;
                     mesh.scale.setScalar(8); // Sync with specialClusterScale
+                } else if (hasLayover) {
+                    mat.color.setHex(brandColor);
+                    mat.opacity = 0;
+                    mesh.scale.setScalar(7);
                 } else if (hasSelected) {
                     mat.color.setHex(brandColor);
                     mat.opacity = 0;
@@ -1282,7 +1304,7 @@ export default function Globe({
                 }
             }
         });
-    }, [isLoaded, originIata, destinationIata, selectedAirports.join(',')]);
+    }, [isLoaded, originIata, destinationIata, selectedAirports.join(','), layovers]);
 
     // 3. Update Interactive State
     useEffect(() => {
@@ -1332,7 +1354,6 @@ export default function Globe({
         window.addEventListener("resize", handleResize);
         return () => window.removeEventListener("resize", handleResize);
     }, [horizontalOffset]);
-
     // 6. Handle arcs and planes creation (Flight path remains stable)
     useEffect(() => {
         if (!isLoaded || !sceneRef.current) return;
@@ -1352,43 +1373,42 @@ export default function Globe({
         }
         planesRef.current = [];
 
-        // Draw Arc if origin and destination are set
-        if (originIata && destinationIata) {
-            const origin = airportsDataRef.current.find(a => a.iata === originIata);
-            const dest = airportsDataRef.current.find(a => a.iata === destinationIata);
+        // Draw Arcs for the full route sequence
+        const routeAirports = [
+            originIata,
+            ...layovers.map(l => l.airport?.iata_code).filter(Boolean),
+            destinationIata
+        ].filter(Boolean) as string[];
 
-            if (origin && dest) {
-                const start = latLonToVector3(Number(origin.lat), Number(origin.lon));
-                const end = latLonToVector3(Number(dest.lat), Number(dest.lon));
-                const dist = start.distanceTo(end);
-                const samples = Math.max(120, Math.floor(dist * 250));
-                const points: THREE.Vector3[] = [];
-                const cruiseAltitude = 0.02 + (dist * 0.04);
+        if (routeAirports.length >= 2) {
+            for (let i = 0; i < routeAirports.length - 1; i++) {
+                const startIata = routeAirports[i];
+                const endIata = routeAirports[i + 1];
+                
+                const startAirport = airportsDataRef.current.find(a => a.iata === startIata);
+                const endAirport = airportsDataRef.current.find(a => a.iata === endIata);
 
-                for (let i = 0; i <= samples; i++) {
-                    const t = i / samples;
-                    const point = new THREE.Vector3().copy(start).lerp(end, t).normalize();
-                    const altitudeFactor = Math.pow(Math.sin(Math.PI * t), 0.5);
-                    const altitude = 1.005 + (altitudeFactor * cruiseAltitude);
-                    point.multiplyScalar(altitude);
-                    points.push(point);
-                }
+                if (startAirport && endAirport) {
+                    const startV3 = latLonToVector3(Number(startAirport.lat), Number(startAirport.lon));
+                    const endV3 = latLonToVector3(Number(endAirport.lat), Number(endAirport.lon));
+                    const dist = startV3.distanceTo(endV3);
+                    const samples = Math.max(120, Math.floor(dist * 250));
+                    const points: THREE.Vector3[] = [];
+                    const cruiseAltitude = 0.02 + (dist * 0.04);
 
-                const curve = new THREE.CatmullRomCurve3(points);
-                const spacedPoints = curve.getSpacedPoints(samples);
-                const pCount = 1;
+                    for (let j = 0; j <= samples; j++) {
+                        const t = j / samples;
+                        const point = new THREE.Vector3().copy(startV3).lerp(endV3, t).normalize();
+                        const altitudeFactor = Math.pow(Math.sin(Math.PI * t), 0.5);
+                        const altitude = 1.005 + (altitudeFactor * cruiseAltitude);
+                        point.multiplyScalar(altitude);
+                        points.push(point);
+                    }
 
-                for (let i = 0; i < pCount; i++) {
-                    const planeColor = getThemeColorHex('--color-origin', 0x0891b2);
-                    const planeMesh = new THREE.Mesh(
-                        new THREE.SphereGeometry(0.005, 12, 12),
-                        new THREE.MeshStandardMaterial({
-                            color: planeColor,
-                            emissive: planeColor,
-                            emissiveIntensity: 3
-                        })
-                    );
-
+                    const curve = new THREE.CatmullRomCurve3(points);
+                    const spacedPoints = curve.getSpacedPoints(samples);
+                    
+                    // Create arc line
                     const trailGeometry = new THREE.BufferGeometry().setFromPoints(spacedPoints);
                     const positionAttr = trailGeometry.getAttribute('position') as THREE.BufferAttribute;
                     if (positionAttr) positionAttr.setUsage(THREE.DynamicDrawUsage);
@@ -1403,6 +1423,18 @@ export default function Globe({
                     const trailLine = new THREE.Line(trailGeometry, trailMaterial);
                     arcsGroupRef.current.add(trailLine);
 
+                    // Create plane for this segment
+                    const planeColor = getThemeColorHex('--color-origin', 0x0891b2);
+                    const planeMesh = new THREE.Mesh(
+                        new THREE.SphereGeometry(0.005, 12, 12),
+                        new THREE.MeshStandardMaterial({
+                            color: planeColor,
+                            emissive: planeColor,
+                            emissiveIntensity: 3
+                        })
+                    );
+                    arcsGroupRef.current.add(planeMesh);
+
                     const baseSpeed = 0.002;
                     const realSpeed = baseSpeed / (1 + dist * 2);
 
@@ -1411,14 +1443,13 @@ export default function Globe({
                         curve: curve,
                         points: spacedPoints,
                         line: trailLine,
-                        progress: i / pCount,
+                        progress: 0, // Stagger if desired, or keep at 0
                         speed: realSpeed
                     });
-                    arcsGroupRef.current.add(planeMesh);
                 }
             }
         }
-    }, [isLoaded, originIata, destinationIata]);
+    }, [isLoaded, originIata, destinationIata, layovers]);
 
     // 7. Handle camera positioning (Direct Action Driven)
     const lastPropsRef = useRef({ originIata, destinationIata, focusIata, interactive });

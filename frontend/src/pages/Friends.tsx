@@ -120,7 +120,7 @@ export default function Friends() {
                     className="ml-auto mb-4 flex items-center gap-2 bg-brand text-content-on-brand px-4 py-2 rounded-xl font-bold hover:opacity-90 transition-all shadow-lg shadow-brand/20 hover:scale-105 active:scale-95"
                 >
                     <UserSearch size={18} />
-                    <span>{t("friends.actions.addFriend")}</span>
+                    <span>{t("friends.addFriend")}</span>
                 </Link>
             </div>
 
