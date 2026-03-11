@@ -2,9 +2,9 @@ import { useEffect, useRef, useState, useMemo } from "react";
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import { gsap } from "gsap";
-import { MapPin, PlaneTakeoff, PlaneLanding, Info, X } from "lucide-react";
+import { PlaneTakeoff, PlaneLanding, X } from "lucide-react";
 import { useGetGlobeAirports } from "@/api/generated/airports/airports";
-import type { GlobeAirportResponse } from "@/api/generated/model";
+import { COUNTRY_NAMES } from "@/constants/countries";
 
 interface AirportData {
     iata: string;
@@ -45,18 +45,21 @@ export default function Globe({
     const popupRef = useRef<HTMLDivElement | null>(null);
     const originLabelRef = useRef<HTMLDivElement | null>(null);
     const destLabelRef = useRef<HTMLDivElement | null>(null);
-    const clusterLabelsContainerRef = useRef<HTMLDivElement | null>(null);
     const contextMenuContainerRef = useRef<HTMLDivElement | null>(null);
-    const clusterLabelsMapRef = useRef<Record<string, HTMLDivElement>>({});
+    const labelGroupRef = useRef<THREE.Group>(new THREE.Group());
+    const clusterTextureCache = useRef<Record<number, THREE.CanvasTexture>>({});
 
     const airplaneModelRef = useRef<THREE.Group | null>(null);
     const airportsDataRef = useRef<AirportData[]>([]);
     const airportsMap = useRef<Record<string, THREE.Mesh>>({});
+    const sharedAirportGeo = useRef(new THREE.SphereGeometry(0.0004, 12, 12));
+    const sharedClusterGeo = useRef(new THREE.SphereGeometry(0.002, 12, 12));
     const arcsGroupRef = useRef<THREE.Group>(new THREE.Group());
     const planesRef = useRef<{ mesh: THREE.Object3D; curve: THREE.Curve<THREE.Vector3>; points: THREE.Vector3[]; line: THREE.Line; progress: number; speed: number }[]>([]);
 
     const sceneRef = useRef<THREE.Scene | null>(null);
     const earthGroupRef = useRef<THREE.Group>(new THREE.Group());
+    const countryLabelsGroupRef = useRef<THREE.Group>(new THREE.Group());
     const airportGroupRef = useRef<THREE.Group>(new THREE.Group());
     const starGroupRef = useRef<THREE.Group>(new THREE.Group());
     const cameraRef = useRef<THREE.PerspectiveCamera | null>(null);
@@ -138,6 +141,78 @@ export default function Globe({
     // Update refs for the animation loop to prevent stale closures
     const selectedAirportsSetRef = useRef<Set<string>>(new Set());
     const interactiveRef = useRef(interactive);
+
+    const getThemeColorString = (varName: string, defaultVal: string): string => {
+        return getComputedStyle(document.documentElement).getPropertyValue(varName).trim() || defaultVal;
+    };
+
+    const getClusterTexture = (count: number) => {
+        if (clusterTextureCache.current[count]) return clusterTextureCache.current[count];
+
+        const size = 64;
+        const canvas = document.createElement('canvas');
+        canvas.width = size;
+        canvas.height = size;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return null;
+
+        const brandColor = getThemeColorString('--color-brand', '#4f46e5');
+
+        // Background circle
+        ctx.beginPath();
+        ctx.arc(size / 2, size / 2, size / 2 - 2, 0, Math.PI * 2);
+        ctx.fillStyle = brandColor;
+        ctx.fill();
+
+        // Border
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
+        ctx.lineWidth = 4;
+        ctx.stroke();
+
+        // Text
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 32px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(count.toString(), size / 2, size / 2);
+
+        const texture = new THREE.CanvasTexture(canvas);
+        texture.anisotropy = 4;
+        clusterTextureCache.current[count] = texture;
+        return texture;
+    };
+
+    const getCountryLabelTexture = (name: string) => {
+        const padding = 16;
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return null;
+
+        ctx.font = '500 28px "Inter", sans-serif';
+        const metrics = ctx.measureText(name);
+        const textWidth = metrics.width;
+
+        canvas.width = textWidth + padding * 2;
+        canvas.height = 60;
+
+        const ctx2 = canvas.getContext('2d')!;
+        ctx2.clearRect(0, 0, canvas.width, canvas.height);
+
+        // Text styling: slightly soft edges to look like paint/print
+        ctx2.fillStyle = 'rgba(255, 255, 255, 0.9)';
+        ctx2.font = '500 28px "Inter", sans-serif';
+        ctx2.textAlign = 'center';
+        ctx2.textBaseline = 'middle';
+
+        // Subtle drop shadow replaces the blocky background
+        ctx2.shadowColor = 'rgba(0, 0, 0, 0.4)';
+        ctx2.shadowBlur = 4;
+        ctx2.fillText(name, canvas.width / 2, canvas.height / 2);
+
+        const texture = new THREE.CanvasTexture(canvas);
+        texture.anisotropy = 4;
+        return texture;
+    };
 
     useEffect(() => {
         activeOriginRef.current = originIata;
@@ -266,6 +341,8 @@ export default function Globe({
         scene.add(earthGroup);
         earthGroup.add(arcsGroupRef.current);
         earthGroup.add(airportGroupRef.current);
+        earthGroup.add(labelGroupRef.current);
+        earthGroup.add(countryLabelsGroupRef.current);
         earthGroup.scale.set(1, 1, 1);
         earthGroup.rotation.y = 0;
 
@@ -523,65 +600,113 @@ export default function Globe({
                         isSpecial = item.iata === activeOrigin || item.iata === activeDest || selSet.has(item.iata);
                     }
 
+                    let targetOpacity = 0;
+                    let targetScale = baseScale;
+
                     if (isSpecial) {
-                        if (mat.opacity !== 1) mat.opacity = 1;
-                        if (mesh.scale.x !== (item.isCluster ? 12 : 12)) mesh.scale.setScalar(item.isCluster ? 12 : 12);
-                    } else {
-                        let targetOpacity = 0;
-                        let targetScale = baseScale;
+                        targetOpacity = 1;
+                        targetScale = 12;
+                    } else if (interactiveRef.current) {
+                        _vec1.copy(mesh.position);
+                        const dot = _camNorm.dot(_vec1);
 
-                        if (interactiveRef.current && !isMoving) {
-                            _vec1.copy(mesh.position);
-                            const dot = _camNorm.dot(_vec1);
-                            if (dot >= 0.1) {
-                                let factor = 0;
-                                if (isMobileRef.current) {
-                                    factor = Math.pow(Math.max(0, (dot - 0.96) / 0.04), 1.5);
-                                } else {
-                                    const distToRay = raycaster.ray.distanceSqToPoint(_vec1);
-                                    if (distToRay < proximityBase) {
-                                        factor = 1 - (distToRay / proximityBase);
-                                    }
-                                }
-
-                                if (factor > 0) {
-                                    targetOpacity = Math.max(0.1, 0.8 * factor);
-                                    targetScale = baseScale + ((item.isCluster ? 8 : 10) - baseScale) * factor;
-                                } else {
-                                    targetOpacity = Math.max(0.01, 0.15 * zoomFactor - 0.05);
-                                    targetScale = baseScale;
+                        if (dot >= 0.1) {
+                            let factor = 0;
+                            if (isMobileRef.current) {
+                                factor = Math.pow(Math.max(0, (dot - 0.96) / 0.04), 1.5);
+                            } else if (!isMoving) {
+                                const distToRay = raycaster.ray.distanceSqToPoint(_vec1);
+                                if (distToRay < proximityBase) {
+                                    factor = 1 - (distToRay / proximityBase);
                                 }
                             }
-                        }
 
-                        if (!(mat.opacity < 0.005 && targetOpacity === 0 && Math.abs(mesh.scale.x - targetScale) < 0.005)) {
-                            mat.opacity += (targetOpacity - mat.opacity) * 0.15;
-                            if (mat.opacity < 0.001) mat.opacity = 0;
-                            const nextScale = mesh.scale.x + (targetScale - mesh.scale.x) * 0.15;
-                            mesh.scale.setScalar(nextScale);
+                            if (factor > 0) {
+                                // Slightly more gradual ramp: reaches full opacity mid-way through proximity
+                                targetOpacity = Math.min(1, factor * 2.5);
+                                targetScale = baseScale + ((item.isCluster ? 8 : 10) - baseScale) * factor;
+                            } else {
+                                targetOpacity = 0;
+                                targetScale = baseScale;
+                            }
                         }
                     }
 
-                    // Integrated Cluster Label Positioning (Optimized)
-                    if (item.isCluster && mountRef.current) {
-                        const label = clusterLabelsMapRef.current[item.id];
-                        if (label) {
-                            _vec1.copy(mesh.position); // Earth at 0,0, world pos = local pos
-                            const dot = _camNorm.dot(_vec1); // Both are radius 1, so this is the cosine
-                            if (dot < 0.2) {
-                                if (label.style.opacity !== "0") label.style.opacity = "0";
-                            } else {
-                                const isVisible = mesh.scale.x > 1.5;
-                                if (isVisible) {
-                                    _vec1.project(cam);
-                                    label.style.opacity = "1";
-                                    label.style.left = `${(_vec1.x * 0.5 + 0.5) * mountRef.current.clientWidth}px`;
-                                    label.style.top = `${(-_vec1.y * 0.5 + 0.5) * mountRef.current.clientHeight}px`;
-                                } else if (label.style.opacity !== "0") {
-                                    label.style.opacity = "0";
-                                }
-                            }
+                    // Apply to Mesh (only if not a cluster)
+                    if (!item.isCluster) {
+                        if (Math.abs(mat.opacity - targetOpacity) > 0.001 || Math.abs(mesh.scale.x - targetScale) > 0.001) {
+                            mat.opacity += (targetOpacity - mat.opacity) * 0.15;
+                            const nextScale = mesh.scale.x + (targetScale - mesh.scale.x) * 0.15;
+                            mesh.scale.setScalar(nextScale);
                         }
+                    } else {
+                        // For clusters, mesh is invisible. 
+                        // Keep a moderate scale for raycasting, but avoid huge bubbles
+                        mat.opacity = 0;
+                        const clusterHitScale = Math.min(6, targetScale);
+                        if (Math.abs(mesh.scale.x - clusterHitScale) > 0.01) {
+                            mesh.scale.setScalar(mesh.scale.x + (clusterHitScale - mesh.scale.x) * 0.15);
+                        }
+                    }
+
+                    // Integrated Cluster Label Positioning (3D Mesh)
+                    if (item.isCluster && mesh.userData.labelMesh) {
+                        const label = mesh.userData.labelMesh as THREE.Sprite;
+
+                        _vec1.copy(mesh.position);
+                        const dot = _camNorm.dot(_vec1);
+
+                        // Sync opacity
+                        const labelTargetOpacity = dot < 0.2 ? 0 : targetOpacity;
+                        if (Math.abs(label.material.opacity - labelTargetOpacity) > 0.001) {
+                            label.material.opacity += (labelTargetOpacity - label.material.opacity) * 0.15;
+                        }
+
+                        // Determine visibility based on dot product (hemisphere) and opacity
+                        const isVisible = label.material.opacity > 0.01;
+                        if (label.visible !== isVisible) {
+                            label.visible = isVisible;
+                        }
+
+                        // Subtle scale effect for the label
+                        const labelScale = 0.013 * (0.5 + 0.5 * (mesh.scale.x / 12));
+                        if (Math.abs(label.scale.x - labelScale) > 0.0001) {
+                            label.scale.setScalar(labelScale);
+                        }
+                    }
+                });
+
+                // --- Update country labels hover ---
+                countryLabelsGroupRef.current.children.forEach(child => {
+                    const mesh = child as THREE.Mesh;
+                    const mat = mesh.material as THREE.MeshBasicMaterial;
+                    _vec1.copy(mesh.position);
+                    const dot = _camNorm.dot(_vec1);
+
+                    let targetOpacity = 0;
+                    const customScale = mesh.userData.customScale || 1;
+
+                    if (interactiveRef.current && dot >= 0.1 && !isMoving) {
+                        const distToRay = raycaster.ray.distanceSqToPoint(_vec1);
+                        // Larger threshold for country labels than airports (at least 4x deeper reach)
+                        const countryThreshold = proximityBase * 4.0 * Math.min(1.5, customScale);
+                        if (distToRay < countryThreshold) {
+                            targetOpacity = 0.4;
+                        }
+                    }
+
+                    if (Math.abs(mat.opacity - targetOpacity) > 0.001) {
+                        mat.opacity += (targetOpacity - mat.opacity) * 0.1;
+                    }
+                    mesh.visible = mat.opacity > 0.01;
+
+                    if (mesh.visible) {
+                        // Adaptive zoom: smaller countries shrink more when zooming out
+                        const adaptiveZoom = customScale < 0.7 ? (0.3 + 0.7 * zoomFactor) : (0.5 + 0.5 * zoomFactor);
+                        const s = 0.032 * customScale * adaptiveZoom;
+                        const texture = mat.map!;
+                        const aspect = (texture.image as any).width / (texture.image as any).height;
+                        mesh.scale.set(s * aspect, s, 1);
                     }
                 });
             }
@@ -713,9 +838,67 @@ export default function Globe({
 
             earthGroupRef.current.clear();
             airportGroupRef.current.clear();
+            labelGroupRef.current.clear();
+            countryLabelsGroupRef.current.clear();
             starGroupRef.current.clear();
             arcsGroupRef.current.clear();
         };
+    }, []);
+
+    // 1.5 Load Country Labels for hover interaction
+    useEffect(() => {
+        fetch('/country_labels.json')
+            .then(res => res.json())
+            .then(data => {
+                countryLabelsGroupRef.current.clear();
+                data.forEach((c: any) => {
+                    const pos = latLonToVector3(c.lat, c.lon, 1.006);
+
+                    // Use translated name if available
+                    // TODO: Implement i18n
+                    let displayName = c.name;
+                    if (c.iso) {
+                        const names = COUNTRY_NAMES[c.iso];
+                        if (names) {
+                            displayName = names[1] || names[0];
+                        }
+                    }
+
+                    const texture = getCountryLabelTexture(displayName);
+                    if (texture) {
+                        const material = new THREE.MeshBasicMaterial({
+                            map: texture,
+                            transparent: true,
+                            opacity: 0,
+                            depthTest: true,
+                            depthWrite: false,
+                        });
+                        const geometry = new THREE.PlaneGeometry(1, 1);
+                        const mesh = new THREE.Mesh(geometry, material);
+                        mesh.position.copy(pos);
+
+                        // Orient mesh to face outward AND stay "straight" (North-South)
+                        const normal = pos.clone().normalize();
+                        let worldUp = new THREE.Vector3(0, 1, 0);
+                        // Handle poles case
+                        if (Math.abs(normal.dot(worldUp)) > 0.99) worldUp.set(0, 0, 1);
+
+                        const right = new THREE.Vector3().crossVectors(worldUp, normal).normalize();
+                        const labelUp = new THREE.Vector3().crossVectors(normal, right).normalize();
+
+                        const matrix = new THREE.Matrix4().makeBasis(right, labelUp, normal);
+                        mesh.quaternion.setFromRotationMatrix(matrix);
+
+                        const aspect = (texture.image as any).width / (texture.image as any).height;
+                        const baseScale = 0.035 * (c.scale || 1);
+                        mesh.scale.set(baseScale * aspect, baseScale, 1);
+                        mesh.userData = { customScale: c.scale || 1 };
+                        mesh.visible = false;
+                        countryLabelsGroupRef.current.add(mesh);
+                    }
+                });
+            })
+            .catch(err => console.error("Error loading country labels:", err));
     }, []);
 
     const selectedAirportsString = selectedAirports.join(',');
@@ -773,30 +956,47 @@ export default function Globe({
             });
 
             Object.values(grid).forEach(group => {
+                let item: any;
                 if (group.length > 1) {
                     const avgLat = group.reduce((s, x) => s + (x.lat || 0), 0) / group.length;
                     const avgLon = group.reduce((s, x) => s + (x.lon || 0), 0) / group.length;
-                    items.push({ isCluster: true, airports: group, lat: avgLat, lon: avgLon, id: `cluster-${group[0].iata}` });
+                    item = { isCluster: true, airports: group, lat: avgLat, lon: avgLon, v3: latLonToVector3(avgLat, avgLon), id: `cluster-${group[0].iata}` };
                 } else {
-                    items.push(group[0]);
+                    // This is an airport that stayed solitary after clustering
+                    // We clone v3 to avoid modifying the original rawData
+                    item = { ...group[0], v3: group[0].v3.clone() };
                 }
+
+                // Repulsion: push away just enough to be colindante
+                forcedSet.forEach(iata => {
+                    const forcedA = rawData.find(a => a.iata === iata);
+                    if (forcedA) {
+                        const dist = item.v3.distanceTo(forcedA.v3);
+                        const protectedRadius = 0.006;
+                        if (dist < protectedRadius && dist > 0) {
+                            const repulsion = new THREE.Vector3().subVectors(item.v3, forcedA.v3);
+                            const pushDist = protectedRadius - dist;
+                            item.v3.add(repulsion.normalize().multiplyScalar(pushDist));
+                            item.v3.normalize();
+                        }
+                    }
+                });
+
+                items.push(item);
             });
         }
 
         // Clean up previous cluster labels
-        if (clusterLabelsContainerRef.current) {
-            clusterLabelsContainerRef.current.innerHTML = "";
-        }
-        clusterLabelsMapRef.current = {};
+        labelGroupRef.current.clear();
 
-        // 2c. Build Scene (Optimized)
+        // Build Scene
         items.forEach(item => {
             const v3 = item.v3 || latLonToVector3(item.lat, item.lon);
-
-            // Determine initial color/scale
-            let meshColor = 0x4444ff;
+            const brandColor = getThemeColorHex('--color-brand', 0x4f46e5);
+            let meshColor = brandColor;
             let meshOpacity = 0.4;
             let meshScale = 1;
+            let renderPriority = 1; // Default priority
 
             if (!item.isCluster) {
                 if (item.iata === originIata || item.iata === destinationIata) {
@@ -806,31 +1006,51 @@ export default function Globe({
                     );
                     meshOpacity = 1;
                     meshScale = 12;
+                    renderPriority = 10; // Highest priority for origin/destination
                 } else if (selectedAirportsSetRef.current.has(item.iata)) {
                     meshColor = 0x00ff00;
                     meshOpacity = 1;
                     meshScale = 8;
+                    renderPriority = 5; // High priority for selected
                 }
             } else {
-                meshOpacity = 0.6;
+                renderPriority = 0; // Clusters have lowest priority
             }
 
             const mesh = new THREE.Mesh(
-                new THREE.SphereGeometry(0.0004, 12, 12),
-                new THREE.MeshBasicMaterial({ color: meshColor, transparent: true, opacity: meshOpacity })
+                item.isCluster ? sharedClusterGeo.current : sharedAirportGeo.current,
+                new THREE.MeshBasicMaterial({
+                    color: meshColor,
+                    transparent: true,
+                    opacity: item.isCluster ? 0 : meshOpacity,
+                    depthWrite: false, // Prevents z-fighting artifacts
+                })
             );
             mesh.position.copy(v3);
             mesh.scale.setScalar(meshScale);
             mesh.userData = item;
+            mesh.renderOrder = renderPriority; // Ensure draw order priority
             airportGroupRef.current.add(mesh);
 
-            if (item.isCluster && clusterLabelsContainerRef.current) {
-                const label = document.createElement("div");
-                label.className = "absolute -translate-x-1/2 -translate-y-1/2 pointer-events-none bg-brand text-[8px] font-bold text-white w-4 h-4 rounded-full flex items-center justify-center shadow-lg border border-white/20 transition-opacity duration-300 opacity-0";
-                label.innerText = item.airports.length.toString();
-                clusterLabelsContainerRef.current.appendChild(label);
-                clusterLabelsMapRef.current[item.id] = label;
-
+            if (item.isCluster) {
+                const texture = getClusterTexture(item.airports.length);
+                if (texture) {
+                    const spriteMaterial = new THREE.SpriteMaterial({
+                        map: texture,
+                        transparent: true,
+                        opacity: 0,
+                        depthTest: true,
+                        depthWrite: false,
+                        color: 0xffffff,
+                    });
+                    const sprite = new THREE.Sprite(spriteMaterial);
+                    sprite.position.copy(v3).multiplyScalar(1.002);
+                    sprite.scale.setScalar(0.016);
+                    sprite.visible = false;
+                    sprite.renderOrder = 0; // Labels stay behind special icons
+                    labelGroupRef.current.add(sprite);
+                    mesh.userData.labelMesh = sprite;
+                }
                 item.airports.forEach((a: any) => airportsMap.current[a.iata] = mesh);
             } else {
                 airportsMap.current[item.iata] = mesh;
@@ -845,6 +1065,7 @@ export default function Globe({
     useEffect(() => {
         if (!isLoaded) return;
 
+        const brandColor = getThemeColorHex('--color-brand', 0x4f46e5);
         const originColor = getThemeColorHex('--color-origin', 0x0891b2);
         const destColor = getThemeColorHex('--color-destination', 0xc026d3);
 
@@ -865,7 +1086,7 @@ export default function Globe({
                     mat.opacity = 1;
                     mesh.scale.setScalar(8);
                 } else {
-                    mat.color.setHex(0x4444ff);
+                    mat.color.setHex(brandColor);
                 }
             } else {
                 // Determine if cluster contains a special airport
@@ -879,12 +1100,12 @@ export default function Globe({
                 }
 
                 if (hasSpecial) {
-                    mat.color.setHex(0x4444ff); // Clusters stay blue but increase scale/opacity
-                    mat.opacity = 1;
+                    mat.color.setHex(brandColor);
+                    mat.opacity = 0; // Clusters stay invisible as mesh
                     mesh.scale.setScalar(12);
                 } else {
-                    mat.color.setHex(0x4444ff);
-                    mat.opacity = 0.6;
+                    mat.color.setHex(brandColor);
+                    mat.opacity = 0;
                 }
             }
         });
@@ -938,38 +1159,6 @@ export default function Globe({
         window.addEventListener("resize", handleResize);
         return () => window.removeEventListener("resize", handleResize);
     }, [horizontalOffset]);
-    // 5. Update airport markers (Marker styling only)
-    useEffect(() => {
-        if (!isLoaded) return;
-
-        airportsDataRef.current.forEach(a => {
-            const mesh = airportsMap.current[a.iata];
-            if (!mesh) return;
-
-            const material = mesh.material as THREE.MeshBasicMaterial;
-            const isSelected = selectedAirports.includes(a.iata);
-            const isOrigin = a.iata === originIata;
-            const isDestination = a.iata === destinationIata;
-
-            if (isOrigin || isDestination) {
-                const themeColor = getThemeColorHex(
-                    isOrigin ? '--color-origin' : '--color-destination',
-                    isOrigin ? 0x0891b2 : 0xc026d3
-                );
-                material.color.setHex(themeColor);
-                material.opacity = 1;
-                mesh.scale.set(12, 12, 12);
-            } else if (isSelected) {
-                material.color.setHex(0x00ff00);
-                material.opacity = 1;
-                mesh.scale.set(8, 8, 8);
-            } else {
-                material.color.setHex(0x4444ff);
-                material.opacity = 0.4;
-                mesh.scale.set(1, 1, 1);
-            }
-        });
-    }, [isLoaded, originIata, destinationIata, selectedAirports]);
 
     // 6. Handle arcs and planes creation (Flight path remains stable)
     useEffect(() => {
@@ -1144,8 +1333,6 @@ export default function Globe({
                 className="pointer-events-none absolute z-50 hidden rounded-md border border-white/20 bg-black/80 p-2 text-xs text-white backdrop-blur-sm transition-all shadow-xl"
             />
 
-            {/* Cluster Labels Container */}
-            <div ref={clusterLabelsContainerRef} className="absolute inset-0 pointer-events-none z-30" />
 
             {/* Origin Tag */}
             <div
@@ -1238,7 +1425,9 @@ export default function Globe({
                                     </div>
                                 ))}
                                 {/* Subtle fade to indicate more content */}
-                                <div className="sticky bottom-0 left-0 right-0 h-8 bg-linear-to-t from-main/90 to-transparent pointer-events-none -mt-8" />
+                                {contextMenu.clusterAirports.length > 3 && (
+                                    <div className="sticky bottom-0 left-0 right-0 h-8 bg-linear-to-t from-main/90 to-transparent pointer-events-none -mt-8" />
+                                )}
                             </div>
                         </div>
                     ) : (
