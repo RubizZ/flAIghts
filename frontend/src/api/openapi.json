@@ -2597,10 +2597,9 @@
 						],
 						"type": "object"
 					},
-					"layover_days": {
+					"dates": {
 						"items": {
-							"type": "number",
-							"format": "double"
+							"type": "string"
 						},
 						"type": "array"
 					}

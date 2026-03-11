@@ -16,11 +16,12 @@ function SearchFlight() {
     const [destination, setDestination] = useState("");
     const [destinationDisplay, setDestinationDisplay] = useState("");
     const [departureDate, setDepartureDate] = useState("");
-    const [activeDeparturePopover, setActiveDeparturePopover] = useState<'main' | 'map' | null>(null);
+    const [activeDeparturePopover, setActiveDeparturePopover] = useState<'main' | 'map' | `layover-main-${number}` | `layover-map-${number}` | null>(null);
     const [returnDate, setReturnDate] = useState("");
     const [activeReturnPopover, setActiveReturnPopover] = useState<'main' | 'map' | null>(null);
+    const [layovers, setLayovers] = useState<{ iata: string; display: string; date: string }[]>([]);
     const [isSelectingOnMap, setIsSelectingOnMap] = useState(false);
-    const [selectingType, setSelectingType] = useState<'origin' | 'destination' | null>(null);
+    const [selectingType, setSelectingType] = useState<'origin' | 'destination' | string | null>(null);
     const [globeReady, setGlobeReady] = useState(false);
     const [shouldCloseOnSelect, setShouldCloseOnSelect] = useState(false);
     const [searchMode, setSearchMode] = useState<'manual' | 'chatbot'>('manual');
@@ -85,6 +86,16 @@ function SearchFlight() {
             }
             setDestination(iata);
             setDestinationDisplay(displayText);
+        } else if (selectingType.startsWith('layover-')) {
+            const index = parseInt(selectingType.split('-')[1]);
+            const newLayovers = [...layovers];
+            if (iata === origin || iata === destination || layovers.some((l, i) => i !== index && l.iata === iata)) {
+                toast.error(t("searchFlight.validation.sameOriginDestination"));
+            } else {
+                newLayovers[index].iata = iata;
+                newLayovers[index].display = displayText;
+                setLayovers(newLayovers);
+            }
         } else {
             if (!origin) {
                 if (iata === destination) return;
@@ -108,7 +119,7 @@ function SearchFlight() {
         setSelectingType(null);
     }
 
-    const startMapSelection = (type: 'origin' | 'destination', fromMainCard: boolean = false) => {
+    const startMapSelection = (type: 'origin' | 'destination' | string, fromMainCard: boolean = false) => {
         setSelectingType(type);
         setIsSelectingOnMap(true);
         setShouldCloseOnSelect(fromMainCard);
@@ -189,15 +200,43 @@ function SearchFlight() {
         setSelectingType(null);
     }
 
+    const handleAddStop = () => {
+        if (layovers.length >= 5) {
+            toast.error(t("searchFlight.validation.maxLayovers"));
+            return;
+        }
+        setLayovers([...layovers, { iata: "", display: "", date: "" }]);
+    };
+
+    const handleRemoveLayover = (index: number) => {
+        const newLayovers = [...layovers];
+        newLayovers.splice(index, 1);
+        setLayovers(newLayovers);
+    };
+
+    const handleLayoverChange = (index: number, field: 'iata' | 'display' | 'date', value: string) => {
+        const newLayovers = [...layovers];
+        if (field === 'iata') {
+            if (value === origin || value === destination || layovers.some((l, i) => i !== index && l.iata === value)) {
+                if (value !== "") toast.error(t("searchFlight.validation.sameOriginDestination"));
+                return false;
+            }
+        }
+        newLayovers[index][field] = value;
+        setLayovers(newLayovers);
+        return true;
+    };
+
     const handleSearch = () => {
-        if (!origin || !destination || !departureDate) {
+        if (!origin || !destination || !departureDate || layovers.some(l => !l.iata || !l.date)) {
             toast.error(t("searchFlight.validation.completeFields"));
             return;
         }
 
         const requestData = {
             origins: [origin],
-            destinations: [destination],
+            destinations: [...layovers.map(l => l.iata), destination],
+            dates: [...layovers.map(l => l.date)],
             criteria: {
                 priority: "balanced" as const,
             },
@@ -266,7 +305,7 @@ function SearchFlight() {
                                 value={destination}
                                 displayValue={destinationDisplay}
                                 onChange={(val, display) => {
-                                    if (val === origin && val !== "") {
+                                    if ((val === origin || layovers.some(l => l.iata === val)) && val !== "") {
                                         toast.error(t("searchFlight.validation.sameOriginDestination"));
                                         return false;
                                     } else {
@@ -286,6 +325,75 @@ function SearchFlight() {
                         </button>
                     </div>
                 </div>
+
+                {/* ── LAYOVERS ── */}
+                {layovers.length > 0 && (
+                    <div className={`flex ${isHorizontal ? 'flex-col md:flex-row overflow-x-auto pb-2' : 'flex-col overflow-y-auto max-h-[30vh] pr-2'} gap-2 shrink-0`}>
+                        {layovers.map((layover, index) => (
+                            <div key={index} className={`flex gap-2 animate-fade-in-up items-stretch shrink-0 ${isHorizontal ? 'w-auto' : 'w-full'}`}>
+                                <div className={`group flex items-center gap-2 lg:gap-3 bg-surface/60 border border-line rounded-2xl px-4 transition-all focus-within:border-brand/60 py-2.5 lg:py-3 flex-[2.5] min-w-0 ${isHorizontal ? 'w-64' : 'w-full'}`}>
+                                    <MapPin className={`shrink-0 transition-colors ${layover.iata ? 'text-orange-500' : 'text-content-muted'}`} size={18} />
+                                    <div className="flex flex-col grow min-w-0">
+                                        <span className="text-[9px] text-content-muted uppercase font-bold tracking-wider truncate">{t("searchFlight.labels.layover") || "Stop"} {index + 1}</span>
+                                        <AirportAutocomplete
+                                            placeholder={t("searchFlight.placeholders.destination")}
+                                            className="bg-transparent border-none p-0 text-content placeholder:text-content-muted/60 focus:outline-none w-full text-sm lg:text-base font-sans"
+                                            value={layover.iata}
+                                            displayValue={layover.display}
+                                            onChange={(val, display) => {
+                                                return handleLayoverChange(index, 'iata', val) && handleLayoverChange(index, 'display', display || val);
+                                            }}
+                                        />
+                                    </div>
+                                    <button
+                                        onClick={() => startMapSelection(`layover-${index}`, !isHorizontal)}
+                                        className={`p-1.5 rounded-lg transition-all cursor-pointer ${selectingType === `layover-${index}` ? 'text-brand bg-brand/10' : 'text-content-muted hover:bg-surface hover:text-brand'}`}
+                                        title="Seleccionar en el mapa"
+                                    >
+                                        <Search size={16} />
+                                    </button>
+                                </div>
+
+                                <div className={`flex-1 min-w-0 ${isHorizontal ? 'w-48' : 'w-full'}`}>
+                                    <Calendar
+                                        isOpen={activeDeparturePopover === `layover-${mode}-${index}`}
+                                        setIsOpen={(val) => setActiveDeparturePopover(val ? `layover-${mode}-${index}` : null)}
+                                        value={layover.date}
+                                        onChange={(date) => {
+                                            handleLayoverChange(index, 'date', date);
+                                            setActiveDeparturePopover(null);
+                                        }}
+                                        minDate={index === 0 ? departureDate || today : layovers[index - 1].date || departureDate || today}
+                                        trigger={
+                                            <div
+                                                onClick={() => setActiveDeparturePopover(activeDeparturePopover === `layover-${mode}-${index}` ? null : `layover-${mode}-${index}`)}
+                                                className="flex items-center gap-2 lg:gap-3 bg-surface/60 border border-line rounded-2xl px-3 transition-all cursor-pointer group relative py-2.5 lg:py-3 h-full overflow-hidden"
+                                            >
+                                                <CalendarIcon className={`shrink-0 transition-colors ${layover.date ? 'text-orange-500' : 'text-content-muted'}`} size={16} />
+                                                <div className="flex flex-col grow min-w-0">
+                                                    <span className="text-[9px] text-content-muted uppercase font-bold tracking-wider text-left truncate">{t("searchFlight.labels.departure")}</span>
+                                                    <div className="relative h-4 lg:h-5 flex items-center">
+                                                        <span className={`truncate text-sm lg:text-base text-left font-sans ${layover.date ? 'text-content' : 'text-content-muted/50 font-normal'}`}>
+                                                            {layover.date ? formatDate(layover.date) : t("searchFlight.placeholders.selectDate")}
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        }
+                                        contentClassName="w-[380px] bg-main/90 backdrop-blur-3xl border border-line shadow-2xl rounded-3xl"
+                                    />
+                                </div>
+
+                                <button
+                                    onClick={() => handleRemoveLayover(index)}
+                                    className="bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white rounded-xl aspect-square flex items-center justify-center transition-all cursor-pointer border border-red-500/20 shrink-0"
+                                >
+                                    <X size={20} />
+                                </button>
+                            </div>
+                        ))}
+                    </div>
+                )}
 
                 {/* ── DATES ── */}
                 <div className={`grid gap-2 shrink-0 ${isHorizontal ? 'grid-cols-2 md:w-64 lg:w-76' : 'grid-cols-2'}`}>
@@ -525,12 +633,18 @@ function SearchFlight() {
                         <>
                             {renderManualSearch('main')}
                             <div className="flex items-center justify-center gap-4 text-xs text-content-muted">
-                                <div className="flex items-center gap-1">
-                                    <Plus size={12} className="text-brand" />
+                                <button
+                                    onClick={handleAddStop}
+                                    disabled={layovers.length >= 5}
+                                    className="flex items-center gap-1 hover:text-brand transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
+                                    <Plus size={12} className="text-brand disabled:text-content-muted" />
                                     <span>{t("searchFlight.additionalOptions.addStop")}</span>
-                                </div>
+                                </button>
                                 <div className="w-1 h-1 bg-line rounded-full" />
-                                <span>{t("searchFlight.additionalOptions.advancedFilters")}</span>
+                                <button className="hover:text-brand transition-colors cursor-pointer">
+                                    <span>{t("searchFlight.additionalOptions.advancedFilters")}</span>
+                                </button>
                             </div>
                         </>
                     ) : (

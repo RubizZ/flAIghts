@@ -386,7 +386,8 @@
       "destination": "Destino",
       "departure": "Salida",
       "return": "Regreso",
-      "selectOnMap": "Seleccionar en el mapa"
+      "selectOnMap": "Seleccionar en el mapa",
+      "layover": "Escala"
     },
     "placeholders": {
       "origin": "¿Desde dónde?",
@@ -402,6 +403,7 @@
     "mapSelection": {
       "selectingOrigin": "Selecciona el aeropuerto de origen en el mapa",
       "selectingDestination": "Selecciona el aeropuerto de destino en el mapa",
+      "selectingLayover": "Selecciona el aeropuerto de escala en el mapa",
       "exploring": "Explorando el globo terráqueo",
       "closeMap": "Cerrar mapa",
       "cancelSelection": "Cancelar"
