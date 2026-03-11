@@ -2773,6 +2773,111 @@
 				"type": "object",
 				"additionalProperties": false
 			},
+			"Pick_IMessage.Exclude_keyofIMessage.created_at__": {
+				"properties": {
+					"_id": {
+						"type": "string"
+					},
+					"conversationId": {
+						"type": "string"
+					},
+					"sender": {
+						"type": "string"
+					},
+					"receiver": {
+						"type": "string"
+					},
+					"content": {
+						"type": "string"
+					},
+					"read": {
+						"type": "boolean"
+					}
+				},
+				"required": [
+					"_id",
+					"conversationId",
+					"sender",
+					"receiver",
+					"content",
+					"read"
+				],
+				"type": "object",
+				"description": "From T, pick a set of properties whose keys are in the union K"
+			},
+			"Omit_IMessage.created_at_": {
+				"$ref": "#/components/schemas/Pick_IMessage.Exclude_keyofIMessage.created_at__",
+				"description": "Construct a type with the properties of T except for those in type K."
+			},
+			"MessageResponse": {
+				"allOf": [
+					{
+						"$ref": "#/components/schemas/Omit_IMessage.created_at_"
+					},
+					{
+						"properties": {
+							"created_at": {
+								"type": "string"
+							}
+						},
+						"required": [
+							"created_at"
+						],
+						"type": "object"
+					}
+				]
+			},
+			"PaginatedMessagesResponse": {
+				"properties": {
+					"items": {
+						"items": {
+							"$ref": "#/components/schemas/MessageResponse"
+						},
+						"type": "array"
+					},
+					"total": {
+						"type": "number",
+						"format": "double"
+					},
+					"page": {
+						"type": "number",
+						"format": "double"
+					},
+					"totalPages": {
+						"type": "number",
+						"format": "double"
+					}
+				},
+				"required": [
+					"items",
+					"total",
+					"page",
+					"totalPages"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"SuccessResponse_PaginatedMessagesResponse_": {
+				"description": "Wrapper de éxito JSend (aplicado por el middleware global).",
+				"properties": {
+					"status": {
+						"type": "string",
+						"enum": [
+							"success"
+						],
+						"nullable": false
+					},
+					"data": {
+						"$ref": "#/components/schemas/PaginatedMessagesResponse"
+					}
+				},
+				"required": [
+					"status",
+					"data"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
 			"LoginResponseData": {
 				"description": "Respuesta del endpoint POST /auth/login",
 				"properties": {
@@ -4908,6 +5013,82 @@
 						"required": false,
 						"schema": {
 							"default": 10,
+							"format": "double",
+							"type": "number"
+						}
+					}
+				]
+			}
+		},
+		"/messages/{otherUserId}": {
+			"get": {
+				"operationId": "GetMessages",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/SuccessResponse_PaginatedMessagesResponse_"
+								}
+							}
+						}
+					},
+					"403": {
+						"description": "No son amigos",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/FailResponseFromError_NotFriendsError_"
+								}
+							}
+						}
+					},
+					"404": {
+						"description": "Usuario no encontrado",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/FailResponseFromError_UserNotFoundError_"
+								}
+							}
+						}
+					}
+				},
+				"description": "Obtiene el historial de mensajes con otro usuario.",
+				"tags": [
+					"Messages"
+				],
+				"security": [
+					{
+						"jwt": []
+					}
+				],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "otherUserId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "query",
+						"name": "page",
+						"required": false,
+						"schema": {
+							"default": 1,
+							"format": "double",
+							"type": "number"
+						}
+					},
+					{
+						"in": "query",
+						"name": "limit",
+						"required": false,
+						"schema": {
+							"default": 50,
 							"format": "double",
 							"type": "number"
 						}
