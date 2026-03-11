@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { AirportResponse } from "@/api/generated/model";
 import StarsBackground from "../components/ui/StarsBackground.tsx";
 import ManualSearchForm from "../components/search/ManualSearchForm.tsx";
+import type { Layover } from "../components/search/ManualSearchForm.tsx";
 import NavIconButton from "../components/ui/NavIconButton.tsx";
 
 function SearchFlight() {
@@ -18,8 +19,10 @@ function SearchFlight() {
     const [activeDeparturePopover, setActiveDeparturePopover] = useState<'main' | 'map' | null>(null);
     const [returnDate, setReturnDate] = useState("");
     const [activeReturnPopover, setActiveReturnPopover] = useState<'main' | 'map' | null>(null);
+    const [layovers, setLayovers] = useState<Layover[]>([]);
+    const [layoverPopoverOpen, setLayoverPopoverOpen] = useState<string | null>(null);
     const [isSelectingOnMap, setIsSelectingOnMap] = useState(false);
-    const [selectingType, setSelectingType] = useState<'origin' | 'destination' | null>(null);
+    const [selectingType, setSelectingType] = useState<'origin' | 'destination' | string | null>(null);
     const [globeReady, setGlobeReady] = useState(false);
     const [shouldCloseOnSelect, setShouldCloseOnSelect] = useState(false);
     const [searchMode, setSearchMode] = useState<'manual' | 'chatbot'>('manual');
@@ -103,6 +106,17 @@ function SearchFlight() {
                 return;
             }
             setDestination(airport);
+        } else if (selectingType?.startsWith('layover-')) {
+            const index = parseInt(selectingType.split('-')[1]!);
+            const iata = airport.iata_code;
+            if (iata === origin?.iata_code || iata === destination?.iata_code || layovers.some((l, i) => i !== index && l.airport?.iata_code === iata)) {
+                toast.error(t("searchFlight.validation.sameOriginDestination"));
+            } else {
+                const newLayovers = [...layovers];
+                const existing = newLayovers[index]!;
+                newLayovers[index] = { airport, date: existing.date };
+                setLayovers(newLayovers);
+            }
         } else {
             if (!origin) {
                 if (airport.iata_code === destination?.iata_code) return;
@@ -122,7 +136,7 @@ function SearchFlight() {
         setSelectingType(null);
     }
 
-    const startMapSelection = (type: 'origin' | 'destination', fromMainCard: boolean = false) => {
+    const startMapSelection = (type: 'origin' | 'destination' | string, fromMainCard: boolean = false) => {
         setSelectingType(type);
         setIsSelectingOnMap(true);
         setShouldCloseOnSelect(fromMainCard);
@@ -197,15 +211,52 @@ function SearchFlight() {
         setSelectingType(null);
     }
 
+    const handleAddStop = () => {
+        if (layovers.length >= 5) {
+            toast.error(t("searchFlight.validation.maxLayovers"));
+            return;
+        }
+        setLayovers([...layovers, { airport: null, date: "" }]);
+    };
+
+    const handleRemoveLayover = (index: number) => {
+        const newLayovers = [...layovers];
+        newLayovers.splice(index, 1);
+        setLayovers(newLayovers);
+    };
+
+    const handleLayoverAirportChange = (index: number, airport: AirportResponse | null): boolean => {
+        if (airport) {
+            const iata = airport.iata_code;
+            if (iata === origin?.iata_code || iata === destination?.iata_code || layovers.some((l, i) => i !== index && l.airport?.iata_code === iata)) {
+                toast.error(t("searchFlight.validation.sameOriginDestination"));
+                return false;
+            }
+        }
+        const newLayovers = [...layovers];
+        const existing = newLayovers[index]!;
+        newLayovers[index] = { airport, date: existing.date };
+        setLayovers(newLayovers);
+        return true;
+    };
+
+    const handleLayoverDateChange = (index: number, date: string) => {
+        const newLayovers = [...layovers];
+        const existing = newLayovers[index]!;
+        newLayovers[index] = { airport: existing.airport, date };
+        setLayovers(newLayovers);
+    };
+
     const handleSearch = () => {
-        if (!origin || !destination || !departureDate) {
+        if (!origin || !destination || !departureDate || layovers.some(l => !l.airport || !l.date)) {
             toast.error(t("searchFlight.validation.completeFields"));
             return;
         }
 
         const requestData = {
             origins: [origin.iata_code],
-            destinations: [destination.iata_code],
+            destinations: [...layovers.map(l => l.airport!.iata_code), destination.iata_code],
+            dates: [...layovers.map(l => l.date)],
             criteria: {
                 priority: "balanced" as const,
             },
@@ -241,6 +292,13 @@ function SearchFlight() {
                 isHorizontal={isMapMode && isLargeScreen}
                 isMapMode={isMapMode}
                 today={today}
+                layovers={layovers}
+                onLayoverAirportChange={handleLayoverAirportChange}
+                onLayoverDateChange={handleLayoverDateChange}
+                onRemoveLayover={handleRemoveLayover}
+                layoverPopoverOpen={layoverPopoverOpen}
+                setLayoverPopoverOpen={setLayoverPopoverOpen}
+                mode={mode}
             />
         );
     }
@@ -422,12 +480,18 @@ function SearchFlight() {
                             <>
                                 {renderManualSearch('main')}
                                 <div className="flex items-center justify-center gap-4 text-xs text-content-muted">
-                                    <div className="flex items-center gap-1">
+                                    <button
+                                        onClick={handleAddStop}
+                                        disabled={layovers.length >= 5}
+                                        className="flex items-center gap-1 hover:text-brand transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                                    >
                                         <Plus size={12} className="text-brand" />
                                         <span>{t("searchFlight.additionalOptions.addStop")}</span>
-                                    </div>
+                                    </button>
                                     <div className="w-1 h-1 bg-line rounded-full" />
-                                    <span>{t("searchFlight.additionalOptions.advancedFilters")}</span>
+                                    <button className="hover:text-brand transition-colors cursor-pointer">
+                                        <span>{t("searchFlight.additionalOptions.advancedFilters")}</span>
+                                    </button>
                                 </div>
                             </>
                         ) : (

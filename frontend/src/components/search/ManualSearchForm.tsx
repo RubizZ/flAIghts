@@ -1,8 +1,14 @@
 import React from "react";
-import { ArrowLeftRight, Search } from "lucide-react";
+import { ArrowLeftRight, Search, MapPin, X } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { AirportResponse } from "@/api/generated/model";
 import FlightSearchInput from "./FlightSearchInput";
 import DateSearchInput from "./DateSearchInput";
+
+export interface Layover {
+    airport: AirportResponse | null;
+    date: string;
+}
 
 interface ManualSearchFormProps {
     origin: AirportResponse | null;
@@ -19,11 +25,19 @@ interface ManualSearchFormProps {
     setActiveReturnPopover: (open: boolean) => void;
     isPending: boolean;
     onSearch: () => void;
-    startMapSelection: (type: 'origin' | 'destination') => void;
-    selectingType: 'origin' | 'destination' | null;
+    startMapSelection: (type: 'origin' | 'destination' | string) => void;
+    selectingType: 'origin' | 'destination' | string | null;
     isHorizontal: boolean;
     isMapMode: boolean;
     today: string;
+    // Layover props
+    layovers: Layover[];
+    onLayoverAirportChange: (index: number, airport: AirportResponse | null) => boolean;
+    onLayoverDateChange: (index: number, date: string) => void;
+    onRemoveLayover: (index: number) => void;
+    layoverPopoverOpen: string | null;
+    setLayoverPopoverOpen: (key: string | null) => void;
+    mode: 'main' | 'map';
 }
 
 const ManualSearchForm: React.FC<ManualSearchFormProps> = ({
@@ -46,7 +60,16 @@ const ManualSearchForm: React.FC<ManualSearchFormProps> = ({
     isHorizontal,
     isMapMode,
     today,
+    layovers,
+    onLayoverAirportChange,
+    onLayoverDateChange,
+    onRemoveLayover,
+    layoverPopoverOpen,
+    setLayoverPopoverOpen,
+    mode,
 }) => {
+    const { t } = useTranslation();
+
     const handleSwitch = () => {
         const tempOrigin = origin;
         setOrigin(destination);
@@ -98,6 +121,52 @@ const ManualSearchForm: React.FC<ManualSearchFormProps> = ({
                     className={'flex-1 min-w-0'}
                 />
             </div>
+
+            {/* ── LAYOVERS ── */}
+            {layovers.length > 0 && (
+                <div className={`flex ${isHorizontal ? 'flex-col md:flex-row overflow-x-auto pb-2' : 'flex-col overflow-y-auto max-h-[30vh] pr-2'} gap-2 shrink-0`}>
+                    {layovers.map((layover, index) => {
+                        const layoverPopoverKey = `layover-${mode}-${index}`;
+                        return (
+                            <div key={index} className={`flex gap-2 animate-fade-in-up items-stretch shrink-0 ${isHorizontal ? 'w-auto' : 'w-full'}`}>
+                                {/* Layover airport input */}
+                                <FlightSearchInput
+                                    type="destination"
+                                    value={layover.airport}
+                                    onChange={(airport) => onLayoverAirportChange(index, airport)}
+                                    onMapClick={() => startMapSelection(`layover-${index}`)}
+                                    isMapSelecting={selectingType === `layover-${index}`}
+                                    placeholder={t("searchFlight.placeholders.destination")}
+                                    className={`flex-[2.5] min-w-0 ${isHorizontal ? 'w-64' : 'w-full'}`}
+                                />
+
+                                {/* Layover date */}
+                                <div className={`flex-1 min-w-0 ${isHorizontal ? 'w-48' : 'w-full'}`}>
+                                    <DateSearchInput
+                                        type="departure"
+                                        value={layover.date}
+                                        onChange={(date) => {
+                                            onLayoverDateChange(index, date);
+                                            setLayoverPopoverOpen(null);
+                                        }}
+                                        minDate={index === 0 ? departureDate || today : layovers[index - 1]!.date || departureDate || today}
+                                        isOpen={layoverPopoverOpen === layoverPopoverKey}
+                                        setIsOpen={(open) => setLayoverPopoverOpen(open ? layoverPopoverKey : null)}
+                                    />
+                                </div>
+
+                                {/* Remove layover button */}
+                                <button
+                                    onClick={() => onRemoveLayover(index)}
+                                    className="bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white rounded-xl aspect-square flex items-center justify-center transition-all cursor-pointer border border-red-500/20 shrink-0"
+                                >
+                                    <X size={20} />
+                                </button>
+                            </div>
+                        );
+                    })}
+                </div>
+            )}
 
             {/* ── DATES ── */}
             <div className={`grid gap-2 ${isHorizontal ? 'grid-cols-2 lg:flex-none shrink-0 min-w-48' : 'grid-cols-2 w-full'}`}>
