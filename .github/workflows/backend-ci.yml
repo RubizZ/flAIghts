@@ -48,6 +48,11 @@ jobs:
           FRONTEND_URL: "http://localhost:5173"
           NODE_ENV: "development"
           PORT: "3000"
+          SMTP_HOST: "localhost"
+          SMTP_PORT: "1025"
+          SMTP_USER: "test"
+          SMTP_PASS: "test"
+          SMTP_FROM: "noreply@test.com"
         run: |
           # Ensure build directory exists for docs if needed
           mkdir -p build
