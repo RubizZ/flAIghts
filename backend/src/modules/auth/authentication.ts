@@ -80,6 +80,17 @@ export async function expressAuthentication(
             err instanceof TokenUserNotFoundError ||
             err instanceof AuthenticationVersionMismatchError ||
             err instanceof InvalidTokenError) {
+
+            // Si hay un error de token, limpiamos la cookie si existe
+            if (request.cookies && request.cookies.token) {
+                const isProduction = process.env.NODE_ENV === 'production';
+                request.res?.clearCookie('token', {
+                    httpOnly: true,
+                    secure: isProduction,
+                    sameSite: isProduction ? 'none' : 'strict',
+                });
+            }
+
             throw err;
         }
         const message = err instanceof Error ? err.message : 'Unknown error';
