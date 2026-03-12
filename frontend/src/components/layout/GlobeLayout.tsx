@@ -16,7 +16,7 @@ export default function GlobeLayout() {
     const closeSidebar = () => setIsSidebarOpen(false);
 
     return (
-        <div className="relative h-screen w-full bg-main text-content overflow-hidden theme-transition">
+        <div className="relative h-svh w-full bg-main text-content overflow-hidden theme-transition">
             <Sidebar variant="floating" isOpen={isSidebarOpen} onClose={closeSidebar} onToggle={toggleSidebar} />
 
             <header className="absolute top-0 left-0 w-full z-40 pointer-events-none">

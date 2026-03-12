@@ -63,7 +63,7 @@ export default function Sidebar({ isOpen, onClose, onToggle, variant = 'classic'
                             ? 'translate-x-0 opacity-100 scale-100'
                             : '-translate-x-8 opacity-0 scale-95 pointer-events-none'
                         }`
-                        : `left-0 top-0 h-screen bg-main border-r border-line shadow-lg
+                        : `left-0 top-0 h-svh bg-main border-r border-line shadow-lg
                            ${isOpen ? 'w-64 translate-x-0' : 'w-16 -translate-x-full sm:translate-x-0'}`
                     }
                 `}
