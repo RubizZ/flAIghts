@@ -260,7 +260,7 @@ export default function Navbar({ variant = 'floating' }: { variant?: 'floating' 
     return (
         <nav className={variant === 'floating' ? "flex items-center justify-end w-full h-10 px-4 relative z-50 pointer-events-none" : "contents"}>
             <div className={variant === 'floating'
-                ? "flex items-center justify-end p-1.5 gap-2 sm:gap-4 shrink-0 z-10 bg-main/60 backdrop-blur-3xl border border-line rounded-3xl pointer-events-auto shadow-2xl"
+                ? "flex items-center justify-end p-1.5 gap-2 sm:gap-4 shrink-0 z-10 premium-glass rounded-3xl pointer-events-auto"
                 : "flex items-center gap-2 sm:gap-4 pointer-events-auto"
             }>
                 {isLoading ? (
@@ -281,7 +281,8 @@ export default function Navbar({ variant = 'floating' }: { variant?: 'floating' 
                                 }
                             }}
                             trigger={
-                                <div className="relative flex items-center justify-center p-2 bg-main/40 hover:bg-main/60 dark:bg-surface dark:hover:bg-surface/80 border border-line rounded-full transition-all group cursor-pointer w-9 h-9 backdrop-blur-md">
+                                <div className={`relative flex items-center justify-center p-2 border border-line rounded-full transition-all group cursor-pointer w-9 h-9 backdrop-blur-md
+                                    ${variant === 'floating' ? 'bg-white/5 hover:bg-white/10' : 'bg-main/40 hover:bg-main/60 dark:bg-surface dark:hover:bg-surface/80'}`}>
                                     <Bell size={18} className="text-content group-hover:text-brand transition-colors" />
                                     {user?.received_friend_requests && user.received_friend_requests.length > 0 && (
                                         <div className="absolute top-0 right-0 w-2.5 h-2.5 bg-brand rounded-full border-2 border-line" />
@@ -312,7 +313,8 @@ export default function Navbar({ variant = 'floating' }: { variant?: 'floating' 
                                 }
                             }}
                             trigger={
-                                <div className="flex items-center gap-2 bg-main/40 hover:bg-main/60 dark:bg-surface dark:hover:bg-surface/80 border border-line p-1 pr-3 rounded-full transition-all group backdrop-blur-md">
+                                <div className={`flex items-center gap-2 border border-line p-1 pr-3 rounded-full transition-all group backdrop-blur-md
+                                    ${variant === 'floating' ? 'bg-white/5 hover:bg-white/10' : 'bg-main/40 hover:bg-main/60 dark:bg-surface dark:hover:bg-surface/80'}`}>
                                     <UserAvatar user={user} size={28} />
                                     <span className="text-content text-sm font-bold hidden sm:block max-w-24 truncate">
                                         {user?.username}
@@ -341,8 +343,16 @@ export default function Navbar({ variant = 'floating' }: { variant?: 'floating' 
                     </div>
                 ) : (
                     <div className="hidden sm:flex gap-2">
-                        <Link to="/login" className="bg-surface text-content hover:bg-surface/80 px-5 py-1.5 rounded-full transition-colors cursor-pointer font-medium text-sm">Log in</Link>
-                        <Link to="/register" className="bg-brand text-content-on-brand hover:bg-brand-hover px-5 py-1.5 rounded-full transition-colors cursor-pointer font-medium text-sm text-center">Register</Link>
+                        <Link to="/login" className={`px-5 py-1.5 rounded-full transition-all cursor-pointer font-medium text-sm border
+                            ${variant === 'floating'
+                                ? 'bg-white/5 hover:bg-white/10 border-white/10 backdrop-blur-md text-content'
+                                : 'bg-surface border-line text-content hover:bg-surface/80'
+                            }`}>Log in</Link>
+                        <Link to="/register" className={`px-5 py-1.5 rounded-full transition-all cursor-pointer font-medium text-sm text-center shadow-lg
+                            ${variant === 'floating'
+                                ? 'bg-brand/80 hover:bg-brand text-content-on-brand border-brand/20'
+                                : 'bg-brand hover:bg-brand-hover text-content-on-brand border-brand'
+                            }`}>Register</Link>
                     </div>
                 )}
 
@@ -358,7 +368,8 @@ export default function Navbar({ variant = 'floating' }: { variant?: 'floating' 
                             }
                         }}
                         trigger={
-                            <div className="w-9 h-9 flex items-center justify-center bg-main/40 hover:bg-main/60 dark:bg-surface dark:hover:bg-surface/80 border border-line rounded-full text-content transition-all active:scale-90 cursor-pointer backdrop-blur-md">
+                            <div className={`w-9 h-9 flex items-center justify-center border border-line rounded-full text-content transition-all active:scale-90 cursor-pointer backdrop-blur-md
+                                ${variant === 'floating' ? 'bg-white/5 hover:bg-white/10' : 'bg-main/40 hover:bg-main/60 dark:bg-surface dark:hover:bg-surface/80'}`}>
                                 <User size={20} className="sm:hidden" />
                                 <MoreHorizontal size={20} className="hidden sm:block" />
                             </div>

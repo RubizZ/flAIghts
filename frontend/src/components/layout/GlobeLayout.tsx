@@ -17,7 +17,7 @@ export default function GlobeLayout() {
 
     return (
         <div className="relative h-screen w-full bg-main text-content overflow-hidden theme-transition">
-            <Sidebar variant="floating" isOpen={isSidebarOpen} onClose={closeSidebar} onToggle={toggleSidebar} className="backdrop-blur-3xl bg-main/60" />
+            <Sidebar variant="floating" isOpen={isSidebarOpen} onClose={closeSidebar} onToggle={toggleSidebar} />
 
             <header className="absolute top-0 left-0 w-full z-40 pointer-events-none">
                 <Navbar variant="floating" />

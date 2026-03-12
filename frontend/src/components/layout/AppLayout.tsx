@@ -32,7 +32,7 @@ export default function AppLayout() {
                     <div className="flex items-center gap-3">
                         <button
                             onClick={toggleSidebar}
-                            className="p-2 text-content-muted hover:text-content active:scale-95 transition-all cursor-pointer"
+                            className="p-2 text-content-muted hover:text-content active:scale-95 transition-all cursor-pointer rounded-xl hover:bg-surface"
                         >
                             <Menu size={22} />
                         </button>

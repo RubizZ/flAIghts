@@ -40,8 +40,8 @@ export default function Sidebar({ isOpen, onClose, onToggle, variant = 'classic'
             {isFloating && (
                 <button
                     onClick={onToggle}
-                    className={`fixed left-4 top-4 z-50 p-2.5 bg-main/60 backdrop-blur-3xl border border-line rounded-2xl
-                        shadow-lg text-content-muted hover:text-content hover:bg-main/80
+                    className={`fixed left-4 top-4 z-50 p-2.5 premium-glass rounded-2xl
+                        text-content-muted hover:text-content hover:bg-main/80
                         transition-all duration-300 ease-out active:scale-95 cursor-pointer
                         ${isOpen
                             ? 'opacity-0 scale-75 pointer-events-none -translate-x-4'
@@ -76,7 +76,7 @@ export default function Sidebar({ isOpen, onClose, onToggle, variant = 'classic'
                         className={`transition-all duration-200 cursor-pointer rounded-2xl
                             text-content-muted hover:text-content active:scale-95
                             ${isFloating
-                                ? 'p-2.5 hover:bg-surface/70 w-full flex items-center gap-3 group'
+                                ? 'p-2.5 hover:bg-white/10 hover:backdrop-blur-md w-full flex items-center gap-3 group'
                                 : 'p-3 hover:bg-surface w-full flex justify-center sm:justify-start group'
                             }
                         `}
@@ -122,7 +122,7 @@ export default function Sidebar({ isOpen, onClose, onToggle, variant = 'classic'
                                         }
                                         ${isActive
                                             ? 'bg-brand text-content-on-brand shadow-md'
-                                            : 'text-content-muted hover:bg-surface/70 hover:text-content'
+                                            : `text-content-muted hover:text-content ${isFloating ? 'hover:bg-white/10 hover:backdrop-blur-md' : 'hover:bg-surface/70'}`
                                         }
                                     `}
                                 >
