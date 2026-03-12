@@ -1,13 +1,11 @@
 import { useState, useEffect } from "react";
 import Globe from "../components/Globe.tsx"
-import { ArrowLeftRight, Plus, Calendar as CalendarIcon, MapPin, Search, Bot, SlidersHorizontal, Globe as GlobeIcon, Maximize2, Info, PlaneTakeoff, PlaneLanding, AlertTriangle, X, Plane, ChevronDown, ChevronRight } from "lucide-react";
-import AirportAutocomplete from "../components/AirportAutocomplete.tsx";
+import { Plus, Bot, SlidersHorizontal, Globe as GlobeIcon, Maximize2, PlaneTakeoff, PlaneLanding, AlertTriangle, X, Plane, ChevronDown, ChevronRight, Search, Calendar as CalendarIcon } from "lucide-react";
 import { useSearchRequest } from "@/api/generated/search/search";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
-import Calendar from "../components/ui/Calendar.tsx";
-import Tooltip from "../components/ui/Tooltip.tsx";
 import StarsBackground from "../components/ui/StarsBackground.tsx";
+import ManualSearchForm from "../components/search/ManualSearchForm.tsx";
 
 function SearchFlight() {
     const [origin, setOrigin] = useState("");
@@ -23,7 +21,7 @@ function SearchFlight() {
     const [globeReady, setGlobeReady] = useState(false);
     const [shouldCloseOnSelect, setShouldCloseOnSelect] = useState(false);
     const [searchMode, setSearchMode] = useState<'manual' | 'chatbot'>('manual');
-    const today = new Date().toISOString().split('T')[0];
+    const today = new Date().toISOString().split('T')[0]!;
     const [isLargeScreen, setIsLargeScreen] = useState(window.innerWidth >= 1024);
     const [isXXLScreen, setIsXXLScreen] = useState(window.innerWidth >= 1536);
     const [isMobileCardExpanded, setIsMobileCardExpanded] = useState(false);
@@ -58,15 +56,6 @@ function SearchFlight() {
             }
         }
     });
-
-    const handleSwitch = () => {
-        const temp = origin;
-        setOrigin(destination);
-        setDestination(temp);
-        const tempDisplay = originDisplay;
-        setOriginDisplay(destinationDisplay);
-        setDestinationDisplay(tempDisplay);
-    }
 
     const formatDate = (dateStr: string) => {
         if (!dateStr) return "";
@@ -158,9 +147,8 @@ function SearchFlight() {
             setIsChanging(true);
             const timer = setTimeout(() => {
                 setRenderedAirport(inspectedAirport);
-                // Wait a tiny bit for React to render new content before fading back in
                 setTimeout(() => setIsChanging(false), 50);
-            }, 400); // Match or slightly exceed CSS transition duration
+            }, 400);
             return () => clearTimeout(timer);
         }
     }, [inspectedAirport, renderedAirport?.iata]);
@@ -225,182 +213,37 @@ function SearchFlight() {
     }
 
     const renderManualSearch = (mode: 'main' | 'map') => {
-        const isHorizontalLayout = mode === 'map' && isLargeScreen;
         const isMapMode = mode === 'map';
         return (
-            <div className={`grow ${isHorizontalLayout ? 'flex flex-row items-stretch gap-4 w-full' : 'flex flex-col gap-3'}`}>
-                {/* ── ORIGIN & DESTINATION ── */}
-                <div className={`relative flex gap-3 items-center grow ${isMapMode ? 'flex-row w-full' : 'flex-col items-stretch'}`}>
-                    {/* Origin */}
-                    <div className={`premium-input group flex items-center gap-1.5 lg:gap-3 rounded-2xl px-2.5 lg:px-4 py-2.5 lg:py-3 ${isMapMode ? 'flex-1 min-w-0' : 'w-full'}`}>
-                        <MapPin className={`shrink-0 transition-colors ${origin ? 'text-origin' : 'text-content-muted'}`} size={18} />
-                        <div className="flex flex-col grow min-w-0">
-                            <span className="text-[9px] text-content-muted uppercase font-bold tracking-wider">Origen</span>
-                            <AirportAutocomplete
-                                placeholder="¿Desde dónde?"
-                                className="bg-transparent border-none p-0 text-content placeholder:text-content-muted/60 focus:outline-none w-full text-sm lg:text-base font-sans"
-                                value={origin}
-                                displayValue={originDisplay}
-                                onChange={(val, display) => {
-                                    if (val === destination && val !== "") {
-                                        toast.error("El origen y el destino no pueden ser el mismo");
-                                        return false;
-                                    } else {
-                                        setOrigin(val);
-                                        setOriginDisplay(display || val);
-                                        return true;
-                                    }
-                                }}
-                            />
-                        </div>
-                        <button
-                            onClick={() => startMapSelection('origin', !isMapMode)}
-                            className={`p-1.5 rounded-lg transition-all cursor-pointer ${selectingType === 'origin' ? 'text-brand bg-brand/10' : 'text-content-muted hover:bg-surface hover:text-brand'}`}
-                            title="Seleccionar en el mapa"
-                        >
-                            <Search size={16} />
-                        </button>
-                    </div>
-
-                    {/* Switch Button */}
-                    <button
-                        onClick={handleSwitch}
-                        className={`shrink-0 bg-brand text-content-on-brand rounded-xl shadow-lg hover:scale-110 active:scale-95 transition-all cursor-pointer border-2 border-main z-20 ${isMapMode ? 'p-1.5 self-center' : 'absolute right-6 top-[50%] -translate-y-1/2 p-2.5 border-4'}`}
-                    >
-                        <ArrowLeftRight size={16} />
-                    </button>
-
-                    {/* Destination */}
-                    <div className={`premium-input group flex items-center gap-1.5 lg:gap-3 rounded-2xl px-2.5 lg:px-4 py-2.5 lg:py-3 ${isMapMode ? 'flex-1 min-w-0' : 'w-full'}`}>
-                        <MapPin className={`shrink-0 transition-colors ${destination ? 'text-destination' : 'text-content-muted'}`} size={18} />
-                        <div className="flex flex-col grow min-w-0">
-                            <span className="text-[9px] text-content-muted uppercase font-bold tracking-wider">Destino</span>
-                            <AirportAutocomplete
-                                placeholder="¿A dónde?"
-                                className="bg-transparent border-none p-0 text-content placeholder:text-content-muted/60 focus:outline-none w-full text-sm lg:text-base font-sans"
-                                value={destination}
-                                displayValue={destinationDisplay}
-                                onChange={(val, display) => {
-                                    if (val === origin && val !== "") {
-                                        toast.error("El origen y el destino no pueden ser el mismo");
-                                        return false;
-                                    } else {
-                                        setDestination(val);
-                                        setDestinationDisplay(display || val);
-                                        return true;
-                                    }
-                                }}
-                            />
-                        </div>
-                        <button
-                            onClick={() => startMapSelection('destination', !isMapMode)}
-                            className={`p-1.5 rounded-lg transition-all cursor-pointer ${selectingType === 'destination' ? 'text-brand bg-brand/10' : 'text-content-muted hover:bg-surface hover:text-brand'}`}
-                            title="Seleccionar en el mapa"
-                        >
-                            <Search size={14} />
-                        </button>
-                    </div>
-                </div>
-
-                {/* ── DATES ── */}
-                <div className={`grid gap-2 shrink-0 ${isHorizontalLayout ? 'grid-cols-2 lg:w-64' : 'grid-cols-2'}`}>
-                    <Calendar
-                        isOpen={activeDeparturePopover === mode}
-                        setIsOpen={(val) => setActiveDeparturePopover(val ? mode : null)}
-                        value={departureDate}
-                        onChange={(date) => {
-                            setDepartureDate(date);
-                            setActiveDeparturePopover(null);
-                            if (returnDate && date > returnDate) {
-                                setReturnDate("");
-                            }
-                        }}
-                        minDate={today}
-                        trigger={
-                            <div
-                                onClick={() => setActiveDeparturePopover(activeDeparturePopover === mode ? null : mode)}
-                                className="premium-input flex items-center gap-3 rounded-2xl px-4 cursor-pointer group relative py-2.5 lg:py-3 h-full"
-                            >
-                                <CalendarIcon className={`shrink-0 transition-colors ${departureDate ? 'text-origin' : 'text-content-muted'}`} size={16} />
-                                <div className="flex flex-col grow min-w-0">
-                                    <span className="text-[9px] text-content-muted uppercase font-bold tracking-wider text-left">Salida</span>
-                                    <div className="relative h-5 flex items-center">
-                                        <span className={`truncate text-sm lg:text-base text-left font-sans ${departureDate ? 'text-content' : 'text-content-muted/50 font-normal'}`}>
-                                            {departureDate ? formatDate(departureDate) : "Seleccionar"}
-                                        </span>
-                                    </div>
-                                </div>
-                            </div>
-                        }
-                        contentClassName="w-[380px] bg-main/90 backdrop-blur-3xl border border-line shadow-2xl rounded-3xl"
-                    />
-
-                    {/* Return Date */}
-                    <div className="relative flex min-w-0">
-                        <Tooltip content="Selecciona primero la fecha de salida" disabled={!!departureDate} position="bottom">
-                            <Calendar
-                                isOpen={activeReturnPopover === mode}
-                                setIsOpen={(val) => setActiveReturnPopover(val ? mode : null)}
-                                value={returnDate}
-                                onChange={(date) => {
-                                    setReturnDate(date);
-                                    setActiveReturnPopover(null);
-                                }}
-                                minDate={departureDate || today}
-                                defaultMonth={departureDate}
-                                trigger={
-                                    <div
-                                        onClick={() => departureDate && setActiveReturnPopover(activeReturnPopover === mode ? null : mode)}
-                                        className={`premium-input flex items-center gap-3 rounded-2xl px-4 relative group w-full py-2.5 lg:py-3 h-full ${!departureDate ? 'opacity-50 cursor-not-allowed grayscale' : 'cursor-pointer'}`}
-                                    >
-                                        <CalendarIcon className={`shrink-0 transition-colors ${returnDate ? 'text-destination' : 'text-content-muted'}`} size={16} />
-                                        <div className="flex flex-col grow min-w-0 text-left">
-                                            <span className="text-[9px] text-content-muted uppercase font-bold tracking-wider">Regreso</span>
-                                            <div className="relative h-5 flex items-center">
-                                                <span className={`truncate text-sm lg:text-base font-sans ${returnDate ? 'text-content' : 'text-content-muted/50 font-normal'}`}>
-                                                    {returnDate ? formatDate(returnDate) : "Seleccionar"}
-                                                </span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                }
-                                contentClassName="w-[380px] bg-main/90 backdrop-blur-3xl border border-line/50 rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.15)] dark:shadow-[0_20px_50px_rgba(0,0,0,0.4)]"
-                            />
-                        </Tooltip>
-
-                        {returnDate && (
-                            <button
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    setReturnDate("");
-                                }}
-                                className="absolute -right-1 -top-1 bg-main text-content-muted p-1 rounded-full border border-line hover:text-red-500 transition-all shadow-sm z-20 cursor-pointer"
-                            >
-                                <Plus size={10} className="rotate-45" />
-                            </button>
-                        )}
-                    </div>
-                </div>
-
-                <button
-                    onClick={handleSearch}
-                    disabled={isPending || !origin || !destination || !departureDate}
-                    className={`group relative flex items-center justify-center gap-2 bg-brand text-content-on-brand rounded-2xl font-bold hover:bg-brand-hover transition-all disabled:opacity-40 disabled:grayscale disabled:cursor-not-allowed overflow-hidden shadow-lg shadow-brand/20 active:scale-95 shrink min-w-fit px-4 lg:px-6 cursor-pointer ${isHorizontalLayout ? 'w-full lg:min-w-30 lg:w-auto py-3.5 lg:py-0' : 'py-4 lg:py-4.5 text-lg'}`}
-                >
-                    <div className="absolute inset-0 bg-linear-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
-                    {isPending ? (
-                        <div className="flex items-center gap-2">
-                            <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                            <span>Buscando...</span>
-                        </div>
-                    ) : (
-                        <>
-                            <Search size={18} />
-                            <span>{isMapMode ? 'Buscar' : 'Explorar vuelos'}</span>
-                        </>
-                    )}
-                </button>
-            </div>
+            <ManualSearchForm
+                origin={origin}
+                originDisplay={originDisplay}
+                setOrigin={(val, display) => {
+                    setOrigin(val);
+                    setOriginDisplay(display || val);
+                }}
+                destination={destination}
+                destinationDisplay={destinationDisplay}
+                setDestination={(val, display) => {
+                    setDestination(val);
+                    setDestinationDisplay(display || val);
+                }}
+                departureDate={departureDate}
+                setDepartureDate={setDepartureDate}
+                returnDate={returnDate}
+                setReturnDate={setReturnDate}
+                activeDeparturePopover={activeDeparturePopover === mode}
+                setActiveDeparturePopover={(open) => setActiveDeparturePopover(open ? mode : null)}
+                activeReturnPopover={activeReturnPopover === mode}
+                setActiveReturnPopover={(open) => setActiveReturnPopover(open ? mode : null)}
+                isPending={isPending}
+                onSearch={handleSearch}
+                startMapSelection={(type) => startMapSelection(type, !isMapMode)}
+                selectingType={selectingType}
+                isHorizontal={isMapMode && isLargeScreen}
+                isMapMode={isMapMode}
+                today={today}
+            />
         );
     }
 
