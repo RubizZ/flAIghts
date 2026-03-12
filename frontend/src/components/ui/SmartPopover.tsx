@@ -210,7 +210,7 @@ export default function SmartPopover({
                             pointerEvents: isOpen ? 'auto' : 'none', // Disable interactions during exit
                         }}
                         className={`
-                            premium-glass text-content 
+                            bg-main border border-line shadow-2xl text-content 
                             rounded-2xl overflow-y-auto text-left 
                             animate-duration-300
                             ${isOpen

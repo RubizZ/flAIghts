@@ -117,16 +117,16 @@ export default function AirportAutocomplete({ value, displayValue, onChange, pla
             <ul className="flex flex-col">
                 {groupedSuggestions.length > 0 ? (
                     groupedSuggestions.map(([country, airports]) => (
-                        <div key={country} className="flex flex-col">
-                            <div className="sticky top-0 z-10 bg-main/95 backdrop-blur-md px-4 py-2 border-b border-line">
-                                <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-content/50">
+                        <div key={country} className="flex flex-col border-b border-line last:border-0">
+                            <div className="sticky top-0 z-10 bg-surface/95 backdrop-blur-md px-4 py-2 border-b border-line flex items-center">
+                                <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-content/50 pr-3 border-r border-line mr-3 leading-none">
                                     {country}
                                 </span>
                             </div>
                             {airports.map((airport) => (
                                 <li
                                     key={airport.iata_code}
-                                    className="px-4 py-3 hover:bg-surface transition-all cursor-pointer flex items-center gap-3 border-b border-line last:border-0 group/suggestion"
+                                    className="px-4 py-3 hover:bg-surface transition-all cursor-pointer flex items-center gap-3 border-b border-line/40 last:border-0 group/suggestion"
                                     onClick={() => handleSelect(airport)}
                                 >
                                     <div className="bg-surface/50 p-2 rounded-xl shrink-0 group-hover/suggestion:bg-brand/10 transition-colors">

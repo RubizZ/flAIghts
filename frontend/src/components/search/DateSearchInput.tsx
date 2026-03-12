@@ -33,7 +33,7 @@ const DateSearchInput: React.FC<DateSearchInputProps> = ({
 }) => {
     const isDeparture = type === 'departure';
     const label = isDeparture ? "Salida" : "Regreso";
-    const iconColorClass = value 
+    const iconColorClass = value
         ? (isDeparture ? "text-origin" : "text-destination")
         : "text-content-muted";
 
@@ -59,13 +59,12 @@ const DateSearchInput: React.FC<DateSearchInputProps> = ({
                 className="w-full h-full"
                 onClick={() => !disabled && setIsOpen(!isOpen)}
             >
-                <span className={`truncate text-sm lg:text-base font-sans transition-all ${
-                    value ? 'text-content' : 'text-content-muted/50 font-normal'
-                }`}>
+                <span className={`truncate text-sm lg:text-base font-sans transition-all ${value ? 'text-content' : 'text-content-muted/50 font-normal'
+                    }`}>
                     {formatDate(value)}
                 </span>
             </PremiumInput>
-            
+
             {!disabled && value && onClear && (
                 <button
                     onClick={(e) => {
@@ -82,9 +81,9 @@ const DateSearchInput: React.FC<DateSearchInputProps> = ({
 
     return (
         <div className={`relative flex w-full min-w-0 ${className}`}>
-            <Tooltip 
-                content={disabledTooltip || ""} 
-                disabled={!disabled || !disabledTooltip} 
+            <Tooltip
+                content={disabledTooltip || ""}
+                disabled={!disabled || !disabledTooltip}
                 position="bottom"
             >
                 <div className="w-full">
