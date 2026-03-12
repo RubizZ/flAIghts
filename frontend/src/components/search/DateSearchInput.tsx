@@ -56,7 +56,7 @@ const DateSearchInput: React.FC<DateSearchInputProps> = ({
                 label={label}
                 iconColorClass={iconColorClass}
                 disabled={disabled}
-                className="h-full"
+                className="w-full h-full"
                 onClick={() => !disabled && setIsOpen(!isOpen)}
             >
                 <span className={`truncate text-sm lg:text-base font-sans transition-all ${
@@ -81,13 +81,13 @@ const DateSearchInput: React.FC<DateSearchInputProps> = ({
     );
 
     return (
-        <div className={`relative flex min-w-0 ${className}`}>
+        <div className={`relative flex w-full min-w-0 ${className}`}>
             <Tooltip 
                 content={disabledTooltip || ""} 
                 disabled={!disabled || !disabledTooltip} 
                 position="bottom"
             >
-                <div>
+                <div className="w-full">
                     <Calendar
                         isOpen={isOpen}
                         setIsOpen={setIsOpen}
