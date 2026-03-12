@@ -260,7 +260,7 @@ export default function Navbar({ variant = 'floating' }: { variant?: 'floating' 
     return (
         <nav className={variant === 'floating' ? "flex items-center justify-end w-full h-10 px-4 relative z-50 pointer-events-none" : "contents"}>
             <div className={variant === 'floating'
-                ? "flex items-center justify-end p-1.5 gap-2 sm:gap-4 shrink-0 z-10 bg-main/40 backdrop-blur-md border border-line rounded-3xl pointer-events-auto shadow-2xl"
+                ? "flex items-center justify-end p-1.5 gap-2 sm:gap-4 shrink-0 z-10 bg-main/60 backdrop-blur-3xl border border-line rounded-3xl pointer-events-auto shadow-2xl"
                 : "flex items-center gap-2 sm:gap-4 pointer-events-auto"
             }>
                 {isLoading ? (

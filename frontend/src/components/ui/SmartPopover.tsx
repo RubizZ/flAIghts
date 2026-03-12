@@ -13,6 +13,8 @@ interface SmartPopoverProps {
     maxContentHeight?: number;
     offset?: number;
     preferredAlign?: 'left' | 'right' | 'center';
+    entryAnimation?: string;
+    exitAnimation?: string;
 }
 
 interface PositionState {
@@ -43,14 +45,33 @@ export default function SmartPopover({
     minContentHeight = 160,
     maxContentHeight = 450,
     offset = 8,
-    preferredAlign = 'left'
+    preferredAlign = 'left',
+    entryAnimation,
+    exitAnimation
 }: SmartPopoverProps) {
     const [pos, setPos] = useState<PositionState | null>(null);
+    const [shouldRender, setShouldRender] = useState(isOpen);
     const containerRef = useRef<HTMLDivElement>(null);
     const contentRef = useRef<HTMLDivElement>(null);
 
+    // Sync rendering state with isOpen to allow exit animations
+    useEffect(() => {
+        if (isOpen) {
+            setShouldRender(true);
+        } else {
+            // Match this duration with your exit animation (e.g. animate-duration-300)
+            const timer = setTimeout(() => setRenderedPos(false), 300);
+            function setRenderedPos(val: boolean) {
+                setShouldRender(val);
+                if (!val) setPos(null); // Clear position only after unmounting
+            }
+            return () => clearTimeout(timer);
+        }
+    }, [isOpen]);
+
     const updatePosition = () => {
-        if (!isOpen || !containerRef.current) return;
+        // Allow updates if it's open OR in the middle of an exit transition
+        if ((!isOpen && !shouldRender) || !containerRef.current) return;
 
         const rect = containerRef.current.getBoundingClientRect();
         const vHeight = window.innerHeight;
@@ -138,17 +159,24 @@ export default function SmartPopover({
     useEffect(() => {
         if (!isOpen) return;
 
-        const handleClickOutside = (event: MouseEvent) => {
+        const handleClickOutside = (event: MouseEvent | TouchEvent) => {
+            const target = event.target as Node;
             if (
-                containerRef.current && !containerRef.current.contains(event.target as Node) &&
-                contentRef.current && !contentRef.current.contains(event.target as Node)
+                containerRef.current && !containerRef.current.contains(target) &&
+                contentRef.current && !contentRef.current.contains(target)
             ) {
                 setIsOpen(false);
             }
         };
 
-        document.addEventListener('mousedown', handleClickOutside);
-        return () => document.removeEventListener('mousedown', handleClickOutside);
+        // Use capture phase to ensure we catch the event before any stopPropagation
+        document.addEventListener('mousedown', handleClickOutside, true);
+        document.addEventListener('touchstart', handleClickOutside, true);
+
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside, true);
+            document.removeEventListener('touchstart', handleClickOutside, true);
+        };
     }, [isOpen, setIsOpen]);
 
     return (
@@ -157,7 +185,7 @@ export default function SmartPopover({
                 {trigger}
             </div>
 
-            {isOpen && pos && createPortal(
+            {shouldRender && pos && createPortal(
                 <div
                     style={{
                         position: 'fixed',
@@ -167,7 +195,7 @@ export default function SmartPopover({
                         right: pos.right,
                         transform: pos.transform,
                         zIndex: 9999,
-                        pointerEvents: 'none', // Pass-through for the positioning layer
+                        pointerEvents: 'none',
                         display: 'flex',
                         flexDirection: 'column',
                         alignItems: pos.horizontalMode === 'center' ? 'center' : pos.horizontalMode === 'left' ? 'flex-start' : 'flex-end',
@@ -179,13 +207,16 @@ export default function SmartPopover({
                             maxWidth: pos.maxWidth,
                             maxHeight: pos.maxHeight,
                             minWidth: pos.triggerWidth,
-                            pointerEvents: 'auto',
+                            pointerEvents: isOpen ? 'auto' : 'none', // Disable interactions during exit
                         }}
                         className={`
-                            bg-main/95 backdrop-blur-3xl text-content border border-line 
-                            rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.3)] overflow-auto text-left 
+                            bg-main/60 backdrop-blur-3xl text-content border border-line 
+                            rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.3)] overflow-hidden text-left 
                             animate-duration-300
-                            ${pos.side === 'top' ? 'animate-fade-in-up' : 'animate-fade-in-down'}
+                            ${isOpen 
+                                ? (entryAnimation || (pos.side === 'top' ? 'animate-fade-in-up' : 'animate-fade-in-down'))
+                                : (exitAnimation || (pos.side === 'top' ? 'animate-fade-out-down' : 'animate-fade-out-up'))
+                            }
                             [ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden
                             ${contentClassName}
                         `}

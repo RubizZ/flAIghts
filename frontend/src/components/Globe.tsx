@@ -25,7 +25,7 @@ interface GlobeProps {
     onSetOrigin?: (iata: string, display: string) => void;
     onSetDestination?: (iata: string, display: string) => void;
     onAirportClick?: (airport: AirportData | null) => void;
-    onMovementChange?: (isMoving: boolean) => void;
+    onMovementChange?: (isMoving: boolean, isUserInteracting: boolean) => void;
 }
 
 export default function Globe({
@@ -84,8 +84,9 @@ export default function Globe({
             .sort()
             .join(',');
     }, [originIata, destinationIata, selectedAirports]);
-    const lastCamQuatRef = useRef(new THREE.Quaternion());
+    const lastCamQuatRef = useRef<THREE.Quaternion>(new THREE.Quaternion());
     const lastMoveTimeRef = useRef(0);
+    const isUserInteractingRef = useRef(false);
 
     // Dynamic distance calculation based on aspect ratio to fit globe on mobile
     const calculateDistance = (w: number, h: number) => {
@@ -313,10 +314,13 @@ export default function Globe({
 
         // Kill any ongoing camera animations when the user starts manual interaction
         controls.addEventListener('start', () => {
+            isUserInteractingRef.current = true;
             if (cameraRef.current) gsap.killTweensOf(cameraRef.current.position);
         });
 
-
+        controls.addEventListener('end', () => {
+            isUserInteractingRef.current = false;
+        });
 
         // Lights
         scene.add(new THREE.AmbientLight(0xffffff, 0.8));
@@ -561,11 +565,15 @@ export default function Globe({
 
                 // Notify parent about movement state
                 if (onMovementChangeRef.current) {
-                    onMovementChangeRef.current(isMoving);
+                    onMovementChangeRef.current(isMoving, isUserInteractingRef.current);
                 }
 
                 const camDist = cam.position.length();
                 const zoomFactor = Math.max(0, Math.min(1, (3.5 - camDist) / 2.4));
+
+                // Start appearing slightly later (with more zoom)
+                const globalZoomFade = Math.max(0, Math.min(1, (2.8 - camDist) / 1.0));
+
                 raycaster.setFromCamera(mousePosRef.current, cam);
 
                 if (controlsRef.current) {
@@ -577,8 +585,16 @@ export default function Globe({
                 const activeDest = activeDestRef.current;
                 const selSet = selectedAirportsSetRef.current;
 
-                const proximityBase = 0.003 + (0.015 * (1 - zoomFactor));
-                const baseScale = 0.15 + (0.85 * zoomFactor);
+                const distFactor = camDist / 3.2;
+                // Use a non-linear factor so they grow slightly bigger on screen as we move away
+                const scaleFactor = Math.pow(distFactor, 1.4);
+                const proximityBase = 0.03 * Math.pow(distFactor, 2.2);
+
+                const baseScale = 1.5 * scaleFactor;
+                const specialScale = 35 * scaleFactor;
+                const clusterHoverScale = 24 * scaleFactor;
+                const airportHoverScale = 28 * scaleFactor;
+                const labelRefScale = 0.045 * scaleFactor;
 
                 airportGroupRef.current.children.forEach(child => {
                     const mesh = child as THREE.Mesh;
@@ -604,8 +620,8 @@ export default function Globe({
                     let targetScale = baseScale;
 
                     if (isSpecial) {
-                        targetOpacity = 1;
-                        targetScale = 12;
+                        targetOpacity = 1 * globalZoomFade;
+                        targetScale = specialScale * Math.max(0.5, globalZoomFade);
                     } else if (interactiveRef.current) {
                         _vec1.copy(mesh.position);
                         const dot = _camNorm.dot(_vec1);
@@ -613,7 +629,8 @@ export default function Globe({
                         if (dot >= 0.1) {
                             let factor = 0;
                             if (isMobileRef.current) {
-                                factor = Math.pow(Math.max(0, (dot - 0.96) / 0.04), 1.5);
+                                // Slightly wider angle for mobile to make targeting easier
+                                factor = Math.pow(Math.max(0, (dot - 0.94) / 0.06), 1.5);
                             } else if (!isMoving) {
                                 const distToRay = raycaster.ray.distanceSqToPoint(_vec1);
                                 if (distToRay < proximityBase) {
@@ -622,9 +639,9 @@ export default function Globe({
                             }
 
                             if (factor > 0) {
-                                // Slightly more gradual ramp: reaches full opacity mid-way through proximity
-                                targetOpacity = Math.min(1, factor * 2.5);
-                                targetScale = baseScale + ((item.isCluster ? 8 : 10) - baseScale) * factor;
+                                // Slightly more gradual ramp
+                                targetOpacity = Math.min(1, factor * 2.5) * globalZoomFade;
+                                targetScale = (baseScale + ((item.isCluster ? clusterHoverScale : airportHoverScale) - baseScale) * factor) * Math.max(0.5, globalZoomFade);
                             } else {
                                 targetOpacity = 0;
                                 targetScale = baseScale;
@@ -635,8 +652,8 @@ export default function Globe({
                     // Apply to Mesh (only if not a cluster)
                     if (!item.isCluster) {
                         if (Math.abs(mat.opacity - targetOpacity) > 0.001 || Math.abs(mesh.scale.x - targetScale) > 0.001) {
-                            mat.opacity += (targetOpacity - mat.opacity) * 0.15;
-                            const nextScale = mesh.scale.x + (targetScale - mesh.scale.x) * 0.15;
+                            mat.opacity += (targetOpacity - mat.opacity) * 0.06; // Slower temporal fade
+                            const nextScale = mesh.scale.x + (targetScale - mesh.scale.x) * 0.06;
                             mesh.scale.setScalar(nextScale);
                         }
                     } else {
@@ -645,7 +662,7 @@ export default function Globe({
                         mat.opacity = 0;
                         const clusterHitScale = Math.min(6, targetScale);
                         if (Math.abs(mesh.scale.x - clusterHitScale) > 0.01) {
-                            mesh.scale.setScalar(mesh.scale.x + (clusterHitScale - mesh.scale.x) * 0.15);
+                            mesh.scale.setScalar(mesh.scale.x + (clusterHitScale - mesh.scale.x) * 0.06);
                         }
                     }
 
@@ -656,10 +673,10 @@ export default function Globe({
                         _vec1.copy(mesh.position);
                         const dot = _camNorm.dot(_vec1);
 
-                        // Sync opacity
+                        // Sync opacity with a slower factor
                         const labelTargetOpacity = dot < 0.2 ? 0 : targetOpacity;
                         if (Math.abs(label.material.opacity - labelTargetOpacity) > 0.001) {
-                            label.material.opacity += (labelTargetOpacity - label.material.opacity) * 0.15;
+                            label.material.opacity += (labelTargetOpacity - label.material.opacity) * 0.06;
                         }
 
                         // Determine visibility based on dot product (hemisphere) and opacity
@@ -668,9 +685,9 @@ export default function Globe({
                             label.visible = isVisible;
                         }
 
-                        // Subtle scale effect for the label
-                        const labelScale = 0.013 * (0.5 + 0.5 * (mesh.scale.x / 12));
-                        if (Math.abs(label.scale.x - labelScale) > 0.0001) {
+                        // Scale effect for the label (relative to mesh scale which is already distance-aware)
+                        const labelScale = labelRefScale * (0.5 + 0.5 * (mesh.scale.x / (35 * scaleFactor)));
+                        if (Math.abs(label.scale.x - (labelScale)) > 0.0001) {
                             label.scale.setScalar(labelScale);
                         }
                     }
@@ -686,12 +703,20 @@ export default function Globe({
                     let targetOpacity = 0;
                     const customScale = mesh.userData.customScale || 1;
 
-                    if (interactiveRef.current && dot >= 0.1 && !isMoving) {
-                        const distToRay = raycaster.ray.distanceSqToPoint(_vec1);
-                        // Larger threshold for country labels than airports (at least 4x deeper reach)
-                        const countryThreshold = proximityBase * 4.0 * Math.min(1.5, customScale);
-                        if (distToRay < countryThreshold) {
-                            targetOpacity = 0.4;
+                    if (interactiveRef.current && dot >= 0.1) {
+                        if (isMobileRef.current) {
+                            // Mobile: Show based on camera looking towards it, exactly like airports
+                            let factor = Math.pow(Math.max(0, (dot - 0.94) / 0.06), 1.5);
+                            if (factor > 0) {
+                                targetOpacity = 0.4 * factor * globalZoomFade;
+                            }
+                        } else if (!isMoving) {
+                            // Desktop: Show based on cursor hover distance
+                            const distToRay = raycaster.ray.distanceSqToPoint(_vec1);
+                            const countryThreshold = proximityBase * 4.0 * Math.min(1.5, customScale);
+                            if (distToRay < countryThreshold) {
+                                targetOpacity = 0.4 * globalZoomFade;
+                            }
                         }
                     }
 
