@@ -27,6 +27,11 @@ body,
 
   --color-origin: #0891b2;
   --color-destination: #c026d3;
+
+  /* Glass System */
+  --glass-bg: rgba(255, 255, 255, 0.85);
+  --glass-border: rgba(255, 255, 255, 0.4);
+  --glass-shadow: rgba(0, 0, 0, 0.08);
 }
 
 /* Dark theme overrides */
@@ -45,6 +50,11 @@ body,
 
   --color-origin: #22d3ee;
   --color-destination: #e879f9;
+
+  /* Glass System Dark */
+  --glass-bg: rgba(15, 23, 42, 0.7);
+  --glass-border: rgba(255, 255, 255, 0.08);
+  --glass-shadow: rgba(0, 0, 0, 0.4);
 }
 
 /* ===== UTILITY CLASSES ===== */
@@ -54,9 +64,34 @@ body,
   .theme-transition *,
   .theme-transition ::before,
   .theme-transition ::after {
-    transition-property: background-color, border-color, color, fill, stroke !important;
+    transition-property: background-color, border-color, color, fill, stroke, transform, opacity !important;
     transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1) !important;
     transition-duration: 300ms !important;
+  }
+
+  /* ROOT GLASS EFFECT */
+  .premium-glass {
+    background: var(--glass-bg);
+    backdrop-filter: blur(24px) saturate(180%) brightness(110%);
+    border: 1px solid var(--glass-border);
+    box-shadow: 0 25px 50px -12px var(--glass-shadow);
+  }
+
+  .dark .premium-glass {
+    backdrop-filter: blur(24px) saturate(160%) brightness(90%);
+  }
+
+  /* Input internal glass style */
+  .premium-input {
+    @apply transition-all duration-300;
+    background: color-mix(in srgb, var(--color-main) 50%, transparent);
+    border: 1px solid color-mix(in srgb, var(--color-line) 40%, transparent);
+  }
+
+  .premium-input:focus-within {
+    background: color-mix(in srgb, var(--color-main) 80%, transparent);
+    border-color: var(--color-brand);
+    box-shadow: 0 0 20px -5px rgba(var(--color-brand), 0.2);
   }
 }
 

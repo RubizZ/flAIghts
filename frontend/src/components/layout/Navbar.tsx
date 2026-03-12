@@ -281,7 +281,7 @@ export default function Navbar({ variant = 'floating' }: { variant?: 'floating' 
                                 }
                             }}
                             trigger={
-                                <div className="relative flex items-center justify-center p-2 bg-surface hover:bg-surface/80 border border-line rounded-full transition-all group cursor-pointer w-9 h-9">
+                                <div className="relative flex items-center justify-center p-2 bg-main/40 hover:bg-main/60 dark:bg-surface dark:hover:bg-surface/80 border border-line rounded-full transition-all group cursor-pointer w-9 h-9 backdrop-blur-md">
                                     <Bell size={18} className="text-content group-hover:text-brand transition-colors" />
                                     {user?.received_friend_requests && user.received_friend_requests.length > 0 && (
                                         <div className="absolute top-0 right-0 w-2.5 h-2.5 bg-brand rounded-full border-2 border-line" />
@@ -312,7 +312,7 @@ export default function Navbar({ variant = 'floating' }: { variant?: 'floating' 
                                 }
                             }}
                             trigger={
-                                <div className="flex items-center gap-2 bg-surface hover:bg-surface/80 border border-line p-1 pr-3 rounded-full transition-all group">
+                                <div className="flex items-center gap-2 bg-main/40 hover:bg-main/60 dark:bg-surface dark:hover:bg-surface/80 border border-line p-1 pr-3 rounded-full transition-all group backdrop-blur-md">
                                     <UserAvatar user={user} size={28} />
                                     <span className="text-content text-sm font-bold hidden sm:block max-w-24 truncate">
                                         {user?.username}
@@ -358,7 +358,7 @@ export default function Navbar({ variant = 'floating' }: { variant?: 'floating' 
                             }
                         }}
                         trigger={
-                            <div className="w-9 h-9 flex items-center justify-center bg-surface hover:bg-surface/80 border border-line rounded-full text-content transition-all active:scale-90 cursor-pointer">
+                            <div className="w-9 h-9 flex items-center justify-center bg-main/40 hover:bg-main/60 dark:bg-surface dark:hover:bg-surface/80 border border-line rounded-full text-content transition-all active:scale-90 cursor-pointer backdrop-blur-md">
                                 <User size={20} className="sm:hidden" />
                                 <MoreHorizontal size={20} className="hidden sm:block" />
                             </div>

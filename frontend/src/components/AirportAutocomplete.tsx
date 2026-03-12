@@ -118,8 +118,8 @@ export default function AirportAutocomplete({ value, displayValue, onChange, pla
                 {groupedSuggestions.length > 0 ? (
                     groupedSuggestions.map(([country, airports]) => (
                         <div key={country} className="flex flex-col">
-                            <div className="sticky top-0 z-10 bg-surface/80 backdrop-blur-md px-4 py-1.5 border-b border-line/50">
-                                <span className="text-[10px] font-bold uppercase tracking-widest text-content-muted">
+                            <div className="sticky top-0 z-10 bg-main/95 backdrop-blur-md px-4 py-2 border-b border-line">
+                                <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-content/50">
                                     {country}
                                 </span>
                             </div>
@@ -129,8 +129,8 @@ export default function AirportAutocomplete({ value, displayValue, onChange, pla
                                     className="px-4 py-3 hover:bg-surface transition-all cursor-pointer flex items-center gap-3 border-b border-line last:border-0 group/suggestion"
                                     onClick={() => handleSelect(airport)}
                                 >
-                                    <div className="bg-surface p-2 rounded-xl shrink-0 group-hover/suggestion:bg-brand/10 transition-colors">
-                                        <Plane size={16} className="text-content-muted group-hover/suggestion:text-brand transition-colors" />
+                                    <div className="bg-surface/50 p-2 rounded-xl shrink-0 group-hover/suggestion:bg-brand/10 transition-colors">
+                                        <Plane size={16} className="text-content-muted/60 group-hover/suggestion:text-brand transition-colors" />
                                     </div>
                                     <div className="flex flex-col overflow-hidden">
                                         <span className="text-sm font-semibold truncate group-hover/suggestion:text-brand transition-colors">
@@ -146,8 +146,8 @@ export default function AirportAutocomplete({ value, displayValue, onChange, pla
                     ))
                 ) : debouncedQuery.length >= 2 && !isFetching ? (
                     <div className="px-6 py-10 flex flex-col items-center justify-center gap-3 text-center">
-                        <div className="bg-surface p-3 rounded-2xl text-content-muted">
-                            <Search size={24} />
+                        <div className="bg-surface/50 p-4 rounded-3xl text-content-muted/40">
+                            <Search size={32} />
                         </div>
                         <div className="flex flex-col gap-1">
                             <p className="text-sm font-bold">No hay resultados</p>

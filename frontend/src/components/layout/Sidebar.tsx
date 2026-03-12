@@ -15,9 +15,10 @@ interface SidebarProps {
      *              Always visible as a narrow icon-only rail that expands on toggle.
      */
     variant?: 'floating' | 'classic';
+    className?: string;
 }
 
-export default function Sidebar({ isOpen, onClose, onToggle, variant = 'classic' }: SidebarProps) {
+export default function Sidebar({ isOpen, onClose, onToggle, variant = 'classic', className = "" }: SidebarProps) {
     const { isLoading } = useAuth();
     const [clickedItem, setClickedItem] = useState<string | null>(null);
     const location = useLocation();
@@ -55,9 +56,9 @@ export default function Sidebar({ isOpen, onClose, onToggle, variant = 'classic'
 
             {/* ── SIDEBAR PANEL ── */}
             <aside
-                className={`fixed z-50 flex flex-col overflow-hidden transition-all duration-300 ease-out
+                className={`fixed z-50 flex flex-col overflow-hidden transition-all duration-300 ease-out ${className}
                     ${isFloating
-                        ? `left-4 top-4 bottom-4 w-60 bg-main/85 backdrop-blur-3xl border border-line shadow-2xl rounded-3xl
+                        ? `left-4 top-4 bottom-4 w-60 premium-glass rounded-3xl
                            ${isOpen
                             ? 'translate-x-0 opacity-100 scale-100'
                             : '-translate-x-8 opacity-0 scale-95 pointer-events-none'

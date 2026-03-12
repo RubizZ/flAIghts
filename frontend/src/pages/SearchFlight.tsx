@@ -232,7 +232,7 @@ function SearchFlight() {
                 {/* ── ORIGIN & DESTINATION ── */}
                 <div className={`relative flex gap-3 items-center grow ${isMapMode ? 'flex-row w-full' : 'flex-col items-stretch'}`}>
                     {/* Origin */}
-                    <div className={`group flex items-center gap-1.5 lg:gap-3 bg-surface/60 border border-line rounded-2xl px-2.5 lg:px-4 transition-all focus-within:border-brand/60 py-2.5 lg:py-3 ${isMapMode ? 'flex-1 min-w-0' : 'w-full'}`}>
+                    <div className={`premium-input group flex items-center gap-1.5 lg:gap-3 rounded-2xl px-2.5 lg:px-4 py-2.5 lg:py-3 ${isMapMode ? 'flex-1 min-w-0' : 'w-full'}`}>
                         <MapPin className={`shrink-0 transition-colors ${origin ? 'text-origin' : 'text-content-muted'}`} size={18} />
                         <div className="flex flex-col grow min-w-0">
                             <span className="text-[9px] text-content-muted uppercase font-bold tracking-wider">Origen</span>
@@ -271,7 +271,7 @@ function SearchFlight() {
                     </button>
 
                     {/* Destination */}
-                    <div className={`group flex items-center gap-1.5 lg:gap-3 bg-surface/60 border border-line rounded-2xl px-2.5 lg:px-4 transition-all focus-within:border-brand/60 py-2.5 lg:py-3 ${isMapMode ? 'flex-1 min-w-0' : 'w-full'}`}>
+                    <div className={`premium-input group flex items-center gap-1.5 lg:gap-3 rounded-2xl px-2.5 lg:px-4 py-2.5 lg:py-3 ${isMapMode ? 'flex-1 min-w-0' : 'w-full'}`}>
                         <MapPin className={`shrink-0 transition-colors ${destination ? 'text-destination' : 'text-content-muted'}`} size={18} />
                         <div className="flex flex-col grow min-w-0">
                             <span className="text-[9px] text-content-muted uppercase font-bold tracking-wider">Destino</span>
@@ -319,7 +319,7 @@ function SearchFlight() {
                         trigger={
                             <div
                                 onClick={() => setActiveDeparturePopover(activeDeparturePopover === mode ? null : mode)}
-                                className="flex items-center gap-3 bg-surface/60 border border-line rounded-2xl px-4 transition-all cursor-pointer group relative py-2.5 lg:py-3 h-full"
+                                className="premium-input flex items-center gap-3 rounded-2xl px-4 cursor-pointer group relative py-2.5 lg:py-3 h-full"
                             >
                                 <CalendarIcon className={`shrink-0 transition-colors ${departureDate ? 'text-origin' : 'text-content-muted'}`} size={16} />
                                 <div className="flex flex-col grow min-w-0">
@@ -351,7 +351,7 @@ function SearchFlight() {
                                 trigger={
                                     <div
                                         onClick={() => departureDate && setActiveReturnPopover(activeReturnPopover === mode ? null : mode)}
-                                        className={`flex items-center gap-3 bg-surface/60 border border-line rounded-2xl px-4 transition-all relative group w-full focus-within:border-brand/60 py-2.5 lg:py-3 h-full ${!departureDate ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'}`}
+                                        className={`premium-input flex items-center gap-3 rounded-2xl px-4 relative group w-full py-2.5 lg:py-3 h-full ${!departureDate ? 'opacity-50 cursor-not-allowed grayscale' : 'cursor-pointer'}`}
                                     >
                                         <CalendarIcon className={`shrink-0 transition-colors ${returnDate ? 'text-destination' : 'text-content-muted'}`} size={16} />
                                         <div className="flex flex-col grow min-w-0 text-left">
@@ -364,7 +364,7 @@ function SearchFlight() {
                                         </div>
                                     </div>
                                 }
-                                contentClassName="w-[380px] bg-main/90 backdrop-blur-3xl border border-line shadow-2xl rounded-3xl"
+                                contentClassName="w-[380px] bg-main/90 backdrop-blur-3xl border border-line/50 rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.15)] dark:shadow-[0_20px_50px_rgba(0,0,0,0.4)]"
                             />
                         </Tooltip>
 
@@ -374,7 +374,7 @@ function SearchFlight() {
                                     e.stopPropagation();
                                     setReturnDate("");
                                 }}
-                                className="absolute -right-1 -top-1 bg-surface text-content-muted p-1 rounded-full border border-line hover:text-red-500 transition-all shadow-sm z-20 cursor-pointer"
+                                className="absolute -right-1 -top-1 bg-main text-content-muted p-1 rounded-full border border-line hover:text-red-500 transition-all shadow-sm z-20 cursor-pointer"
                             >
                                 <Plus size={10} className="rotate-45" />
                             </button>
@@ -483,7 +483,7 @@ function SearchFlight() {
                 ? 'left-1/2 lg:left-8 top-1/2 -translate-y-1/2 -translate-x-1/2 lg:translate-x-0 opacity-100 scale-100'
                 : 'left-1/2 lg:-left-full top-0 lg:top-1/2 -translate-y-[calc(100%+2rem)] lg:-translate-y-1/2 -translate-x-1/2 lg:translate-x-0 opacity-0 scale-95 pointer-events-none'
                 }`}>
-                <div className="relative bg-main/60 backdrop-blur-3xl p-7 rounded-4xl border border-line shadow-[0_32px_64px_-16px_rgba(0,0,0,0.4)] flex flex-col gap-6 transition-all hover:shadow-[0_48px_80px_-20px_rgba(0,0,0,0.5)] w-[min(96vw,420px)]">
+                <div className="premium-glass relative p-7 rounded-4xl flex flex-col gap-6 transition-all hover:scale-[1.01] w-[min(96vw,420px)]">
 
                     {/* Mobile Map Toggle Button */}
                     {!isLargeScreen && searchMode === 'manual' && !isSelectingOnMap && (
@@ -503,7 +503,7 @@ function SearchFlight() {
                     {isLargeScreen && searchMode === 'manual' && (
                         <button
                             onClick={() => setIsSelectingOnMap(true)}
-                            className="absolute -right-5 top-1/2 -translate-y-1/2 w-10 h-24 bg-surface backdrop-blur-xl border border-line rounded-2xl shadow-xl flex items-center justify-center group hover:bg-brand hover:border-brand/40 transition-all active:scale-95 cursor-pointer z-30"
+                            className="absolute -right-5 top-1/2 -translate-y-1/2 w-10 h-24 bg-main/90 backdrop-blur-xl border border-line rounded-2xl shadow-xl flex items-center justify-center group hover:bg-brand hover:border-brand/40 transition-all active:scale-95 cursor-pointer z-30"
                             title="Expandir mapa"
                         >
                             <Maximize2 size={18} className="text-content-muted group-hover:text-content-on-brand transition-colors rotate-90" />
@@ -520,7 +520,7 @@ function SearchFlight() {
                             <p className="text-content-muted text-sm">Explora destinos mundiales con flAIghts.</p>
                         </div>
 
-                        <div className="flex shrink-0 items-center bg-surface rounded-xl p-1 gap-0.5 border border-line mt-1">
+                        <div className="flex shrink-0 items-center bg-main/50 dark:bg-surface rounded-xl p-1 gap-0.5 border border-line mt-1">
                             <button
                                 onClick={() => setSearchMode('manual')}
                                 title="Búsqueda manual"
@@ -569,7 +569,7 @@ function SearchFlight() {
                                         <span className="text-content-muted text-sm">Próximamente — describe tu viaje ideal con IA</span>
                                     </div>
                                 </div>
-                                <div className="flex items-center gap-3 bg-surface/60 border border-line rounded-2xl px-4 py-3 opacity-50 pointer-events-none">
+                                <div className="flex items-center gap-3 bg-main/60 dark:bg-surface/60 border border-line rounded-2xl px-4 py-3 opacity-50 pointer-events-none">
                                     <Bot size={18} className="text-content-muted shrink-0" />
                                     <span className="text-content-muted text-sm">Ej: "Quiero ir a Tokio en verano por menos de 600€"</span>
                                 </div>
@@ -590,7 +590,7 @@ function SearchFlight() {
                     : 'top-20 w-[calc(100%-40px)] xl:top-6 xl:w-[min(calc(100%-500px),900px)] opacity-100 scale-100')
                 : 'top-0 -translate-y-full opacity-0 scale-95 pointer-events-none'
                 }`}>
-                <div className={`relative border border-line flex flex-col transition-all duration-500 ${!isLargeScreen && isSelectingOnMap && !isMobileCardExpanded ? 'p-3 bg-main/60 backdrop-blur-3xl rounded-3xl shadow-lg' : 'p-3 lg:p-4 bg-main/60 backdrop-blur-3xl rounded-3xl lg:rounded-4xl shadow-[0_32px_64px_-16px_rgba(0,0,0,0.4)]'}`}>
+                <div className={`premium-glass relative border border-line/50 flex flex-col transition-all duration-500 ${!isLargeScreen && isSelectingOnMap && !isMobileCardExpanded ? 'p-3 rounded-3xl' : 'p-3 lg:p-4 rounded-3xl lg:rounded-4xl'}`}>
 
                     {/* Summary Header (Only for Collapsible Drawer mode < 1024px) */}
                     {!isLargeScreen && (
@@ -666,7 +666,7 @@ function SearchFlight() {
                             className="absolute -bottom-5 left-1/2 -translate-x-1/2 bg-surface/90 backdrop-blur-2xl border border-line px-5 py-2.5 rounded-full shadow-2xl flex items-center gap-2.5 group hover:bg-surface transition-all active:scale-95 cursor-pointer z-30 whitespace-nowrap animate-fade-in"
                         >
                             <ChevronDown size={14} className="text-brand rotate-180 transition-transform group-active:-translate-y-1" />
-                            <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-content/90 font-bold">Plegar búsqueda</span>
+                            <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-content/90">Plegar búsqueda</span>
                         </button>
                     )}
                 </div>
@@ -683,7 +683,7 @@ function SearchFlight() {
                     : 'opacity-0 translate-x-12 scale-95 pointer-events-none'
                 }`
                 }`}>
-                <div className="bg-main/60 backdrop-blur-3xl p-6 rounded-3xl border border-line shadow-2xl flex flex-col gap-5 overflow-hidden group">
+                <div className="bg-white/95 dark:bg-main/60 backdrop-blur-3xl p-6 rounded-3xl border border-line/50 shadow-2xl flex flex-col gap-5 overflow-hidden group">
                     <div className="flex items-start justify-between">
                         <div className="flex flex-col gap-1">
                             <span className="text-[10px] text-brand uppercase font-bold tracking-[0.2em]">Aeropuerto</span>
