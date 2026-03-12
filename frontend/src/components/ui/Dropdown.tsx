@@ -126,7 +126,7 @@ export default function Dropdown({
                 exitAnimation={finalExitAnimation}
             >
                 <div
-                    className={`z-50 ${contentClassName} overflow-hidden h-full w-full`}
+                    className={`z-50 ${contentClassName} overflow-y-auto h-full w-full [ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden`}
                 >
                     {menus ? (
                         <div className={`relative overflow-hidden w-full h-full`}>
