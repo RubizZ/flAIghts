@@ -228,9 +228,9 @@ function SearchFlight() {
         const isHorizontalLayout = mode === 'map' && isLargeScreen;
         const isMapMode = mode === 'map';
         return (
-            <div className={`grow ${isHorizontalLayout ? 'flex flex-row items-stretch gap-2 lg:gap-4 w-full' : 'flex flex-col gap-3'}`}>
+            <div className={`grow ${isHorizontalLayout ? 'flex flex-row items-stretch gap-4 w-full' : 'flex flex-col gap-3'}`}>
                 {/* ── ORIGIN & DESTINATION ── */}
-                <div className={`relative flex gap-1.5 lg:gap-3 items-center grow ${isMapMode ? 'flex-row w-full' : 'flex-col items-stretch'}`}>
+                <div className={`relative flex gap-3 items-center grow ${isMapMode ? 'flex-row w-full' : 'flex-col items-stretch'}`}>
                     {/* Origin */}
                     <div className={`group flex items-center gap-1.5 lg:gap-3 bg-surface/60 border border-line rounded-2xl px-2.5 lg:px-4 transition-all focus-within:border-brand/60 py-2.5 lg:py-3 ${isMapMode ? 'flex-1 min-w-0' : 'w-full'}`}>
                         <MapPin className={`shrink-0 transition-colors ${origin ? 'text-origin' : 'text-content-muted'}`} size={18} />
@@ -324,7 +324,7 @@ function SearchFlight() {
                                 <CalendarIcon className={`shrink-0 transition-colors ${departureDate ? 'text-origin' : 'text-content-muted'}`} size={16} />
                                 <div className="flex flex-col grow min-w-0">
                                     <span className="text-[9px] text-content-muted uppercase font-bold tracking-wider text-left">Salida</span>
-                                    <div className="relative h-4 lg:h-5 flex items-center">
+                                    <div className="relative h-5 flex items-center">
                                         <span className={`truncate text-sm lg:text-base text-left font-sans ${departureDate ? 'text-content' : 'text-content-muted/50 font-normal'}`}>
                                             {departureDate ? formatDate(departureDate) : "Seleccionar"}
                                         </span>
@@ -356,7 +356,7 @@ function SearchFlight() {
                                         <CalendarIcon className={`shrink-0 transition-colors ${returnDate ? 'text-destination' : 'text-content-muted'}`} size={16} />
                                         <div className="flex flex-col grow min-w-0 text-left">
                                             <span className="text-[9px] text-content-muted uppercase font-bold tracking-wider">Regreso</span>
-                                            <div className="relative h-4 lg:h-5 flex items-center">
+                                            <div className="relative h-5 flex items-center">
                                                 <span className={`truncate text-sm lg:text-base font-sans ${returnDate ? 'text-content' : 'text-content-muted/50 font-normal'}`}>
                                                     {returnDate ? formatDate(returnDate) : "Seleccionar"}
                                                 </span>
