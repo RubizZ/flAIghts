@@ -12,9 +12,15 @@ interface CalendarProps {
     setIsOpen?: (open: boolean) => void;
     contentClassName?: string;
     defaultMonth?: string;
+    keepTriggerWidth?: boolean;
 }
 
-export default function Calendar({ value, onChange, minDate, className = "", trigger, isOpen, setIsOpen, contentClassName, defaultMonth }: CalendarProps) {
+export default function Calendar({ value, onChange, minDate, className = "", trigger,    isOpen, 
+    setIsOpen, 
+    contentClassName, 
+    defaultMonth,
+    keepTriggerWidth = true
+}: CalendarProps) {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
@@ -278,6 +284,7 @@ export default function Calendar({ value, onChange, minDate, className = "", tri
                 className="w-full"
                 contentClassName={contentClassName}
                 maxContentHeight={550}
+                keepTriggerWidth={keepTriggerWidth}
             >
                 {calendarContent}
             </SmartPopover>

@@ -15,6 +15,7 @@ interface SmartPopoverProps {
     preferredAlign?: 'left' | 'right' | 'center';
     entryAnimation?: string;
     exitAnimation?: string;
+    keepTriggerWidth?: boolean;
 }
 
 interface PositionState {
@@ -47,7 +48,8 @@ export default function SmartPopover({
     offset = 8,
     preferredAlign = 'left',
     entryAnimation,
-    exitAnimation
+    exitAnimation,
+    keepTriggerWidth = true
 }: SmartPopoverProps) {
     const [pos, setPos] = useState<PositionState | null>(null);
     const [shouldRender, setShouldRender] = useState(isOpen);
@@ -76,22 +78,28 @@ export default function SmartPopover({
         const rect = containerRef.current.getBoundingClientRect();
         const vHeight = window.innerHeight;
         const vWidth = window.innerWidth;
+        
+        // Mobile Keyboard Aware calculations
+        const vv = window.visualViewport;
+        const viewportHeight = vv ? vv.height : vHeight;
+        const viewportOffsetTop = vv ? vv.offsetTop : 0;
+        
         const margin = 16;
 
-        // 1. Vertical Logic (Choose side with more space)
-        const spaceBelow = vHeight - rect.bottom - margin;
-        const spaceAbove = rect.top - margin;
+        // space relative to what's actually visible (keyboard aware)
+        const spaceBelowVisible = viewportHeight - (rect.bottom - viewportOffsetTop) - margin;
+        const spaceAboveVisible = (rect.top - viewportOffsetTop) - margin;
 
-        // Default to bottom, but flip to top if it doesn't fit below AND there's more space above
+        // Decide side based on where there is more REAL space
         let side: 'top' | 'bottom' = 'bottom';
-        if (spaceBelow < maxContentHeight && spaceAbove > spaceBelow) {
+        if (spaceBelowVisible < maxContentHeight && spaceAboveVisible > spaceBelowVisible) {
             side = 'top';
         }
 
-        const availableVerticalSpace = side === 'bottom' ? spaceBelow : spaceAbove;
-        const finalMaxHeight = Math.max(minContentHeight, Math.min(availableVerticalSpace - offset, maxContentHeight));
+        const availableVerticalSpace = side === 'bottom' ? spaceBelowVisible : spaceAboveVisible;
+        const finalMaxHeight = Math.max(100, Math.min(availableVerticalSpace - offset, maxContentHeight));
 
-        // 2. Horizontal Logic
+        // 2. Horizontal Logic (Standard)
         const canAlignLeft = rect.left + maxContentWidth < vWidth - margin;
         const canAlignRight = rect.right - maxContentWidth > margin;
 
@@ -148,10 +156,20 @@ export default function SmartPopover({
 
         window.addEventListener('resize', handleUpdate);
         window.addEventListener('scroll', handleUpdate, true);
+        
+        // Listen to visual viewport changes (keyboard)
+        if (window.visualViewport) {
+            window.visualViewport.addEventListener('resize', handleUpdate);
+            window.visualViewport.addEventListener('scroll', handleUpdate);
+        }
 
         return () => {
             window.removeEventListener('resize', handleUpdate);
             window.removeEventListener('scroll', handleUpdate, true);
+            if (window.visualViewport) {
+                window.visualViewport.removeEventListener('resize', handleUpdate);
+                window.visualViewport.removeEventListener('scroll', handleUpdate);
+            }
         };
     }, [isOpen]);
 
@@ -198,6 +216,7 @@ export default function SmartPopover({
                         pointerEvents: 'none',
                         display: 'flex',
                         flexDirection: 'column',
+                        justifyContent: pos.side === 'top' ? 'flex-end' : 'flex-start',
                         alignItems: pos.horizontalMode === 'center' ? 'center' : pos.horizontalMode === 'left' ? 'flex-start' : 'flex-end',
                     }}
                 >
@@ -206,7 +225,7 @@ export default function SmartPopover({
                         style={{
                             maxWidth: pos.maxWidth,
                             maxHeight: pos.maxHeight,
-                            minWidth: pos.triggerWidth,
+                            minWidth: keepTriggerWidth ? pos.triggerWidth : 'auto',
                             pointerEvents: isOpen ? 'auto' : 'none', // Disable interactions during exit
                         }}
                         className={`

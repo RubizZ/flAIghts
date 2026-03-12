@@ -49,15 +49,27 @@ const DateSearchInput: React.FC<DateSearchInputProps> = ({
         }
     };
 
+    const containerRef = React.useRef<HTMLDivElement>(null);
+
     const trigger = (
-        <div className="relative group w-full h-full">
+        <div className="relative group w-full h-full" ref={containerRef}>
             <PremiumInput
                 icon={<CalendarIcon size={16} />}
                 label={label}
                 iconColorClass={iconColorClass}
                 disabled={disabled}
                 className="w-full h-full"
-                onClick={() => !disabled && setIsOpen(!isOpen)}
+                onClick={() => {
+                    if (!disabled) {
+                        const nextState = !isOpen;
+                        setIsOpen(nextState);
+                        if (nextState) {
+                            setTimeout(() => {
+                                containerRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                            }, 100);
+                        }
+                    }
+                }}
             >
                 <span className={`truncate text-sm lg:text-base font-sans transition-all ${value ? 'text-content' : 'text-content-muted/50 font-normal'
                     }`}>
@@ -95,7 +107,8 @@ const DateSearchInput: React.FC<DateSearchInputProps> = ({
                         minDate={minDate}
                         defaultMonth={defaultMonth}
                         trigger={trigger}
-                        contentClassName="w-[380px] bg-main/90 backdrop-blur-3xl border border-line shadow-2xl rounded-3xl"
+                        contentClassName="w-[min(380px,90vw,65svh)] bg-main border border-line shadow-2xl rounded-3xl"
+                        keepTriggerWidth={false}
                     />
                 </div>
             </Tooltip>

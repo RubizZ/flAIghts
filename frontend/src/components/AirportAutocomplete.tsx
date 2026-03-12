@@ -96,6 +96,10 @@ export default function AirportAutocomplete({ value, displayValue, onChange, pla
                         }}
                         onFocus={(e) => {
                             setIsOpen(true);
+                            const target = e.target;
+                            setTimeout(() => {
+                                target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                            }, 100);
                             if (query === displayValue && query !== "") {
                                 e.target.select();
                             }
