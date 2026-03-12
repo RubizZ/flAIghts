@@ -211,7 +211,7 @@ export default function SmartPopover({
                         }}
                         className={`
                             bg-main/60 backdrop-blur-3xl text-content border border-line 
-                            rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.3)] overflow-hidden text-left 
+                            rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.3)] overflow-y-auto text-left 
                             animate-duration-300
                             ${isOpen 
                                 ? (entryAnimation || (pos.side === 'top' ? 'animate-fade-in-up' : 'animate-fade-in-down'))
