@@ -122,12 +122,11 @@ export default function Dropdown({
                     </div>
                 }
                 preferredAlign={align}
+                entryAnimation={finalEntryAnimation}
+                exitAnimation={finalExitAnimation}
             >
                 <div
-                    className={`
-                        z-50 ${contentClassName} overflow-hidden
-                        ${isOpen ? finalEntryAnimation : finalExitAnimation}
-                    `}
+                    className={`z-50 ${contentClassName} overflow-hidden h-full w-full`}
                 >
                     {menus ? (
                         <div className={`relative overflow-hidden w-full h-full`}>
