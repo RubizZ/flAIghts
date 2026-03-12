@@ -513,9 +513,20 @@ export default function Globe({
                 renderer.domElement.style.cursor = "pointer";
                 if (popupRef.current) {
                     const item = intersects[0].object.userData;
-                    popupRef.current.style.left = (e.clientX - rect.left + 10) + "px";
-                    popupRef.current.style.top = (e.clientY - rect.top + 10) + "px";
+                    let x = e.clientX - rect.left + 10;
+                    let y = e.clientY - rect.top + 10;
+                    const popupWidth = popupRef.current.offsetWidth || 200;
+                    const popupHeight = popupRef.current.offsetHeight || 40;
 
+                    if (x + popupWidth > rect.width - 10) {
+                        x = e.clientX - rect.left - popupWidth - 10;
+                    }
+                    if (y + popupHeight > rect.height - 10) {
+                        y = e.clientY - rect.top - popupHeight - 10;
+                    }
+
+                    popupRef.current.style.left = x + "px";
+                    popupRef.current.style.top = y + "px";
                     if (item.isCluster) {
                         popupRef.current.innerHTML = `<b>${item.airports.length} aeropuertos</b> en esta zona`;
                     } else {
@@ -814,8 +825,30 @@ export default function Globe({
                     if (contextMenuContainerRef.current.style.display !== "block")
                         contextMenuContainerRef.current.style.display = "block";
                     _vec1.copy(cm.worldPos).project(cameraRef.current);
-                    contextMenuContainerRef.current.style.left = `${(_vec1.x * 0.5 + 0.5) * mountRef.current.clientWidth}px`;
-                    contextMenuContainerRef.current.style.top = `${(-_vec1.y * 0.5 + 0.5) * mountRef.current.clientHeight}px`;
+                    const menu = contextMenuContainerRef.current;
+                    const containerWidth = mountRef.current.clientWidth;
+                    const containerHeight = mountRef.current.clientHeight;
+                    const menuWidth = menu.offsetWidth;
+                    const menuHeight = menu.offsetHeight;
+
+                    let x = (_vec1.x * 0.5 + 0.5) * containerWidth;
+                    let y = (-_vec1.y * 0.5 + 0.5) * containerHeight;
+
+                    // Intelligent positioning: if it overflows right, move it left by its width
+                    if (x + menuWidth > containerWidth - 10) {
+                        x -= menuWidth;
+                    }
+                    // If it overflows bottom, move it up by its height
+                    if (y + menuHeight > containerHeight - 10) {
+                        y -= menuHeight;
+                    }
+
+                    // Final clamping to ensure it's never off-screen
+                    x = Math.max(10, Math.min(x, containerWidth - menuWidth - 10));
+                    y = Math.max(10, Math.min(y, containerHeight - menuHeight - 10));
+
+                    menu.style.left = `${x}px`;
+                    menu.style.top = `${y}px`;
                 }
             }
 
