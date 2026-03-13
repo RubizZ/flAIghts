@@ -59,7 +59,7 @@ export default function AppLayout() {
             )}
 
             <div className={`flex flex-col min-w-0 relative grow shrink min-h-0 ${isGlobe ? 'w-full' : ''}`}>
-                <header className={`absolute top-4 left-0 w-full z-40 pointer-events-none ${isGlobe ? 'block' : 'hidden sm:block'}`}>
+                <header className={`absolute top-0 left-0 w-full z-40 pointer-events-none ${isGlobe ? 'block' : 'hidden sm:block'}`}>
                     <Navbar variant="floating" />
                 </header>
 

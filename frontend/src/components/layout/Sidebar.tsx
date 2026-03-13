@@ -3,6 +3,7 @@ import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { Menu, X } from "lucide-react";
 import { useNavItems } from "./useNavItems";
+import NavIconButton from "../ui/NavIconButton";
 
 interface SidebarProps {
     isOpen: boolean;
@@ -38,20 +39,15 @@ export default function Sidebar({ isOpen, onClose, onToggle, variant = 'classic'
 
             {/* ── EXTERNAL HAMBURGER BUTTON (Only for floating variant) ── */}
             {isFloating && (
-                <button
-                    onClick={onToggle}
-                    className={`fixed left-4 top-4 z-50 p-2.5 premium-glass rounded-2xl
-                        text-content-muted hover:text-content hover:bg-main/80
-                        transition-all duration-300 ease-out active:scale-95 cursor-pointer
-                        ${isOpen
-                            ? 'opacity-0 scale-75 pointer-events-none -translate-x-4'
-                            : 'opacity-100 scale-100 translate-x-0'
-                        }
-                    `}
-                    aria-label="Abrir menú"
-                >
-                    <Menu size={20} />
-                </button>
+                <div className={`fixed left-4 top-4 z-50 transition-all duration-300 ${isOpen ? 'opacity-0 scale-75 pointer-events-none -translate-x-4' : 'opacity-100 scale-100 translate-x-0'}`}>
+                    <NavIconButton
+                        onClick={onToggle}
+                        variant="floating"
+                        title="Abrir menú"
+                    >
+                        <Menu size={20} />
+                    </NavIconButton>
+                </div>
             )}
 
             {/* ── SIDEBAR PANEL ── */}

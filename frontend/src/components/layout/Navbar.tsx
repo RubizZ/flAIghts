@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { PopulatedUser } from "@/api/generated/model";
 import UserAvatar from "@/components/ui/UserAvatar";
+import NavIconButton from "@/components/ui/NavIconButton";
 
 export default function Navbar({ variant = 'floating' }: { variant?: 'floating' | 'flat' }) {
     const navigate = useNavigate();
@@ -110,6 +111,30 @@ export default function Navbar({ variant = 'floating' }: { variant?: 'floating' 
                     <p className="text-sm font-bold text-content truncate">{user?.email}</p>
                 </div>
                 <div className="p-1">
+                    {/* Sección de notificaciones - Solo visible en móvil/tablet si flotante */}
+                    <div className="lg:hidden border-b border-line mb-1">
+                        <button
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                pushMenu('notifications');
+                            }}
+                            className="w-full flex items-center justify-between px-3 py-2 text-sm text-content hover:bg-surface/70 rounded-xl transition-all cursor-pointer group text-left font-medium"
+                        >
+                            <div className="flex items-center gap-3">
+                                <Bell size={16} className="shrink-0 group-hover:text-brand transition-colors" />
+                                <span className="leading-none">Notificaciones</span>
+                            </div>
+                            <div className="flex items-center gap-1.5">
+                                {user?.received_friend_requests && user.received_friend_requests.length > 0 && (
+                                    <span className="text-[10px] text-brand font-bold bg-brand/10 px-1.5 py-0.5 rounded-full">
+                                        {user.received_friend_requests.length}
+                                    </span>
+                                )}
+                                <ChevronDown size={12} className="-rotate-90 opacity-60" />
+                            </div>
+                        </button>
+                    </div>
+
                     <button onClick={() => { setIsOpen(false); navigate(`/user/${user?._id}`) }} className="w-full flex items-center justify-between text-content px-3 py-2 text-sm rounded-xl transition-all group text-left hover:bg-surface/70 hover:cursor-pointer font-medium">
                         <div className="flex items-center gap-3">
                             <User size={16} className="shrink-0" />
@@ -213,12 +238,12 @@ export default function Navbar({ variant = 'floating' }: { variant?: 'floating' 
         );
     };
 
-    const OptionsMainView = ({ theme, themeLabels }: { theme: string, themeLabels: Record<string, string> }) => {
+    const OptionsMainView = ({ theme, themeLabels, navigate }: { theme: string, themeLabels: Record<string, string>, navigate: any }) => {
         const { pushMenu, setIsOpen } = useDropdown();
         return (
             <div className="w-64 p-1">
-                {/* Mobile Auth Options */}
-                <div className="sm:hidden mb-2 pb-2 border-b border-line">
+                {/* Mobile/Tablet Auth Options */}
+                <div className="lg:hidden mb-2 pb-2 border-b border-line">
                     <p className="px-3 py-2 text-[10px] uppercase tracking-widest text-content-muted font-bold opacity-50">Autenticación</p>
                     <button
                         onClick={() => { setIsOpen(false); navigate('/login'); }}
@@ -258,16 +283,16 @@ export default function Navbar({ variant = 'floating' }: { variant?: 'floating' 
     };
 
     return (
-        <nav className={variant === 'floating' ? "flex items-center justify-end w-full h-10 px-4 relative z-50 pointer-events-none" : "contents"}>
+        <nav className={variant === 'floating' ? "contents" : "contents"}>
             <div className={variant === 'floating'
-                ? "flex items-center justify-end p-1.5 gap-2 sm:gap-4 shrink-0 z-10 premium-glass rounded-3xl pointer-events-auto"
+                ? "fixed top-4 right-4 flex items-center justify-end gap-2 sm:gap-4 z-10 pointer-events-auto"
                 : "flex items-center gap-2 sm:gap-4 pointer-events-auto"
             }>
                 {isLoading ? (
                     <div className="flex items-center gap-2">
                         <div className="hidden sm:block w-16 h-8 bg-surface rounded-full animate-pulse opacity-50" />
                         <div className="hidden sm:block w-20 h-8 bg-surface rounded-full animate-pulse opacity-50" />
-                        <div className="w-9 h-9 bg-surface rounded-full animate-pulse opacity-50" />
+                        <div className="w-10 h-10 bg-surface rounded-2xl sm:rounded-full animate-pulse opacity-50" />
                     </div>
                 ) : isAuthenticated ? (
                     <div className="flex items-center gap-2">
@@ -281,7 +306,7 @@ export default function Navbar({ variant = 'floating' }: { variant?: 'floating' 
                                 }
                             }}
                             trigger={
-                                <div className={`relative flex items-center justify-center p-2 border border-line rounded-full transition-all group cursor-pointer w-9 h-9 backdrop-blur-md
+                                <div className={`relative hidden lg:flex items-center justify-center p-2 border border-line rounded-full transition-all group cursor-pointer w-9 h-9 backdrop-blur-md
                                     ${variant === 'floating' ? 'bg-white/5 hover:bg-white/10' : 'bg-main/40 hover:bg-main/60 dark:bg-surface dark:hover:bg-surface/80'}`}>
                                     <Bell size={18} className="text-content group-hover:text-brand transition-colors" />
                                     {user?.received_friend_requests && user.received_friend_requests.length > 0 && (
@@ -313,14 +338,16 @@ export default function Navbar({ variant = 'floating' }: { variant?: 'floating' 
                                 }
                             }}
                             trigger={
-                                <div className={`flex items-center gap-2 border border-line p-1 pr-3 rounded-full transition-all group backdrop-blur-md
-                                    ${variant === 'floating' ? 'bg-white/5 hover:bg-white/10' : 'bg-main/40 hover:bg-main/60 dark:bg-surface dark:hover:bg-surface/80'}`}>
+                                <NavIconButton
+                                    variant={variant}
+                                    showBadge={!!(user?.received_friend_requests && user.received_friend_requests.length > 0)}
+                                >
                                     <UserAvatar user={user} size={28} />
-                                    <span className="text-content text-sm font-bold hidden sm:block max-w-24 truncate">
+                                    <span className="text-content text-sm font-bold hidden lg:block max-w-24 truncate">
                                         {user?.username}
                                     </span>
-                                    <ChevronDown size={14} className={`text-content-muted opacity-60 transition-all ${isUserMenuOpen ? 'rotate-180' : ''}`} />
-                                </div>
+                                    <ChevronDown size={14} className={`text-content-muted opacity-60 transition-all hidden lg:block ${isUserMenuOpen ? 'rotate-180' : ''}`} />
+                                </NavIconButton>
                             }
                             menus={{
                                 main: (
@@ -337,22 +364,33 @@ export default function Navbar({ variant = 'floating' }: { variant?: 'floating' 
                                         theme={theme}
                                         setTheme={setTheme}
                                     />
+                                ),
+                                notifications: (
+                                    <NotificationsMainView
+                                        user={user!}
+                                    />
+                                ),
+                                friend_requests: (
+                                    <NotificationsFriendRequestsView
+                                        user={user!}
+                                        navigate={navigate}
+                                    />
                                 )
                             }}
                         />
                     </div>
                 ) : (
-                    <div className="hidden sm:flex gap-2">
-                        <Link to="/login" className={`px-5 py-1.5 rounded-full transition-all cursor-pointer font-medium text-sm border
-                            ${variant === 'floating'
-                                ? 'bg-white/5 hover:bg-white/10 border-white/10 backdrop-blur-md text-content'
-                                : 'bg-surface border-line text-content hover:bg-surface/80'
-                            }`}>Log in</Link>
-                        <Link to="/register" className={`px-5 py-1.5 rounded-full transition-all cursor-pointer font-medium text-sm text-center shadow-lg
-                            ${variant === 'floating'
-                                ? 'bg-brand/80 hover:bg-brand text-content-on-brand border-brand/20'
-                                : 'bg-brand hover:bg-brand-hover text-content-on-brand border-brand'
-                            }`}>Register</Link>
+                    <div className="hidden lg:flex gap-2">
+                        <NavIconButton to="/login" variant={variant}>
+                            Log in
+                        </NavIconButton>
+                        <NavIconButton
+                            to="/register"
+                            variant={variant}
+                            className="bg-brand! hover:bg-brand-hover! text-content-on-brand! border-none!"
+                        >
+                            Register
+                        </NavIconButton>
                     </div>
                 )}
 
@@ -368,17 +406,17 @@ export default function Navbar({ variant = 'floating' }: { variant?: 'floating' 
                             }
                         }}
                         trigger={
-                            <div className={`w-9 h-9 flex items-center justify-center border border-line rounded-full text-content transition-all active:scale-90 cursor-pointer backdrop-blur-md
-                                ${variant === 'floating' ? 'bg-white/5 hover:bg-white/10' : 'bg-main/40 hover:bg-main/60 dark:bg-surface dark:hover:bg-surface/80'}`}>
+                            <NavIconButton variant={variant}>
                                 <User size={20} className="sm:hidden" />
                                 <MoreHorizontal size={20} className="hidden sm:block" />
-                            </div>
+                            </NavIconButton>
                         }
                         menus={{
                             main: (
                                 <OptionsMainView
                                     theme={theme}
                                     themeLabels={themeLabels}
+                                    navigate={navigate}
                                 />
                             ),
                             theme: (

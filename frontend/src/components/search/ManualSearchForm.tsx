@@ -60,7 +60,7 @@ const ManualSearchForm: React.FC<ManualSearchFormProps> = ({
     return (
         <div className={`grow ${isHorizontal ? 'flex flex-row items-stretch gap-4 w-full' : 'flex flex-col gap-3'}`}>
             {/* ── ORIGIN & DESTINATION ── */}
-            <div className={`relative flex gap-3 items-center grow ${isMapMode ? 'flex-row w-full' : 'flex-col items-stretch'}`}>
+            <div className={`relative flex gap-3 grow ${isHorizontal ? 'flex-3 min-w-0 flex-row items-center' : 'flex-col items-stretch'}`}>
                 {/* Origin */}
                 <FlightSearchInput
                     type="origin"
@@ -73,17 +73,16 @@ const ManualSearchForm: React.FC<ManualSearchFormProps> = ({
                     }}
                     onMapClick={() => startMapSelection('origin')}
                     isMapSelecting={selectingType === 'origin'}
-                    className={isMapMode ? 'flex-1 min-w-0' : 'w-full'}
+                    className={'flex-1 min-w-0'}
                 />
 
                 {/* Switch Button */}
                 <button
                     onClick={handleSwitch}
-                    className={`shrink-0 bg-brand text-content-on-brand rounded-xl shadow-lg hover:scale-110 active:scale-95 transition-all cursor-pointer border-2 border-main z-20 ${
-                        isMapMode 
-                            ? 'p-1.5 self-center' 
-                            : 'absolute right-6 top-[50%] -translate-y-1/2 p-2.5 border-4'
-                    }`}
+                    className={`shrink-0 bg-brand text-content-on-brand rounded-xl shadow-lg hover:scale-110 active:scale-95 transition-all cursor-pointer border-2 border-main z-20 ${isHorizontal
+                        ? 'p-1.5 self-center'
+                        : 'absolute right-6 top-[50%] -translate-y-1/2 p-2 px-2.5 border-4'
+                        }`}
                 >
                     <ArrowLeftRight size={16} />
                 </button>
@@ -100,12 +99,12 @@ const ManualSearchForm: React.FC<ManualSearchFormProps> = ({
                     }}
                     onMapClick={() => startMapSelection('destination')}
                     isMapSelecting={selectingType === 'destination'}
-                    className={isMapMode ? 'flex-1 min-w-0' : 'w-full'}
+                    className={'flex-1 min-w-0'}
                 />
             </div>
 
             {/* ── DATES ── */}
-            <div className={`grid gap-2 ${isHorizontal ? 'grid-cols-2 lg:w-80 shrink-0' : 'grid-cols-2 w-full'}`}>
+            <div className={`grid gap-2 ${isHorizontal ? 'grid-cols-2 lg:flex-1 shrink-0 min-w-56' : 'grid-cols-2 w-full'}`}>
                 <DateSearchInput
                     type="departure"
                     value={departureDate}
@@ -142,11 +141,10 @@ const ManualSearchForm: React.FC<ManualSearchFormProps> = ({
             <button
                 onClick={onSearch}
                 disabled={isPending || !origin || !destination || !departureDate}
-                className={`group relative flex items-center justify-center gap-2 bg-brand text-content-on-brand rounded-2xl font-bold hover:bg-brand-hover transition-all disabled:opacity-40 disabled:grayscale disabled:cursor-not-allowed overflow-hidden shadow-lg shadow-brand/20 active:scale-95 shrink min-w-fit px-4 lg:px-6 cursor-pointer ${
-                    isHorizontal 
-                        ? 'w-full lg:min-w-30 lg:w-auto py-3.5 lg:py-0' 
-                        : 'py-4 lg:py-4.5 text-lg'
-                }`}
+                className={`group relative flex items-center justify-center gap-2 bg-brand text-content-on-brand rounded-2xl font-bold hover:bg-brand-hover transition-all disabled:opacity-40 disabled:grayscale disabled:cursor-not-allowed overflow-hidden shadow-lg shadow-brand/20 active:scale-95 shrink-0 min-w-fit px-4 lg:px-6 cursor-pointer ${isHorizontal
+                    ? 'w-full lg:w-auto py-3.5 lg:py-0'
+                    : 'py-4 lg:py-4.5 text-lg w-full'
+                    }`}
             >
                 <div className="absolute inset-0 bg-linear-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
                 {isPending ? (

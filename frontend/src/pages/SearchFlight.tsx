@@ -22,6 +22,7 @@ function SearchFlight() {
     const [shouldCloseOnSelect, setShouldCloseOnSelect] = useState(false);
     const [searchMode, setSearchMode] = useState<'manual' | 'chatbot'>('manual');
     const today = new Date().toISOString().split('T')[0]!;
+    const [isSMScreen, setIsSMScreen] = useState(window.innerWidth >= 640);
     const [isLargeScreen, setIsLargeScreen] = useState(window.innerWidth >= 1024);
     const [isXXLScreen, setIsXXLScreen] = useState(window.innerWidth >= 1536);
     const [isMobileCardExpanded, setIsMobileCardExpanded] = useState(false);
@@ -29,6 +30,7 @@ function SearchFlight() {
 
     useEffect(() => {
         const handleResize = () => {
+            setIsSMScreen(window.innerWidth >= 640);
             setIsLargeScreen(window.innerWidth >= 1024);
             setIsXXLScreen(window.innerWidth >= 1536);
         };
@@ -326,7 +328,7 @@ function SearchFlight() {
                 ? 'left-1/2 lg:left-8 top-1/2 -translate-y-1/2 -translate-x-1/2 lg:translate-x-0 opacity-100 scale-100'
                 : 'left-1/2 lg:-left-full top-0 lg:top-1/2 -translate-y-[calc(100%+2rem)] lg:-translate-y-1/2 -translate-x-1/2 lg:translate-x-0 opacity-0 scale-95 pointer-events-none'
                 }`}>
-                <div className="premium-glass relative p-7 rounded-4xl flex flex-col gap-6 transition-all hover:scale-[1.01] w-[min(96vw,420px)]">
+                <div className="premium-glass relative p-7 rounded-4xl flex flex-col gap-6 transition-all hover:scale-[1.01] w-[min(96vw,540px)]">
 
                     {/* Mobile Map Toggle Button */}
                     {!isLargeScreen && searchMode === 'manual' && !isSelectingOnMap && (
@@ -430,10 +432,16 @@ function SearchFlight() {
             <div className={`absolute left-1/2 -translate-x-1/2 z-10 transition-all duration-700 cubic-bezier(0.4, 0, 0.2, 1) ${isSelectingOnMap && !selectingType
                 ? (isXXLScreen
                     ? 'top-6 w-[min(calc(100%-600px),1200px)] opacity-100 scale-100'
-                    : 'top-20 w-[calc(100%-40px)] xl:top-6 xl:w-[min(calc(100%-500px),900px)] opacity-100 scale-100')
+                    : isLargeScreen
+                        ? 'top-6 w-[min(calc(100%-300px),1200px)] opacity-100 scale-100'
+                        : isMobileCardExpanded
+                            ? 'top-20 w-[calc(100%-20px)] opacity-100 scale-100'
+                            : isSMScreen
+                                ? 'top-4 w-[calc(100%-180px)] opacity-100 scale-100'
+                                : 'top-4 w-[calc(100%-110px)] opacity-100 scale-100')
                 : 'top-0 -translate-y-full opacity-0 scale-95 pointer-events-none'
                 }`}>
-                <div className={`premium-glass relative border border-line/50 flex flex-col transition-all duration-500 ${!isLargeScreen && isSelectingOnMap && !isMobileCardExpanded ? 'p-3 rounded-3xl' : 'p-3 lg:p-4 rounded-3xl lg:rounded-4xl'}`}>
+                <div className={`premium-glass relative border border-line/50 flex flex-col transition-all duration-700 cubic-bezier(0.4, 0, 0.2, 1) ${!isLargeScreen && isSelectingOnMap && !isMobileCardExpanded ? 'p-2 px-4 rounded-3xl' : 'p-3 lg:p-4 rounded-3xl lg:rounded-4xl'}`}>
 
                     {/* Summary Header (Only for Collapsible Drawer mode < 1024px) */}
                     {!isLargeScreen && (
@@ -487,7 +495,7 @@ function SearchFlight() {
 
                     {/* Content Container */}
                     <div className={`${!isLargeScreen ? `transition-all duration-500 overflow-hidden ${!isMobileCardExpanded ? 'max-h-0 opacity-0' : 'max-h-[800px] opacity-100 mt-4'}` : 'flex flex-row items-center gap-4 overflow-hidden'}`}>
-                        <div className="flex flex-col lg:flex-row items-center gap-2 lg:gap-4 w-full min-w-0 opacity-100 scale-100">
+                        <div className="flex flex-col lg:flex-row items-stretch lg:items-center gap-2 lg:gap-4 w-full min-w-0 opacity-100 scale-100">
                             {/* Minimized Header (Fixed Horizontal Bar Only) */}
                             {isXXLScreen && (
                                 <div className="hidden lg:flex items-center gap-2 px-3 border-r border-line/10 h-10 shrink-0">
