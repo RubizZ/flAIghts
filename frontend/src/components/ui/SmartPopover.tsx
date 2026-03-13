@@ -99,31 +99,47 @@ export default function SmartPopover({
         const availableVerticalSpace = side === 'bottom' ? spaceBelowVisible : spaceAboveVisible;
         const finalMaxHeight = Math.max(100, Math.min(availableVerticalSpace - offset, maxContentHeight));
 
-        // 2. Horizontal Logic (Standard)
-        const canAlignLeft = rect.left + maxContentWidth < vWidth - margin;
-        const canAlignRight = rect.right - maxContentWidth > margin;
+        // 2. Horizontal Logic (Smart threshold centering)
+        const paddingLeft = rect.left;
+        const paddingRight = vWidth - rect.right;
+        const spaceOnRight = vWidth - rect.left; // Space available if aligned left
+        const spaceOnLeft = rect.right; // Space available if aligned right
+
+        let horizontalMode: 'left' | 'right' | 'center' = 'center';
+
+        if (preferredAlign === 'left') {
+            // "lado pegado" = left. Padding = paddingLeft.
+            // "lado no pegado" = right. Tamaño = spaceOnRight.
+            const shouldCenter = spaceOnRight < paddingLeft;
+            horizontalMode = shouldCenter ? 'center' : 'left';
+        } else if (preferredAlign === 'right') {
+            // "lado pegado" = right. Padding = paddingRight.
+            // "lado no pegado" = left. Tamaño = spaceOnLeft.
+            const shouldCenter = spaceOnLeft < paddingRight;
+            horizontalMode = shouldCenter ? 'center' : 'right';
+        } else {
+            horizontalMode = 'center';
+        }
 
         let left: number | string = 'auto';
         let right: number | 'auto' = 'auto';
         let transform = 'none';
-        let horizontalMode: 'left' | 'right' | 'center' = 'center';
-
-        if (preferredAlign === 'left') {
-            if (canAlignLeft) horizontalMode = 'left';
-            else if (canAlignRight) horizontalMode = 'right';
-        } else if (preferredAlign === 'right') {
-            if (canAlignRight) horizontalMode = 'right';
-            else if (canAlignLeft) horizontalMode = 'left';
-        }
+        let finalMaxWidth = maxContentWidth;
 
         if (horizontalMode === 'left') {
             left = rect.left;
+            finalMaxWidth = Math.min(maxContentWidth, vWidth - rect.left - margin);
         } else if (horizontalMode === 'right') {
             right = vWidth - rect.right;
+            finalMaxWidth = Math.min(maxContentWidth, rect.right - margin);
         } else {
             left = '50%';
             transform = 'translateX(-50%)';
+            finalMaxWidth = Math.min(maxContentWidth, vWidth - (margin * 2));
         }
+
+        // Ensure we don't end up with negative or tiny widths
+        finalMaxWidth = Math.max(minContentHeight / 2, finalMaxWidth);
 
         setPos({
             top: side === 'bottom' ? rect.bottom + offset : 'auto',
@@ -131,7 +147,7 @@ export default function SmartPopover({
             left,
             right,
             transform,
-            maxWidth: Math.min(vWidth - (margin * 2), maxContentWidth),
+            maxWidth: finalMaxWidth,
             maxHeight: finalMaxHeight,
             triggerWidth: rect.width,
             side,

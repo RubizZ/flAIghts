@@ -42,7 +42,7 @@ export default function Sidebar({ isOpen, onClose, onToggle, variant = 'classic'
                 <div className={`fixed left-4 top-4 z-50 transition-all duration-300 ${isOpen ? 'opacity-0 scale-75 pointer-events-none -translate-x-4' : 'opacity-100 scale-100 translate-x-0'}`}>
                     <NavIconButton
                         onClick={onToggle}
-                        variant="floating"
+                        variant={variant}
                         title="Abrir menú"
                     >
                         <Menu size={20} />

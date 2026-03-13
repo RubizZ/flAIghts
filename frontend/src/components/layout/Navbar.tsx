@@ -8,7 +8,6 @@ import {
     Settings,
     LogOut,
     ChevronDown,
-    MoreHorizontal,
     Sun,
     Moon,
     Monitor,
@@ -306,13 +305,13 @@ export default function Navbar({ variant = 'floating' }: { variant?: 'floating' 
                                 }
                             }}
                             trigger={
-                                <div className={`relative hidden lg:flex items-center justify-center p-2 border border-line rounded-full transition-all group cursor-pointer w-9 h-9 backdrop-blur-md
-                                    ${variant === 'floating' ? 'bg-white/5 hover:bg-white/10' : 'bg-main/40 hover:bg-main/60 dark:bg-surface dark:hover:bg-surface/80'}`}>
-                                    <Bell size={18} className="text-content group-hover:text-brand transition-colors" />
-                                    {user?.received_friend_requests && user.received_friend_requests.length > 0 && (
-                                        <div className="absolute top-0 right-0 w-2.5 h-2.5 bg-brand rounded-full border-2 border-line" />
-                                    )}
-                                </div>
+                                <NavIconButton
+                                    variant={variant}
+                                    showBadge={!!(user?.received_friend_requests && user.received_friend_requests.length > 0)}
+                                    className="hidden lg:flex"
+                                >
+                                    <Bell size={20} className="text-content group-hover:text-brand transition-colors" />
+                                </NavIconButton>
                             }
                             menus={{
                                 main: (
@@ -342,11 +341,7 @@ export default function Navbar({ variant = 'floating' }: { variant?: 'floating' 
                                     variant={variant}
                                     showBadge={!!(user?.received_friend_requests && user.received_friend_requests.length > 0)}
                                 >
-                                    <UserAvatar user={user} size={28} />
-                                    <span className="text-content text-sm font-bold hidden lg:block max-w-24 truncate">
-                                        {user?.username}
-                                    </span>
-                                    <ChevronDown size={14} className={`text-content-muted opacity-60 transition-all hidden lg:block ${isUserMenuOpen ? 'rotate-180' : ''}`} />
+                                    <UserAvatar user={user} size={32} />
                                 </NavIconButton>
                             }
                             menus={{
@@ -381,12 +376,13 @@ export default function Navbar({ variant = 'floating' }: { variant?: 'floating' 
                     </div>
                 ) : (
                     <div className="hidden lg:flex gap-2">
-                        <NavIconButton to="/login" variant={variant}>
+                        <NavIconButton to="/login" variant={variant} isPill>
                             Log in
                         </NavIconButton>
                         <NavIconButton
                             to="/register"
                             variant={variant}
+                            isPill
                             className="bg-brand! hover:bg-brand-hover! text-content-on-brand! border-none!"
                         >
                             Register
@@ -407,8 +403,7 @@ export default function Navbar({ variant = 'floating' }: { variant?: 'floating' 
                         }}
                         trigger={
                             <NavIconButton variant={variant}>
-                                <User size={20} className="sm:hidden" />
-                                <MoreHorizontal size={20} className="hidden sm:block" />
+                                <User size={22} />
                             </NavIconButton>
                         }
                         menus={{

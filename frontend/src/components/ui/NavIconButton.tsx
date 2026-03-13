@@ -9,6 +9,7 @@ interface NavIconButtonProps {
     className?: string;
     variant?: 'floating' | 'flat';
     showBadge?: boolean;
+    isPill?: boolean;
 }
 
 const NavIconButton: React.FC<NavIconButtonProps> = ({
@@ -18,27 +19,30 @@ const NavIconButton: React.FC<NavIconButtonProps> = ({
     title,
     className = '',
     variant = 'floating',
+    isPill = false,
     showBadge = false
 }) => {
     const isFloating = variant === 'floating';
 
-    const baseStyles = "relative flex items-center justify-center transition-all duration-300 active:scale-95 cursor-pointer group focus:outline-none";
-    
+    const baseStyles = "relative flex items-center justify-center transition-all duration-100 cursor-pointer group focus:outline-none";
+
     // Strict symmetry & HUD synchronization:
-    // Mobile/Tablet: 40x40 Circle (w-10 h-10 rounded-full)
-    // Desktop (>=1024px): Premium Capsule (lg:h-10 lg:p-1.5 lg:px-4)
-    const sizeStyles = "w-10 h-10 lg:w-auto lg:h-10 lg:p-1.5 lg:px-4 lg:gap-2";
+    // Icons: Strictly 48x48 Circle
+    // Pills: 48px height with horizontal padding
+    const sizeStyles = isPill ? "h-12 px-6 min-w-fit" : "w-12 h-12";
     const shapeStyles = "rounded-full";
-    
-    const glassStyles = isFloating 
-        ? "premium-glass" 
-        : "bg-main/40 hover:bg-main/60 dark:bg-surface dark:hover:bg-surface/80 border border-line";
+
+    const glassStyles = isFloating
+        ? "premium-glass"
+        : "bg-surface hover:bg-surface/80 border border-line";
+
+    const hoverStyles = "hover:scale-105 active:scale-95";
 
     const content = (
         <>
             {children}
             {showBadge && (
-                <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-brand rounded-full animate-in fade-in scale-in duration-300" />
+                <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-brand rounded-full animate-in fade-in scale-in duration-300 shadow-[0_0_8px_rgba(var(--color-brand),0.6)]" />
             )}
         </>
     );
@@ -48,7 +52,7 @@ const NavIconButton: React.FC<NavIconButtonProps> = ({
             <Link
                 to={to}
                 title={title}
-                className={`${baseStyles} ${sizeStyles} ${shapeStyles} ${glassStyles} ${className} animate-in fade-in zoom-in duration-700 cubic-bezier(0.4, 0, 0.2, 1)`}
+                className={`${baseStyles} ${sizeStyles} ${shapeStyles} ${glassStyles} ${hoverStyles} ${className} animate-in fade-in zoom-in duration-700 cubic-bezier(0.4, 0, 0.2, 1)`}
             >
                 {content}
             </Link>
@@ -59,7 +63,7 @@ const NavIconButton: React.FC<NavIconButtonProps> = ({
         <button
             onClick={onClick}
             title={title}
-            className={`${baseStyles} ${sizeStyles} ${shapeStyles} ${glassStyles} ${className} animate-in fade-in zoom-in duration-700 cubic-bezier(0.4, 0, 0.2, 1)`}
+            className={`${baseStyles} ${sizeStyles} ${shapeStyles} ${glassStyles} ${hoverStyles} ${className} animate-in fade-in zoom-in duration-700 cubic-bezier(0.4, 0, 0.2, 1)`}
         >
             {content}
         </button>
