@@ -60,7 +60,7 @@ const ManualSearchForm: React.FC<ManualSearchFormProps> = ({
     return (
         <div className={`grow ${isHorizontal ? 'flex flex-row items-stretch gap-4 w-full' : 'flex flex-col gap-3'}`}>
             {/* ── ORIGIN & DESTINATION ── */}
-            <div className={`relative flex gap-3 grow ${isHorizontal ? 'flex-3 min-w-0 flex-row items-center' : 'flex-col items-stretch'}`}>
+            <div className={`relative flex gap-3 grow ${isHorizontal ? 'flex-3 min-w-0 flex-row items-center' : 'flex-col sm:flex-row items-stretch sm:items-center'}`}>
                 {/* Origin */}
                 <FlightSearchInput
                     type="origin"
@@ -81,7 +81,7 @@ const ManualSearchForm: React.FC<ManualSearchFormProps> = ({
                     onClick={handleSwitch}
                     className={`shrink-0 bg-brand text-content-on-brand rounded-xl shadow-lg hover:scale-110 active:scale-95 transition-all cursor-pointer border-2 border-main z-20 ${isHorizontal
                         ? 'p-1.5 self-center'
-                        : 'absolute right-6 top-[50%] -translate-y-1/2 p-2 px-2.5 border-4'
+                        : 'absolute right-6 top-[50%] -translate-y-1/2 p-2 px-2.5 border-4 sm:relative sm:right-auto sm:top-auto sm:translate-y-0 sm:p-1.5 sm:self-center sm:border-2'
                         }`}
                 >
                     <ArrowLeftRight size={16} />

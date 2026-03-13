@@ -298,28 +298,58 @@ function SearchFlight() {
 
             {isSelectingOnMap && (
                 <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-20 flex flex-col items-center gap-4 animate-fade-in-up w-[min(90vw,fit-content)]">
-                    <div className="bg-main/85 backdrop-blur-3xl border border-white/10 px-6 py-3 rounded-2xl shadow-2xl flex items-center gap-4 w-auto">
-                        <div className={`shrink-0 w-3 h-3 rounded-full ${selectingType ? 'animate-pulse bg-brand' : 'bg-content-muted/40'}`} />
-                        <span className="text-sm text-content font-medium opacity-90 leading-tight grow-0">
-                            {selectingType
-                                ? `Selecciona ${selectingType === 'origin' ? 'origen' : 'destino'} en el mapa`
-                                : "Explorando el globo terráqueo"}
-                        </span>
-                        <button
-                            onClick={() => {
-                                if (selectingType && !shouldCloseOnSelect) {
-                                    setSelectingType(null);
-                                } else {
-                                    setIsSelectingOnMap(false);
-                                    setSelectingType(null);
-                                    setShouldCloseOnSelect(false);
-                                }
-                            }}
-                            className="shrink-0 flex items-center gap-2 px-3 py-1.5 rounded-xl bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white transition-all text-xs font-bold uppercase tracking-wider cursor-pointer border border-red-500/20"
-                        >
-                            <X size={14} />
-                            <span>{selectingType ? "Cancelar" : "Cerrar"}</span>
-                        </button>
+                    {/* Floating Search Button (Only when card is folded on mobile) */}
+                    {/* Floating Search Button (With Animation) */}
+                    <div className="relative flex flex-col items-center w-full">
+                        {/* Status Bar */}
+                        <div className="bg-main/85 backdrop-blur-3xl border border-white/10 px-6 py-3 rounded-2xl shadow-2xl flex items-center gap-4 w-auto z-10">
+                            <div className={`shrink-0 w-3 h-3 rounded-full ${selectingType ? 'animate-pulse bg-brand' : 'bg-content-muted/40'}`} />
+                            <span className="text-[10px] sm:text-xs md:text-sm text-content font-medium opacity-90 leading-tight grow-0">
+                                {selectingType
+                                    ? `Selecciona ${selectingType === 'origin' ? 'origen' : 'destino'} en el mapa`
+                                    : "Explorando el globo terráqueo"}
+                            </span>
+                            <button
+                                onClick={() => {
+                                    if (selectingType && !shouldCloseOnSelect) {
+                                        setSelectingType(null);
+                                    } else {
+                                        setIsSelectingOnMap(false);
+                                        setSelectingType(null);
+                                        setShouldCloseOnSelect(false);
+                                    }
+                                }}
+                                className="shrink-0 flex items-center gap-2 px-3 py-1.5 rounded-xl bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white transition-all text-xs font-bold uppercase tracking-wider cursor-pointer border border-red-500/20"
+                            >
+                                <X size={14} />
+                                <span>{selectingType ? "Cancelar" : "Cerrar"}</span>
+                            </button>
+                        </div>
+
+                        {/* Floating Search Button (Animate in place above the bar) */}
+                        <div className={`absolute bottom-full mb-4 transition-all duration-400 ${!isLargeScreen && !isMobileCardExpanded && !selectingType
+                            ? 'animate-fade-in opacity-100 scale-100 visible'
+                            : 'animate-fade-out opacity-0 scale-95 invisible pointer-events-none'
+                            }`}>
+                            <button
+                                onClick={handleSearch}
+                                disabled={isPending || !origin || !destination || !departureDate}
+                                className="group relative flex items-center justify-center gap-2.5 px-6 py-3 bg-brand text-content-on-brand rounded-xl font-bold shadow-[0_15px_40px_rgba(var(--brand-rgb),0.25)] active:scale-95 transition-all outline-hidden disabled:opacity-50 disabled:grayscale cursor-pointer overflow-hidden w-auto"
+                            >
+                                <div className="absolute inset-0 bg-linear-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
+                                {isPending ? (
+                                    <div className="flex items-center gap-2">
+                                        <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                        <span>Buscando...</span>
+                                    </div>
+                                ) : (
+                                    <>
+                                        <Search size={18} className="group-hover:scale-110 transition-transform" />
+                                        <span className="text-sm">Buscar vuelos</span>
+                                    </>
+                                )}
+                            </button>
+                        </div>
                     </div>
                 </div>
             )}
@@ -431,14 +461,14 @@ function SearchFlight() {
             {/* 2. Horizontal/Top Card (Only when general map expanded) */}
             <div className={`absolute left-1/2 -translate-x-1/2 z-10 transition-all duration-700 cubic-bezier(0.4, 0, 0.2, 1) ${isSelectingOnMap && !selectingType
                 ? (isXXLScreen
-                    ? 'top-6 w-[min(calc(100%-600px),1200px)] opacity-100 scale-100'
+                    ? 'top-6 w-[min(calc(100%-400px),1200px)] opacity-100 scale-100'
                     : isLargeScreen
                         ? 'top-6 w-[min(calc(100%-300px),1200px)] opacity-100 scale-100'
                         : isMobileCardExpanded
                             ? 'top-20 w-[calc(100%-20px)] opacity-100 scale-100'
                             : isSMScreen
                                 ? 'top-4 w-[calc(100%-180px)] opacity-100 scale-100'
-                                : 'top-4 w-[calc(100%-110px)] opacity-100 scale-100')
+                                : 'top-4 w-[calc(100%-140px)] opacity-100 scale-100')
                 : 'top-0 -translate-y-full opacity-0 scale-95 pointer-events-none'
                 }`}>
                 <div className={`premium-glass relative border border-line/50 flex flex-col transition-all duration-700 cubic-bezier(0.4, 0, 0.2, 1) ${!isLargeScreen && isSelectingOnMap && !isMobileCardExpanded ? 'p-2 px-4 rounded-3xl' : 'p-3 lg:p-4 rounded-3xl lg:rounded-4xl'}`}>
@@ -462,7 +492,7 @@ function SearchFlight() {
                                             <span>
                                                 {origin && destination
                                                     ? `${origin.split('(')[1]?.replace(')', '') || origin} → ${destination.split('(')[1]?.replace(')', '') || destination}`
-                                                    : "Detalle del viaje"}
+                                                    : "Configuración del viaje"}
                                             </span>
                                         </div>
                                     )}
