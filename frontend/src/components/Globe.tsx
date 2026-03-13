@@ -635,7 +635,7 @@ export default function Globe({
                     let targetScale = baseScale;
 
                     if (isSpecial) {
-                        targetOpacity = 1 * globalZoomFade;
+                        targetOpacity = 1;
                         targetScale = specialScale * Math.max(0.5, globalZoomFade);
                     } else if (interactiveRef.current) {
                         _vec1.copy(mesh.position);
