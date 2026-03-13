@@ -106,7 +106,7 @@ const ManualSearchForm: React.FC<ManualSearchFormProps> = ({
             </div>
 
             {/* ── DATES ── */}
-            <div className={`grid gap-2 ${isHorizontal ? 'grid-cols-2 lg:flex-1 shrink-0 min-w-56' : 'grid-cols-2 w-full'}`}>
+            <div className={`grid gap-2 ${isHorizontal ? 'grid-cols-2 lg:flex-none shrink-0 min-w-48' : 'grid-cols-2 w-full'}`}>
                 <DateSearchInput
                     type="departure"
                     value={departureDate}

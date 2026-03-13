@@ -83,7 +83,7 @@ const DateSearchInput: React.FC<DateSearchInputProps> = ({
                         e.stopPropagation();
                         onClear();
                     }}
-                    className="absolute -right-1 -top-1 bg-main text-content-muted p-1 rounded-full border border-line hover:text-red-500 transition-all shadow-sm z-20 cursor-pointer"
+                    className="absolute -right-1.5 -top-1.5 bg-main text-content-muted p-1.5 rounded-full border border-line hover:text-red-500 transition-all shadow-md z-30 cursor-pointer"
                 >
                     <Plus size={10} className="rotate-45" />
                 </button>

@@ -6,6 +6,7 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import StarsBackground from "../components/ui/StarsBackground.tsx";
 import ManualSearchForm from "../components/search/ManualSearchForm.tsx";
+import NavIconButton from "../components/ui/NavIconButton.tsx";
 
 function SearchFlight() {
     const [origin, setOrigin] = useState("");
@@ -271,6 +272,7 @@ function SearchFlight() {
                         setIsGlobeMoving(moving);
                         setIsUserInteracting(interacting);
                     }}
+                    focusIata={inspectedAirport?.iata}
                 />
             </div>
 
@@ -296,35 +298,37 @@ function SearchFlight() {
                 </div>
             </div>
 
-            {isSelectingOnMap && (
-                <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-20 flex flex-col items-center gap-4 animate-fade-in-up w-[min(90vw,fit-content)]">
-                    {/* Floating Search Button (Only when card is folded on mobile) */}
-                    {/* Floating Search Button (With Animation) */}
-                    <div className="relative flex flex-col items-center w-full">
-                        {/* Status Bar */}
-                        <div className="bg-main/85 backdrop-blur-3xl border border-white/10 px-6 py-3 rounded-2xl shadow-2xl flex items-center gap-4 w-auto z-10">
-                            <div className={`shrink-0 w-3 h-3 rounded-full ${selectingType ? 'animate-pulse bg-brand' : 'bg-content-muted/40'}`} />
-                            <span className="text-[10px] sm:text-xs md:text-sm text-content font-medium opacity-90 leading-tight grow-0">
-                                {selectingType
-                                    ? `Selecciona ${selectingType === 'origin' ? 'origen' : 'destino'} en el mapa`
-                                    : "Explorando el globo terráqueo"}
+            {/* Map Action HUD (Always rendered for smooth entry/exit transition) */}
+            <div 
+                className={`absolute bottom-8 left-1/2 -translate-x-1/2 z-20 flex flex-col items-center gap-4 w-[min(90vw,fit-content)] transition-all duration-500 ease-out
+                    ${isSelectingOnMap 
+                        ? 'opacity-100 translate-y-0 scale-100' 
+                        : 'opacity-0 translate-y-12 scale-90 pointer-events-none'}`}
+            >
+                {/* Floating Action Button (Unified with System HUD) */}
+                <div className="relative flex flex-col items-center w-full">
+                    <NavIconButton
+                        onClick={() => {
+                            if (selectingType && !shouldCloseOnSelect) {
+                                setSelectingType(null);
+                            } else {
+                                setIsSelectingOnMap(false);
+                                setSelectingType(null);
+                                setShouldCloseOnSelect(false);
+                            }
+                        }}
+                        variant="floating"
+                        isPill={true}
+                        className={`h-14! px-8! text-red-500 hover:bg-red-500! hover:text-white! border-red-500/20! z-10 transition-all
+                            ${selectingType ? 'animate-pulse bg-red-500/10! border-red-500/40!' : ''}`}
+                    >
+                        <div className="flex items-center gap-3">
+                            <X size={20} className="group-hover:rotate-90 transition-transform duration-300" />
+                            <span className="text-[10px] font-bold uppercase tracking-[0.2em] whitespace-nowrap leading-none">
+                                {selectingType ? "Cancelar selección" : "Cerrar mapa"}
                             </span>
-                            <button
-                                onClick={() => {
-                                    if (selectingType && !shouldCloseOnSelect) {
-                                        setSelectingType(null);
-                                    } else {
-                                        setIsSelectingOnMap(false);
-                                        setSelectingType(null);
-                                        setShouldCloseOnSelect(false);
-                                    }
-                                }}
-                                className="shrink-0 flex items-center gap-2 px-3 py-1.5 rounded-xl bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white transition-all text-xs font-bold uppercase tracking-wider cursor-pointer border border-red-500/20"
-                            >
-                                <X size={14} />
-                                <span>{selectingType ? "Cancelar" : "Cerrar"}</span>
-                            </button>
                         </div>
+                    </NavIconButton>
 
                         {/* Floating Search Button (Animate in place above the bar) */}
                         <div className={`absolute bottom-full mb-4 transition-all duration-400 ${!isLargeScreen && !isMobileCardExpanded && !selectingType
@@ -352,13 +356,12 @@ function SearchFlight() {
                         </div>
                     </div>
                 </div>
-            )}
             {/* 1. Normal/Vertical Card (Center on Mobile, Left on Desktop) - ONLY HOME SCREEN */}
             <div className={`absolute transition-all duration-700 cubic-bezier(0.4, 0, 0.2, 1) z-10 ${!isSelectingOnMap
                 ? 'left-1/2 lg:left-8 top-1/2 -translate-y-1/2 -translate-x-1/2 lg:translate-x-0 opacity-100 scale-100'
                 : 'left-1/2 lg:-left-full top-0 lg:top-1/2 -translate-y-[calc(100%+2rem)] lg:-translate-y-1/2 -translate-x-1/2 lg:translate-x-0 opacity-0 scale-95 pointer-events-none'
                 }`}>
-                <div className="premium-glass relative p-7 rounded-4xl flex flex-col gap-6 transition-all hover:scale-[1.01] w-[min(96vw,540px)]">
+                <div className="premium-glass relative p-7 rounded-4xl flex flex-col gap-6 transition-all hover:scale-[1.01] w-[min(96vw,540px)] overflow-visible">
 
                     {/* Mobile Map Toggle Button */}
                     {!isLargeScreen && searchMode === 'manual' && !isSelectingOnMap && (
@@ -524,7 +527,7 @@ function SearchFlight() {
                     )}
 
                     {/* Content Container */}
-                    <div className={`${!isLargeScreen ? `transition-all duration-500 overflow-hidden ${!isMobileCardExpanded ? 'max-h-0 opacity-0' : 'max-h-[800px] opacity-100 mt-4'}` : 'flex flex-row items-center gap-4 overflow-hidden'}`}>
+                    <div className={`${!isLargeScreen ? `transition-all duration-500 ${!isMobileCardExpanded ? 'max-h-0 opacity-0 overflow-hidden' : 'max-h-[800px] opacity-100 mt-4 !overflow-visible'}` : 'flex flex-row items-center gap-4 overflow-visible'}`}>
                         <div className="flex flex-col lg:flex-row items-stretch lg:items-center gap-2 lg:gap-4 w-full min-w-0 opacity-100 scale-100">
                             {/* Minimized Header (Fixed Horizontal Bar Only) */}
                             {isXXLScreen && (

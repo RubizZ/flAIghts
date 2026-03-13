@@ -26,6 +26,7 @@ interface GlobeProps {
     onSetDestination?: (iata: string, display: string) => void;
     onAirportClick?: (airport: AirportData | null) => void;
     onMovementChange?: (isMoving: boolean, isUserInteracting: boolean) => void;
+    focusIata?: string;
 }
 
 export default function Globe({
@@ -39,7 +40,8 @@ export default function Globe({
     onSetOrigin,
     onSetDestination,
     onAirportClick,
-    onMovementChange
+    onMovementChange,
+    focusIata
 }: GlobeProps) {
     const mountRef = useRef<HTMLDivElement | null>(null);
     const popupRef = useRef<HTMLDivElement | null>(null);
@@ -288,6 +290,7 @@ export default function Globe({
 
         const controls = new OrbitControls(camera, renderer.domElement);
         controls.enableDamping = true;
+        controls.dampingFactor = 0.03;
         controls.minDistance = 1.3;
         controls.maxDistance = 6;
         controls.enablePan = false;
@@ -588,7 +591,8 @@ export default function Globe({
                 raycaster.setFromCamera(mousePosRef.current, cam);
 
                 if (controlsRef.current) {
-                    controlsRef.current.rotateSpeed = 0.8 - (0.65 * zoomFactor);
+                    // Slower, more deliberate rotation speed
+                    controlsRef.current.rotateSpeed = 0.4 - (0.32 * zoomFactor);
                 }
 
                 _camNorm.copy(cam.position).normalize();
@@ -1345,11 +1349,13 @@ export default function Globe({
                 });
             }
         } else {
-            const focusedIata = originIata || destinationIata;
+            // Prioritize focusIata (inspected airport), then origin, then destination
+            const focusedIata = focusIata || originIata || destinationIata;
             const focusedAirport = focusedIata ? airportsDataRef.current.find(a => a.iata === focusedIata) : null;
 
             if (focusedAirport) {
                 const targetPoint = latLonToVector3(Number(focusedAirport.lat), Number(focusedAirport.lon));
+                // Zoom in on the specific airport
                 const targetPos = targetPoint.clone().normalize().multiplyScalar(1.5);
 
                 gsap.to(cameraRef.current.position, {
@@ -1363,8 +1369,9 @@ export default function Globe({
                         cameraRef.current?.lookAt(0, 0, 0);
                     }
                 });
-            } else if (!interactive && geoReady) {
-                // If map is NOT interactive and nothing is selected, go back to home position
+            } else if (!interactive && geoReady && !focusIata) {
+                // If map is NOT interactive, nothing is selected AND nothing is being focused/inspected, 
+                // go back to home position
                 gsap.to(cameraRef.current.position, {
                     x: homePositionRef.current.x,
                     y: homePositionRef.current.y,
@@ -1376,7 +1383,7 @@ export default function Globe({
                 });
             }
         }
-    }, [isLoaded, originIata, destinationIata, interactive, geoReady]);
+    }, [isLoaded, originIata, destinationIata, focusIata, interactive, geoReady]);
 
 
 
