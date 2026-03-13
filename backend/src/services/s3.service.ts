@@ -36,59 +36,43 @@ export class S3FileTooLargeError extends AppError<'S3_FILE_TOO_LARGE', { size: n
     }
 }
 
+import { ServerConfig } from '@/config/server.config.js'
+
 @injectable()
 @singleton()
 export class S3Service {
-    private readonly bucket: string
-    private readonly region: string
     private readonly s3Client: S3Client
     private readonly signerClient: S3Client
-    private readonly basePath: string
-    private readonly maxFileSize: number
-    private readonly minFileSize: number
-    private readonly autoCreateBucket: boolean
     private readonly initializationPromise: Promise<void>
 
-    constructor() {
-        // Validation - Throw Error if critical config is missing
-        if (!process.env.S3_BUCKET_NAME || !process.env.S3_REGION || !process.env.S3_ACCESS_KEY_ID || !process.env.S3_SECRET_ACCESS_KEY) {
-            throw new S3ConfigError('Missing critical S3 environment variables (S3_BUCKET_NAME, S3_REGION, S3_ACCESS_KEY_ID, S3_SECRET_ACCESS_KEY)');
-        }
-
-        this.bucket = process.env.S3_BUCKET_NAME
-        this.region = process.env.S3_REGION
-        this.basePath = (process.env.S3_BASE_MEDIA_PATH ?? 'media').replace(/^\/+/, '').replace(/\/+$/, '')
-        this.maxFileSize = Number(process.env.S3_MAX_FILE_SIZE ?? 50 * 1024 * 1024) // 50MB
-        this.minFileSize = Number(process.env.S3_MIN_FILE_SIZE ?? 1)
-        this.autoCreateBucket = process.env.S3_AUTO_CREATE_BUCKET !== 'false'
-
-        const host = process.env.S3_HOST
-        const useSsl = process.env.S3_USE_SSL === 'true'
-        const forcePathStyle = process.env.S3_FORCE_PATH_STYLE === 'true'
+    constructor(private readonly config: ServerConfig) {
+        const host = config.S3_HOST
+        const useSsl = config.S3_USE_SSL
+        const forcePathStyle = config.S3_FORCE_PATH_STYLE
 
         const endpoint = host ? `${useSsl ? 'https' : 'http'}://${host}` : undefined
 
         this.s3Client = new S3Client({
             endpoint,
-            region: this.region,
+            region: config.S3_REGION,
             forcePathStyle,
             credentials: {
-                accessKeyId: process.env.S3_ACCESS_KEY_ID,
-                secretAccessKey: process.env.S3_SECRET_ACCESS_KEY
+                accessKeyId: config.S3_ACCESS_KEY_ID,
+                secretAccessKey: config.S3_SECRET_ACCESS_KEY
             }
         })
 
         // El signerClient usa el host público para que el navegador pueda acceder
-        const publicHost = process.env.S3_PUBLIC_HOST || host
+        const publicHost = config.S3_PUBLIC_HOST || host
         const publicEndpoint = publicHost ? `${useSsl ? 'https' : 'http'}://${publicHost}` : undefined
 
         this.signerClient = new S3Client({
             endpoint: publicEndpoint,
-            region: this.region,
+            region: config.S3_REGION,
             forcePathStyle,
             credentials: {
-                accessKeyId: process.env.S3_ACCESS_KEY_ID,
-                secretAccessKey: process.env.S3_SECRET_ACCESS_KEY
+                accessKeyId: config.S3_ACCESS_KEY_ID,
+                secretAccessKey: config.S3_SECRET_ACCESS_KEY
             }
         })
 
@@ -100,21 +84,21 @@ export class S3Service {
 
     private async initializeBucket(): Promise<void> {
         try {
-            await this.s3Client.send(new HeadBucketCommand({ Bucket: this.bucket }))
+            await this.s3Client.send(new HeadBucketCommand({ Bucket: this.config.S3_BUCKET_NAME }))
         } catch (error: any) {
             const isNotFoundError =
                 error?.name === 'NoSuchBucket' ||
                 error?.$metadata?.httpStatusCode === 404
 
-            if (isNotFoundError && this.autoCreateBucket) {
+            if (isNotFoundError && this.config.S3_AUTO_CREATE_BUCKET) {
                 try {
-                    await this.s3Client.send(new CreateBucketCommand({ Bucket: this.bucket }))
-                    console.log(`[S3Service] Bucket "${this.bucket}" created successfully`)
+                    await this.s3Client.send(new CreateBucketCommand({ Bucket: this.config.S3_BUCKET_NAME }))
+                    console.log(`[S3Service] Bucket "${this.config.S3_BUCKET_NAME}" created successfully`)
                 } catch (createError) {
                     console.error(`[S3Service] Failed to auto-create bucket: ${createError instanceof Error ? createError.message : String(createError)}`)
                 }
             } else {
-                console.warn(`[S3Service] Bucket "${this.bucket}" could not be verified or accessed.`)
+                console.warn(`[S3Service] Bucket "${this.config.S3_BUCKET_NAME}" could not be verified or accessed.`)
             }
         }
     }
@@ -134,10 +118,11 @@ export class S3Service {
         const sniffed = await fileTypeFromBuffer(buffer)
         const usedMime = sniffed?.mime ?? mimeType ?? 'application/octet-stream'
 
-        const key = `${this.basePath}/${path.replace(/^\/+/, '')}`
+        const basePath = this.config.S3_BASE_MEDIA_PATH.replace(/^\/+/, '').replace(/\/+$/, '')
+        const key = `${basePath}/${path.replace(/^\/+/, '')}`
 
         const command = new PutObjectCommand({
-            Bucket: this.bucket,
+            Bucket: this.config.S3_BUCKET_NAME,
             Key: key,
             Body: buffer,
             ContentType: usedMime,
@@ -156,28 +141,29 @@ export class S3Service {
     }
 
     private validateBuffer(buffer: Buffer): void {
-        if (this.maxFileSize > 0 && buffer.length > this.maxFileSize) {
-            throw new S3FileTooLargeError(buffer.length, this.maxFileSize);
+        const maxFileSize = this.config.S3_MAX_FILE_SIZE
+        if (maxFileSize > 0 && buffer.length > maxFileSize) {
+            throw new S3FileTooLargeError(buffer.length, maxFileSize);
         }
     }
 
     async getDownloadUrl(key: string, expiresInSeconds: number = 3600): Promise<string> {
         await this.initializationPromise;
         const command = new GetObjectCommand({
-            Bucket: this.bucket,
+            Bucket: this.config.S3_BUCKET_NAME,
             Key: key
         })
 
         let signedUrl = await getSignedUrl(this.signerClient, command, { expiresIn: expiresInSeconds })
 
         // Si el host público ya apunta a la raíz del bucket, el nombre del bucket sobra en la URL
-        if (process.env.S3_PUBLIC_HOST_IS_ROOT_MAPPED === 'true') {
+        if (this.config.S3_PUBLIC_HOST_IS_ROOT_MAPPED) {
             const url = new URL(signedUrl);
 
             // Explicación: El SDK añade /${this.bucket}/ al principio del pathname.
             // Lo eliminamos para que coincida con el mapeo directo de Cloudflare.
-            if (url.pathname.startsWith(`/${this.bucket}`)) {
-                url.pathname = url.pathname.replace(`/${this.bucket}`, '');
+            if (url.pathname.startsWith(`/${this.config.S3_BUCKET_NAME}`)) {
+                url.pathname = url.pathname.replace(`/${this.config.S3_BUCKET_NAME}`, '');
                 signedUrl = url.toString();
             }
         }
@@ -189,7 +175,7 @@ export class S3Service {
         await this.initializationPromise;
         try {
             await this.s3Client.send(new DeleteObjectCommand({
-                Bucket: this.bucket,
+                Bucket: this.config.S3_BUCKET_NAME,
                 Key: key
             }))
             return true

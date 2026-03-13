@@ -7,11 +7,16 @@ import type { FailResponseFromError, MessageResponseData, SuccessResponse } from
 import type { AuthFailResponse } from "./auth.types.js";
 import { InvalidCredentialsError, LoginUserNotFoundError, InvalidPasswordError, ResetTokenInvalidOrExpiredError, EmailNotVerifiedError, NewPasswordSameAsOldError } from "./auth.errors.js";
 
+import { ServerConfig } from "../../config/server.config.js";
+
 @injectable()
 @Route("auth")
 @Tags("Auth")
 export class AuthController extends Controller {
-    constructor(@inject(AuthService) private authService: AuthService) {
+    constructor(
+        @inject(AuthService) private authService: AuthService,
+        private config: ServerConfig
+    ) {
         super()
     }
 
@@ -30,7 +35,7 @@ export class AuthController extends Controller {
             switch (responseType) {
                 case 'cookie':
                     console.log('Setting cookie for user:', result.userId);
-                    const isProduction = process.env.NODE_ENV === 'production';
+                    const isProduction = this.config.NODE_ENV === 'production';
                     request.res!.cookie('token', result.token, {
                         httpOnly: true,
                         secure: isProduction,
@@ -57,7 +62,7 @@ export class AuthController extends Controller {
  */
     @Post("/logout")
     public async logout(@Request() request: ExpressRequest): Promise<SuccessResponse<MessageResponseData>> {
-        const isProduction = process.env.NODE_ENV === 'production';
+        const isProduction = this.config.NODE_ENV === 'production';
         request.res!.clearCookie('token', {
             httpOnly: true,
             secure: isProduction,
@@ -76,7 +81,7 @@ export class AuthController extends Controller {
     @Response<AuthFailResponse>(401, "No autenticado")
     public async logoutAll(@RequestProp("user") user: AuthenticatedUser, @Request() request: ExpressRequest): Promise<SuccessResponse<MessageResponseData>> {
         await this.authService.logoutAll(user._id);
-        const isProduction = process.env.NODE_ENV === 'production';
+        const isProduction = this.config.NODE_ENV === 'production';
         request.res!.clearCookie('token', {
             httpOnly: true,
             secure: isProduction,

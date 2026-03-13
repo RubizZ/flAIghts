@@ -5,17 +5,15 @@ import { User, type IUser } from "../users/models/user.model.js";
 import { AuthenticationVersionMismatchError, InvalidTokenError, NoTokenProvidedError, TokenUserNotFoundError } from "./auth.errors.js";
 import type { FriendUser, PopulatedUser, PublicUser } from "../users/user.types.js";
 
-if (!process.env.JWT_SECRET) {
-    throw new Error("JWT_SECRET is not defined");
-}
-
-const JWT_SECRET = process.env.JWT_SECRET;
+import { container } from "tsyringe"
+import { ServerConfig } from "../../config/server.config.js"
 
 export async function expressAuthentication(
     request: Request,
     securityName: string,
     _scopes?: string[]
 ): Promise<AuthenticatedUser | null> {
+    const config = container.resolve(ServerConfig);
     const authHeader = request.headers['authorization'] || request.headers['Authorization'];
     const headerValue = Array.isArray(authHeader) ? authHeader[0] : authHeader;
 
@@ -37,7 +35,7 @@ export async function expressAuthentication(
             throw new NoTokenProvidedError('Missing or invalid authorization token (Cookie or Bearer header)');
         }
 
-        const decoded = jwt.verify(token, JWT_SECRET) as JWTPayload;
+        const decoded = jwt.verify(token, config.JWT_SECRET) as JWTPayload;
 
         let user = await User.findById(decoded.userId);
         if (!user) {
