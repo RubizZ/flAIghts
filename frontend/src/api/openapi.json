@@ -2773,6 +2773,25 @@
 				"type": "object",
 				"additionalProperties": false
 			},
+			"ConversationUser": {
+				"properties": {
+					"_id": {
+						"type": "string"
+					},
+					"username": {
+						"type": "string"
+					},
+					"profile_picture": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"_id",
+					"username"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
 			"Pick_IMessage.Exclude_keyofIMessage.created_at__": {
 				"properties": {
 					"_id": {
@@ -2827,6 +2846,82 @@
 					}
 				]
 			},
+			"ConversationResponse": {
+				"properties": {
+					"conversationId": {
+						"type": "string"
+					},
+					"otherUser": {
+						"$ref": "#/components/schemas/ConversationUser"
+					},
+					"lastMessage": {
+						"$ref": "#/components/schemas/MessageResponse"
+					},
+					"unreadCount": {
+						"type": "number",
+						"format": "double"
+					}
+				},
+				"required": [
+					"conversationId",
+					"otherUser",
+					"lastMessage",
+					"unreadCount"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"PaginatedConversationsResponse": {
+				"properties": {
+					"items": {
+						"items": {
+							"$ref": "#/components/schemas/ConversationResponse"
+						},
+						"type": "array"
+					},
+					"total": {
+						"type": "number",
+						"format": "double"
+					},
+					"page": {
+						"type": "number",
+						"format": "double"
+					},
+					"totalPages": {
+						"type": "number",
+						"format": "double"
+					}
+				},
+				"required": [
+					"items",
+					"total",
+					"page",
+					"totalPages"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"SuccessResponse_PaginatedConversationsResponse_": {
+				"description": "Wrapper de éxito JSend (aplicado por el middleware global).",
+				"properties": {
+					"status": {
+						"type": "string",
+						"enum": [
+							"success"
+						],
+						"nullable": false
+					},
+					"data": {
+						"$ref": "#/components/schemas/PaginatedConversationsResponse"
+					}
+				},
+				"required": [
+					"status",
+					"data"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
 			"PaginatedMessagesResponse": {
 				"properties": {
 					"items": {
@@ -2869,6 +2964,31 @@
 					},
 					"data": {
 						"$ref": "#/components/schemas/PaginatedMessagesResponse"
+					}
+				},
+				"required": [
+					"status",
+					"data"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"SuccessResponse_null_": {
+				"description": "Wrapper de éxito JSend (aplicado por el middleware global).",
+				"properties": {
+					"status": {
+						"type": "string",
+						"enum": [
+							"success"
+						],
+						"nullable": false
+					},
+					"data": {
+						"type": "number",
+						"enum": [
+							null
+						],
+						"nullable": true
 					}
 				},
 				"required": [
@@ -5020,7 +5140,55 @@
 				]
 			}
 		},
-		"/messages/{otherUserId}": {
+		"/conversations": {
+			"get": {
+				"operationId": "GetConversations",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/SuccessResponse_PaginatedConversationsResponse_"
+								}
+							}
+						}
+					}
+				},
+				"description": "Get list of user's latest conversations",
+				"tags": [
+					"Conversations"
+				],
+				"security": [
+					{
+						"jwt": []
+					}
+				],
+				"parameters": [
+					{
+						"in": "query",
+						"name": "page",
+						"required": false,
+						"schema": {
+							"default": 1,
+							"format": "double",
+							"type": "number"
+						}
+					},
+					{
+						"in": "query",
+						"name": "limit",
+						"required": false,
+						"schema": {
+							"default": 50,
+							"format": "double",
+							"type": "number"
+						}
+					}
+				]
+			}
+		},
+		"/conversations/{otherUserId}/messages": {
 			"get": {
 				"operationId": "GetMessages",
 				"responses": {
@@ -5055,9 +5223,9 @@
 						}
 					}
 				},
-				"description": "Obtiene el historial de mensajes con otro usuario.",
+				"description": "Get messages history with another user",
 				"tags": [
-					"Messages"
+					"Conversations"
 				],
 				"security": [
 					{
@@ -5091,6 +5259,42 @@
 							"default": 50,
 							"format": "double",
 							"type": "number"
+						}
+					}
+				]
+			}
+		},
+		"/conversations/{otherUserId}/read": {
+			"post": {
+				"operationId": "MarkConversationAsRead",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/SuccessResponse_null_"
+								}
+							}
+						}
+					}
+				},
+				"description": "Mark all messages in conversation as read by user and notify this event to SocketService",
+				"tags": [
+					"Conversations"
+				],
+				"security": [
+					{
+						"jwt": []
+					}
+				],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "otherUserId",
+						"required": true,
+						"schema": {
+							"type": "string"
 						}
 					}
 				]
