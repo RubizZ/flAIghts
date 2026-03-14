@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, UIEvent, Fragment } from "react";
 import { useParams, Link } from "react-router-dom";
-import { ArrowLeft, Send, Loader2, CheckCheck } from "lucide-react";
+import { ArrowLeft, Send, Loader2, CheckCheck, Plane } from "lucide-react";
 import { useGetUserById } from "@/api/generated/users/users";
 import UserAvatar from "@/components/ui/UserAvatar";
 import { useAuth } from "@/context/AuthContext";
@@ -66,7 +66,7 @@ export default function Chat() {
     const messages = history?.pages.slice().reverse().flatMap(page => page.items) ?? [];
     const lastMessageId = messages.length > 0 ? messages[messages.length - 1]!._id : null; // Get ID of the last message to control scrolling.
 
-    // Agrupamos los mensajes por día para que el efecto "sticky" funcione correctamente (WhatsApp style)
+    // Group messages by day to make sticky work propperly
     const groupedMessages = messages.reduce((acc, msg) => {
         const dateKey = new Date(msg.created_at).toDateString();
         if (!acc[dateKey]) acc[dateKey] = [];
@@ -112,7 +112,6 @@ export default function Chat() {
             if (conversationUserIds.includes(incomingMessage.sender) && conversationUserIds.includes(incomingMessage.receiver)) {
                 queryClient.setQueryData<InfiniteData<PaginatedMessagesResponse>>(['messages', userId], (oldData) => {
                     if (!oldData || oldData.pages.length === 0) {
-                        // Si no hay datos (chat nuevo), se crea la estructura inicial.
                         return {
                             pages: [{
                                 items: [incomingMessage],
@@ -124,9 +123,8 @@ export default function Chat() {
                         };
                     }
 
-                    // Si ya hay datos, se actualiza la primera página (la más reciente).
                     const newPages = [...oldData.pages];
-                    const firstPage = newPages[0]; // Es de tipo `PaginatedMessagesResponse | undefined`
+                    const firstPage = newPages[0];
 
                     if (firstPage) {
                         newPages[0] = {
@@ -275,11 +273,37 @@ export default function Chat() {
                                     </div>
                                     {dayMessages.map((msg) => {
                                         const isSelf = msg.sender === selfUser?._id;
+                                        const isSharedSearch = msg.content.startsWith("SHARE_SEARCH:");
+
+                                        const renderContent = () => {
+                                            if (isSharedSearch) {
+                                                const [, searchId, origin, destination] = msg.content.split(":");
+                                                return (
+                                                    <div className="flex flex-col gap-3 min-w-[200px]">
+                                                        <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider opacity-70">
+                                                            <Plane size={14} className="rotate-45" />
+                                                            Vuelo compartido
+                                                        </div>
+                                                        <div className="font-bold text-base">
+                                                            {origin} → {destination}
+                                                        </div>
+                                                        <Link
+                                                            to={`/search/${searchId}`}
+                                                            className={`text-center py-2 rounded-xl text-xs font-bold transition-all ${isSelf ? 'bg-white/20 hover:bg-white/30 text-white' : 'bg-brand text-white hover:opacity-90'}`}
+                                                        >
+                                                            Ver detalles del viaje
+                                                        </Link>
+                                                    </div>
+                                                );
+                                            }
+                                            return <p className="text-sm">{msg.content}</p>;
+                                        };
+
                                         return (
                                             <div key={msg._id} className={`flex items-end gap-2 ${isSelf ? 'justify-end' : 'justify-start'}`}>
                                                 {!isSelf && <UserAvatar user={otherUser} size={32} className="self-end" />}
                                                 <div className={`max-w-md lg:max-w-lg px-4 py-3 rounded-2xl shadow-sm ${isSelf ? 'bg-brand text-content-on-brand rounded-br-none' : 'bg-surface text-content rounded-bl-none'}`}>
-                                                    <p className="text-sm">{msg.content}</p>
+                                                    {renderContent()}
                                                     <div className="flex items-center justify-end gap-1.5 mt-1.5">
                                                         <span className={`text-xs ${isSelf ? 'text-white/70' : 'text-content-muted'}`}>
                                                             {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}

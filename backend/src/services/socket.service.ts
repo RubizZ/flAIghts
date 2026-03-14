@@ -4,6 +4,7 @@ import { singleton, inject } from 'tsyringe';
 import { AuthService } from '../modules/auth/auth.service.js';
 import { MessageService } from '../modules/messages/message.service.js';
 import type { MessageResponse } from '../modules/messages/message.types.js';
+import { SearchService } from '../modules/search/search.service.js';
 
 // Types of events and data that Server can send to Client
 interface ServerToClientEvents {
@@ -31,7 +32,8 @@ export class SocketService {
 
     constructor(
         @inject(AuthService) private authService: AuthService,
-        @inject(MessageService) private messageService: MessageService
+        @inject(MessageService) private messageService: MessageService,
+        @inject(SearchService) private searchService: SearchService
     ) { }
 
     public initialize(httpServer: HttpServer) {
@@ -67,6 +69,15 @@ export class SocketService {
                 try {
                     const message = await this.messageService.createMessage(senderId, receiverId, content);
                     const formattedMessage = this.messageService.formatMessageResponse(message);
+
+                    // Change private search to public if shared
+                    if (content.startsWith("SHARE_SEARCH:")) {
+                        const searchId = content.split(":")[1];
+                        if (searchId) {
+                            await this.searchService.shareSearch(searchId, senderId).catch(() => { });
+                        }
+                    }
+
                     const receiverSocketIds = this.onlineUsers.get(receiverId);
                     receiverSocketIds?.forEach(socketId => this.io?.to(socketId).emit('receiveMessage', formattedMessage));
 
@@ -85,6 +96,18 @@ export class SocketService {
         });
 
         console.log('✅ Socket.IO service initialized');
+    }
+
+    /**
+     * Emit a message to all active sockets of a specific user
+     */
+    public emitToUser(userId: string, event: keyof ServerToClientEvents, data: any) {
+        const userSockets = this.onlineUsers.get(userId);
+        if (userSockets) {
+            userSockets.forEach(socketId => {
+                this.io?.to(socketId).emit(event as any, data);
+            });
+        }
     }
 
     /**
