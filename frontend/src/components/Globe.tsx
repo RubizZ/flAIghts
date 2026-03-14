@@ -635,7 +635,7 @@ export default function Globe({
                     let targetScale = baseScale;
 
                     if (isSpecial) {
-                        targetOpacity = 1 * globalZoomFade;
+                        targetOpacity = 1;
                         targetScale = specialScale * Math.max(0.5, globalZoomFade);
                     } else if (interactiveRef.current) {
                         _vec1.copy(mesh.position);
@@ -1309,14 +1309,73 @@ export default function Globe({
         }
     }, [isLoaded, originIata, destinationIata]);
 
-    // 7. Handle camera positioning (Reacts to selection AND to closing the map)
+    // 7. Handle camera positioning (Direct Action Driven)
+    const lastPropsRef = useRef({ originIata, destinationIata, focusIata, interactive });
+
     useEffect(() => {
         if (!isLoaded || !cameraRef.current) return;
 
-        if (originIata && destinationIata) {
-            const origin = airportsDataRef.current.find(a => a.iata === originIata);
-            const dest = airportsDataRef.current.find(a => a.iata === destinationIata);
+        const prev = lastPropsRef.current;
+        const current = { originIata, destinationIata, focusIata, interactive };
+        lastPropsRef.current = current;
 
+        // Determine if we should trigger a camera movement based on what changed
+        let shouldMove = false;
+        let targetType: 'focus' | 'route' | 'single' | 'home' | null = null;
+        let targetIata: string | undefined = undefined;
+
+        const focusChanged = current.focusIata !== prev.focusIata;
+        const originChanged = current.originIata !== prev.originIata;
+        const destChanged = current.destinationIata !== prev.destinationIata;
+        const interactiveChanged = current.interactive !== prev.interactive;
+
+        const originSetOrChanged = originChanged && !!current.originIata;
+        const destSetOrChanged = destChanged && !!current.destinationIata;
+
+        if (originSetOrChanged || destSetOrChanged) {
+            // Case A: Origin or Destination was explicitly SET or UPDATED
+            // This takes top priority (e.g., when confirming an inspected airport)
+            shouldMove = true;
+            if (current.originIata && current.destinationIata) targetType = 'route';
+            else {
+                targetType = 'single';
+                targetIata = current.originIata || current.destinationIata;
+            }
+        } else if (focusChanged && current.focusIata) {
+            // Case B: A new airport was focused (inspected)
+            shouldMove = true;
+            targetType = 'focus';
+            targetIata = current.focusIata;
+        } else if (interactiveChanged && !current.interactive) {
+            // Case C: Map was closed -> Return to route or home
+            shouldMove = true;
+            if (current.originIata && current.destinationIata) targetType = 'route';
+            else if (current.originIata || current.destinationIata) {
+                targetType = 'single';
+                targetIata = current.originIata || current.destinationIata;
+            } else targetType = 'home';
+        } else {
+            // Focus removed or irrelevant change -> Stay still
+            shouldMove = false;
+        }
+
+        if (!shouldMove) return;
+
+        if (targetType === 'focus' || targetType === 'single') {
+            const iata = targetIata;
+            const airport = iata ? airportsDataRef.current.find(a => a.iata === iata) : null;
+            if (airport) {
+                const targetPoint = latLonToVector3(Number(airport.lat), Number(airport.lon));
+                const targetPos = targetPoint.clone().normalize().multiplyScalar(1.5);
+                gsap.to(cameraRef.current.position, {
+                    x: targetPos.x, y: targetPos.y, z: targetPos.z,
+                    duration: 1.5, ease: "power2.inOut", overwrite: "auto",
+                    onUpdate: () => { cameraRef.current?.lookAt(0, 0, 0); }
+                });
+            }
+        } else if (targetType === 'route' && current.originIata && current.destinationIata) {
+            const origin = airportsDataRef.current.find(a => a.iata === current.originIata);
+            const dest = airportsDataRef.current.find(a => a.iata === current.destinationIata);
             if (origin && dest) {
                 const start = latLonToVector3(Number(origin.lat), Number(origin.lon));
                 const end = latLonToVector3(Number(dest.lat), Number(dest.lon));
@@ -1324,64 +1383,26 @@ export default function Globe({
                 const cameraDistance = 2.2 + (routeDist * 0.8);
                 const midPos = start.clone().lerp(end, 0.5).normalize();
                 let arcNormal = start.clone().cross(end).normalize();
-
                 if (arcNormal.lengthSq() < 0.1) {
                     arcNormal = Math.abs(midPos.y) < 0.9 ? new THREE.Vector3(0, 1, 0) : new THREE.Vector3(1, 0, 0);
                 }
-
                 if (arcNormal.y > 0 || (Math.abs(arcNormal.y) < 0.001 && arcNormal.x > 0)) {
                     arcNormal.multiplyScalar(-1);
                 }
-
                 const tiltedPos = midPos.clone().lerp(arcNormal, 0.20).normalize();
                 const targetPos = tiltedPos.multiplyScalar(cameraDistance);
-
                 gsap.to(cameraRef.current.position, {
-                    x: targetPos.x,
-                    y: targetPos.y,
-                    z: targetPos.z,
-                    duration: 1.8,
-                    ease: "power3.inOut",
-                    overwrite: "auto",
-                    onUpdate: () => {
-                        cameraRef.current?.lookAt(0, 0, 0);
-                    }
-                });
-            }
-        } else {
-            // Prioritize focusIata (inspected airport), then origin, then destination
-            const focusedIata = focusIata || originIata || destinationIata;
-            const focusedAirport = focusedIata ? airportsDataRef.current.find(a => a.iata === focusedIata) : null;
-
-            if (focusedAirport) {
-                const targetPoint = latLonToVector3(Number(focusedAirport.lat), Number(focusedAirport.lon));
-                // Zoom in on the specific airport
-                const targetPos = targetPoint.clone().normalize().multiplyScalar(1.5);
-
-                gsap.to(cameraRef.current.position, {
-                    x: targetPos.x,
-                    y: targetPos.y,
-                    z: targetPos.z,
-                    duration: 1.5,
-                    ease: "power2.inOut",
-                    overwrite: "auto",
-                    onUpdate: () => {
-                        cameraRef.current?.lookAt(0, 0, 0);
-                    }
-                });
-            } else if (!interactive && geoReady && !focusIata) {
-                // If map is NOT interactive, nothing is selected AND nothing is being focused/inspected, 
-                // go back to home position
-                gsap.to(cameraRef.current.position, {
-                    x: homePositionRef.current.x,
-                    y: homePositionRef.current.y,
-                    z: homePositionRef.current.z,
-                    duration: 1.5,
-                    ease: "power2.inOut",
-                    overwrite: "auto",
+                    x: targetPos.x, y: targetPos.y, z: targetPos.z,
+                    duration: 1.8, ease: "power3.inOut", overwrite: "auto",
                     onUpdate: () => { cameraRef.current?.lookAt(0, 0, 0); }
                 });
             }
+        } else if (targetType === 'home' && !current.interactive && geoReady) {
+            gsap.to(cameraRef.current.position, {
+                x: homePositionRef.current.x, y: homePositionRef.current.y, z: homePositionRef.current.z,
+                duration: 1.5, ease: "power2.inOut", overwrite: "auto",
+                onUpdate: () => { cameraRef.current?.lookAt(0, 0, 0); }
+            });
         }
     }, [isLoaded, originIata, destinationIata, focusIata, interactive, geoReady]);
 
