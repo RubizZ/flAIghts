@@ -9,6 +9,7 @@ import type { MessageResponse } from '../modules/messages/message.types.js';
 interface ServerToClientEvents {
     receiveMessage: (message: MessageResponse) => void;
     userStatus: (data: { userId: string, online: boolean }) => void;
+    conversationRead: (data: { byUserId: string }) => void;
 }
 
 // Types of events and data that Client can send to Server
@@ -87,17 +88,30 @@ export class SocketService {
     }
 
     /**
-     * Add socketId to user list
+     * Notify a sender that their messages have been read by the reader
+     */
+    public notifyMessagesRead(readerId: string, senderId: string) {
+        const senderSockets = this.onlineUsers.get(senderId);
+        if (senderSockets) {
+            senderSockets.forEach(socketId => {
+                this.io?.to(socketId).emit('conversationRead', { byUserId: readerId });
+            });
+        }
+    }
+
+    /**
+     * Add socketId to user list and notify user status (online) in the first Socket connection
      */
     private addOnlineUser(userId: string, socketId: string) {
         if (!this.onlineUsers.has(userId)) {
             this.onlineUsers.set(userId, new Set());
+            this.io?.emit('userStatus', { userId, online: true });
         }
         this.onlineUsers.get(userId)!.add(socketId);
     }
 
     /**
-     * Remove socketId from user map. If it's the last, remove user from map
+     * Remove socketId from user map. If it's the last, remove user from map and notify user status (offline)
      */
     private removeOnlineUser(userId: string, socketId: string) {
         const userSockets = this.onlineUsers.get(userId);
@@ -105,6 +119,7 @@ export class SocketService {
             userSockets.delete(socketId);
             if (userSockets.size === 0) {
                 this.onlineUsers.delete(userId);
+                this.io?.emit('userStatus', { userId, online: false });
             }
         }
     }
