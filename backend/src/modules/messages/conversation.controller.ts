@@ -1,0 +1,104 @@
+import { Body, Controller, Get, Path, Post, Query, RequestProp, Response, Route, Security, Tags } from "tsoa";
+import { inject, injectable } from "tsyringe";
+import { MessageService } from "./message.service.js";
+import type { AuthenticatedUser } from "../auth/auth.types.js";
+import type { SuccessResponse, FailResponseFromError } from "../../utils/responses.js";
+import type { PaginatedMessagesResponse, PaginatedConversationsResponse, MessageResponse } from "./message.types.js";
+import { NotFriendsError, UserNotFoundError } from "../users/user.errors.js";
+import { UserService } from "../users/user.service.js";
+import { SocketService } from "../../services/socket.service.js";
+import { SearchService } from "../search/search.service.js";
+
+@injectable()
+@Route("conversations")
+@Tags("Conversations")
+@Security("jwt")
+export class ConversationController extends Controller {
+
+    constructor(
+        @inject(MessageService) private readonly messageService: MessageService,
+        @inject(UserService) private readonly userService: UserService,
+        @inject(SocketService) private readonly socketService: SocketService,
+        @inject(SearchService) private readonly searchService: SearchService
+    ) {
+        super();
+    }
+
+    /**
+     * Get list of user's latest conversations
+     */
+    @Get()
+    public async getConversations(
+        @RequestProp('user') user: AuthenticatedUser,
+        @Query('page') page: number = 1,
+        @Query('limit') limit: number = 50
+    ): Promise<SuccessResponse<PaginatedConversationsResponse>> {
+        const conversations = await this.messageService.getUserConversations(user._id, page, limit);
+        // Types conform to the generated Swagger spec and our custom SuccessResponse wrapper
+        return conversations as any;
+    }
+
+    /**
+     * Get messages history with another user
+     */
+    @Get("{otherUserId}/messages")
+    @Response<FailResponseFromError<NotFriendsError>>(403, "No son amigos")
+    @Response<FailResponseFromError<UserNotFoundError>>(404, "Usuario no encontrado")
+    public async getMessages(
+        @Path('otherUserId') otherUserId: string,
+        @RequestProp('user') user: AuthenticatedUser,
+        @Query('page') page: number = 1,
+        @Query('limit') limit: number = 50
+    ): Promise<SuccessResponse<PaginatedMessagesResponse>> {
+        // Security check: ensure users are friends before allowing them to see chat history
+        const selfUser = await this.userService.getUser(user._id);
+        const isFriend = selfUser.friends.some(f => f.user.toString() === otherUserId);
+        if (!isFriend) {
+            throw new NotFriendsError();
+        }
+
+        const history = await this.messageService.getConversationHistory(user._id, otherUserId, page, limit);
+        return this.messageService.formatPaginatedResponse(history) as any;
+    }
+
+    /**
+     * Send a message to a user (for sharing content)
+     */
+    @Post("{otherUserId}/messages")
+    public async sendMessage(
+        @Path('otherUserId') otherUserId: string,
+        @RequestProp('user') user: AuthenticatedUser,
+        @Body() body: { content: string }
+    ): Promise<SuccessResponse<MessageResponse>> {
+        const message = await this.messageService.createMessage(user._id, otherUserId, body.content);
+        const formatted = this.messageService.formatMessageResponse(message);
+
+        // Make search public if shared
+        if (body.content.startsWith("SHARE_SEARCH:")) {
+            const searchId = body.content.split(":")[1];
+            if (searchId) {
+                await this.searchService.shareSearch(searchId, user._id).catch(() => { });
+            }
+        }
+
+        // Notify via Sockets for real-time delivery
+        this.socketService.emitToUser(otherUserId, 'receiveMessage', formatted);
+
+        return formatted as any;
+    }
+
+    /**
+     * Mark all messages in conversation as read by user and notify this event to SocketService
+     */
+    @Post("{otherUserId}/read")
+    public async markConversationAsRead(
+        @Path('otherUserId') otherUserId: string,
+        @RequestProp('user') user: AuthenticatedUser
+    ): Promise<SuccessResponse<null>> {
+        await this.messageService.markConversationAsRead(user._id, otherUserId);
+        this.socketService.notifyMessagesRead(user._id, otherUserId);
+        return null as any;
+    }
+
+
+}

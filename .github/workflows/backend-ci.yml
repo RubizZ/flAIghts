@@ -48,6 +48,15 @@ jobs:
           FRONTEND_URL: "http://localhost:5173"
           NODE_ENV: "development"
           PORT: "3000"
+          SMTP_HOST: "localhost"
+          SMTP_PORT: "1025"
+          SMTP_USER: "test"
+          SMTP_PASS: "test"
+          SMTP_FROM: "noreply@test.com"
+          S3_BUCKET_NAME: "test-bucket"
+          S3_REGION: "us-east-1"
+          S3_ACCESS_KEY_ID: "test-key-id"
+          S3_SECRET_ACCESS_KEY: "test-secret-key"
         run: |
           # Ensure build directory exists for docs if needed
           mkdir -p build

@@ -8,17 +8,21 @@ import {
     getGetSelfUserQueryKey
 } from "@/api/generated/users/users";
 import { getSearches } from "@/api/generated/search/search";
-import { UIEvent } from "react";
+import { useState, UIEvent } from "react";
 import { useNavigate, useParams, Link } from "react-router-dom";
 import { toast } from "sonner";
 import { useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/context/AuthContext";
-import { Lock, MessageCircle, UserMinus } from "lucide-react";
+import { Lock, MessageCircle, UserMinus, Share2 } from "lucide-react";
 import UserAvatar from "@/components/ui/UserAvatar";
+import { useSendMessage } from "@/api/generated/conversations/conversations";
+import SmartPopover from "@/components/ui/SmartPopover";
+import type { FriendUser } from "@/api/generated/model";
 
 export default function UserProfile() {
     const { id } = useParams();
     const navigate = useNavigate();
+    const [sharingSearchId, setSharingSearchId] = useState<string | null>(null);
     const { isAuthenticated, isLoading: isAuthLoading } = useAuth();
 
     if (!id) {
@@ -39,6 +43,13 @@ export default function UserProfile() {
             },
             onError: (error) => toast.error(error.message),
         },
+    });
+
+    const { mutate: sendMessage } = useSendMessage({
+        mutation: {
+            onSuccess: () => toast.success("Vuelo compartido con éxito"),
+            onError: () => toast.error("Error al compartir el vuelo")
+        }
     });
 
     const { mutate: acceptFriendRequest } = useAcceptFriendRequest({
@@ -190,7 +201,7 @@ export default function UserProfile() {
                     </button>
                 ) : user.type === "friend" ? (
                     <div className="flex gap-4">
-                        <Link to={`/chat/${id}`} onClick={(e) => e.preventDefault()} className="flex-1 justify-center flex items-center gap-2 px-8 py-3 bg-brand text-content-on-brand rounded-full transition-all shadow-xl active:scale-95 cursor-pointer font-bold hover:scale-[1.02]">
+                        <Link to={`/chats/${id}`} className="flex-1 justify-center flex items-center gap-2 px-8 py-3 bg-brand text-content-on-brand rounded-full transition-all shadow-xl active:scale-95 cursor-pointer font-bold hover:scale-[1.02]">
                             <MessageCircle size={18} />
                             Mensaje
                         </Link>
@@ -244,46 +255,90 @@ export default function UserProfile() {
                                 {searchesData?.pages.map((page, i) => (
                                     <div key={i} className="flex flex-col gap-4">
                                         {page.items.map((search) => (
-                                            <Link
-                                                key={search._id}
-                                                to={`/search/${search._id}`}
-                                                className="p-5 border border-line rounded-3xl hover:border-brand hover:shadow-md cursor-pointer transition-all bg-surface flex flex-col gap-3 group"
-                                            >
-                                                <div className="flex justify-between items-center">
-                                                    <div className="flex items-center gap-2 text-lg font-bold text-content">
-                                                        <span>{search.origins.join(', ')}</span>
-                                                        <span className="text-brand group-hover:px-1 transition-all">→</span>
-                                                        <span>{search.destinations.join(', ')}</span>
-                                                    </div>
-                                                    <div className="px-3 py-1 bg-brand/10 text-brand text-xs font-bold rounded-full uppercase tracking-wider">
-                                                        {search.criteria?.priority || 'Balanced'}
-                                                    </div>
-                                                </div>
-
-                                                <div className="flex items-center gap-6 text-sm text-content-muted font-medium">
-                                                    <div className="flex items-center gap-2">
-                                                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                                        </svg>
-                                                        <span>Salida: {new Date(search.departure_date).toLocaleDateString()}</span>
+                                            <div key={search._id} className="relative group/card">
+                                                <Link
+                                                    to={`/search/${search._id}`}
+                                                    className="p-5 border border-line rounded-3xl hover:border-brand hover:shadow-md cursor-pointer transition-all bg-surface flex flex-col gap-3 group"
+                                                >
+                                                    <div className="flex justify-between items-center">
+                                                        <div className="flex items-center gap-2 text-lg font-bold text-content">
+                                                            <span>{search.origins.join(', ')}</span>
+                                                            <span className="text-brand group-hover:px-1 transition-all">→</span>
+                                                            <span>{search.destinations.join(', ')}</span>
+                                                        </div>
+                                                        <div className="px-3 py-1 bg-brand/10 text-brand text-xs font-bold rounded-full uppercase tracking-wider">
+                                                            {search.criteria?.priority || 'Balanced'}
+                                                        </div>
                                                     </div>
 
-                                                    {search.return_date && (
+                                                    <div className="flex items-center gap-6 text-sm text-content-muted font-medium">
                                                         <div className="flex items-center gap-2">
-                                                            <svg className="w-4 h-4 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
+                                                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                                                             </svg>
-                                                            <span>Regreso: {new Date(search.return_date).toLocaleDateString()}</span>
+                                                            <span>Salida: {new Date(search.departure_date).toLocaleDateString()}</span>
                                                         </div>
-                                                    )}
 
-                                                    {search.criteria?.max_price && (
-                                                        <div className="flex items-center gap-1 text-green-600 dark:text-green-400 ml-auto">
-                                                            <span>Max {search.criteria.max_price}€</span>
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            </Link>
+                                                        {search.return_date && (
+                                                            <div className="flex items-center gap-2">
+                                                                <svg className="w-4 h-4 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
+                                                                </svg>
+                                                                <span>Regreso: {new Date(search.return_date).toLocaleDateString()}</span>
+                                                            </div>
+                                                        )}
+
+                                                        {search.criteria?.max_price && (
+                                                            <div className="flex items-center gap-1 text-green-600 dark:text-green-400 ml-auto">
+                                                                <span>Max {search.criteria.max_price}€</span>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                </Link>
+
+
+                                                {user.type === "self" && (
+                                                    <div className="absolute right-4 bottom-4">
+                                                        <SmartPopover
+                                                            isOpen={sharingSearchId === search._id}
+                                                            setIsOpen={(open) => setSharingSearchId(open ? search._id : null)}
+                                                            preferredAlign="right"
+                                                            trigger={
+                                                                <button
+                                                                    onClick={(e) => {
+                                                                        e.preventDefault();
+                                                                        e.stopPropagation();
+                                                                        setSharingSearchId(sharingSearchId === search._id ? null : search._id);
+                                                                    }}
+                                                                    className="p-2 bg-main border border-line rounded-full text-content-muted hover:text-brand hover:border-brand transition-all shadow-sm">
+                                                                    <Share2 size={16} />
+                                                                </button>
+                                                            }
+                                                        >
+                                                            <div className="p-2 flex flex-col gap-1 min-w-[200px]">
+                                                                <p className="px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-content-muted border-b border-line mb-1">Compartir con amigo</p>
+                                                                {user.friends.filter((f): f is FriendUser => typeof f !== 'string').map(friend => (
+                                                                    <button
+                                                                        key={friend._id}
+                                                                        onClick={() => {
+                                                                            sendMessage({
+                                                                                otherUserId: friend._id,
+                                                                                data: { content: `SHARE_SEARCH:${search._id}:${search.origins[0]}:${search.destinations[0]}` }
+                                                                            });
+                                                                            setSharingSearchId(null);
+                                                                        }}
+                                                                        className="flex items-center gap-2 p-2 hover:bg-surface rounded-xl transition-all text-left w-full"
+                                                                    >
+                                                                        <UserAvatar user={friend} size={24} />
+                                                                        <span className="text-xs font-bold">{friend.username}</span>
+                                                                    </button>
+                                                                ))}
+                                                            </div>
+                                                        </SmartPopover>
+                                                    </div>
+                                                )
+                                                }
+                                            </div>
                                         ))}
                                     </div>
                                 ))}
@@ -304,6 +359,6 @@ export default function UserProfile() {
                     </div>
                 )}
             </div>
-        </div>
+        </div >
     );
 }

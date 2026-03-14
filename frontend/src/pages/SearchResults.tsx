@@ -1,10 +1,18 @@
-import { useParams } from "react-router-dom";
+import { useParams, Link } from "react-router-dom";
 import { useSearchResult } from "@/api/generated/search/search";
-import { Loader2, Plane } from "lucide-react";
-import type { ItineraryResponse } from "@/api/generated/model";
+import { Loader2, Plane, Share2 } from "lucide-react";
+import type { ItineraryResponse, FriendUser } from "@/api/generated/model";
+import { useAuth } from "@/context/AuthContext";
+import { useSendMessage } from "@/api/generated/conversations/conversations";
+import SmartPopover from "@/components/ui/SmartPopover";
+import UserAvatar from "@/components/ui/UserAvatar";
+import { useState } from "react";
+import { toast } from "sonner";
 
 export default function SearchResults() {
     const { id } = useParams<{ id: string }>();
+    const { user, isAuthenticated } = useAuth();
+    const [isSharing, setIsSharing] = useState(false);
 
     // Fetch search results with polling enabled while status is 'searching'
     const { data, isLoading, error } = useSearchResult(
@@ -19,6 +27,13 @@ export default function SearchResults() {
             }
         }
     );
+
+    const { mutate: sendMessage } = useSendMessage({
+        mutation: {
+            onSuccess: () => { toast.success("Vuelo compartido"); setIsSharing(false); },
+            onError: () => toast.error("Error al compartir")
+        }
+    });
 
     if (isLoading) {
         return (
@@ -105,6 +120,45 @@ export default function SearchResults() {
         <div className="max-w-4xl mx-auto p-6 space-y-8 text-content">
             <div className="flex items-center justify-between">
                 <h1 className="text-2xl font-bold">Resultados de búsqueda</h1>
+
+                {isAuthenticated && user && data && (
+                    <SmartPopover
+                        isOpen={isSharing}
+                        setIsOpen={setIsSharing}
+                        preferredAlign="right"
+                        trigger={
+                            <button
+                                onClick={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    setIsSharing(!isSharing);
+                                }}
+                                className="flex items-center gap-2 px-4 py-2 bg-brand text-white rounded-full font-bold shadow-lg hover:scale-105 active:scale-95 transition-all"
+                            >
+                                <Share2 size={18} />
+                                <span>Compartir</span>
+                            </button>
+                        }
+                    >
+                        <div className="p-2 flex flex-col gap-1 min-w-[220px]">
+                            <p className="px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-content-muted border-b border-line mb-1">Compartir con amigo</p>
+                            {user.friends.filter((f): f is FriendUser => typeof f !== 'string').map(friend => (
+                                <button
+                                    key={friend._id}
+                                    onClick={() => sendMessage({
+                                        otherUserId: friend._id,
+                                        data: { content: `SHARE_SEARCH:${id}:${data.origins[0]}:${data.destinations[0]}` }
+                                    })}
+                                    className="flex items-center gap-2 p-2 hover:bg-surface rounded-xl transition-all text-left w-full"
+                                >
+                                    <UserAvatar user={friend} size={28} />
+                                    <span className="text-sm font-bold">{friend.username}</span>
+                                </button>
+                            ))}
+                        </div>
+                    </SmartPopover>
+                )}
+
                 {searchData.status === 'searching' && (
                     <div className="flex items-center gap-2 text-brand animate-pulse">
                         <Loader2 className="w-4 h-4 animate-spin" />

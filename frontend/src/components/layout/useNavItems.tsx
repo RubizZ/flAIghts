@@ -1,4 +1,4 @@
-import { Compass, Users } from "lucide-react";
+import { Compass, Users, MessageSquare } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 
 export interface NavItem {
@@ -21,6 +21,12 @@ export function useNavItems(): NavItem[] {
             path: "/",
             icon: <Compass size={20} />,
             show: true,
+        },
+        {
+            label: "Chats",
+            path: "/chats",
+            icon: <MessageSquare size={20} />,
+            show: isAuthenticated,
         },
         {
             label: "Amigos",
