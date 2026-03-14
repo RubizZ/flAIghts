@@ -190,7 +190,7 @@ export default function UserProfile() {
                     </button>
                 ) : user.type === "friend" ? (
                     <div className="flex gap-4">
-                        <Link to={`/chat/${id}`} className="flex-1 justify-center flex items-center gap-2 px-8 py-3 bg-brand text-content-on-brand rounded-full transition-all shadow-xl active:scale-95 cursor-pointer font-bold hover:scale-[1.02]">
+                        <Link to={`/chats/${id}`} className="flex-1 justify-center flex items-center gap-2 px-8 py-3 bg-brand text-content-on-brand rounded-full transition-all shadow-xl active:scale-95 cursor-pointer font-bold hover:scale-[1.02]">
                             <MessageCircle size={18} />
                             Mensaje
                         </Link>
