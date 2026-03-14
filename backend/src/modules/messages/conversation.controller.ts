@@ -1,12 +1,13 @@
-import { Controller, Get, Path, Post, Query, RequestProp, Response, Route, Security, Tags } from "tsoa";
+import { Body, Controller, Get, Path, Post, Query, RequestProp, Response, Route, Security, Tags } from "tsoa";
 import { inject, injectable } from "tsyringe";
 import { MessageService } from "./message.service.js";
 import type { AuthenticatedUser } from "../auth/auth.types.js";
 import type { SuccessResponse, FailResponseFromError } from "../../utils/responses.js";
-import type { PaginatedMessagesResponse, PaginatedConversationsResponse } from "./message.types.js";
+import type { PaginatedMessagesResponse, PaginatedConversationsResponse, MessageResponse } from "./message.types.js";
 import { NotFriendsError, UserNotFoundError } from "../users/user.errors.js";
 import { UserService } from "../users/user.service.js";
 import { SocketService } from "../../services/socket.service.js";
+import { SearchService } from "../search/search.service.js";
 
 @injectable()
 @Route("conversations")
@@ -17,7 +18,8 @@ export class ConversationController extends Controller {
     constructor(
         @inject(MessageService) private readonly messageService: MessageService,
         @inject(UserService) private readonly userService: UserService,
-        @inject(SocketService) private readonly socketService: SocketService
+        @inject(SocketService) private readonly socketService: SocketService,
+        @inject(SearchService) private readonly searchService: SearchService
     ) {
         super();
     }
@@ -57,6 +59,32 @@ export class ConversationController extends Controller {
 
         const history = await this.messageService.getConversationHistory(user._id, otherUserId, page, limit);
         return this.messageService.formatPaginatedResponse(history) as any;
+    }
+
+    /**
+     * Send a message to a user (for sharing content)
+     */
+    @Post("{otherUserId}/messages")
+    public async sendMessage(
+        @Path('otherUserId') otherUserId: string,
+        @RequestProp('user') user: AuthenticatedUser,
+        @Body() body: { content: string }
+    ): Promise<SuccessResponse<MessageResponse>> {
+        const message = await this.messageService.createMessage(user._id, otherUserId, body.content);
+        const formatted = this.messageService.formatMessageResponse(message);
+
+        // Make search public if shared
+        if (body.content.startsWith("SHARE_SEARCH:")) {
+            const searchId = body.content.split(":")[1];
+            if (searchId) {
+                await this.searchService.shareSearch(searchId, user._id).catch(() => { });
+            }
+        }
+
+        // Notify via Sockets for real-time delivery
+        this.socketService.emitToUser(otherUserId, 'receiveMessage', formatted);
+
+        return formatted as any;
     }
 
     /**

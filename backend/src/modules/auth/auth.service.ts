@@ -252,7 +252,7 @@ export class AuthService {
     public async verifyToken(token: string): Promise<AuthenticatedUser> {
         let decoded: JWTPayload;
         try {
-            decoded = jwt.verify(token, this.jwtSecret) as JWTPayload;
+            decoded = jwt.verify(token, this.config.JWT_SECRET) as JWTPayload;
         } catch (err) {
             const message = err instanceof Error ? err.message : 'Unknown JWT error';
             throw new InvalidTokenError(message);
