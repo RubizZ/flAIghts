@@ -2,8 +2,8 @@ import { useState, useMemo, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useSearchResult } from "@/api/generated/search/search";
 import { useGetGlobeAirports } from "@/api/generated/airports/airports";
-import { AlertCircle, Loader2, Plane, ArrowLeft, DollarSign, Clock, Calendar, ChevronDown, Info, Ticket, PlaneTakeoff, PlaneLanding } from "lucide-react";
-import type { ItineraryResponse, GlobeAirportResponse, Leg } from "@/api/generated/model";
+import { AlertCircle, Loader2, Plane, ArrowLeft, ArrowRight, DollarSign, Clock, Calendar, ChevronDown, Info, Ticket, PlaneTakeoff, PlaneLanding } from "lucide-react";
+import type { ItineraryResponse, GlobeAirportResponse, LegResponse } from "@/api/generated/model";
 import StarsBackground from "@/components/ui/StarsBackground";
 import Globe from "@/components/Globe";
 
@@ -11,7 +11,6 @@ export default function SearchResults() {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
     const [sortBy, setSortBy] = useState<'price' | 'duration'>('price');
-    const [isGlobeReady, setIsGlobeReady] = useState(false);
     const [windowWidth, setWindowWidth] = useState(window.innerWidth);
 
     useEffect(() => {
@@ -92,6 +91,21 @@ export default function SearchResults() {
         return formatted.charAt(0).toUpperCase() + formatted.slice(1).replace(/\./g, '');
     };
 
+    // Calculate offset to center globe in the right empty space
+    const globeOffset = useMemo(() => {
+        if (windowWidth >= 1280) { // xl breakpoint (60% left panel)
+            // Left panel is 60%, right is 40%. Center of right is at 60 + 40/2 = 80%.
+            // Globe is centered at 50%. Shift is 80 - 50 = 30%.
+            return windowWidth * 0.30;
+        }
+        if (windowWidth >= 1024) { // lg breakpoint (65% left panel)
+            // Left panel is 65%, right is 35%. Center of right is at 65 + 35/2 = 82.5%.
+            // Globe is centered at 50%. Shift is 82.5 - 50 = 32.5%.
+            return windowWidth * 0.325;
+        }
+        return 0;
+    }, [windowWidth]);
+
     // --- Loading State ---
     if (isLoading && !data) {
         return (
@@ -125,13 +139,10 @@ export default function SearchResults() {
         );
     }
 
-    if (!data) return null;
+    if (!searchData) return null;
 
     const departureItineraries = sortItineraries(searchData.departure_itineraries);
     const returnItineraries = sortItineraries(searchData.return_itineraries);
-
-    // Calculate offset to center globe in the right empty space (approx 35% of screen width shift)
-    const globeOffset = windowWidth >= 1024 ? windowWidth * 0.35 : 0;
 
     return (
         <div className="relative w-full h-screen overflow-hidden bg-main lg:bg-black text-content flex">
@@ -146,7 +157,7 @@ export default function SearchResults() {
                     <div className="max-w-3xl mx-auto px-4 pt-24 pb-6 lg:pt-24 lg:pb-10 min-h-full flex flex-col gap-6 lg:gap-8">
 
                         {/* Header Card */}
-                        <div className="sticky top-24 z-20 backdrop-blur-2xl bg-main/70 border border-line/40 p-4 rounded-2xl shadow-2xl flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4 animate-in fade-in slide-in-from-top-4 duration-700">
+                        <div className="sticky top-6 lg:top-8 z-20 backdrop-blur-2xl bg-main/80 dark:bg-main/70 border border-line p-4 rounded-2xl shadow-2xl flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4 animate-in fade-in slide-in-from-top-4 duration-700">
                             <div className="flex items-center gap-4">
                                 <button
                                     onClick={() => navigate('/')}
@@ -156,11 +167,23 @@ export default function SearchResults() {
                                     <ArrowLeft size={20} className="text-content-muted group-hover:text-content" />
                                 </button>
                                 <div>
-                                    <h1 className="text-lg md:text-xl font-bold flex items-center gap-3 text-white">
+                                    <h1 className="text-lg md:text-xl font-bold flex items-center gap-3 text-content">
                                         {globeRoute.origin} <Plane className="w-5 h-5 text-brand rotate-90" /> {globeRoute.destination}
                                     </h1>
-                                    <div className="flex items-center gap-3 flex-wrap mt-1 text-xs text-content-muted font-medium">
-                                        <div className="flex items-center gap-2">
+                                    <div className="flex flex-col justify-start gap-3 flex-wrap mt-1 text-xs text-content-muted font-medium">
+                                        {searchData.departure_date && (
+                                            <div className="flex items-center gap-1.5">
+                                                <Calendar size={14} className="text-brand/80" />
+                                                <span>{formatDateForDisplay(searchData.departure_date)}</span>
+                                                {searchData.return_date && (
+                                                    <>
+                                                        <span className="text-content-muted/50 mt-0.5"><ArrowRight size={12} /></span>
+                                                        <span>{formatDateForDisplay(searchData.return_date)}</span>
+                                                    </>
+                                                )}
+                                            </div>
+                                        )}
+                                        <div className="flex items-center gap-2 justify-start">
                                             {searchData.status === 'searching' && (
                                                 <Loader2 className="w-3 h-3 animate-spin text-brand" />
                                             )}
@@ -168,18 +191,6 @@ export default function SearchResults() {
                                                 {searchData.status === 'searching' ? 'Buscando en tiempo real...' : `${(departureItineraries?.length || 0) + (returnItineraries?.length || 0)} resultados encontrados`}
                                             </p>
                                         </div>
-                                        {searchData.departure_date && (
-                                            <div className="flex items-center gap-2 border-l-0 pl-0 sm:border-l sm:border-white/10 sm:pl-3">
-                                                <Calendar size={14} className="text-brand/80" />
-                                                <span>{formatDateForDisplay(searchData.departure_date)}</span>
-                                                {searchData.return_date && (
-                                                    <>
-                                                        <span className="text-white/30 mx-1">→</span>
-                                                        <span>{formatDateForDisplay(searchData.return_date)}</span>
-                                                    </>
-                                                )}
-                                            </div>
-                                        )}
                                     </div>
                                 </div>
                             </div>
@@ -187,12 +198,12 @@ export default function SearchResults() {
                             {/* Sorting Controls */}
                             <div className="flex items-center gap-2">
                                 <span className="text-xs font-medium text-content-muted block">Ordenar por:</span>
-                                <div className="flex items-center gap-1 bg-black/20 p-1 rounded-xl border border-white/10">
+                                <div className="flex items-center gap-1 bg-surface p-1 rounded-xl border border-line">
                                     <button
                                         onClick={() => setSortBy('price')}
                                         className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs md:text-sm font-medium transition-all cursor-pointer ${sortBy === 'price'
                                             ? 'bg-brand text-content-on-brand shadow-sm'
-                                            : 'text-content-muted hover:text-white hover:bg-white/5'
+                                            : 'text-content-muted hover:text-content hover:bg-main'
                                             }`}
                                     >
                                         <DollarSign size={14} />
@@ -202,7 +213,7 @@ export default function SearchResults() {
                                         onClick={() => setSortBy('duration')}
                                         className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs md:text-sm font-medium transition-all cursor-pointer ${sortBy === 'duration'
                                             ? 'bg-brand text-content-on-brand shadow-sm'
-                                            : 'text-content-muted hover:text-white hover:bg-white/5'
+                                            : 'text-content-muted hover:text-content hover:bg-main'
                                             }`}
                                     >
                                         <Clock size={14} />
@@ -217,7 +228,7 @@ export default function SearchResults() {
                             {/* Departure Flights */}
                             {departureItineraries && departureItineraries.length > 0 && (
                                 <div className="space-y-4 animate-in slide-in-from-bottom-8 fade-in duration-700 delay-100">
-                                    <h2 className="text-xl font-bold text-white flex items-center gap-3 ml-2">
+                                    <h2 className="text-xl font-bold text-content flex items-center gap-3 ml-2">
                                         <div className="p-2 bg-origin/20 rounded-lg">
                                             <Plane className="w-5 h-5 text-origin -rotate-45" />
                                         </div>
@@ -240,7 +251,7 @@ export default function SearchResults() {
                             {/* Return Flights */}
                             {returnItineraries && returnItineraries.length > 0 && (
                                 <div className="space-y-4 animate-in slide-in-from-bottom-8 fade-in duration-700 delay-200">
-                                    <h2 className="text-xl font-bold text-white flex items-center gap-3 ml-2">
+                                    <h2 className="text-xl font-bold text-content flex items-center gap-3 ml-2">
                                         <div className="p-2 bg-destination/20 rounded-lg">
                                             <Plane className="w-5 h-5 text-destination rotate-[135deg]" />
                                         </div>
@@ -261,9 +272,9 @@ export default function SearchResults() {
                             )}
 
                             {!isLoading && (!departureItineraries?.length) && (!returnItineraries?.length) && (
-                                <div className="flex flex-col items-center justify-center py-20 bg-main/40 backdrop-blur-md rounded-3xl border border-line/30 text-center text-content-muted mx-4">
-                                    <AlertCircle size={48} className="mb-4 opacity-50 text-white" />
-                                    <h3 className="text-xl font-semibold text-white mb-2">No se encontraron vuelos</h3>
+                                <div className="flex flex-col items-center justify-center py-20 bg-main/40 backdrop-blur-md rounded-3xl border border-line text-center text-content-muted mx-4">
+                                    <AlertCircle size={48} className="mb-4 opacity-50 text-content" />
+                                    <h3 className="text-xl font-semibold text-content mb-2">No se encontraron vuelos</h3>
                                     <p className="text-sm opacity-70">Intenta cambiar las fechas o los aeropuertos en la búsqueda.</p>
                                 </div>
                             )}
@@ -278,7 +289,6 @@ export default function SearchResults() {
                     originIata={globeRoute.origin}
                     destinationIata={globeRoute.destination}
                     selectedAirports={[globeRoute.origin, globeRoute.destination].filter(Boolean) as string[]}
-                    onReady={() => setIsGlobeReady(true)}
                     interactive={true} // Allow interaction on desktop
                     horizontalOffset={globeOffset}
                 />
@@ -292,7 +302,7 @@ function FlightCard({ itinerary, formatTime, formatDuration, airportsMap }: { it
     const [isExpanded, setIsExpanded] = useState(false);
 
     return (
-        <div className="bg-main/60 backdrop-blur-xl border border-white/10 rounded-2xl shadow-lg transition-all duration-300 hover:border-brand/40 hover:bg-main/80 overflow-hidden">
+        <div className="bg-main/80 dark:bg-main/60 backdrop-blur-xl border border-line rounded-2xl shadow-lg transition-all duration-300 hover:border-brand/40 hover:bg-surface overflow-hidden">
             <div
                 className="group relative pt-5 px-5 pb-10 cursor-pointer"
                 onClick={() => setIsExpanded(!isExpanded)}
@@ -302,51 +312,54 @@ function FlightCard({ itinerary, formatTime, formatDuration, airportsMap }: { it
 
                 <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
                     <div className="flex-1 space-y-6 w-full">
-                        {itinerary.legs.map((leg, legIndex) => (
-                            <div key={legIndex} className="flex flex-col gap-3">
-                                {/* Airline Header */}
-                                <div className="flex items-center gap-2.5">
-                                    {leg.airline_logo ? (
-                                        <img src={leg.airline_logo} alt={leg.airline} className="w-6 h-6 object-contain rounded-xs bg-white/5 p-0.5" />
-                                    ) : (
-                                        <Plane className="w-5 h-5 p-1 bg-white/10 rounded-full" />
-                                    )}
-                                    <span className="text-sm font-semibold text-content/90">{leg.airline}</span>
-                                </div>
-
-                                {/* Flight Route Visual */}
-                                <div className="flex items-center gap-4 sm:gap-6 w-full">
-                                    {/* Departure */}
-                                    <div className="text-center min-w-[70px]">
-                                        <div className="text-2xl font-bold text-white tracking-tight">{formatTime(leg.departure_time)}</div>
-                                        <div className="text-xs font-bold text-content-muted/80 bg-surface/30 px-2 py-0.5 rounded-full inline-block mt-1">{leg.origin}</div>
+                        {itinerary.legs.map((leg, legIndex) => {
+                            const waitTime = leg.wait_time || 0;
+                            return (
+                                <div key={legIndex} className="flex flex-col gap-3">
+                                    {/* Airline Header */}
+                                    <div className="flex items-center gap-2.5">
+                                        {leg.airline_logo ? (
+                                            <img src={leg.airline_logo} alt={leg.airline} className="w-6 h-6 object-contain rounded-xs bg-surface p-0.5" />
+                                        ) : (
+                                            <Plane className="w-5 h-5 p-1 bg-surface rounded-full" />
+                                        )}
+                                        <span className="text-sm font-semibold text-content/90">{leg.airline}</span>
                                     </div>
 
-                                    {/* Path & Duration */}
-                                    <div className="flex flex-col items-center flex-1 px-2 relative min-w-[100px]">
-                                        <span className="text-[10px] uppercase font-bold text-content-muted mb-1.5 tracking-wider">{formatDuration(leg.duration)}</span>
-                                        <div className="w-full h-[2px] bg-white/10 relative flex items-center justify-center">
-                                            <div className="absolute w-1.5 h-1.5 rounded-full bg-white/20 left-0" />
-                                            <Plane className="w-4 h-4 text-brand rotate-90 absolute bg-black p-0.5 rounded-full" />
-                                            <div className="absolute w-1.5 h-1.5 rounded-full bg-white/20 right-0" />
+                                    {/* Flight Route Visual */}
+                                    <div className="flex items-center gap-4 sm:gap-6 w-full">
+                                        {/* Departure */}
+                                        <div className="text-center min-w-[70px]">
+                                            <div className="text-2xl font-bold text-content tracking-tight">{formatTime(leg.departure_time)}</div>
+                                            <div className="text-xs font-bold text-content-muted/80 bg-surface/30 px-2 py-0.5 rounded-full inline-block mt-1">{leg.origin}</div>
                                         </div>
-                                        <span className={`text-[10px] font-bold mt-1.5 ${leg.wait_time > 0 ? 'text-orange-400' : 'text-emerald-400'}`}>
-                                            {leg.wait_time > 0 ? `${Math.floor(leg.wait_time / 60)}h ${leg.wait_time % 60}m escala` : 'Directo'}
-                                        </span>
-                                    </div>
 
-                                    {/* Arrival */}
-                                    <div className="text-center min-w-[70px]">
-                                        <div className="text-2xl font-bold text-white tracking-tight">{formatTime(leg.arrival_time)}</div>
-                                        <div className="text-xs font-bold text-content-muted/80 bg-surface/30 px-2 py-0.5 rounded-full inline-block mt-1">{leg.destination}</div>
+                                        {/* Path & Duration */}
+                                        <div className="flex flex-col items-center flex-1 px-2 relative min-w-[100px]">
+                                            <span className="text-[10px] uppercase font-bold text-content-muted mb-1.5 tracking-wider">{formatDuration(leg.duration)}</span>
+                                            <div className="w-full h-[2px] bg-line relative flex items-center justify-center">
+                                                <div className="absolute w-1.5 h-1.5 rounded-full bg-line left-0" />
+                                                <Plane className="w-4 h-4 text-brand rotate-90 absolute bg-main p-0.5 rounded-full" />
+                                                <div className="absolute w-1.5 h-1.5 rounded-full bg-line right-0" />
+                                            </div>
+                                            <span className={`text-[10px] font-bold mt-1.5 ${waitTime > 0 ? 'text-orange-400' : 'text-emerald-400'}`}>
+                                                {waitTime > 0 ? `${Math.floor(waitTime / 60)}h ${waitTime % 60}m escala` : 'Directo'}
+                                            </span>
+                                        </div>
+
+                                        {/* Arrival */}
+                                        <div className="text-center min-w-[70px]">
+                                            <div className="text-2xl font-bold text-content tracking-tight">{formatTime(leg.arrival_time)}</div>
+                                            <div className="text-xs font-bold text-content-muted/80 bg-surface/30 px-2 py-0.5 rounded-full inline-block mt-1">{leg.destination}</div>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                        ))}
+                            );
+                        })}
                     </div>
 
                     {/* Price & Action */}
-                    <div className="flex flex-row lg:flex-col items-center lg:items-end justify-between w-full lg:w-auto pt-1 lg:pt-0 lg:pl-8 lg:border-l border-white/10 gap-3">
+                    <div className="flex flex-row lg:flex-col items-center lg:items-end justify-between w-full lg:w-auto pt-1 lg:pt-0 lg:pl-8 lg:border-l border-line gap-3">
                         <div className="text-left lg:text-right">
                             <span className="text-[10px] uppercase font-bold text-content-muted tracking-wider block mb-0.5">Precio total</span>
                             <span className="text-3xl font-black text-brand tracking-tight">{itinerary.total_price}€</span>
@@ -366,7 +379,7 @@ function FlightCard({ itinerary, formatTime, formatDuration, airportsMap }: { it
             </div>
 
             {isExpanded && (
-                <div className="px-5 pb-5 border-t border-white/10 animate-in fade-in duration-300">
+                <div className="px-5 pb-5 border-t border-line animate-in fade-in duration-300">
                     <div className="py-4 space-y-8">
                         {itinerary.legs.map((leg, legIndex) => (
                             <LegDetails key={legIndex} leg={leg} airportsMap={airportsMap} formatTime={formatTime} />
@@ -378,7 +391,7 @@ function FlightCard({ itinerary, formatTime, formatDuration, airportsMap }: { it
     );
 }
 
-function LegDetails({ leg, airportsMap, formatTime }: { leg: Leg, airportsMap: Map<string, GlobeAirportResponse>, formatTime: (s?: string) => string }) {
+function LegDetails({ leg, airportsMap, formatTime }: { leg: LegResponse, airportsMap: Map<string, GlobeAirportResponse>, formatTime: (s?: string) => string }) {
     const originAirport = airportsMap.get(leg.origin);
     const destinationAirport = airportsMap.get(leg.destination);
 
@@ -387,19 +400,19 @@ function LegDetails({ leg, airportsMap, formatTime }: { leg: Leg, airportsMap: M
             <div className="flex items-center gap-3 text-xs text-content-muted font-medium">
                 <div className="flex items-center gap-2">
                     <Ticket size={14} className="text-brand/70" />
-                    <span>{leg.flight_number}</span>
+                    <span>Turista/Business</span>{/* Replace this later */}
                 </div>
-                <div className="w-1 h-1 bg-white/20 rounded-full" />
+                <div className="w-1 h-1 bg-line rounded-full" />
                 <div className="flex items-center gap-2">
                     <Info size={14} className="text-brand/70" />
-                    <span>{leg.airplane}</span>
+                    <span>AirBus 11</span> {/* Replace this later */}
                 </div>
             </div>
 
             <div className="flex items-start gap-4">
                 <PlaneTakeoff size={18} className="text-origin shrink-0 mt-1" />
                 <div className="flex flex-col">
-                    <span className="font-bold text-white">{formatTime(leg.departure_time)} - {leg.origin}</span>
+                    <span className="font-bold text-content">{formatTime(leg.departure_time)} - {leg.origin}</span>
                     <span className="text-xs text-content-muted">{originAirport?.n}, {originAirport?.ci}</span>
                 </div>
             </div>
@@ -407,7 +420,7 @@ function LegDetails({ leg, airportsMap, formatTime }: { leg: Leg, airportsMap: M
             <div className="flex items-start gap-4">
                 <PlaneLanding size={18} className="text-destination shrink-0 mt-1" />
                 <div className="flex flex-col">
-                    <span className="font-bold text-white">{formatTime(leg.arrival_time)} - {leg.destination}</span>
+                    <span className="font-bold text-content">{formatTime(leg.arrival_time)} - {leg.destination}</span>
                     <span className="text-xs text-content-muted">{destinationAirport?.n}, {destinationAirport?.ci}</span>
                 </div>
             </div>
