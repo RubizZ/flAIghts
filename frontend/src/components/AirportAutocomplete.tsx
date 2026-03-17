@@ -127,7 +127,10 @@ export default function AirportAutocomplete({ value, onChange, placeholder, clas
                             setIsOpen(true);
                             const target = e.target;
                             setTimeout(() => {
-                                target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                                const vv = window.visualViewport;
+                                if (vv && vv.height < window.innerHeight) {
+                                    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                                }
                             }, 100);
                             if (query === getDisplay(value) && query !== "") {
                                 e.target.select();
