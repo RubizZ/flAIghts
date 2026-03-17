@@ -1,8 +1,7 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
-import { Menu, X } from "lucide-react";
-import { useNavItems } from "./useNavItems";
+import { Compass, Menu, Users, X } from "lucide-react";
 import NavIconButton from "../ui/NavIconButton";
 
 interface SidebarProps {
@@ -20,10 +19,23 @@ interface SidebarProps {
 }
 
 export default function Sidebar({ isOpen, onClose, onToggle, variant = 'classic', className = "" }: SidebarProps) {
-    const { isLoading } = useAuth();
+    const { isAuthenticated, isLoading } = useAuth();
     const [clickedItem, setClickedItem] = useState<string | null>(null);
     const location = useLocation();
-    const navItems = useNavItems();
+    const navItems = [
+        {
+            label: "Buscar vuelos",
+            path: "/",
+            icon: <Compass size={20} />,
+            show: true,
+        },
+        {
+            label: "Amigos",
+            path: "/friends",
+            icon: <Users size={20} />,
+            show: isAuthenticated,
+        },
+    ];
 
     const isFloating = variant === 'floating';
 
