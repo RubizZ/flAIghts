@@ -128,6 +128,15 @@ export class AirportService {
         }));
     }
 
+    public async getAirportByIata(iata: string): Promise<IAirport | null> {
+        if (!iata || iata.length !== 3) return null;
+        if (this.isInitialized) {
+            const found = this.airportsCache.find(a => a.iata_code === iata.toUpperCase());
+            return found || null;
+        }
+        return await Airport.findOne({ iata_code: iata.toUpperCase() }).lean();
+    }
+
     public async getCandidateLayovers(
         originIata: string,
         destinationIata: string

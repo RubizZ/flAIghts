@@ -1,13 +1,13 @@
 import React from "react";
 import { MapPin, Search } from "lucide-react";
+import { AirportResponse } from "@/api/generated/model";
 import AirportAutocomplete from "../AirportAutocomplete";
 import PremiumInput from "../ui/PremiumInput";
 
 interface FlightSearchInputProps {
     type: 'origin' | 'destination';
-    value: string;
-    displayValue: string;
-    onChange: (value: string, display?: string) => boolean;
+    value: AirportResponse | null;
+    onChange: (airport: AirportResponse | null, query?: string) => boolean;
     onMapClick: () => void;
     isMapSelecting?: boolean;
     placeholder?: string;
@@ -17,7 +17,6 @@ interface FlightSearchInputProps {
 const FlightSearchInput: React.FC<FlightSearchInputProps> = ({
     type,
     value,
-    displayValue,
     onChange,
     onMapClick,
     isMapSelecting = false,
@@ -26,7 +25,7 @@ const FlightSearchInput: React.FC<FlightSearchInputProps> = ({
 }) => {
     const isOrigin = type === 'origin';
     const label = isOrigin ? "Origen" : "Destino";
-    const iconColorClass = value 
+    const iconColorClass = value
         ? (isOrigin ? "text-origin" : "text-destination")
         : "text-content-muted";
 
@@ -37,8 +36,8 @@ const FlightSearchInput: React.FC<FlightSearchInputProps> = ({
                 onMapClick();
             }}
             className={`p-1.5 rounded-lg transition-all cursor-pointer ${
-                isMapSelecting 
-                    ? 'text-brand bg-brand/10' 
+                isMapSelecting
+                    ? 'text-brand bg-brand/10'
                     : 'text-content-muted hover:bg-surface hover:text-brand'
             }`}
             title="Seleccionar en el mapa"
@@ -59,7 +58,6 @@ const FlightSearchInput: React.FC<FlightSearchInputProps> = ({
                 placeholder={placeholder || (isOrigin ? "¿Desde dónde?" : "¿A dónde?")}
                 className="bg-transparent border-none p-0 text-content placeholder:text-content-muted/60 focus:outline-none w-full text-sm lg:text-base font-sans"
                 value={value}
-                displayValue={displayValue}
                 onChange={onChange}
             />
         </PremiumInput>

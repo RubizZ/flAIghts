@@ -5,6 +5,7 @@ import { gsap } from "gsap";
 import { PlaneTakeoff, PlaneLanding, X } from "lucide-react";
 import { useGetGlobeAirports } from "@/api/generated/airports/airports";
 import { COUNTRY_NAMES } from "@/constants/countries";
+import type { AirportResponse } from "@/api/generated/model";
 
 interface AirportData {
     iata: string;
@@ -15,16 +16,16 @@ interface AirportData {
 }
 
 interface GlobeProps {
-    onAirportSelect?: (iata: string, display?: string) => void;
+    onAirportSelect?: (airport: AirportResponse) => void;
     selectedAirports: string[];
-    originIata?: string;
-    destinationIata?: string;
+    origin: AirportResponse | null;
+    destination: AirportResponse | null;
     interactive?: boolean;
     horizontalOffset?: number;
     onReady?: () => void;
-    onSetOrigin?: (iata: string, display: string) => void;
-    onSetDestination?: (iata: string, display: string) => void;
-    onAirportClick?: (airport: AirportData | null) => void;
+    onSetOrigin?: (airport: AirportResponse) => void;
+    onSetDestination?: (airport: AirportResponse) => void;
+    onAirportClick?: (airport: AirportResponse | null) => void;
     onMovementChange?: (isMoving: boolean, isUserInteracting: boolean) => void;
     focusIata?: string;
 }
@@ -32,8 +33,8 @@ interface GlobeProps {
 export default function Globe({
     onAirportSelect,
     selectedAirports,
-    originIata,
-    destinationIata,
+    origin,
+    destination,
     interactive = false,
     horizontalOffset = 0,
     onReady,
@@ -43,6 +44,18 @@ export default function Globe({
     onMovementChange,
     focusIata
 }: GlobeProps) {
+    const originIata = origin?.iata_code;
+    const destinationIata = destination?.iata_code;
+
+    const toAirportResponse = (ad: AirportData): AirportResponse => ({
+        iata_code: ad.iata,
+        name: ad.name,
+        city: ad.city,
+        location: {
+            coordinates: [ad.lon, ad.lat],
+            type: "Point"
+        }
+    } as AirportResponse);
     const mountRef = useRef<HTMLDivElement | null>(null);
     const popupRef = useRef<HTMLDivElement | null>(null);
     const originLabelRef = useRef<HTMLDivElement | null>(null);
@@ -452,10 +465,9 @@ export default function Globe({
                 } else {
                     const a = item as AirportData;
                     if (onSelectRef.current) {
-                        const displayName = a.city || a.name || 'Unknown Location';
-                        onSelectRef.current(a.iata, `${displayName} (${a.iata})`);
+                        onSelectRef.current(toAirportResponse(a));
                     } else {
-                        onAirportClickRef.current?.(a);
+                        onAirportClickRef.current?.(toAirportResponse(a));
                     }
                     setContextMenu(prev => ({ ...prev, visible: false }));
                 }
@@ -1426,7 +1438,7 @@ export default function Globe({
                 className="pointer-events-none absolute z-40 hidden -translate-x-1/2 -translate-y-[calc(100%+12px)] flex-col items-center transition-opacity duration-300"
             >
                 <div className="bg-origin/10 backdrop-blur-md border border-origin/40 px-3 py-1 rounded-full text-[10px] font-bold text-origin shadow-[0_4px_12px_rgba(0,0,0,0.5)] whitespace-nowrap">
-                    {originIata}
+                    {origin ? (origin.city || origin.name || origin.iata_code) : originIata}
                 </div>
                 <div className="w-px h-6 bg-linear-to-b from-origin/40 to-transparent" />
             </div>
@@ -1437,7 +1449,7 @@ export default function Globe({
                 className="pointer-events-none absolute z-40 hidden -translate-x-1/2 -translate-y-[calc(100%+12px)] flex-col items-center transition-opacity duration-300"
             >
                 <div className="bg-destination/10 backdrop-blur-md border border-destination/40 px-3 py-1 rounded-full text-[10px] font-bold text-destination shadow-[0_4px_12px_rgba(0,0,0,0.5)] whitespace-nowrap">
-                    {destinationIata}
+                    {destination ? (destination.city || destination.name || destination.iata_code) : destinationIata}
                 </div>
                 <div className="w-px h-6 bg-linear-to-b from-destination/40 to-transparent" />
             </div>
@@ -1470,10 +1482,9 @@ export default function Globe({
                                             onClick={(e) => {
                                                 e.stopPropagation();
                                                 if (onSelectRef.current) {
-                                                    const displayName = a.city || a.name || 'Unknown Location';
-                                                    onSelectRef.current(a.iata, `${displayName} (${a.iata})`);
+                                                    onSelectRef.current(toAirportResponse(a));
                                                 } else {
-                                                    onAirportClickRef.current?.(a);
+                                                    onAirportClickRef.current?.(toAirportResponse(a));
                                                 }
                                                 setContextMenu(prev => ({ ...prev, visible: false }));
                                             }}
@@ -1487,7 +1498,7 @@ export default function Globe({
                                                 <button
                                                     onClick={(e) => {
                                                         e.stopPropagation();
-                                                        onSetOrigin?.(a.iata, `${a.city || a.name} (${a.iata})`);
+                                                        onSetOrigin?.(toAirportResponse(a));
                                                         setContextMenu(prev => ({ ...prev, visible: false }));
                                                     }}
                                                     className="flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg bg-origin/10 text-origin text-[9px] font-bold hover:bg-origin/20 transition-all cursor-pointer"
@@ -1498,7 +1509,7 @@ export default function Globe({
                                                 <button
                                                     onClick={(e) => {
                                                         e.stopPropagation();
-                                                        onSetDestination?.(a.iata, `${a.city || a.name} (${a.iata})`);
+                                                        onSetDestination?.(toAirportResponse(a));
                                                         setContextMenu(prev => ({ ...prev, visible: false }));
                                                     }}
                                                     className="flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg bg-destination/10 text-destination text-[9px] font-bold hover:bg-destination/20 transition-all cursor-pointer"
@@ -1530,7 +1541,7 @@ export default function Globe({
                                     onClick={(e) => {
                                         e.stopPropagation();
                                         const a = contextMenu.airport!;
-                                        onSetOrigin?.(a.iata, `${a.city || a.name} (${a.iata})`);
+                                        onSetOrigin?.(toAirportResponse(a));
                                         setContextMenu(prev => ({ ...prev, visible: false }));
                                     }}
                                     className="flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-semibold text-content hover:bg-origin/20 hover:text-origin transition-all cursor-pointer group"
@@ -1543,7 +1554,7 @@ export default function Globe({
                                     onClick={(e) => {
                                         e.stopPropagation();
                                         const a = contextMenu.airport!;
-                                        onSetDestination?.(a.iata, `${a.city || a.name} (${a.iata})`);
+                                        onSetDestination?.(toAirportResponse(a));
                                         setContextMenu(prev => ({ ...prev, visible: false }));
                                     }}
                                     className="flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-semibold text-content hover:bg-destination/20 hover:text-destination transition-all cursor-pointer group"
