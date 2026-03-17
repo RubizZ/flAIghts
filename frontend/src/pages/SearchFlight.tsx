@@ -4,15 +4,14 @@ import { Plus, Bot, SlidersHorizontal, Globe as GlobeIcon, Maximize2, PlaneTakeo
 import { useSearchRequest } from "@/api/generated/search/search";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
+import { AirportResponse } from "@/api/generated/model";
 import StarsBackground from "../components/ui/StarsBackground.tsx";
 import ManualSearchForm from "../components/search/ManualSearchForm.tsx";
 import NavIconButton from "../components/ui/NavIconButton.tsx";
 
 function SearchFlight() {
-    const [origin, setOrigin] = useState("");
-    const [originDisplay, setOriginDisplay] = useState("");
-    const [destination, setDestination] = useState("");
-    const [destinationDisplay, setDestinationDisplay] = useState("");
+    const [origin, setOrigin] = useState<AirportResponse | null>(null);
+    const [destination, setDestination] = useState<AirportResponse | null>(null);
     const [departureDate, setDepartureDate] = useState("");
     const [activeDeparturePopover, setActiveDeparturePopover] = useState<'main' | 'map' | null>(null);
     const [returnDate, setReturnDate] = useState("");
@@ -28,6 +27,23 @@ function SearchFlight() {
     const [isXXLScreen, setIsXXLScreen] = useState(window.innerWidth >= 1536);
     const [isMobileCardExpanded, setIsMobileCardExpanded] = useState(false);
     const [isUserInteracting, setIsUserInteracting] = useState(false);
+    const [userLocation, setUserLocation] = useState<{ latitude: number; longitude: number } | undefined>(undefined);
+
+    useEffect(() => {
+        if ("geolocation" in navigator) {
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    setUserLocation({
+                        latitude: position.coords.latitude,
+                        longitude: position.coords.longitude
+                    });
+                },
+                (error) => {
+                    console.warn("Geolocation Error:", error.message);
+                }
+            );
+        }
+    }, []);
 
     useEffect(() => {
         const handleResize = () => {
@@ -66,42 +82,35 @@ function SearchFlight() {
         const isCurrentYear = date.getFullYear() === new Date().getFullYear();
 
         if (isCurrentYear) {
-            return date.toLocaleDateString('es-ES', { weekday: 'short', day: 'numeric', month: 'short' });
+            return date.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' });
         } else {
-            return date.toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' });
+            return date.toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: '2-digit' });
         }
     }
 
-    const handleMapSelect = (iata: string, display?: string) => {
-        const displayText = display || iata;
+    const handleMapSelect = (airport: AirportResponse) => {
         if (selectingType === 'origin') {
-            if (iata === destination) {
+            if (airport.iata_code === destination?.iata_code) {
                 toast.error("El origen y el destino no pueden ser el mismo");
                 return;
             }
-            setOrigin(iata);
-            setOriginDisplay(displayText);
+            setOrigin(airport);
         } else if (selectingType === 'destination') {
-            if (iata === origin) {
+            if (airport.iata_code === origin?.iata_code) {
                 toast.error("El origen y el destino no pueden ser el mismo");
                 return;
             }
-            setDestination(iata);
-            setDestinationDisplay(displayText);
+            setDestination(airport);
         } else {
             if (!origin) {
-                if (iata === destination) return;
-                setOrigin(iata);
-                setOriginDisplay(displayText);
-            } else if (!destination && origin !== iata) {
-                setDestination(iata);
-                setDestinationDisplay(displayText);
+                if (airport.iata_code === destination?.iata_code) return;
+                setOrigin(airport);
+            } else if (!destination && origin.iata_code !== airport.iata_code) {
+                setDestination(airport);
             } else {
-                if (iata === destination) return;
-                setOrigin(iata);
-                setOriginDisplay(displayText);
-                setDestination("");
-                setDestinationDisplay("");
+                if (airport.iata_code === destination?.iata_code) return;
+                setOrigin(airport);
+                setDestination(null);
             }
         }
         if (shouldCloseOnSelect) {
@@ -120,8 +129,8 @@ function SearchFlight() {
         }
     }
 
-    const [inspectedAirport, setInspectedAirport] = useState<{ iata: string; name: string; city: string; lat: number; lon: number } | null>(null);
-    const [renderedAirport, setRenderedAirport] = useState<{ iata: string; name: string; city: string; lat: number; lon: number } | null>(null);
+    const [inspectedAirport, setInspectedAirport] = useState<AirportResponse | null>(null);
+    const [renderedAirport, setRenderedAirport] = useState<AirportResponse | null>(null);
     const [isChanging, setIsChanging] = useState(false);
 
     const [isGlobeMoving, setIsGlobeMoving] = useState(false);
@@ -140,7 +149,7 @@ function SearchFlight() {
         if (!renderedAirport) {
             setRenderedAirport(inspectedAirport);
             setIsChanging(false);
-        } else if (renderedAirport.iata !== inspectedAirport.iata) {
+        } else if (renderedAirport.iata_code !== inspectedAirport.iata_code) {
             setIsChanging(true);
             const timer = setTimeout(() => {
                 setRenderedAirport(inspectedAirport);
@@ -148,7 +157,7 @@ function SearchFlight() {
             }, 400);
             return () => clearTimeout(timer);
         }
-    }, [inspectedAirport, renderedAirport?.iata]);
+    }, [inspectedAirport, renderedAirport?.iata_code]);
 
     useEffect(() => {
         if (!isSelectingOnMap) {
@@ -156,13 +165,12 @@ function SearchFlight() {
         }
     }, [isSelectingOnMap]);
 
-    const handleSetOrigin = (iata: string, display: string) => {
-        if (iata === destination) {
+    const handleSetOrigin = (airport: AirportResponse) => {
+        if (airport.iata_code === destination?.iata_code) {
             toast.error("El origen y el destino no pueden ser el mismo");
             return;
         }
-        setOrigin(iata);
-        setOriginDisplay(display);
+        setOrigin(airport);
         setInspectedAirport(null);
 
         if (shouldCloseOnSelect) {
@@ -172,13 +180,12 @@ function SearchFlight() {
         setSelectingType(null);
     }
 
-    const handleSetDestination = (iata: string, display: string) => {
-        if (iata === origin) {
+    const handleSetDestination = (airport: AirportResponse) => {
+        if (airport.iata_code === origin?.iata_code) {
             toast.error("El origen y el destino no pueden ser el mismo");
             return;
         }
-        setDestination(iata);
-        setDestinationDisplay(display);
+        setDestination(airport);
         setInspectedAirport(null);
 
         if (shouldCloseOnSelect) {
@@ -195,8 +202,8 @@ function SearchFlight() {
         }
 
         const requestData = {
-            origins: [origin],
-            destinations: [destination],
+            origins: [origin.iata_code],
+            destinations: [destination.iata_code],
             criteria: {
                 priority: "balanced" as const,
             },
@@ -214,17 +221,9 @@ function SearchFlight() {
         return (
             <ManualSearchForm
                 origin={origin}
-                originDisplay={originDisplay}
-                setOrigin={(val, display) => {
-                    setOrigin(val);
-                    setOriginDisplay(display || val);
-                }}
+                setOrigin={setOrigin}
                 destination={destination}
-                destinationDisplay={destinationDisplay}
-                setDestination={(val, display) => {
-                    setDestination(val);
-                    setDestinationDisplay(display || val);
-                }}
+                setDestination={setDestination}
                 departureDate={departureDate}
                 setDepartureDate={setDepartureDate}
                 returnDate={returnDate}
@@ -253,9 +252,9 @@ function SearchFlight() {
             <div className={`absolute inset-0 z-0 transition-opacity duration-700 ${!isLargeScreen && !isSelectingOnMap ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
                 <Globe
                     onAirportSelect={selectingType ? handleMapSelect : undefined}
-                    selectedAirports={[origin, destination, inspectedAirport?.iata].filter(Boolean) as string[]}
-                    originIata={origin}
-                    destinationIata={destination}
+                    selectedAirports={[origin?.iata_code, destination?.iata_code, inspectedAirport?.iata_code].filter(Boolean) as string[]}
+                    origin={origin}
+                    destination={destination}
                     interactive={isSelectingOnMap && !(inspectedAirport && !isLargeScreen)}
                     horizontalOffset={isSelectingOnMap ? 0 : (isLargeScreen ? 258 : 0)}
                     onReady={() => setGlobeReady(true)}
@@ -266,7 +265,7 @@ function SearchFlight() {
                         setIsGlobeMoving(moving);
                         setIsUserInteracting(interacting);
                     }}
-                    focusIata={inspectedAirport?.iata}
+                    focusIata={inspectedAirport?.iata_code}
                 />
             </div>
 
@@ -488,7 +487,7 @@ function SearchFlight() {
                                             <Plane size={14} className="text-brand rotate-45 shrink-0" />
                                             <span>
                                                 {origin && destination
-                                                    ? `${origin.split('(')[1]?.replace(')', '') || origin} → ${destination.split('(')[1]?.replace(')', '') || destination}`
+                                                    ? `${origin.iata_code} → ${destination.iata_code}`
                                                     : "Configuración del viaje"}
                                             </span>
                                         </div>
@@ -497,16 +496,20 @@ function SearchFlight() {
                                 {!isMobileCardExpanded && (
                                     <div className="flex items-center gap-1.5 mt-0.5">
                                         <div className="flex items-center gap-1 overflow-hidden">
-                                            <span className="text-content-muted text-[10px] font-medium truncate">{originDisplay || "Origen"}</span>
+                                            <span className="text-content-muted text-[10px] font-medium truncate">{origin ? (origin.city || origin.name || origin.iata_code) : "Origen"}</span>
                                             <ChevronRight size={8} className="text-content-muted/30 shrink-0" />
-                                            <span className="text-content-muted text-[10px] font-medium truncate">{destinationDisplay || "Destino"}</span>
+                                            <span className="text-content-muted text-[10px] font-medium truncate">{destination ? (destination.city || destination.name || destination.iata_code) : "Destino"}</span>
                                         </div>
-                                        {departureDate && (
+                                        {(departureDate || returnDate) && (
                                             <>
                                                 <div className="w-1 h-1 rounded-full bg-content-muted/20 shrink-0" />
                                                 <div className="flex items-center gap-1 shrink-0">
                                                     <CalendarIcon size={8} className="text-brand/60" />
-                                                    <span className="text-content-muted text-[10px] font-medium">{formatDate(departureDate)}</span>
+                                                    <span className="text-content-muted text-[10px] font-medium">
+                                                        {departureDate && formatDate(departureDate)}
+                                                        {departureDate && returnDate && " - "}
+                                                        {returnDate && formatDate(returnDate)}
+                                                    </span>
                                                 </div>
                                             </>
                                         )}
@@ -521,7 +524,7 @@ function SearchFlight() {
                     )}
 
                     {/* Content Container */}
-                    <div className={`${!isLargeScreen ? `transition-all duration-500 ${!isMobileCardExpanded ? 'max-h-0 opacity-0 overflow-hidden' : 'max-h-[800px] opacity-100 mt-4 !overflow-visible'}` : 'flex flex-row items-center gap-4 overflow-visible'}`}>
+                    <div className={`${!isLargeScreen ? `transition-all duration-500 ${!isMobileCardExpanded ? 'max-h-0 opacity-0 overflow-hidden' : 'max-h-200 opacity-100 mt-4 overflow-visible!'}` : 'flex flex-row items-center gap-4 overflow-visible'}`}>
                         <div className="flex flex-col lg:flex-row items-stretch lg:items-center gap-2 lg:gap-4 w-full min-w-0 opacity-100 scale-100">
                             {/* Minimized Header (Fixed Horizontal Bar Only) */}
                             {isXXLScreen && (
@@ -574,7 +577,7 @@ function SearchFlight() {
                         <div className="flex items-start justify-between">
                             <div className="flex flex-col gap-1">
                                 <span className="text-[10px] text-brand uppercase font-bold tracking-[0.2em]">Aeropuerto</span>
-                                <h2 className="text-2xl font-bold text-content tracking-tight">{renderedAirport?.iata}</h2>
+                                <h2 className="text-2xl font-bold text-content tracking-tight">{renderedAirport?.iata_code}</h2>
                             </div>
                             <button
                                 onClick={() => setInspectedAirport(null)}
@@ -596,25 +599,25 @@ function SearchFlight() {
                             <div className="grid grid-cols-2 gap-4 pt-2 border-t border-line/50">
                                 <div className="flex flex-col">
                                     <span className="text-[10px] text-content-muted uppercase font-bold tracking-wider">Latitud</span>
-                                    <span className="text-content text-xs font-mono">{renderedAirport?.lat.toFixed(4)}°</span>
+                                    <span className="text-content text-xs font-mono">{renderedAirport?.location?.coordinates[1]?.toFixed(4)}°</span>
                                 </div>
                                 <div className="flex flex-col">
                                     <span className="text-[10px] text-content-muted uppercase font-bold tracking-wider">Longitud</span>
-                                    <span className="text-content text-xs font-mono">{renderedAirport?.lon.toFixed(4)}°</span>
+                                    <span className="text-content text-xs font-mono">{renderedAirport?.location?.coordinates[0]?.toFixed(4)}°</span>
                                 </div>
                             </div>
                         </div>
 
                         <div className="mt-2 flex flex-col gap-2">
                             <button
-                                onClick={() => renderedAirport && handleSetOrigin(renderedAirport.iata, `${renderedAirport.city || renderedAirport.name} (${renderedAirport.iata})`)}
+                                onClick={() => renderedAirport && handleSetOrigin(renderedAirport)}
                                 className="flex items-center justify-center gap-2 w-full py-3 bg-origin/10 hover:bg-origin/20 border border-origin/20 rounded-2xl text-origin text-xs font-bold transition-all group/btn cursor-pointer"
                             >
                                 <PlaneTakeoff size={14} className="group-hover/btn:-translate-y-0.5 transition-transform" />
                                 Definir como Origen
                             </button>
                             <button
-                                onClick={() => renderedAirport && handleSetDestination(renderedAirport.iata, `${renderedAirport.city || renderedAirport.name} (${renderedAirport.iata})`)}
+                                onClick={() => renderedAirport && handleSetDestination(renderedAirport)}
                                 className="flex items-center justify-center gap-2 w-full py-3 bg-destination/10 hover:bg-destination/20 border border-destination/20 rounded-2xl text-destination text-xs font-bold transition-all group/btn cursor-pointer"
                             >
                                 <PlaneLanding size={14} className="group-hover/btn:translate-y-0.5 transition-transform" />

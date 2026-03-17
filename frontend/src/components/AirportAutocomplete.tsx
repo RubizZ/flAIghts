@@ -1,34 +1,57 @@
-import { useState, useEffect, useRef, useMemo } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Plane, Loader2, Search } from "lucide-react";
-import { useSearchAirports } from "@/api/generated/airports/airports";
+import { useSearchAirports, useGetAirportByIata } from "@/api/generated/airports/airports";
 import type { AirportResponse } from "@/api/generated/model";
 import { COUNTRY_NAMES } from "@/constants/countries";
 import SmartPopover from "./ui/SmartPopover";
 
 interface AirportAutocompleteProps {
-    value: string;
-    displayValue?: string;
-    onChange: (value: string, display?: string) => void | boolean;
+    value: AirportResponse | null;
+    onChange: (airport: AirportResponse | null, query?: string) => void | boolean;
     placeholder?: string;
     className?: string;
     side?: 'top' | 'bottom';
 }
 
-export default function AirportAutocomplete({ value, displayValue, onChange, placeholder, className, side = 'bottom' }: AirportAutocompleteProps) {
-    const [query, setQuery] = useState(displayValue || value);
-    const [debouncedQuery, setDebouncedQuery] = useState(value);
+export default function AirportAutocomplete({ value, onChange, placeholder, className, side = 'bottom' }: AirportAutocompleteProps) {
+    const getDisplay = (a: AirportResponse | null) => {
+        if (!a) return "";
+        const name = a.name || a.city || "Unknown Location";
+        return a.iata_code ? `${name} (${a.iata_code})` : name;
+    }
+
+    const [query, setQuery] = useState(getDisplay(value));
+    const [debouncedQuery, setDebouncedQuery] = useState("");
     const [isOpen, setIsOpen] = useState(false);
 
     const { data, isFetching } = useSearchAirports(
         { q: debouncedQuery },
         {
             query: {
-                enabled: debouncedQuery.length >= 2 && (!value || debouncedQuery !== displayValue),
+                enabled: debouncedQuery.length >= 2 && (!value || debouncedQuery !== getDisplay(value)),
                 staleTime: 5 * 60 * 1000,
                 refetchOnWindowFocus: false,
             },
         }
     );
+
+    // Resolve IATA code if only IATA is provided in value
+    const shouldResolve = !!(value && value.iata_code && value.iata_code.length === 3 && !value.city && !value.name);
+    const { data: resolvedData, isFetching: isResolving } = useGetAirportByIata(
+        value?.iata_code || "",
+        {
+            query: {
+                enabled: shouldResolve,
+                staleTime: Infinity,
+            }
+        }
+    );
+
+    useEffect(() => {
+        if (resolvedData && shouldResolve) {
+            onChange(resolvedData);
+        }
+    }, [resolvedData, shouldResolve, onChange]);
 
     const suggestions = data ?? [];
 
@@ -52,33 +75,35 @@ export default function AirportAutocomplete({ value, displayValue, onChange, pla
 
     // Sync input with external value
     useEffect(() => {
-        setQuery(displayValue || value);
-    }, [value, displayValue]);
+        if (!isOpen) {
+            setQuery(getDisplay(value));
+        }
+    }, [value, isOpen]);
 
     // Debounce query
     useEffect(() => {
         const timer = setTimeout(() => {
-            setDebouncedQuery(query);
+            if (isOpen || !value) {
+                setDebouncedQuery(query);
+            }
         }, 300);
         return () => clearTimeout(timer);
-    }, [query]);
+    }, [query, isOpen, value]);
 
     const handleSelect = (airport: AirportResponse) => {
-        const displayName = airport.name || airport.city || "Unknown Location";
-        const display = `${displayName} (${airport.iata_code})`;
-        const result = onChange(airport.iata_code, display);
+        const result = onChange(airport);
         if (result === false) {
-            setQuery(displayValue || value);
-            setDebouncedQuery(value);
+            setQuery(getDisplay(value));
+            setDebouncedQuery("");
         } else {
-            setQuery(display);
+            setQuery(getDisplay(airport));
         }
         setIsOpen(false);
     };
 
     return (
         <SmartPopover
-            isOpen={isOpen && (!value || query !== displayValue) && (debouncedQuery.length >= 2 || groupedSuggestions.length > 0)}
+            isOpen={isOpen && (!value || query !== getDisplay(value)) && (debouncedQuery.length >= 2 || groupedSuggestions.length > 0)}
             setIsOpen={setIsOpen}
             className="w-full"
             trigger={
@@ -91,8 +116,12 @@ export default function AirportAutocomplete({ value, displayValue, onChange, pla
                         onChange={(e) => {
                             const newQuery = e.target.value;
                             setQuery(newQuery);
-                            // Notify parent on every keystroke to sync state between cards
-                            onChange("", newQuery);
+                            // If user clears the input, notify parent
+                            if (!newQuery) {
+                                onChange(null);
+                            } else {
+                                onChange(null, newQuery);
+                            }
                         }}
                         onFocus={(e) => {
                             setIsOpen(true);
@@ -100,17 +129,17 @@ export default function AirportAutocomplete({ value, displayValue, onChange, pla
                             setTimeout(() => {
                                 target.scrollIntoView({ behavior: 'smooth', block: 'start' });
                             }, 100);
-                            if (query === displayValue && query !== "") {
+                            if (query === getDisplay(value) && query !== "") {
                                 e.target.select();
                             }
                         }}
                         onClick={(e) => {
-                            if (query === displayValue && query !== "") {
+                            if (query === getDisplay(value) && query !== "") {
                                 (e.target as HTMLInputElement).select();
                             }
                         }}
                     />
-                    {isFetching && (
+                    {(isFetching || isResolving) && (
                         <div className="absolute right-3 top-1/2 -translate-y-1/2">
                             <Loader2 className="animate-spin h-4 w-4 text-content-muted" />
                         </div>

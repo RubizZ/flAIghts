@@ -26,4 +26,15 @@ export class AirportController extends Controller {
     public async getGlobeAirports(): Promise<GlobeAirportResponse[]> {
         return this.airportService.getGlobeAirports();
     }
+
+    @Get("/{iata}")
+    @Response<SuccessResponse<AirportResponse>>(200, "Aeropuerto encontrado")
+    public async getAirportByIata(iata: string): Promise<SuccessResponse<AirportResponse>> {
+        const result = await this.airportService.getAirportByIata(iata);
+        if (!result) {
+            this.setStatus(404);
+            return { status: "fail", data: { message: "Aeropuerto no encontrado" } } as any;
+        }
+        return { status: "success", data: result as any };
+    }
 }
