@@ -1,8 +1,8 @@
-import { Controller, Get, Route, Query, Tags, Response } from "tsoa";
+import { Controller, Get, Route, Query, Tags, Response, SuccessResponse } from "tsoa";
 import { injectable, inject } from "tsyringe";
 import { AirportService } from "./airport.service.js";
-import type { AirportResponse, GlobeAirportResponse } from "./airport.types.js";
-import type { SuccessResponse, RequestValidationFailResponse, ValidationDetails, QueryPath } from "../../utils/responses.js";
+import type { PaginatedAirportResponse, GlobeAirportResponse } from "./airport.types.js";
+import type { SuccessResponse as SuccessResponseType, RequestValidationFailResponse, ValidationDetails, QueryPath } from "../../utils/responses.js";
 
 @injectable()
 @Route("airports")
@@ -14,15 +14,19 @@ export class AirportController extends Controller {
     }
 
     @Get("/")
-    @Response<SuccessResponse<AirportResponse[]>>(200, "Aeropuertos encontrados")
+    @SuccessResponse(200, "Aeropuertos encontrados")
     @Response<RequestValidationFailResponse<ValidationDetails<QueryPath<{ q: string }>>>>(422, "Error de validación")
-    public async searchAirports(@Query() q: string): Promise<SuccessResponse<AirportResponse[]>> {
-        const results = await this.airportService.searchAirports(q);
-        return results as any;
+    public async searchAirports(
+        @Query() q: string,
+        @Query() page: number = 1,
+        @Query() limit: number = 10
+    ): Promise<SuccessResponseType<PaginatedAirportResponse>> {
+        const results = await this.airportService.searchAirports(q, page, limit);
+        return results satisfies PaginatedAirportResponse as any;
     }
 
     @Get("/globe")
-    @Response<GlobeAirportResponse[]>(200, "Aeropuertos para el globo")
+    @SuccessResponse(200, "Aeropuertos para el globo")
     public async getGlobeAirports(): Promise<GlobeAirportResponse[]> {
         return this.airportService.getGlobeAirports();
     }
