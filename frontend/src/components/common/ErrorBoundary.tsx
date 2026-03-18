@@ -1,4 +1,4 @@
-import React, { Component, ErrorInfo, ReactNode } from "react";
+import { Component, ErrorInfo, ReactNode } from "react";
 import { TriangleAlert, RefreshCcw, Home, ChevronDown, ChevronUp, Copy, LogIn } from "lucide-react";
 import { AuthFailError } from "@/api/axios-instance";
 
@@ -138,12 +138,12 @@ class ErrorBoundary extends Component<Props, State> {
                         <div className="space-y-3">
                             <h2 className="text-2xl font-bold text-content tracking-tight">Vuelo interrumpido</h2>
                             <p className="text-content-muted leading-relaxed">
-                                Parece que hemos encontrado una turbulencia inesperada en el sistema. No hemos podido completar tu solicitud.
+                                Parece que hemos encontrado una turbulencia inesperada en el sistema. No hemos podido completar tu solicitud. Intenta de nuevo más tarde.
                             </p>
                         </div>
 
                         {/* Error detail (Expandable) */}
-                        {this.state.error && (
+                        {process.env.NODE_ENV === 'development' && this.state.error && (
                             <div className="w-full text-left">
                                 <button
                                     onClick={this.toggleDetails}
@@ -157,18 +157,39 @@ class ErrorBoundary extends Component<Props, State> {
                                     <div className="bg-surface/50 border border-red-500/10 rounded-xl p-4 overflow-hidden relative group/code animate-in fade-in slide-in-from-top-2 duration-200">
                                         <button
                                             onClick={this.copyErrorToClipboard}
-                                            className="absolute top-2 right-2 p-2 bg-main/50 rounded-md hover:bg-main text-content-muted hover:text-content transition-all opacity-0 group-hover/code:opacity-100"
+                                            className="absolute top-2 right-10 p-2 bg-main/50 rounded-md hover:bg-main text-content-muted hover:text-content transition-all opacity-0 group-hover/code:opacity-100"
                                             title="Copiar error"
                                         >
                                             <Copy size={14} />
                                         </button>
-                                        <div className="max-h-60 overflow-y-auto custom-scrollbar pr-2">
-                                            <p className="text-sm font-bold text-red-400 mb-2">
+                                        <div className="max-h-60 overflow-y-auto custom-scrollbar pr-2 flex flex-col gap-3">
+                                            <p className="text-sm font-bold text-red-400">
                                                 {this.state.error.toString()}
                                             </p>
-                                            <pre className="text-[10px] font-mono text-content-muted whitespace-pre-wrap wrap-break-word">
-                                                {this.state.errorInfo?.componentStack}
-                                            </pre>
+                                            {this.state.errorInfo?.componentStack && (
+                                                <>
+                                                    <h3 className="text-xs font-bold text-content">Component Stack:</h3>
+                                                    <pre className="text-[10px] font-mono text-content-muted whitespace-pre-wrap wrap-break-word">
+                                                        {this.state.errorInfo.componentStack}
+                                                    </pre>
+                                                </>
+                                            )}
+                                            {!!this.state.error.cause && (
+                                                <>
+                                                    <h3 className="text-xs font-bold text-content">Causa:</h3>
+                                                    <p className="text-xs font-mono">
+                                                        {String(this.state.error.cause)}
+                                                    </p>
+                                                </>
+                                            )}
+                                            {this.state.error.stack && (
+                                                <>
+                                                    <h3 className="text-xs font-bold text-content">Stacktrace:</h3>
+                                                    <pre className="text-[10px] font-mono text-content-muted whitespace-pre-wrap wrap-break-word">
+                                                        {this.state.error.stack}
+                                                    </pre>
+                                                </>
+                                            )}
                                         </div>
                                     </div>
                                 )}
