@@ -25,7 +25,7 @@ import { inject, injectable } from "tsyringe";
 import { UserService } from "./user.service.js";
 import type { AuthenticatedUser } from "../auth/auth.types.js";
 import type { IFriend, IFriendPopulated, IUser, IUserUnpopulated } from "./models/user.model.js";
-import type { SuccessResponse as SuccessResponseType, FailResponseFromError } from "../../utils/responses.js";
+import type { SuccessResponse as SuccessResponseType, FailResponseFromError, PathPath, QueryPath, ValidationDetails, RequestValidationFailResponse } from "../../utils/responses.js";
 import type { AuthFailResponse } from "../auth/auth.types.js";
 import {
     EmailAlreadyInUseError,
@@ -148,6 +148,7 @@ export class UsersController extends Controller {
     @Get("/search")
     @Security("jwt")
     @Response<AuthFailResponse>(401, "No autenticado")
+    @Response<RequestValidationFailResponse<ValidationDetails<QueryPath<{ q: string }>>>>(422, "Error de validación")
     public async searchUsers(@Query() q: string, @RequestProp('user') user: AuthenticatedUser): Promise<SuccessResponseType<PublicUser[]>> {
         if (!q || !q.trim()) return [] satisfies PublicUser[] as any;
         const foundUsers = await this.userService.searchUsers(q.trim(), user._id);
@@ -169,6 +170,7 @@ export class UsersController extends Controller {
     @Security("jwt")
     @Response<AuthFailResponse>(401, "No autenticado")
     @Response<FailResponseFromError<UserNotFoundError>>(404, "Usuario no encontrado")
+    @Response<RequestValidationFailResponse<ValidationDetails<PathPath<{ id: string }>>>>(422, "Error de validación")
     public async getUserById(@Path() id: string, @RequestProp('user') user: AuthenticatedUser): Promise<SuccessResponseType<GetUserByIdResponseData>> {
         if (id === user._id) {
             const targetUser = await this.userService.getUser(id, true);
@@ -193,6 +195,7 @@ export class UsersController extends Controller {
     @Response<AuthFailResponse>(401, "No autenticado")
     @Response<FailResponseFromError<UserNotFoundError>>(404, "Usuario no encontrado")
     @Response<FailResponseFromError<SelfFriendRequestError> | FailResponseFromError<AlreadyFriendsError> | FailResponseFromError<FriendRequestAlreadySentError> | FailResponseFromError<FriendRequestAlreadyReceivedError>>(400, "Error en la solicitud de amistad")
+    @Response<RequestValidationFailResponse<ValidationDetails<PathPath<{ id: string }>>>>(422, "Error de validación")
     public async sendFriendRequest(@Path() id: string, @RequestProp('user') user: AuthenticatedUser): Promise<SuccessResponseType> {
         await this.userService.sendFriendRequest(user._id, id);
         return {} satisfies {} as any;
@@ -203,6 +206,7 @@ export class UsersController extends Controller {
     @Response<AuthFailResponse>(401, "No autenticado")
     @Response<FailResponseFromError<UserNotFoundError>>(404, "Usuario no encontrado")
     @Response<FailResponseFromError<NoPendingFriendRequestError>>(400, "No hay solicitud pendiente")
+    @Response<RequestValidationFailResponse<ValidationDetails<PathPath<{ id: string }>>>>(422, "Error de validación")
     public async cancelFriendRequest(@Path() id: string, @RequestProp('user') user: AuthenticatedUser): Promise<SuccessResponseType> {
         await this.userService.cancelFriendRequest(user._id, id);
         return {} satisfies {} as any;
@@ -213,6 +217,7 @@ export class UsersController extends Controller {
     @Response<AuthFailResponse>(401, "No autenticado")
     @Response<FailResponseFromError<UserNotFoundError>>(404, "Usuario no encontrado")
     @Response<FailResponseFromError<NoReceivedFriendRequestError>>(400, "No has recibido solicitud de esta persona")
+    @Response<RequestValidationFailResponse<ValidationDetails<PathPath<{ id: string }>>>>(422, "Error de validación")
     public async acceptFriendRequest(@Path() id: string, @RequestProp('user') user: AuthenticatedUser): Promise<SuccessResponseType> {
         await this.userService.acceptFriendRequest(user._id, id);
         return {} satisfies {} as any;
@@ -223,6 +228,7 @@ export class UsersController extends Controller {
     @Response<AuthFailResponse>(401, "No autenticado")
     @Response<FailResponseFromError<UserNotFoundError>>(404, "Usuario no encontrado")
     @Response<FailResponseFromError<NoReceivedFriendRequestError>>(400, "No has recibido solicitud de esta persona")
+    @Response<RequestValidationFailResponse<ValidationDetails<PathPath<{ id: string }>>>>(422, "Error de validación")
     public async rejectFriendRequest(@Path() id: string, @RequestProp('user') user: AuthenticatedUser): Promise<SuccessResponseType> {
         await this.userService.rejectFriendRequest(user._id, id);
         return {} satisfies {} as any;
@@ -233,6 +239,7 @@ export class UsersController extends Controller {
     @Response<AuthFailResponse>(401, "No autenticado")
     @Response<FailResponseFromError<UserNotFoundError>>(404, "Usuario no encontrado")
     @Response<FailResponseFromError<NotFriendsError>>(400, "No tienes agregada a esa persona")
+    @Response<RequestValidationFailResponse<ValidationDetails<PathPath<{ id: string }>>>>(422, "Error de validación")
     public async removeFriend(@Path() id: string, @RequestProp('user') user: AuthenticatedUser): Promise<SuccessResponseType> {
         await this.userService.removeFriend(user._id, id);
         return {} satisfies {} as any;
@@ -260,6 +267,7 @@ export class UsersController extends Controller {
     @Get("/{id}/avatar")
     @SuccessResponse(302, "Redirect to S3")
     @Response<FailResponseFromError<UserNotFoundError>>(404, "Usuario no encontrado")
+    @Response<RequestValidationFailResponse<ValidationDetails<PathPath<{ id: string }>>>>(422, "Error de validación")
     public async getUserAvatar(@Path() id: string, @Request() request: express.Request): Promise<void> {
         const url = await this.userService.getProfilePictureUrl(id);
         const res = request.res!;

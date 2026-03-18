@@ -86,10 +86,44 @@ export default function Register() {
             },
             onError: (error) => {
                 if (error.code === "REQUEST_VALIDATION_ERROR") {
+                    error.details
                     const newErrors = { ...errors };
-                    if (error.details["body.username"]) newErrors.username = error.details["body.username"].message;
-                    if (error.details["body.password"]) newErrors.password = error.details["body.password"].message;
-                    if (error.details["body.code"]) newErrors.code = error.details["body.code"].message;
+                    if (error.details["body.username"]) {
+                        switch (error.details["body.username"].message) {
+                            case "minLength 3":
+                                newErrors.username = "Mínimo 3 caracteres";
+                                break;
+                            case "maxLength 20":
+                                newErrors.username = "Máximo 20 caracteres";
+                                break;
+                            default:
+                                newErrors.username = error.details["body.username"].message;
+                                break;
+                        }
+                    };
+                    if (error.details["body.password"]) {
+                        switch (error.details["body.password"].message) {
+                            case "minLength 8":
+                                newErrors.password = "Mínimo 8 caracteres";
+                                break;
+                            default:
+                                newErrors.password = error.details["body.password"].message;
+                                break;
+                        }
+                    };
+                    if (error.details["body.code"]) {
+                        switch (error.details["body.code"].message) {
+                            case "minLength 6":
+                                newErrors.code = "Mínimo 6 caracteres";
+                                break;
+                            case "maxLength 6":
+                                newErrors.code = "Máximo 6 caracteres";
+                                break;
+                            default:
+                                newErrors.code = error.details["body.code"].message;
+                                break;
+                        }
+                    };
                     setErrors(newErrors);
                 } else if (error.code === "EMAIL_VERIFICATION_CODE_INVALID_OR_EXPIRED") {
                     setErrors(prev => ({ ...prev, code: "El código es inválido o ha expirado" }));

@@ -30,13 +30,31 @@ export default function Login() {
             },
             onError: (error) => {
                 switch (error.code) {
-                    case "REQUEST_VALIDATION_ERROR":
-                        const newErrors = {
-                            identifier: error.details["body.identifier"]?.message || "",
-                            password: error.details["body.password"]?.message || ""
+                    case "REQUEST_VALIDATION_ERROR": {
+                        const newErrors = { identifier: "", password: "" };
+                        if (error.details["body.identifier"]) {
+                            switch (error.details["body.identifier"].message) {
+                                case "minLength 3":
+                                    newErrors.identifier = "Mínimo 3 caracteres";
+                                    break;
+                                default:
+                                    newErrors.identifier = error.details["body.identifier"].message;
+                                    break;
+                            }
+                        }
+                        if (error.details["body.password"]) {
+                            switch (error.details["body.password"].message) {
+                                case "minLength 8":
+                                    newErrors.password = "Mínimo 8 caracteres";
+                                    break;
+                                default:
+                                    newErrors.password = error.details["body.password"].message;
+                                    break;
+                            }
                         }
                         setErrors(newErrors);
                         break;
+                    }
                     case "INVALID_CREDENTIALS":
                         toast.error("Credenciales inválidas");
                         break;
@@ -47,10 +65,10 @@ export default function Login() {
         }
     });
 
-    const login = () => { // TODO Mejorar validacion
+    const login = () => {
         const newErrors = {
             identifier: !credentials.identifier ? "Introduce tu email o nombre de usuario" : "",
-            password: !credentials.password ? "Introduce tu contraseña" : ""
+            password: !credentials.password ? "Introduce tu contraseña" : credentials.password.length < 8 ? "Mínimo 8 caracteres" : ""
         };
         setErrors(newErrors);
 

@@ -3,7 +3,7 @@ import type { SearchRequest, SearchResponseData, SearchValidationFailResponse } 
 import { inject, injectable } from "tsyringe";
 import { SearchService } from "./search.service.js";
 import type { AuthenticatedUser } from "../auth/auth.types.js";
-import type { SuccessResponse as SuccessResponseType, FailResponseFromError } from "../../utils/responses.js";
+import type { SuccessResponse as SuccessResponseType, FailResponseFromError, PathPath, QueryPath, ValidationDetails, RequestValidationFailResponse } from "../../utils/responses.js";
 import { SearchNotFoundError, SearchNotAuthorizedError } from "./search.errors.js";
 
 @injectable()
@@ -44,6 +44,7 @@ export class SearchController extends Controller {
     @Security('jwt-optional')
     @Response<FailResponseFromError<SearchNotFoundError>>(404, "Búsqueda no encontrada")
     @Response<FailResponseFromError<SearchNotAuthorizedError>>(403, "Búsqueda privada no autorizada")
+    @Response<RequestValidationFailResponse<ValidationDetails<PathPath<{ searchId: string }>>>>(422, "Error de validación")
     public async searchResult(
         @Path('searchId') searchId: string,
         @RequestProp('user') user: AuthenticatedUser | null
@@ -56,6 +57,7 @@ export class SearchController extends Controller {
     @Security('jwt')
     @Response<FailResponseFromError<SearchNotFoundError>>(404, "Búsqueda no encontrada")
     @Response<FailResponseFromError<SearchNotAuthorizedError>>(403, "Operación no autorizada sobre un recurso ajeno")
+    @Response<RequestValidationFailResponse<ValidationDetails<PathPath<{ searchId: string }>>>>(422, "Error de validación")
     @SuccessResponse(200, "Búsqueda compartida")
     public async shareSearch(
         @Path('searchId') searchId: string,
@@ -69,6 +71,7 @@ export class SearchController extends Controller {
     @Security('jwt')
     @Response<FailResponseFromError<SearchNotFoundError>>(404, "Búsqueda no encontrada")
     @Response<FailResponseFromError<SearchNotAuthorizedError>>(403, "Operación no autorizada sobre un recurso ajeno")
+    @Response<RequestValidationFailResponse<ValidationDetails<PathPath<{ searchId: string }>>>>(422, "Error de validación")
     @SuccessResponse(200, "Búsqueda privatizada")
     public async privatizeSearch(
         @Path('searchId') searchId: string,
@@ -82,6 +85,7 @@ export class SearchController extends Controller {
     @Security('jwt-optional')
     @Response<FailResponseFromError<SearchNotFoundError>>(404, "Búsqueda no encontrada")
     @Response<FailResponseFromError<SearchNotAuthorizedError>>(403, "Búsqueda privada no autorizada")
+    @Response<RequestValidationFailResponse<ValidationDetails<PathPath<{ userId: string }> | QueryPath<{ page: number, limit: number }>>>>(422, "Error de validación")
     public async getSearches(
         @Path('userId') userId: string,
         @RequestProp('user') user: AuthenticatedUser | null,

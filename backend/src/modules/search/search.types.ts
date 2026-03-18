@@ -1,4 +1,4 @@
-import type { ValidationDetails, RequestValidationFailResponse, DatabaseValidationFailResponse } from "../../utils/responses.js";
+import type { ValidationDetails, RequestValidationFailResponse, DatabaseValidationFailResponse, BodyPath } from "../../utils/responses.js";
 
 export interface SearchRequest {
     /**
@@ -86,13 +86,9 @@ export interface SearchResponseData {
 }
 
 export type SearchRequestValidationFailResponse = RequestValidationFailResponse<ValidationDetails<
-    | "body"
-    | "body.origins"
-    | "body.destinations"
-    | "body.criteria"
-    | "body.criteria.priority"
-    | "body.criteria.max_price"
+    BodyPath<SearchRequest>
 >>;
 
 // Unión de todas las posibles respuestas 422 para search
 export type SearchValidationFailResponse = SearchRequestValidationFailResponse | DatabaseValidationFailResponse;
+
