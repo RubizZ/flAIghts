@@ -3,10 +3,10 @@ export default function StarsBackground({ className = "" }: { className?: string
         <div className={`absolute inset-0 overflow-hidden z-0 ${className}`}>
             {/* Light Mode Gradient - Vibrant Sky */}
             <div className="absolute inset-0 bg-linear-to-br from-[#bae6fd] via-[#e0f2fe] to-[#f0f9ff] dark:hidden" />
-            
+
             {/* Dark Mode Gradient - Deep Interstellar */}
             <div className="absolute inset-0 hidden dark:block bg-gradient-radial from-[#1e1b4b] via-[#0f172a] to-[#020617]" />
-            
+
             <div className="stars"></div>
             <div className="stars2"></div>
             <div className="stars3"></div>
