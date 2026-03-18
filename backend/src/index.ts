@@ -16,8 +16,17 @@ import { Error as MongooseError } from 'mongoose';
 import { container } from 'tsyringe';
 import { ServerConfig } from './config/server.config.js';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+console.log(`
+   __ _          _____      _     _       
+  / _| |   /\\   |_   _|    | |   | |      
+ | |_| |  /  \\    | |  __ _| |__ | |_ ___ 
+ |  _| | / /\\ \\   | | / _\` | '_ \\| __/ __|
+ | | | |/ ____ \\ _| || (_| | | | | |_\\__ \\
+ |_| |_/_/    \\_\\____/\\__, |_| |_|\\__|___/
+                       __/ |              
+                      |___/               
+`);
+
 
 const config = container.resolve(ServerConfig);
 
@@ -25,7 +34,6 @@ const PORT = config.PORT;
 
 const app = express();
 app.use(compression());
-
 
 const origins = config.ALLOWED_ORIGINS || [];
 if (config.FRONTEND_URL) {
@@ -64,7 +72,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
 // Connect to database
-connectDB(config.MONGODB_URI);
+await connectDB(config.MONGODB_URI);
 
 // Middleware to wrap all successful responses in JSend format
 app.use((req, res, next) => {
@@ -88,6 +96,8 @@ app.use((req, res, next) => {
 
 // Swagger UI documentation (only in development)
 if (config.NODE_ENV !== 'production') {
+    const __filename = fileURLToPath(import.meta.url);
+    const __dirname = path.dirname(__filename);
     const openApiSpec = JSON.parse(fs.readFileSync(path.join(__dirname, '../build/openapi.json'), 'utf8'));
     app.use('/docs', swaggerUi.serve, swaggerUi.setup(openApiSpec));
 }
@@ -167,5 +177,5 @@ app.use((err: any, req: express.Request, res: express.Response, next: express.Ne
 });
 
 app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
+    console.log(`Server initialized successfully on port ${PORT}`);
 });
