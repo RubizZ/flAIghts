@@ -1,4 +1,4 @@
-import type { ValidationDetails, RequestValidationFailResponse, DatabaseValidationFailResponse, FailResponseFromError } from "../../utils/responses.js";
+import type { ValidationDetails, RequestValidationFailResponse, DatabaseValidationFailResponse, FailResponseFromError, BodyPath } from "../../utils/responses.js";
 import { NoTokenProvidedError, InvalidTokenError, TokenUserNotFoundError, AuthenticationVersionMismatchError, InvalidPasswordError } from "./auth.errors.js";
 
 // ==================== TIPOS DE AUTENTICACIÓN ====================
@@ -87,27 +87,19 @@ export interface ResetPasswordRequest {
 // ==================== VALIDATION FAIL RESPONSES (422) ====================
 
 export type LoginRequestValidationFailResponse = RequestValidationFailResponse<ValidationDetails<
-    | "body"
-    | "body.identifier"
-    | "body.password"
-    | "body.responseType"
+    BodyPath<LoginRequest>
 >>;
 
 export type ChangePasswordRequestValidationFailResponse = RequestValidationFailResponse<ValidationDetails<
-    | "body"
-    | "body.oldPassword"
-    | "body.newPassword"
+    BodyPath<ChangePasswordRequest>
 >>;
 
 export type ForgotPasswordRequestValidationFailResponse = RequestValidationFailResponse<ValidationDetails<
-    | "body"
-    | "body.email"
+    BodyPath<ForgotPasswordRequest>
 >>;
 
 export type ResetPasswordRequestValidationFailResponse = RequestValidationFailResponse<ValidationDetails<
-    | "body"
-    | "body.token"
-    | "body.newPassword"
+    BodyPath<ResetPasswordRequest>
 >>;
 
 // Uniones para todas las posibles respuestas 422

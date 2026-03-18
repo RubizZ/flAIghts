@@ -57,8 +57,42 @@ export type RateLimitFailResponse = {
     };
 };
 
-// Patrón para las claves de detalle de validación (el "regex" de TypeScript)
-type ValidationKey = `body.${string}` | `query.${string}` | `path.${string}` | `header.${string}` | `formData.${string}` | `body` | `query` | `path` | `header` | `formData`;
+// Patrón para las claves de detalle de validación (soporta prefijos de TSOA)
+type ValidationKeyPrefix = 'body' | 'query' | 'path' | 'header' | 'formData';
+export type ValidationKey = `${ValidationKeyPrefix}.${string}` | ValidationKeyPrefix;
+
+/**
+ * Generador recursivo de rutas de objetos para tipado de errores.
+ */
+type PathTo<T, Prefix extends string> = T extends Date | Buffer | string | number | boolean | any[] | undefined | null
+    ? Prefix
+    : T extends object
+    ? { [K in keyof T]-?: K extends string
+        ? `${Prefix}.${K}` | PathTo<T[K], `${Prefix}.${K}`>
+        : never
+    }[keyof T] | Prefix
+    : Prefix;
+
+/**
+ * Ayudante para generar las claves de validación basadas en una interfaz del Request Body.
+ * @example ValidationDetails<BodyPath<LoginRequest>>
+ */
+export type BodyPath<T> = PathTo<T, "body">;
+
+/**
+ * Ayudante para generar las claves de validación basadas en parámetros de Query.
+ */
+export type QueryPath<T> = PathTo<T, "query">;
+
+/**
+ * Ayudante para generar las claves de validación basadas en parámetros de Path.
+ */
+export type PathPath<T> = PathTo<T, "path">;
+
+/**
+ * Ayudante para generar las claves de validación basadas en cabeceras HTTP.
+ */
+export type HeaderPath<T> = PathTo<T, "header">;
 
 /**
  * Generador de estructura de detalles.

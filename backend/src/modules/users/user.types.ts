@@ -1,4 +1,4 @@
-import type { ValidationDetails, RequestValidationFailResponse, DatabaseValidationFailResponse, FailResponseFromError, RateLimitFailResponse } from "../../utils/responses.js";
+import type { ValidationDetails, RequestValidationFailResponse, DatabaseValidationFailResponse, FailResponseFromError, RateLimitFailResponse, BodyPath } from "../../utils/responses.js";
 export type { RateLimitFailResponse };
 
 // ==================== TIPOS DE USUARIO ====================
@@ -144,6 +144,10 @@ export interface CompleteRegistrationData {
      * @format email
      * @pattern ^(?:[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*|"(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21\x23-\x5b\x5d-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])*")@(?:(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?|\[(?:(?:(2(5[0-5]|[0-4][0-9])|1[0-9][0-9]|[1-9]?[0-9]))\.){3}(?:(2(5[0-5]|[0-4][0-9])|1[0-9][0-9]|[1-9]?[0-9])|[a-z0-9-]*[a-z0-9]:(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21-\x5a\x53-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])+)\])$     */
     email: string;
+    /**
+     * @minLength 6
+     * @maxLength 6
+     */
     code: string;
     /**
      * @minLength 3
@@ -155,9 +159,25 @@ export interface CompleteRegistrationData {
      */
     password: string;
     preferences?: {
+        /**
+         * @minimum 0
+         * @maximum 1
+         */
         price_weight?: number;
+        /**
+         * @minimum 0
+         * @maximum 1
+         */
         duration_weight?: number;
+        /**
+         * @minimum 0
+         * @maximum 1
+         */
         stops_weight?: number;
+        /**
+         * @minimum 0
+         * @maximum 1
+         */
         airline_quality_weight?: number;
     };
 }
@@ -170,7 +190,15 @@ export interface InitiateEmailChangeData {
 }
 
 export interface CompleteEmailChangeData {
+    /**
+     * @minLength 6
+     * @maxLength 6
+     */
     oldEmailCode: string;
+    /**
+     * @minLength 6
+     * @maxLength 6
+     */
     newEmailCode: string;
 }
 
@@ -180,60 +208,31 @@ export type SetProfilePictureRequest = Buffer;
 // ==================== TIPOS DE ERROR ====================
 
 export type RegisterRequestValidationFailResponse = RequestValidationFailResponse<ValidationDetails<
-    | "body"
-    | "body.username"
-    | "body.email"
-    | "body.password"
-    | "body.preferences"
-    | "body.preferences.price_weight"
-    | "body.preferences.duration_weight"
-    | "body.preferences.stops_weight"
-    | "body.preferences.airline_quality_weight"
+    BodyPath<CompleteRegistrationData>
 >>;
 
 export type UpdateUserRequestValidationFailResponse = RequestValidationFailResponse<ValidationDetails<
-    | "body"
-    | "body.username"
-    | "body.preferences"
-    | "body.preferences.price_weight"
-    | "body.preferences.duration_weight"
-    | "body.preferences.stops_weight"
-    | "body.preferences.airline_quality_weight"
+    BodyPath<UpdateUserData>
 >>;
 
 export type InitiateRegistrationRequestValidationFailResponse = RequestValidationFailResponse<ValidationDetails<
-    | "body"
-    | "body.email"
+    BodyPath<InitiateRegistrationData>
 >>;
 
 export type CompleteRegistrationRequestValidationFailResponse = RequestValidationFailResponse<ValidationDetails<
-    | "body"
-    | "body.email"
-    | "body.code"
-    | "body.username"
-    | "body.password"
-    | "body.preferences"
-    | "body.preferences.price_weight"
-    | "body.preferences.duration_weight"
-    | "body.preferences.stops_weight"
-    | "body.preferences.airline_quality_weight"
+    BodyPath<CompleteRegistrationData>
 >>;
 
 export type InitiateEmailChangeRequestValidationFailResponse = RequestValidationFailResponse<ValidationDetails<
-    | "body"
-    | "body.newEmail"
+    BodyPath<InitiateEmailChangeData>
 >>;
 
 export type CompleteEmailChangeRequestValidationFailResponse = RequestValidationFailResponse<ValidationDetails<
-    | "body"
-    | "body.oldEmailCode"
-    | "body.newEmailCode"
+    BodyPath<CompleteEmailChangeData>
 >>;
 
-
 export type VerifyEmailRequestValidationFailResponse = RequestValidationFailResponse<ValidationDetails<
-    | "body"
-    | "body.code"
+    BodyPath<{ code: string }>
 >>;
 
 
