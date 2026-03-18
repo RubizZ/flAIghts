@@ -99,6 +99,8 @@ export class ServerConfig {
         }
 
         Object.assign(this, result.data);
+
+        console.log(`Server configuration loaded: ${JSON.stringify(this, null, 2)}`);
     }
 }
 
