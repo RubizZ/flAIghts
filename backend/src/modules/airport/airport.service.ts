@@ -145,7 +145,7 @@ export class AirportService {
         return this.formatForGlobe(this.airportsCache);
     }
 
-    private formatForGlobe(airports: any[]): GlobeAirportResponse[] {
+    private formatForGlobe(airports: IAirport[]): GlobeAirportResponse[] {
         return airports.map(a => ({
             i: a.iata_code,
             n: a.name,
@@ -155,6 +155,21 @@ export class AirportService {
             s: a.importance_score,
             c: a.country
         }));
+    }
+
+    public async getTopAirportsSummary(limit: number = 100): Promise<string> {
+        const format = (a: IAirport) => `${a.city} (${a.iata_code}) [lat:${a.location.coordinates[1]}, lon:${a.location.coordinates[0]}]`;
+
+        if (!this.isInitialized) {
+            const airports = await Airport.find({}).sort({ importance_score: -1 }).limit(limit).lean();
+            return airports.map(format).join(", ");
+        }
+
+        return this.airportsCache
+            .sort((a, b) => (b.importance_score || 0) - (a.importance_score || 0))
+            .slice(0, limit)
+            .map(format)
+            .join(", ");
     }
 
     public async getAirportByIata(iata: string): Promise<IAirport | null> {

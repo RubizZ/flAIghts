@@ -1,3 +1,4 @@
+import type { AirportResponse } from "../airport/airport.types.js";
 import type { ValidationDetails, RequestValidationFailResponse, DatabaseValidationFailResponse, BodyPath } from "../../utils/responses.js";
 import type { DijkstraFlightEdge } from "@/algorithms/dijkstra.js";
 
@@ -29,9 +30,6 @@ export interface SearchRequest {
     };
 
     layover_days?: number[];
-
-
-
 }
 
 export interface LegResponse {
@@ -103,3 +101,52 @@ export interface EnrichedFlightEdge extends DijkstraFlightEdge {
     travel_class: string;
     extensions?: string[];
 }
+
+/**
+ * Estructura genérica de mensaje para el historial del chat.
+ */
+export interface AssistantChatMessage {
+    role: "user" | "assistant" | "system";
+    content: string;
+}
+
+/**
+ * Mensaje devuelto por el asistente en la respuesta.
+ */
+export interface AssistantResponseMessage {
+    role: "assistant";
+    content: string;
+}
+
+/**
+ * Mensaje enviado por el cliente al asistente. Solo permitimos 'user' y 'assistant'
+ * para evitar que se inyecten mensajes de 'system'.
+ */
+export interface AssistantRequestMessage {
+    role: "user" | "assistant";
+    content: string;
+}
+
+export interface AssistantExtractedData {
+    origin?: AirportResponse | null;
+    destination?: AirportResponse | null;
+    departure_date?: string | null;
+    return_date?: string | null;
+}
+
+export interface AssistantRequest {
+    messages: AssistantRequestMessage[];
+    location?: {
+        latitude: number;
+        longitude: number;
+    };
+}
+
+export interface AssistantResponse {
+    message: AssistantResponseMessage;
+    data: AssistantExtractedData;
+    ready: boolean;
+}
+
+export type AssistantValidationFailResponse = RequestValidationFailResponse<ValidationDetails<"body" | "body.messages" | "body.location">>;
+

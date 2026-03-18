@@ -8,6 +8,7 @@ import { AirportResponse } from "@/api/generated/model";
 import StarsBackground from "../components/ui/StarsBackground.tsx";
 import ManualSearchForm from "../components/search/ManualSearchForm.tsx";
 import NavIconButton from "../components/ui/NavIconButton.tsx";
+import SearchAssistant from "../components/search/SearchAssistant.tsx";
 
 function SearchFlight() {
     const [origin, setOrigin] = useState<AirportResponse | null>(null);
@@ -28,7 +29,8 @@ function SearchFlight() {
     const [isMobileCardExpanded, setIsMobileCardExpanded] = useState(false);
     const [isUserInteracting, setIsUserInteracting] = useState(false);
     const [userLocation, setUserLocation] = useState<{ latitude: number; longitude: number } | undefined>(undefined);
-
+    const [chatMessages, setChatMessages] = useState<any[]>([]);
+    const [isChatbotReady, setIsChatbotReady] = useState(false);
     useEffect(() => {
         if ("geolocation" in navigator) {
             navigator.geolocation.getCurrentPosition(
@@ -430,24 +432,30 @@ function SearchFlight() {
                             </>
                         ) : (
                             /* Chatbot mode panel */
-                            <div className="flex flex-col gap-4">
-                                <div className="flex flex-col items-center justify-center gap-3 py-8 text-center">
-                                    <div className="w-14 h-14 rounded-2xl bg-brand/10 border border-brand/20 flex items-center justify-center">
-                                        <Bot size={28} className="text-brand" />
-                                    </div>
-                                    <div className="flex flex-col gap-1">
-                                        <span className="text-content font-semibold">Asistente flAIghts</span>
-                                        <span className="text-content-muted text-sm">Próximamente — describe tu viaje ideal con IA</span>
-                                    </div>
-                                </div>
-                                <div className="flex items-center gap-3 bg-main/60 dark:bg-surface/60 border border-line rounded-2xl px-4 py-3 opacity-50 pointer-events-none">
-                                    <Bot size={18} className="text-content-muted shrink-0" />
-                                    <span className="text-content-muted text-sm">Ej: "Quiero ir a Tokio en verano por menos de 600€"</span>
-                                </div>
-                                <button disabled className="flex items-center justify-center gap-3 bg-brand/50 text-content-on-brand py-4 rounded-2xl font-bold text-base opacity-50 cursor-not-allowed">
-                                    <Bot size={18} />
-                                    <span>Preguntar al asistente</span>
-                                </button>
+                            <div className="flex flex-col gap-5 pt-2">
+                                <SearchAssistant
+                                    messages={chatMessages}
+                                    setMessages={setChatMessages}
+                                    location={userLocation}
+                                    isReady={isChatbotReady}
+                                    onSearch={handleSearch}
+                                    onReadyChange={setIsChatbotReady}
+                                    onDetectedData={(data) => {
+                                        if (data.origin) {
+                                            setOrigin(data.origin);
+                                        }
+                                        if (data.destination) {
+                                            setDestination(data.destination);
+                                        }
+                                        if (data.departure_date) setDepartureDate(data.departure_date);
+                                        if (data.return_date) setReturnDate(data.return_date);
+                                    }}
+                                />
+                                {!isChatbotReady && (
+                                    <p className="text-[10px] text-center text-content-muted italic opacity-60 px-4 mt-2">
+                                        Sigue conversando con flAIghts para configurar tu búsqueda automática.
+                                    </p>
+                                )}
                             </div>
                         )}
                     </div>

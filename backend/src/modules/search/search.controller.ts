@@ -1,10 +1,11 @@
 import { Body, Controller, Get, Patch, Path, Post, Query, RequestProp, Response, Route, Security, SuccessResponse, Tags } from "tsoa";
-import type { SearchRequest, SearchResponseData, SearchValidationFailResponse } from "./search.types.js";
+import type { SearchRequest, SearchResponseData, SearchValidationFailResponse, AssistantRequest, AssistantResponse, AssistantValidationFailResponse } from "./search.types.js";
 import { inject, injectable } from "tsyringe";
 import { SearchService } from "./search.service.js";
+import { SearchAssistantService } from "./search-assistant.service.js";
 import type { AuthenticatedUser } from "../auth/auth.types.js";
 import type { SuccessResponse as SuccessResponseType, FailResponseFromError, PathPath, QueryPath, ValidationDetails, RequestValidationFailResponse } from "../../utils/responses.js";
-import { SearchNotFoundError, SearchNotAuthorizedError } from "./search.errors.js";
+import { SearchNotFoundError, SearchNotAuthorizedError, AssistantUnavailableError } from "./search.errors.js";
 
 @injectable()
 @Route("search")
@@ -12,7 +13,8 @@ import { SearchNotFoundError, SearchNotAuthorizedError } from "./search.errors.j
 export class SearchController extends Controller {
 
     constructor(
-        @inject(SearchService) private readonly searchService: SearchService
+        @inject(SearchService) private readonly searchService: SearchService,
+        @inject(SearchAssistantService) private readonly assistantService: SearchAssistantService
     ) {
         super();
     }
@@ -94,5 +96,17 @@ export class SearchController extends Controller {
     ): Promise<SuccessResponseType<{ items: SearchResponseData[], total: number, page: number, totalPages: number }>> {
         const searches = await this.searchService.getSearches(userId, user?._id || undefined, page, limit);
         return searches satisfies { items: SearchResponseData[], total: number, page: number, totalPages: number } as any;
+    }
+
+    /**
+     * Envía una lista de mensajes al asistente de búsqueda de vuelos y recibe una respuesta con datos extraídos.
+     */
+    @Post("/assistant")
+    @Response<AssistantValidationFailResponse>(422, "Error de validación")
+    @Response<FailResponseFromError<AssistantUnavailableError>>(503, "Servicio no disponible")
+    public async searchAssistant(@Body() body: AssistantRequest): Promise<SuccessResponseType<AssistantResponse>> {
+        const { messages, location } = body;
+        const result = await this.assistantService.extractSearchData(messages, location);
+        return result satisfies AssistantResponse as any;
     }
 }
