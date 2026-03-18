@@ -1,5 +1,4 @@
 import "dotenv/config";
-import "reflect-metadata";
 import { singleton } from "tsyringe";
 import { z } from "zod";
 import ms from "ms";
