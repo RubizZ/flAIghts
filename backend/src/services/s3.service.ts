@@ -9,6 +9,7 @@ import {
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
 import { fileTypeFromBuffer } from 'file-type'
 import { inject, injectable, singleton } from 'tsyringe'
+import bytes from 'bytes'
 
 import { AppError } from '@/utils/errors.js'
 
@@ -141,9 +142,11 @@ export class S3Service {
     }
 
     private validateBuffer(buffer: Buffer): void {
-        const maxFileSize = this.config.S3_MAX_FILE_SIZE
-        if (maxFileSize > 0 && buffer.length > maxFileSize) {
-            throw new S3FileTooLargeError(buffer.length, maxFileSize);
+        const maxSizeStr = this.config.S3_MAX_FILE_SIZE;
+        const maxSizeInBytes = bytes(maxSizeStr);
+        
+        if (maxSizeInBytes && buffer.length > maxSizeInBytes) {
+            throw new S3FileTooLargeError(buffer.length, maxSizeInBytes);
         }
     }
 

@@ -1,3 +1,4 @@
+import bytes from "bytes";
 import { AppError } from "../../utils/errors.js";
 
 export class EmailAlreadyInUseError extends AppError<'EMAIL_ALREADY_IN_USE', { field: 'email'; value: string }> {
@@ -135,7 +136,7 @@ export class ProfilePictureTooLargeError extends AppError<'PROFILE_PICTURE_TOO_L
     public readonly statusCode: number = 413;
 
     constructor(size: number, maxSize: number) {
-        super(`La imagen es demasiado grande. Máximo permitido: ${maxSize / (1024 * 1024)}MB`);
+        super(`La imagen es demasiado grande. Máximo permitido: ${bytes(maxSize, { unit: 'MB', fixedDecimals: true })}`);
         this.details = { size, maxSize };
     }
 }

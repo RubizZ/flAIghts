@@ -4,6 +4,7 @@ import { singleton } from "tsyringe";
 import { z } from "zod";
 import ms from "ms";
 import type { StringValue } from "ms";
+import bytes from "bytes";
 
 const emptyToUndefined = (val: unknown) => {
     if (typeof val !== "string") return val;
@@ -21,6 +22,17 @@ const msSchema = z.string().refine((val) => {
     }
 }, {
     message: "Invalid time format (e.g., '30d', '1h', '2 days')"
+});
+
+const bytesSchema = z.string().refine((val) => {
+    try {
+        const result = bytes(val);
+        return result !== undefined && result !== null;
+    } catch {
+        return false;
+    }
+}, {
+    message: "Invalid bytes format (e.g., '50MB', '1GB', '2TB')"
 });
 
 // Validador de puerto
@@ -62,10 +74,7 @@ const serverConfigSchema = z.object({
     S3_ACCESS_KEY_ID: z.preprocess(emptyToUndefined, z.string()),
     S3_SECRET_ACCESS_KEY: z.preprocess(emptyToUndefined, z.string()),
     S3_BASE_MEDIA_PATH: z.preprocess(emptyToUndefined, z.string().default("media")),
-    S3_MAX_FILE_SIZE: z.preprocess((val) => {
-        const v = emptyToUndefined(val);
-        return v === undefined ? undefined : Number(v);
-    }, z.number().positive().default(50 * 1024 * 1024)),
+    S3_MAX_FILE_SIZE: z.preprocess(emptyToUndefined, bytesSchema.default("50MB")),
     S3_AUTO_CREATE_BUCKET: z.preprocess((val) => {
         const v = emptyToUndefined(val);
         return v === undefined ? undefined : v === "true";
