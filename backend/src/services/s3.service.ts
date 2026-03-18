@@ -8,7 +8,7 @@ import {
 } from '@aws-sdk/client-s3'
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
 import { fileTypeFromBuffer } from 'file-type'
-import { injectable, singleton } from 'tsyringe'
+import { inject, injectable, singleton } from 'tsyringe'
 
 import { AppError } from '@/utils/errors.js'
 
@@ -45,7 +45,7 @@ export class S3Service {
     private readonly signerClient: S3Client
     private readonly initializationPromise: Promise<void>
 
-    constructor(private readonly config: ServerConfig) {
+    constructor(@inject(ServerConfig) private readonly config: ServerConfig) {
         const host = config.S3_HOST
         const useSsl = config.S3_USE_SSL
         const forcePathStyle = config.S3_FORCE_PATH_STYLE

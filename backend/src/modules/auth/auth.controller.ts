@@ -15,7 +15,7 @@ import { ServerConfig } from "../../config/server.config.js";
 export class AuthController extends Controller {
     constructor(
         @inject(AuthService) private authService: AuthService,
-        private config: ServerConfig
+        @inject(ServerConfig) private config: ServerConfig
     ) {
         super()
     }

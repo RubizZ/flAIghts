@@ -36,7 +36,7 @@ export class AuthService {
 
     constructor(
         @inject(MailService) private mailService: MailService,
-        private config: ServerConfig
+        @inject(ServerConfig) private config: ServerConfig
     ) { }
 
     public async login(identifier: string, password: string): Promise<LoginResponseData> {
