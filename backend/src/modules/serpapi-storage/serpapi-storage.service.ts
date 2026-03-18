@@ -10,7 +10,7 @@ import { ServerConfig } from "../../config/server.config.js";
 export class SerpapiStorageService {
     constructor(
         @inject(SerpApiClient) private readonly serpApiClient: SerpApiClient,
-        private config: ServerConfig
+        @inject(ServerConfig) private config: ServerConfig
     ) { }
 
     public async getAllFlights(departure: string, arrival: string, date: string): Promise<FlightRoute[]> {

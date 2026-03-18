@@ -1,5 +1,5 @@
 import nodemailer from "nodemailer";
-import { singleton } from "tsyringe";
+import { inject, singleton } from "tsyringe";
 
 export interface MailOptions {
     to: string;
@@ -12,7 +12,7 @@ import { ServerConfig } from "../config/server.config.js";
 @singleton()
 export class MailService {
     private transporter: nodemailer.Transporter;
-    constructor(private config: ServerConfig) {
+    constructor(@inject(ServerConfig) private config: ServerConfig) {
         this.transporter = nodemailer.createTransport({
             host: config.SMTP_HOST,
             port: config.SMTP_PORT,

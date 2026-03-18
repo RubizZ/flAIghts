@@ -1,4 +1,4 @@
-import { injectable } from "tsyringe";
+import { inject, injectable } from "tsyringe";
 import type { ApiRequestParameters, SerpApiResponse } from "./serpapi.types.js";
 import mongoose, { Schema } from "mongoose";
 import { ServerConfig } from "../../config/server.config.js";
@@ -15,7 +15,7 @@ export class SerpApiClient {
 
     private baseUrl = "https://serpapi.com";
 
-    constructor(private config: ServerConfig) { }
+    constructor(@inject(ServerConfig) private config: ServerConfig) { }
 
     private maxRequestPerDay = 1000;
 
