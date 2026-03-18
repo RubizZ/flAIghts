@@ -13,11 +13,12 @@ import { fileURLToPath } from 'node:url';
 import cookieParser from 'cookie-parser';
 import compression from 'compression';
 import { Error as MongooseError } from 'mongoose';
+import { container } from 'tsyringe';
+import { ServerConfig } from './config/server.config.js';
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-import { container } from 'tsyringe';
-import { ServerConfig } from './config/server.config.js';
 const config = container.resolve(ServerConfig);
 
 const PORT = config.PORT;
@@ -41,7 +42,10 @@ const originRegexes = allOrigins.map(o => {
 
 app.use(cors({
     origin: (origin, callback) => {
-        if (!origin) return callback(null, true);
+        // En desarrollo, permitimos cualquier origen para facilitar el testing
+        if (!origin || config.NODE_ENV === 'development') {
+            return callback(null, true);
+        }
 
         if (originRegexes.some(regex => regex.test(origin))) {
             callback(null, true);
@@ -50,7 +54,7 @@ app.use(cors({
         }
     },
     methods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
     credentials: true
 }));
 

@@ -73,7 +73,7 @@ services:
       dockerfile: Dockerfile.dev
     environment:
       CHOKIDAR_USEPOLLING: "true"
-      VITE_BACKEND_API_BASE_URL: "http://localhost:3000"
+      VITE_BACKEND_API_BASE_URL: "${VITE_BACKEND_API_BASE_URL:-http://localhost:3000}"
     ports:
       - 5173:5173
     command: sh -c "npm install && npm run dev"
