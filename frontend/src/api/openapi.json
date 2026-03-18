@@ -7,7 +7,7 @@
 		"requestBodies": {},
 		"responses": {},
 		"schemas": {
-			"SuccessResponse": {
+			"SuccessResponseType": {
 				"description": "Wrapper de éxito JSend (aplicado por el middleware global).",
 				"properties": {
 					"status": {
@@ -283,7 +283,7 @@
 				"type": "object",
 				"additionalProperties": false
 			},
-			"SuccessResponse_User_": {
+			"SuccessResponseType_User_": {
 				"description": "Wrapper de éxito JSend (aplicado por el middleware global).",
 				"properties": {
 					"status": {
@@ -945,7 +945,7 @@
 				"$ref": "#/components/schemas/PopulatedUser",
 				"description": "Respuesta del endpoint GET /users/me"
 			},
-			"SuccessResponse_GetUserResponseData_": {
+			"SuccessResponseType_GetUserResponseData_": {
 				"description": "Wrapper de éxito JSend (aplicado por el middleware global).",
 				"properties": {
 					"status": {
@@ -1231,7 +1231,7 @@
 				"$ref": "#/components/schemas/User",
 				"description": "Respuesta del endpoint PATCH /users/me"
 			},
-			"SuccessResponse_UpdateUserResponseData_": {
+			"SuccessResponseType_UpdateUserResponseData_": {
 				"description": "Wrapper de éxito JSend (aplicado por el middleware global).",
 				"properties": {
 					"status": {
@@ -1732,7 +1732,7 @@
 				"type": "object",
 				"additionalProperties": false
 			},
-			"SuccessResponse_PublicUser-Array_": {
+			"SuccessResponseType_PublicUser-Array_": {
 				"description": "Wrapper de éxito JSend (aplicado por el middleware global).",
 				"properties": {
 					"status": {
@@ -1773,7 +1773,7 @@
 				],
 				"description": "Respuesta del endpoint GET /users/:id"
 			},
-			"SuccessResponse_GetUserByIdResponseData_": {
+			"SuccessResponseType_GetUserByIdResponseData_": {
 				"description": "Wrapper de éxito JSend (aplicado por el middleware global).",
 				"properties": {
 					"status": {
@@ -2399,7 +2399,7 @@
 				"type": "object",
 				"additionalProperties": false
 			},
-			"SuccessResponse_SearchResponseData_": {
+			"SuccessResponseType_SearchResponseData_": {
 				"description": "Wrapper de éxito JSend (aplicado por el middleware global).",
 				"properties": {
 					"status": {
@@ -2726,7 +2726,7 @@
 				"$ref": "#/components/schemas/FailResponse_NOT_AUTHORIZED._searchId-string--requesterId-string__",
 				"description": "Extrae automáticamente code y details de una clase AppError.\r\n\r\nEjemplo:\r\n- FailResponseFromError<UserAlreadyExistsError> → { status: 'fail', data: { code: 'CONFLICT', message: string, details: { field, value } } }\r\n- FailResponseFromError<UserNotFoundError> → { status: 'fail', data: { code: 'NOT_FOUND', message: string, details: { userId } } }"
 			},
-			"SuccessResponse__items-SearchResponseData-Array--total-number--page-number--totalPages-number__": {
+			"SuccessResponseType__items-SearchResponseData-Array--total-number--page-number--totalPages-number__": {
 				"description": "Wrapper de éxito JSend (aplicado por el middleware global).",
 				"properties": {
 					"status": {
@@ -3665,11 +3665,11 @@
 				"operationId": "InitiateRegistration",
 				"responses": {
 					"200": {
-						"description": "Ok",
+						"description": "OK",
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/SuccessResponse"
+									"$ref": "#/components/schemas/SuccessResponseType"
 								}
 							}
 						}
@@ -3717,12 +3717,12 @@
 			"post": {
 				"operationId": "CompleteRegistration",
 				"responses": {
-					"200": {
-						"description": "Ok",
+					"201": {
+						"description": "Created",
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/SuccessResponse_User_"
+									"$ref": "#/components/schemas/SuccessResponseType_User_"
 								}
 							}
 						}
@@ -3792,7 +3792,7 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/SuccessResponse_GetUserResponseData_"
+									"$ref": "#/components/schemas/SuccessResponseType_GetUserResponseData_"
 								}
 							}
 						}
@@ -3827,7 +3827,7 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/SuccessResponse_UpdateUserResponseData_"
+									"$ref": "#/components/schemas/SuccessResponseType_UpdateUserResponseData_"
 								}
 							}
 						}
@@ -3904,7 +3904,7 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/SuccessResponse"
+									"$ref": "#/components/schemas/SuccessResponseType"
 								}
 							}
 						}
@@ -3971,7 +3971,7 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/SuccessResponse_User_"
+									"$ref": "#/components/schemas/SuccessResponseType_User_"
 								}
 							}
 						}
@@ -4038,7 +4038,7 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/SuccessResponse"
+									"$ref": "#/components/schemas/SuccessResponseType"
 								}
 							}
 						}
@@ -4085,7 +4085,7 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/SuccessResponse_PublicUser-Array_"
+									"$ref": "#/components/schemas/SuccessResponseType_PublicUser-Array_"
 								}
 							}
 						}
@@ -4131,7 +4131,7 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/SuccessResponse_GetUserByIdResponseData_"
+									"$ref": "#/components/schemas/SuccessResponseType_GetUserByIdResponseData_"
 								}
 							}
 						}
@@ -4187,7 +4187,7 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/SuccessResponse"
+									"$ref": "#/components/schemas/SuccessResponseType"
 								}
 							}
 						}
@@ -4265,7 +4265,7 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/SuccessResponse"
+									"$ref": "#/components/schemas/SuccessResponseType"
 								}
 							}
 						}
@@ -4330,7 +4330,7 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/SuccessResponse"
+									"$ref": "#/components/schemas/SuccessResponseType"
 								}
 							}
 						}
@@ -4395,7 +4395,7 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/SuccessResponse"
+									"$ref": "#/components/schemas/SuccessResponseType"
 								}
 							}
 						}
@@ -4460,7 +4460,7 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/SuccessResponse"
+									"$ref": "#/components/schemas/SuccessResponseType"
 								}
 							}
 						}
@@ -4525,7 +4525,7 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/SuccessResponse"
+									"$ref": "#/components/schemas/SuccessResponseType"
 								}
 							}
 						}
@@ -4596,8 +4596,8 @@
 			"get": {
 				"operationId": "GetUserAvatar",
 				"responses": {
-					"204": {
-						"description": "No content"
+					"302": {
+						"description": "Redirect to S3"
 					},
 					"404": {
 						"description": "Usuario no encontrado",
@@ -4631,12 +4631,12 @@
 			"post": {
 				"operationId": "SearchRequest",
 				"responses": {
-					"200": {
-						"description": "Ok",
+					"201": {
+						"description": "Búsqueda creada",
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/SuccessResponse_SearchResponseData_"
+									"$ref": "#/components/schemas/SuccessResponseType_SearchResponseData_"
 								}
 							}
 						}
@@ -4683,7 +4683,7 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/SuccessResponse_SearchResponseData_"
+									"$ref": "#/components/schemas/SuccessResponseType_SearchResponseData_"
 								}
 							}
 						}
@@ -4735,11 +4735,11 @@
 				"operationId": "ShareSearch",
 				"responses": {
 					"200": {
-						"description": "Ok",
+						"description": "Búsqueda compartida",
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/SuccessResponse_SearchResponseData_"
+									"$ref": "#/components/schemas/SuccessResponseType_SearchResponseData_"
 								}
 							}
 						}
@@ -4790,11 +4790,11 @@
 				"operationId": "PrivatizeSearch",
 				"responses": {
 					"200": {
-						"description": "Ok",
+						"description": "Búsqueda privatizada",
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/SuccessResponse_SearchResponseData_"
+									"$ref": "#/components/schemas/SuccessResponseType_SearchResponseData_"
 								}
 							}
 						}
@@ -4849,7 +4849,7 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/SuccessResponse__items-SearchResponseData-Array--total-number--page-number--totalPages-number__"
+									"$ref": "#/components/schemas/SuccessResponseType__items-SearchResponseData-Array--total-number--page-number--totalPages-number__"
 								}
 							}
 						}

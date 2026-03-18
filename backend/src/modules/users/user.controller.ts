@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Patch, Path, Post, Query, RequestProp, Response, Route, Security, SuccessResponse as SuccessResponseDecorator, Tags, Request, Consumes, Middlewares } from "tsoa";
+import { Body, Controller, Get, Patch, Path, Post, Query, RequestProp, Response, Route, Security, SuccessResponse, Tags, Request, Consumes, Middlewares } from "tsoa";
 import express from 'express';
 import type {
     InitiateRegistrationData,
@@ -25,7 +25,7 @@ import { inject, injectable } from "tsyringe";
 import { UserService } from "./user.service.js";
 import type { AuthenticatedUser } from "../auth/auth.types.js";
 import type { IFriend, IFriendPopulated, IUser, IUserUnpopulated } from "./models/user.model.js";
-import type { SuccessResponse, FailResponseFromError } from "../../utils/responses.js";
+import type { SuccessResponse as SuccessResponseType, FailResponseFromError } from "../../utils/responses.js";
 import type { AuthFailResponse } from "../auth/auth.types.js";
 import {
     EmailAlreadyInUseError,
@@ -57,10 +57,10 @@ export class UsersController extends Controller {
      * Paso 1 del registro: Inicia el registro enviando un código de verificación al email.
      */
     @Post("/register/initiate")
-    @SuccessResponseDecorator(200, "OK")
+    @SuccessResponse(200, "OK")
     @Response<FailResponseFromError<EmailAlreadyInUseError>>(409, "Email ya registrado")
     @Response<InitiateRegistrationRequestValidationFailResponse>(422, "Error de validación")
-    public async initiateRegistration(@Body() body: InitiateRegistrationData): Promise<SuccessResponse> {
+    public async initiateRegistration(@Body() body: InitiateRegistrationData): Promise<SuccessResponseType> {
         await this.userService.initiateRegistration(body);
         return {} satisfies {} as any;
     }
@@ -69,11 +69,11 @@ export class UsersController extends Controller {
      * Paso 2 del registro: Completa el registro verificando el código y creando el usuario.
      */
     @Post("/register/complete")
-    @SuccessResponseDecorator(201, "Created")
+    @SuccessResponse(201, "Created")
     @Response<FailResponseFromError<EmailAlreadyInUseError> | FailResponseFromError<UsernameAlreadyInUseError>>(409, "Email ya registrado")
     @Response<FailResponseFromError<EmailVerificationCodeInvalidOrExpiredError>>(400, "Código inválido o expirado")
     @Response<CompleteRegistrationRequestValidationFailResponse>(422, "Error de validación")
-    public async completeRegistration(@Body() body: CompleteRegistrationData): Promise<SuccessResponse<User>> {
+    public async completeRegistration(@Body() body: CompleteRegistrationData): Promise<SuccessResponseType<User>> {
         const user = await this.userService.completeRegistration(body);
         this.setStatus(201);
         return this.sanitizeUser(user) satisfies User as any;
@@ -85,7 +85,7 @@ export class UsersController extends Controller {
     @Get("/me")
     @Security("jwt")
     @Response<AuthFailResponse>(401, "No autenticado")
-    public async getSelfUser(@RequestProp('user') user: AuthenticatedUser): Promise<SuccessResponse<GetUserResponseData>> {
+    public async getSelfUser(@RequestProp('user') user: AuthenticatedUser): Promise<SuccessResponseType<GetUserResponseData>> {
         const freshUser = await this.userService.getUser(user._id, true);
         return this.sanitizePopulatedUser(freshUser) satisfies GetUserResponseData as any;
     }
@@ -99,7 +99,7 @@ export class UsersController extends Controller {
     @Response<FailResponseFromError<UserNotFoundError>>(404, "Usuario no encontrado")
     @Response<FailResponseFromError<UsernameAlreadyInUseError>>(409, "El nombre de usuario ya está en uso")
     @Response<UpdateUserValidationFailResponse>(422, "Error de validación")
-    public async updateUser(@RequestProp('user') user: AuthenticatedUser, @Body() body: UpdateUserData): Promise<SuccessResponse<UpdateUserResponseData>> {
+    public async updateUser(@RequestProp('user') user: AuthenticatedUser, @Body() body: UpdateUserData): Promise<SuccessResponseType<UpdateUserResponseData>> {
         const updatedUser = await this.userService.updateUser(user._id, body);
         return this.sanitizeUser(updatedUser) satisfies UpdateUserResponseData as any;
     }
@@ -112,7 +112,7 @@ export class UsersController extends Controller {
     @Response<AuthFailResponse>(401, "No autenticado")
     @Response<FailResponseFromError<EmailAlreadyInUseError>>(409, "El nuevo email ya está en uso")
     @Response<InitiateEmailChangeRequestValidationFailResponse>(422, "Error de validación")
-    public async initiateEmailChange(@RequestProp('user') user: AuthenticatedUser, @Body() body: InitiateEmailChangeData): Promise<SuccessResponse> {
+    public async initiateEmailChange(@RequestProp('user') user: AuthenticatedUser, @Body() body: InitiateEmailChangeData): Promise<SuccessResponseType> {
         await this.userService.initiateEmailChange(user._id, body);
         return {} satisfies {} as any;
     }
@@ -125,7 +125,7 @@ export class UsersController extends Controller {
     @Response<AuthFailResponse>(401, "No autenticado")
     @Response<FailResponseFromError<EmailVerificationCodeInvalidOrExpiredError>>(400, "Códigos inválidos o expirados")
     @Response<CompleteEmailChangeRequestValidationFailResponse>(422, "Error de validación")
-    public async completeEmailChange(@RequestProp('user') user: AuthenticatedUser, @Body() body: CompleteEmailChangeData): Promise<SuccessResponse<User>> {
+    public async completeEmailChange(@RequestProp('user') user: AuthenticatedUser, @Body() body: CompleteEmailChangeData): Promise<SuccessResponseType<User>> {
         const updatedUser = await this.userService.completeEmailChange(user._id, body);
         return this.sanitizeUser(updatedUser) satisfies User as any;
     }
@@ -137,7 +137,7 @@ export class UsersController extends Controller {
     @Security("jwt")
     @Response<AuthFailResponse>(401, "No autenticado")
     @Response<FailResponseFromError<UserNotFoundError>>(404, "Usuario no encontrado")
-    public async cancelEmailChange(@RequestProp('user') user: AuthenticatedUser): Promise<SuccessResponse> {
+    public async cancelEmailChange(@RequestProp('user') user: AuthenticatedUser): Promise<SuccessResponseType> {
         await this.userService.cancelEmailChange(user._id);
         return {} satisfies {} as any;
     }
@@ -148,7 +148,7 @@ export class UsersController extends Controller {
     @Get("/search")
     @Security("jwt")
     @Response<AuthFailResponse>(401, "No autenticado")
-    public async searchUsers(@Query() q: string, @RequestProp('user') user: AuthenticatedUser): Promise<SuccessResponse<PublicUser[]>> {
+    public async searchUsers(@Query() q: string, @RequestProp('user') user: AuthenticatedUser): Promise<SuccessResponseType<PublicUser[]>> {
         if (!q || !q.trim()) return [] satisfies PublicUser[] as any;
         const foundUsers = await this.userService.searchUsers(q.trim(), user._id);
 
@@ -169,7 +169,7 @@ export class UsersController extends Controller {
     @Security("jwt")
     @Response<AuthFailResponse>(401, "No autenticado")
     @Response<FailResponseFromError<UserNotFoundError>>(404, "Usuario no encontrado")
-    public async getUserById(@Path() id: string, @RequestProp('user') user: AuthenticatedUser): Promise<SuccessResponse<GetUserByIdResponseData>> {
+    public async getUserById(@Path() id: string, @RequestProp('user') user: AuthenticatedUser): Promise<SuccessResponseType<GetUserByIdResponseData>> {
         if (id === user._id) {
             const targetUser = await this.userService.getUser(id, true);
             return this.sanitizePopulatedUser(targetUser) satisfies GetUserByIdResponseData as any;
@@ -193,7 +193,7 @@ export class UsersController extends Controller {
     @Response<AuthFailResponse>(401, "No autenticado")
     @Response<FailResponseFromError<UserNotFoundError>>(404, "Usuario no encontrado")
     @Response<FailResponseFromError<SelfFriendRequestError> | FailResponseFromError<AlreadyFriendsError> | FailResponseFromError<FriendRequestAlreadySentError> | FailResponseFromError<FriendRequestAlreadyReceivedError>>(400, "Error en la solicitud de amistad")
-    public async sendFriendRequest(@Path() id: string, @RequestProp('user') user: AuthenticatedUser): Promise<SuccessResponse> {
+    public async sendFriendRequest(@Path() id: string, @RequestProp('user') user: AuthenticatedUser): Promise<SuccessResponseType> {
         await this.userService.sendFriendRequest(user._id, id);
         return {} satisfies {} as any;
     }
@@ -203,7 +203,7 @@ export class UsersController extends Controller {
     @Response<AuthFailResponse>(401, "No autenticado")
     @Response<FailResponseFromError<UserNotFoundError>>(404, "Usuario no encontrado")
     @Response<FailResponseFromError<NoPendingFriendRequestError>>(400, "No hay solicitud pendiente")
-    public async cancelFriendRequest(@Path() id: string, @RequestProp('user') user: AuthenticatedUser): Promise<SuccessResponse> {
+    public async cancelFriendRequest(@Path() id: string, @RequestProp('user') user: AuthenticatedUser): Promise<SuccessResponseType> {
         await this.userService.cancelFriendRequest(user._id, id);
         return {} satisfies {} as any;
     }
@@ -213,7 +213,7 @@ export class UsersController extends Controller {
     @Response<AuthFailResponse>(401, "No autenticado")
     @Response<FailResponseFromError<UserNotFoundError>>(404, "Usuario no encontrado")
     @Response<FailResponseFromError<NoReceivedFriendRequestError>>(400, "No has recibido solicitud de esta persona")
-    public async acceptFriendRequest(@Path() id: string, @RequestProp('user') user: AuthenticatedUser): Promise<SuccessResponse> {
+    public async acceptFriendRequest(@Path() id: string, @RequestProp('user') user: AuthenticatedUser): Promise<SuccessResponseType> {
         await this.userService.acceptFriendRequest(user._id, id);
         return {} satisfies {} as any;
     }
@@ -223,7 +223,7 @@ export class UsersController extends Controller {
     @Response<AuthFailResponse>(401, "No autenticado")
     @Response<FailResponseFromError<UserNotFoundError>>(404, "Usuario no encontrado")
     @Response<FailResponseFromError<NoReceivedFriendRequestError>>(400, "No has recibido solicitud de esta persona")
-    public async rejectFriendRequest(@Path() id: string, @RequestProp('user') user: AuthenticatedUser): Promise<SuccessResponse> {
+    public async rejectFriendRequest(@Path() id: string, @RequestProp('user') user: AuthenticatedUser): Promise<SuccessResponseType> {
         await this.userService.rejectFriendRequest(user._id, id);
         return {} satisfies {} as any;
     }
@@ -233,7 +233,7 @@ export class UsersController extends Controller {
     @Response<AuthFailResponse>(401, "No autenticado")
     @Response<FailResponseFromError<UserNotFoundError>>(404, "Usuario no encontrado")
     @Response<FailResponseFromError<NotFriendsError>>(400, "No tienes agregada a esa persona")
-    public async removeFriend(@Path() id: string, @RequestProp('user') user: AuthenticatedUser): Promise<SuccessResponse> {
+    public async removeFriend(@Path() id: string, @RequestProp('user') user: AuthenticatedUser): Promise<SuccessResponseType> {
         await this.userService.removeFriend(user._id, id);
         return {} satisfies {} as any;
     }
@@ -249,7 +249,7 @@ export class UsersController extends Controller {
     public async setProfilePicture(
         @RequestProp('user') user: AuthenticatedUser,
         @Body() body: SetProfilePictureRequest
-    ): Promise<SuccessResponse> {
+    ): Promise<SuccessResponseType> {
         await this.userService.setProfilePicture(user._id, body);
         return {} satisfies {} as any;
     }
@@ -258,7 +258,7 @@ export class UsersController extends Controller {
      * Obtiene el avatar del usuario y redirige a la URL firmada de S3.
      */
     @Get("/{id}/avatar")
-    @SuccessResponseDecorator(302, "Redirect to S3")
+    @SuccessResponse(302, "Redirect to S3")
     @Response<FailResponseFromError<UserNotFoundError>>(404, "Usuario no encontrado")
     public async getUserAvatar(@Path() id: string, @Request() request: express.Request): Promise<void> {
         const url = await this.userService.getProfilePictureUrl(id);

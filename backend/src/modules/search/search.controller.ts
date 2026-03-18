@@ -1,9 +1,9 @@
-import { Body, Controller, Get, Patch, Path, Post, Query, RequestProp, Response, Route, Security, SuccessResponse as SuccessResponseDecorator, Tags } from "tsoa";
+import { Body, Controller, Get, Patch, Path, Post, Query, RequestProp, Response, Route, Security, SuccessResponse, Tags } from "tsoa";
 import type { SearchRequest, SearchResponseData, SearchValidationFailResponse } from "./search.types.js";
 import { inject, injectable } from "tsyringe";
 import { SearchService } from "./search.service.js";
 import type { AuthenticatedUser } from "../auth/auth.types.js";
-import type { SuccessResponse, FailResponseFromError } from "../../utils/responses.js";
+import type { SuccessResponse as SuccessResponseType, FailResponseFromError } from "../../utils/responses.js";
 import { SearchNotFoundError, SearchNotAuthorizedError } from "./search.errors.js";
 
 @injectable()
@@ -24,11 +24,11 @@ export class SearchController extends Controller {
     @Post("/")
     @Security('jwt-optional')
     @Response<SearchValidationFailResponse>(422, "Error de validación")
-    @SuccessResponseDecorator(201, "Búsqueda creada")
+    @SuccessResponse(201, "Búsqueda creada")
     public async searchRequest(
         @Body() body: SearchRequest,
         @RequestProp('user') user: AuthenticatedUser | null
-    ): Promise<SuccessResponse<SearchResponseData>> {
+    ): Promise<SuccessResponseType<SearchResponseData>> {
         const request: SearchRequest & { user_id?: string } = { ...body };
         if (user) request.user_id = user._id;
         this.setStatus(201);
@@ -47,7 +47,7 @@ export class SearchController extends Controller {
     public async searchResult(
         @Path('searchId') searchId: string,
         @RequestProp('user') user: AuthenticatedUser | null
-    ): Promise<SuccessResponse<SearchResponseData>> {
+    ): Promise<SuccessResponseType<SearchResponseData>> {
         const result = await this.searchService.getSearch(searchId, user?._id);
         return result satisfies SearchResponseData as any;
     }
@@ -56,11 +56,11 @@ export class SearchController extends Controller {
     @Security('jwt')
     @Response<FailResponseFromError<SearchNotFoundError>>(404, "Búsqueda no encontrada")
     @Response<FailResponseFromError<SearchNotAuthorizedError>>(403, "Operación no autorizada sobre un recurso ajeno")
-    @SuccessResponseDecorator(200, "Búsqueda compartida")
+    @SuccessResponse(200, "Búsqueda compartida")
     public async shareSearch(
         @Path('searchId') searchId: string,
         @RequestProp('user') user: AuthenticatedUser
-    ): Promise<SuccessResponse<SearchResponseData>> {
+    ): Promise<SuccessResponseType<SearchResponseData>> {
         const result = await this.searchService.shareSearch(searchId, user._id);
         return result satisfies SearchResponseData as any;
     }
@@ -69,11 +69,11 @@ export class SearchController extends Controller {
     @Security('jwt')
     @Response<FailResponseFromError<SearchNotFoundError>>(404, "Búsqueda no encontrada")
     @Response<FailResponseFromError<SearchNotAuthorizedError>>(403, "Operación no autorizada sobre un recurso ajeno")
-    @SuccessResponseDecorator(200, "Búsqueda privatizada")
+    @SuccessResponse(200, "Búsqueda privatizada")
     public async privatizeSearch(
         @Path('searchId') searchId: string,
         @RequestProp('user') user: AuthenticatedUser
-    ): Promise<SuccessResponse<SearchResponseData>> {
+    ): Promise<SuccessResponseType<SearchResponseData>> {
         const result = await this.searchService.privatizeSearch(searchId, user._id);
         return result satisfies SearchResponseData as any;
     }
@@ -87,7 +87,7 @@ export class SearchController extends Controller {
         @RequestProp('user') user: AuthenticatedUser | null,
         @Query('page') page: number = 1,
         @Query('limit') limit: number = 10
-    ): Promise<SuccessResponse<{ items: SearchResponseData[], total: number, page: number, totalPages: number }>> {
+    ): Promise<SuccessResponseType<{ items: SearchResponseData[], total: number, page: number, totalPages: number }>> {
         const searches = await this.searchService.getSearches(userId, user?._id || undefined, page, limit);
         return searches satisfies { items: SearchResponseData[], total: number, page: number, totalPages: number } as any;
     }
