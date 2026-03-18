@@ -1,5 +1,4 @@
 import type { ValidationDetails, RequestValidationFailResponse, DatabaseValidationFailResponse, FailResponseFromError } from "../../utils/responses.js";
-import type { PopulatedUser } from "../users/user.types.js";
 import { NoTokenProvidedError, InvalidTokenError, TokenUserNotFoundError, AuthenticationVersionMismatchError, InvalidPasswordError } from "./auth.errors.js";
 
 // ==================== TIPOS DE AUTENTICACIÓN ====================

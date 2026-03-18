@@ -5,7 +5,7 @@ import { AuthService } from "./auth.service.js";
 import type { AuthenticatedUser, ChangePasswordRequest, ChangePasswordValidationFailResponse, ForgotPasswordRequest, ForgotPasswordValidationFailResponse, LoginRequest, LoginResponseData, LoginValidationFailResponse, ResetPasswordRequest, ResetPasswordValidationFailResponse, ChangePasswordErrorResponse } from "./auth.types.js";
 import type { FailResponseFromError, MessageResponseData, SuccessResponse } from "../../utils/responses.js";
 import type { AuthFailResponse } from "./auth.types.js";
-import { InvalidCredentialsError, LoginUserNotFoundError, InvalidPasswordError, ResetTokenInvalidOrExpiredError, EmailNotVerifiedError, NewPasswordSameAsOldError } from "./auth.errors.js";
+import { InvalidCredentialsError, LoginUserNotFoundError, InvalidPasswordError, ResetTokenInvalidOrExpiredError, NewPasswordSameAsOldError } from "./auth.errors.js";
 
 import { ServerConfig } from "../../config/server.config.js";
 
