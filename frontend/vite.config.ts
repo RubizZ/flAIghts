@@ -15,6 +15,7 @@ export default defineConfig({
         }),
         run({
             run: ['npm', 'run', 'orval'],
+            startup: false,
             condition: (file) => file.includes('openapi.json') || file.includes('orval.config.js'),
         })
     ],

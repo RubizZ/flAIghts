@@ -11,7 +11,7 @@
     "build": "npm run orval && vite build",
     "preview": "vite preview",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "orval": "orval && npx tsx scripts/fix-orval-enums.ts"
+    "orval": "orval"
   },
   "devDependencies": {
     "@tailwindcss/vite": "^4.1.18",
@@ -22,7 +22,7 @@
     "@types/react-dom": "^19.2.3",
     "@types/three": "^0.182.0",
     "@vitejs/plugin-react": "^5.1.1",
-    "orval": "^8.1.0",
+    "orval": "^8.5.3",
     "tailwindcss": "^4.1.18",
     "typescript": "^5.9.3",
     "vite": "^7.3.1",
