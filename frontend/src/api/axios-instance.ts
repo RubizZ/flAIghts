@@ -1,5 +1,4 @@
 import axios, { AxiosRequestConfig, AxiosError } from 'axios';
-import nprogress from 'nprogress';
 
 // Códigos de error de autenticación que deben redirigir a login
 export const AUTH_FAIL_CODES = [
@@ -60,48 +59,6 @@ const getApiBaseUrl = () => {
 export const AXIOS_INSTANCE = axios.create({
     withCredentials: true
 });
-
-// Contador de peticiones activas para manejar peticiones concurrentes
-let activeRequests = 0;
-
-const startProgress = () => {
-    if (activeRequests === 0) {
-        nprogress.start();
-    }
-    activeRequests++;
-};
-
-const stopProgress = () => {
-    activeRequests--;
-    if (activeRequests <= 0) {
-        activeRequests = 0;
-        nprogress.done();
-    }
-};
-
-// Interceptor de peticiones
-AXIOS_INSTANCE.interceptors.request.use(
-    (config) => {
-        startProgress();
-        return config;
-    },
-    (error) => {
-        stopProgress();
-        return Promise.reject(error);
-    }
-);
-
-// Interceptor de respuestas
-AXIOS_INSTANCE.interceptors.response.use(
-    (response) => {
-        stopProgress();
-        return response;
-    },
-    (error) => {
-        stopProgress();
-        return Promise.reject(error);
-    }
-);
 
 // Mutador para Orval: extrae los datos y gestiona la cancelación
 export type BodyType<T> = T extends { data: infer D } ? D : T;
