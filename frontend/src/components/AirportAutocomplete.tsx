@@ -1,7 +1,9 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { Plane, Loader2, Search } from "lucide-react";
-import { useSearchAirports, useGetAirportByIata } from "@/api/generated/airports/airports";
-import type { AirportResponse } from "@/api/generated/model";
+import { useInfiniteQuery } from "@tanstack/react-query";
+import { useGetAirportByIata } from "@/api/generated/airports/airports";
+import { customInstance } from "@/api/axios-instance";
+import type { AirportResponse, PaginatedAirportResponse } from "@/api/generated/model";
 import { COUNTRY_NAMES } from "@/constants/countries";
 import SmartPopover from "./ui/SmartPopover";
 
@@ -24,16 +26,28 @@ export default function AirportAutocomplete({ value, onChange, placeholder, clas
     const [debouncedQuery, setDebouncedQuery] = useState("");
     const [isOpen, setIsOpen] = useState(false);
 
-    const { data, isFetching } = useSearchAirports(
-        { q: debouncedQuery },
-        {
-            query: {
-                enabled: debouncedQuery.length >= 2 && (!value || debouncedQuery !== getDisplay(value)),
-                staleTime: 5 * 60 * 1000,
-                refetchOnWindowFocus: false,
-            },
-        }
-    );
+    const sentinelRef = useRef<HTMLDivElement>(null);
+    const scrollContainerRef = useRef<HTMLUListElement>(null);
+
+    const {
+        data,
+        isFetching,
+        fetchNextPage,
+        hasNextPage,
+        isFetchingNextPage
+    } = useInfiniteQuery({
+        queryKey: ['airports', 'autocomplete', debouncedQuery],
+        initialPageParam: 1,
+        queryFn: ({ pageParam }) => customInstance<PaginatedAirportResponse>({
+            url: '/airports',
+            method: 'GET',
+            params: { q: debouncedQuery, page: pageParam, limit: 20 }
+        }),
+        getNextPageParam: (lastPage) => lastPage.page < lastPage.totalPages ? lastPage.page + 1 : undefined,
+        enabled: debouncedQuery.length >= 2 && (!value || debouncedQuery !== getDisplay(value)),
+        staleTime: 5 * 60 * 1000,
+        refetchOnWindowFocus: false,
+    });
 
     // Resolve IATA code if only IATA is provided in value
     const shouldResolve = !!(value && value.iata_code && value.iata_code.length === 3 && !value.city && !value.name);
@@ -53,25 +67,7 @@ export default function AirportAutocomplete({ value, onChange, placeholder, clas
         }
     }, [resolvedData, shouldResolve, onChange]);
 
-    // Resolve IATA code if only IATA is provided in value
-    const shouldResolve = !!(value && value.iata_code && value.iata_code.length === 3 && !value.city && !value.name);
-    const { data: resolvedData, isFetching: isResolving } = useGetAirportByIata(
-        value?.iata_code || "",
-        {
-            query: {
-                enabled: shouldResolve,
-                staleTime: Infinity,
-            }
-        }
-    );
-
-    useEffect(() => {
-        if (resolvedData && shouldResolve) {
-            onChange(resolvedData);
-        }
-    }, [resolvedData, shouldResolve, onChange]);
-
-    const suggestions = data?.items ?? [];
+    const suggestions = useMemo(() => data?.pages.flatMap(page => page.items) ?? [], [data]);
 
     const groupedSuggestions = useMemo(() => {
         const groups: Record<string, AirportResponse[]> = {};
@@ -107,6 +103,21 @@ export default function AirportAutocomplete({ value, onChange, placeholder, clas
         }, 300);
         return () => clearTimeout(timer);
     }, [query, isOpen, value]);
+
+    // Infinite Scroll Observer
+    useEffect(() => {
+        const observer = new IntersectionObserver((entries) => {
+            if (entries[0]?.isIntersecting && hasNextPage && !isFetchingNextPage) {
+                fetchNextPage();
+            }
+        }, {
+            root: scrollContainerRef.current,
+            rootMargin: '100px'
+        });
+        const el = sentinelRef.current;
+        if (el) observer.observe(el);
+        return () => { if (el) observer.unobserve(el); };
+    }, [hasNextPage, isFetchingNextPage, fetchNextPage, suggestions, scrollContainerRef.current]);
 
     const handleSelect = (airport: AirportResponse) => {
         const result = onChange(airport);
@@ -168,7 +179,7 @@ export default function AirportAutocomplete({ value, onChange, placeholder, clas
                 </div>
             }
         >
-            <ul className="flex flex-col">
+            <ul ref={scrollContainerRef} className="flex flex-col max-h-[400px] overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
                 {groupedSuggestions.length > 0 ? (
                     groupedSuggestions.map(([country, airports]) => (
                         <div key={country} className="flex flex-col border-b border-line last:border-0">
@@ -198,7 +209,15 @@ export default function AirportAutocomplete({ value, onChange, placeholder, clas
                             ))}
                         </div>
                     ))
-                ) : debouncedQuery.length >= 2 && !isFetching ? (
+                ) : null}
+
+                {/* Loading Indicator & Sentinel for Infinite Scroll */}
+                {(isFetching || isFetchingNextPage) ? (
+                    <div ref={sentinelRef} className="px-6 py-4 flex items-center justify-center gap-3 text-content-muted">
+                        <Loader2 className="animate-spin h-5 w-5" />
+                        <span className="text-xs">{isFetchingNextPage ? "Cargando más..." : "Buscando..."}</span>
+                    </div>
+                ) : (debouncedQuery.length >= 2 && groupedSuggestions.length === 0) ? (
                     <div className="px-6 py-10 flex flex-col items-center justify-center gap-3 text-center">
                         <div className="bg-surface/50 p-4 rounded-3xl text-content-muted/40">
                             <Search size={32} />
@@ -208,12 +227,7 @@ export default function AirportAutocomplete({ value, onChange, placeholder, clas
                             <p className="text-xs text-content-muted">Prueba con otro código o nombre de ciudad</p>
                         </div>
                     </div>
-                ) : (
-                    <div className="px-6 py-10 flex items-center justify-center gap-3 text-content-muted">
-                        <Loader2 className="animate-spin h-5 w-5" />
-                        <span className="text-sm">Buscando aeropuertos...</span>
-                    </div>
-                )}
+                ) : <div ref={sentinelRef} />}
             </ul>
         </SmartPopover>
     );

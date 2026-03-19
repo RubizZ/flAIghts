@@ -27,8 +27,9 @@ export class AirportController extends Controller {
 
     @Get("/globe")
     @SuccessResponse(200, "Aeropuertos para el globo")
-    public async getGlobeAirports(): Promise<GlobeAirportResponse[]> {
-        return this.airportService.getGlobeAirports();
+    public async getGlobeAirports(): Promise<SuccessResponseType<GlobeAirportResponse[]>> {
+        const airports = await this.airportService.getGlobeAirports();
+        return airports satisfies GlobeAirportResponse[] as any;
     }
 
     @Get("/{iata}")
