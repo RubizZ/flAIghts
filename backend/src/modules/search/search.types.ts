@@ -98,8 +98,8 @@ export type SearchRequestValidationFailResponse = RequestValidationFailResponse<
 export type SearchValidationFailResponse = SearchRequestValidationFailResponse | DatabaseValidationFailResponse;
 
 export interface EnrichedFlightEdge extends DijkstraFlightEdge {
-    airplane?: string;
-    flight_number?: string;
-    travel_class?: string;
+    airplane: string;
+    flight_number: string;
+    travel_class: string;
     extensions?: string[];
 }
