@@ -63,6 +63,7 @@ export default function Globe({
     const contextMenuContainerRef = useRef<HTMLDivElement | null>(null);
     const labelGroupRef = useRef<THREE.Group>(new THREE.Group());
     const clusterTextureCache = useRef<Record<number, THREE.CanvasTexture>>({});
+    const zoomTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
     const airplaneModelRef = useRef<THREE.Group | null>(null);
     const airportsDataRef = useRef<AirportData[]>([]);
@@ -106,11 +107,12 @@ export default function Globe({
     // Dynamic distance calculation based on aspect ratio to fit globe on mobile
     const calculateDistance = (w: number, h: number) => {
         const aspect = w / h;
+        const ZOOM_STEP = 0.25;
         if (aspect < 1) {
-            // Mobile portrait: increase distance to fit width
-            return 1.8 / (aspect * 0.4142);
+            const raw = 1.8 / (aspect * 0.4142);
+            return Math.round(raw / ZOOM_STEP) * ZOOM_STEP;
         }
-        return 3.2; // Desktop / Landscape
+        return 3.25; // Multiple of 0.25
     };
 
     const [isLoaded, setIsLoaded] = useState(false);
@@ -304,26 +306,34 @@ export default function Globe({
         const controls = new OrbitControls(camera, renderer.domElement);
         controls.enableDamping = true;
         controls.dampingFactor = 0.03;
-        controls.minDistance = 1.3;
-        controls.maxDistance = 6;
+        controls.minDistance = 1.25; // Aligned to 0.25 step
+        controls.maxDistance = 6.25; // Aligned to 0.25 step
         controls.enablePan = false;
         controlsRef.current = controls;
 
         const hideContextMenu = () => {
             setContextMenu(prev => prev.visible ? { ...prev, visible: false } : prev);
         };
-
         const onControlsChange = () => {
             if (camera.position.length() !== 0) {
+                const ZOOM_STEP = 0.25;
                 const dist = camera.position.length();
-                // Balanced threshold: active grouping but keeping major airports distinct at mid-zoom
-                const rawThreshold = (dist - 1.1) * 0.028;
-                const nextThreshold = Math.max(0.003, Math.min(0.08, rawThreshold));
+                // Snap distance to step for deterministic threshold calculation
+                const steppedDist = Math.round(dist / ZOOM_STEP) * ZOOM_STEP;
+                // Snapped threshold calculation for categorical zoom "notches"
+                // Formula tuned to range [0.012, 0.045] over dist [1.25, 6.25]
+                // With greedy clustering, we need higher thresholds to perceive grouping.
+                const rawThreshold = (steppedDist - 1.25) * 0.007 + 0.012;
+                const nextThreshold = Math.max(0.012, Math.min(0.045, rawThreshold));
 
-                setClusterThreshold(prev => {
-                    if (Math.abs(prev - nextThreshold) < 0.002) return prev;
-                    return nextThreshold;
-                });
+                // Debounce threshold update to avoid lag during zoom
+                if (zoomTimeoutRef.current) clearTimeout(zoomTimeoutRef.current);
+                zoomTimeoutRef.current = setTimeout(() => {
+                    setClusterThreshold(prev => {
+                        if (Math.abs(prev - nextThreshold) < 0.001) return prev;
+                        return nextThreshold;
+                    });
+                }, 50);
             }
         };
         controls.addEventListener('change', onControlsChange);
@@ -613,13 +623,14 @@ export default function Globe({
                 const selSet = selectedAirportsSetRef.current;
 
                 const distFactor = camDist / 3.2;
-                // Use a non-linear factor so they grow slightly bigger on screen as we move away
-                const scaleFactor = Math.pow(distFactor, 1.4);
+                // Linear scaling ensures constant screen size (Perspective projection offset)
+                const scaleFactor = distFactor;
                 const proximityBase = 0.03 * Math.pow(distFactor, 2.2);
 
                 const baseScale = 1.5 * scaleFactor;
                 const specialScale = 35 * scaleFactor;
-                const clusterHoverScale = 24 * scaleFactor;
+                const specialClusterScale = 8 * scaleFactor; // Balanced for 5x geometry
+                const clusterHoverScale = 6 * scaleFactor;   // Balanced for 5x geometry
                 const airportHoverScale = 28 * scaleFactor;
                 const labelRefScale = 0.045 * scaleFactor;
 
@@ -648,7 +659,8 @@ export default function Globe({
 
                     if (isSpecial) {
                         targetOpacity = 1;
-                        targetScale = specialScale * Math.max(0.5, globalZoomFade);
+                        const s = item.isCluster ? specialClusterScale : specialScale;
+                        targetScale = s * Math.max(0.5, globalZoomFade);
                     } else if (interactiveRef.current) {
                         _vec1.copy(mesh.position);
                         const dot = _camNorm.dot(_vec1);
@@ -668,7 +680,8 @@ export default function Globe({
                             if (factor > 0) {
                                 // Slightly more gradual ramp
                                 targetOpacity = Math.min(1, factor * 2.5) * globalZoomFade;
-                                targetScale = (baseScale + ((item.isCluster ? clusterHoverScale : airportHoverScale) - baseScale) * factor) * Math.max(0.5, globalZoomFade);
+                                const hS = item.isCluster ? clusterHoverScale : airportHoverScale;
+                                targetScale = (baseScale + (hS - baseScale) * factor) * Math.max(0.5, globalZoomFade);
                             } else {
                                 targetOpacity = 0;
                                 targetScale = baseScale;
@@ -685,9 +698,9 @@ export default function Globe({
                         }
                     } else {
                         // For clusters, mesh is invisible. 
-                        // Keep a moderate scale for raycasting, but avoid huge bubbles
+                        // Keep a moderate scale for raycasting, but avoid "enlarged" hitboxes
                         mat.opacity = 0;
-                        const clusterHitScale = Math.min(6, targetScale);
+                        const clusterHitScale = targetScale;
                         if (Math.abs(mesh.scale.x - clusterHitScale) > 0.01) {
                             mesh.scale.setScalar(mesh.scale.x + (clusterHitScale - mesh.scale.x) * 0.06);
                         }
@@ -902,6 +915,7 @@ export default function Globe({
 
             controls.removeEventListener('change', onControlsChange);
             controls.dispose();
+            if (zoomTimeoutRef.current) clearTimeout(zoomTimeoutRef.current);
 
             if (mount.contains(renderer.domElement)) mount.removeChild(renderer.domElement);
             renderer.dispose();
@@ -977,119 +991,205 @@ export default function Globe({
 
     const selectedAirportsString = selectedAirports.join(',');
 
-    // 2. Load and process airports from API (Optimized Clustering + O(N) Grid)
+    // 2. Load and process airports from API (Hitbox-based Clustering)
     useEffect(() => {
         if (!isAirportsLoaded || !globeAirports) return;
 
         airportGroupRef.current.clear();
         airportsMap.current = {};
 
-        // 2a. Pre-calculate positions once (Avoid thousands of sin/cos calls in loops)
-        const rawData = globeAirports.map(a => {
-            const pos = latLonToVector3(a.la, a.lo);
-            return {
-                iata: a.i,
-                lat: a.la,
-                lon: a.lo,
-                name: a.n,
-                city: a.ci,
-                v3: pos // Pre-calculated position
-            };
-        });
-
-        const items: any[] = [];
+        const hM = isMobileRef.current ? 1.5 : 1.0;
+        const forcedSet = new Set([...selectedAirports, originIata, destinationIata].filter(Boolean) as string[]);
         const threshold = clusterThreshold;
 
-        // Force selected, origin, and destination as individuals ALWAYS
-        const forcedSet = new Set([...selectedAirports, originIata, destinationIata].filter(Boolean) as string[]);
+        // 1. OOP Entity Class
+        class GlobeItem {
+            v3: THREE.Vector3;
+            iata: string;
+            name: string;
+            city: string;
+            lat: number;
+            lon: number;
+            airports: any[];
+            isSpecial: boolean;
+            isCluster: boolean;
+            id: string;
 
-        const toCluster: any[] = [];
-        rawData.forEach(a => {
-            if (forcedSet.has(a.iata)) {
-                items.push(a);
+            constructor(data: any) {
+                this.v3 = data.v3.clone();
+                this.iata = data.iata || '';
+                this.name = data.name || '';
+                this.city = data.city || '';
+                this.lat = data.lat;
+                this.lon = data.lon;
+                this.airports = data.airports || [];
+                this.isSpecial = forcedSet.has(this.iata);
+                this.isCluster = !!data.isCluster;
+                // Deterministic ID: for clusters, join sorted IATAs
+                if (this.isCluster) {
+                    const sortedIatas = [...this.airports].map(a => a.iata).sort();
+                    this.id = `c-${sortedIatas.join('-')}`;
+                } else {
+                    this.id = this.iata;
+                }
+            }
+
+            get radius() {
+                return threshold * 0.5;
+            }
+
+            collides(other: GlobeItem) {
+                const minDist = (this.radius + other.radius) * hM;
+                return this.v3.distanceTo(other.v3) < minDist;
+            }
+        }
+
+        // 2. Spatial Grid Class for O(N) Complexity
+        class SpatialGrid {
+            grid: Map<string, GlobeItem[]>;
+            size: number;
+            constructor(size: number) {
+                this.grid = new Map();
+                this.size = size;
+            }
+            insert(it: GlobeItem) {
+                const gx = Math.floor(it.v3.x / this.size);
+                const gy = Math.floor(it.v3.y / this.size);
+                const gz = Math.floor(it.v3.z / this.size);
+                const k = `${gx},${gy},${gz}`;
+                if (!this.grid.has(k)) this.grid.set(k, []);
+                this.grid.get(k)!.push(it);
+            }
+            getNeighbors(it: GlobeItem) {
+                const res: GlobeItem[] = [];
+                const gx = Math.floor(it.v3.x / this.size);
+                const gy = Math.floor(it.v3.y / this.size);
+                const gz = Math.floor(it.v3.z / this.size);
+                for (let x = gx - 1; x <= gx + 1; x++) {
+                    for (let y = gy - 1; y <= gy + 1; y++) {
+                        for (let z = gz - 1; z <= gz + 1; z++) {
+                            const n = this.grid.get(`${x},${y},${z}`);
+                            if (n) res.push(...n);
+                        }
+                    }
+                }
+                return res;
+            }
+        }
+
+        // Processing Pipeline (Stable sort for determinism)
+        let items = [...globeAirports]
+            .sort((a, b) => a.i.localeCompare(b.i))
+            .map(a => new GlobeItem({
+                iata: a.i, lat: a.la, lon: a.lo, name: a.n, city: a.ci, v3: latLonToVector3(a.la, a.lo)
+            }));
+
+        // 2b. Leader-based Clustering Pass (O(N) with Grid)
+        // Prevents Transitive "Super-clusters" by ensuring each leader only picks its immediate neighbors.
+        // This creates an organic mesh of clusters instead of long chains.
+        const assigned = new Set<string>();
+        const resultItems: GlobeItem[] = [];
+
+        // Pre-insert non-special items into grid for fast neighborhood search
+        const mergeGrid = new SpatialGrid(threshold * 1.5 * hM);
+        items.forEach(it => { if (!it.isSpecial) mergeGrid.insert(it); });
+
+        // Process items carefully: special airports first to ensure they aren't swallowed
+        // We look at airports in a deterministic order
+        items.forEach(it => {
+            if (assigned.has(it.id)) return;
+
+            // 1. Handle special airports (origin, dest, selected) -> they remain as single points
+            if (it.isSpecial) {
+                resultItems.push(it);
+                assigned.add(it.id);
+                return;
+            }
+
+            // 2. Start a new cluster centered at 'it'
+            const clusterMembers: any[] = [{ iata: it.iata, lat: it.lat, lon: it.lon, name: it.name, city: it.city }];
+            assigned.add(it.id);
+
+            // 3. Absorb immediate unassigned neighbors within threshold radius
+            const neighbors = mergeGrid.getNeighbors(it);
+            for (const nb of neighbors) {
+                if (!nb.isSpecial && !assigned.has(nb.id) && it.collides(nb)) {
+                    clusterMembers.push({ iata: nb.iata, lat: nb.lat, lon: nb.lon, name: nb.name, city: nb.city });
+                    assigned.add(nb.id);
+                }
+            }
+
+            // 4. Finalize cluster or single item
+            if (clusterMembers.length > 1) {
+                const avgLat = clusterMembers.reduce((s, a) => s + a.lat, 0) / clusterMembers.length;
+                const avgLon = clusterMembers.reduce((s, a) => s + a.lon, 0) / clusterMembers.length;
+                resultItems.push(new GlobeItem({
+                    isCluster: true,
+                    airports: clusterMembers,
+                    lat: avgLat,
+                    lon: avgLon,
+                    v3: latLonToVector3(avgLat, avgLon)
+                }));
             } else {
-                toCluster.push(a);
+                resultItems.push(it);
             }
         });
 
-        if (threshold <= 0) {
-            // Fallback for extreme cases: no clustering
-            toCluster.forEach(a => items.push(a));
-        } else {
-            // 2b. O(N) Spatial Grid Clustering
-            const grid: Record<string, any[]> = {};
-            const cellSize = threshold * 1.8; // Balanced cell size for more natural grouping
+        items = resultItems;
 
-            toCluster.forEach(a => {
-                const gx = Math.floor(a.v3.x / cellSize);
-                const gy = Math.floor(a.v3.y / cellSize);
-                const gz = Math.floor(a.v3.z / cellSize);
-                const key = `${gx},${gy},${gz}`;
-                if (!grid[key]) grid[key] = [];
-                grid[key].push(a);
-            });
-
-            Object.values(grid).forEach(group => {
-                let item: any;
-                if (group.length > 1) {
-                    const avgLat = group.reduce((s, x) => s + (x.lat || 0), 0) / group.length;
-                    const avgLon = group.reduce((s, x) => s + (x.lon || 0), 0) / group.length;
-                    item = { isCluster: true, airports: group, lat: avgLat, lon: avgLon, v3: latLonToVector3(avgLat, avgLon), id: `cluster-${group[0].iata}` };
-                } else {
-                    // This is an airport that stayed solitary after clustering
-                    // We clone v3 to avoid modifying the original rawData
-                    item = { ...group[0], v3: group[0].v3.clone() };
-                }
-
-                // Repulsion: push away just enough to be colindante
-                forcedSet.forEach(iata => {
-                    const forcedA = rawData.find(a => a.iata === iata);
-                    if (forcedA) {
-                        const dist = item.v3.distanceTo(forcedA.v3);
-                        const protectedRadius = 0.006;
-                        if (dist < protectedRadius && dist > 0) {
-                            const repulsion = new THREE.Vector3().subVectors(item.v3, forcedA.v3);
-                            const pushDist = protectedRadius - dist;
-                            item.v3.add(repulsion.normalize().multiplyScalar(pushDist));
-                            item.v3.normalize();
+        // 2c. Repulsion Pass (O(N) with Grid)
+        const vRep = new THREE.Vector3();
+        for (let iter = 0; iter < 4; iter++) {
+            const grid = new SpatialGrid(threshold * 1.5 * hM);
+            items.forEach(it => grid.insert(it));
+            for (let i = 0; i < items.length; i++) {
+                const a = items[i];
+                if (!a) continue;
+                const neighbors = grid.getNeighbors(a);
+                for (const b of neighbors) {
+                    if (a === b || a.id < b.id) continue;
+                    const minDist = (a.radius + b.radius) * hM;
+                    const d = a.v3.distanceTo(b.v3);
+                    if (d < minDist) {
+                        const diff = vRep.subVectors(a.v3, b.v3);
+                        // Deterministic jitter based on coordinates instead of Math.random()
+                        if (d < 0.0001) {
+                            const jitterX = Math.sin(a.lat * 123.456 + a.lon * 456.789);
+                            const jitterY = Math.cos(a.lat * 456.789 + a.lon * 123.456);
+                            const jitterZ = Math.sin(a.lat * 321.654 + a.lon * 654.321);
+                            diff.set(jitterX, jitterY, jitterZ);
+                        }
+                        diff.normalize();
+                        const push = minDist - d;
+                        if (a.isSpecial && b.isSpecial) {
+                            const p2 = push * 0.5;
+                            a.v3.addScaledVector(diff, p2).normalize();
+                            b.v3.addScaledVector(diff, -p2).normalize();
+                        } else if (a.isSpecial) {
+                            b.v3.addScaledVector(diff, -push).normalize();
+                        } else if (b.isSpecial) {
+                            a.v3.addScaledVector(diff, push).normalize();
+                        } else {
+                            const p2 = push * 0.5;
+                            a.v3.addScaledVector(diff, p2).normalize();
+                            b.v3.addScaledVector(diff, -p2).normalize();
                         }
                     }
-                });
-
-                items.push(item);
-            });
+                }
+            }
         }
 
-        // Clean up previous cluster labels
         labelGroupRef.current.clear();
 
-        // Build Scene
+        // 3. Build Scene
         items.forEach(item => {
-            const v3 = item.v3 || latLonToVector3(item.lat, item.lon);
-            const brandColor = getThemeColorHex('--color-brand', 0x4f46e5);
-            let meshColor = brandColor;
-            let meshOpacity = 0.4;
-            let meshScale = 1;
-            let renderPriority = 1; // Default priority
+            const isOriginDest = item.iata === originIata || item.iata === destinationIata;
+            const meshColor = isOriginDest
+                ? getThemeColorHex(item.iata === originIata ? '--color-origin' : '--color-destination', 0x0891b2)
+                : (item.isSpecial ? 0x00ff00 : getThemeColorHex('--color-brand', 0x4f46e5));
 
-            if (!item.isCluster) {
-                if (item.iata === originIata || item.iata === destinationIata) {
-                    meshColor = getThemeColorHex(
-                        item.iata === originIata ? '--color-origin' : '--color-destination',
-                        item.iata === originIata ? 0x0891b2 : 0xc026d3
-                    );
-                    meshOpacity = 1;
-                    meshScale = 12;
-                    renderPriority = 10; // Highest priority for origin/destination
-                } else if (selectedAirportsSetRef.current.has(item.iata)) {
-                    meshColor = 0x00ff00;
-                    meshOpacity = 1;
-                    meshScale = 8;
-                    renderPriority = 5; // High priority for selected
-                }
-            } else {
-                renderPriority = 0; // Clusters have lowest priority
-            }
+            const meshOpacity = (item.isSpecial || isOriginDest) ? 1 : 0.4;
+            const baseScale = isOriginDest ? 35 : (item.isSpecial ? 28 : (item.isCluster ? 2.4 : 1.6));
 
             const mesh = new THREE.Mesh(
                 item.isCluster ? sharedClusterGeo.current : sharedAirportGeo.current,
@@ -1097,48 +1197,40 @@ export default function Globe({
                     color: meshColor,
                     transparent: true,
                     opacity: item.isCluster ? 0 : meshOpacity,
-                    depthWrite: false, // Prevents z-fighting artifacts
+                    depthWrite: false,
                 })
             );
-            mesh.position.copy(v3);
-            mesh.scale.setScalar(meshScale);
-            mesh.userData = item;
-            mesh.renderOrder = renderPriority; // Ensure draw order priority
+            mesh.position.copy(item.v3);
+            mesh.scale.setScalar(baseScale);
+            mesh.userData = { ...item }; // Plain object for userData
+            mesh.renderOrder = isOriginDest ? 10 : (item.isSpecial ? 5 : 1);
             airportGroupRef.current.add(mesh);
 
             if (item.isCluster) {
                 const texture = getClusterTexture(item.airports.length);
                 if (texture) {
-                    const spriteMaterial = new THREE.SpriteMaterial({
-                        map: texture,
-                        transparent: true,
-                        opacity: 0,
-                        depthTest: true,
-                        depthWrite: false,
-                        color: 0xffffff,
-                    });
-                    const sprite = new THREE.Sprite(spriteMaterial);
-                    sprite.position.copy(v3).multiplyScalar(1.002);
+                    const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: texture, transparent: true, opacity: 0, depthWrite: false }));
+                    sprite.position.copy(item.v3).multiplyScalar(1.002);
                     sprite.scale.setScalar(0.016);
                     sprite.visible = false;
-                    sprite.renderOrder = 0; // Labels stay behind special icons
                     labelGroupRef.current.add(sprite);
                     mesh.userData.labelMesh = sprite;
                 }
-                item.airports.forEach((a: any) => airportsMap.current[a.iata] = mesh);
+                item.airports.forEach((a: any) => {
+                    if (a && a.iata) airportsMap.current[a.iata] = mesh;
+                });
             } else {
                 airportsMap.current[item.iata] = mesh;
             }
         });
 
-        airportsDataRef.current = rawData;
+        airportsDataRef.current = globeAirports.map(a => ({ iata: a.i, lat: a.la, lon: a.lo, name: a.n, city: a.ci, v3: latLonToVector3(a.la, a.lo) }));
         setIsLoaded(true);
     }, [isAirportsLoaded, globeAirports, clusterThreshold, forcedAirportsKey]);
 
     // 2.5 Style Update Effect (Updates marker visual state WITHOUT rebuilding scene)
     useEffect(() => {
         if (!isLoaded) return;
-
         const brandColor = getThemeColorHex('--color-brand', 0x4f46e5);
         const originColor = getThemeColorHex('--color-origin', 0x0891b2);
         const destColor = getThemeColorHex('--color-destination', 0xc026d3);
@@ -1164,19 +1256,26 @@ export default function Globe({
                 }
             } else {
                 // Determine if cluster contains a special airport
-                let hasSpecial = false;
+                let hasOriginOrDest = false;
+                let hasSelected = false;
                 for (let i = 0; i < item.airports.length; i++) {
                     const iata = item.airports[i].iata;
-                    if (iata === originIata || iata === destinationIata || selSet.has(iata)) {
-                        hasSpecial = true;
-                        break;
+                    if (iata === originIata || iata === destinationIata) {
+                        hasOriginOrDest = true;
+                    }
+                    if (selSet.has(iata)) {
+                        hasSelected = true;
                     }
                 }
 
-                if (hasSpecial) {
+                if (hasOriginOrDest) {
                     mat.color.setHex(brandColor);
-                    mat.opacity = 0; // Clusters stay invisible as mesh
-                    mesh.scale.setScalar(12);
+                    mat.opacity = 0;
+                    mesh.scale.setScalar(8); // Sync with specialClusterScale
+                } else if (hasSelected) {
+                    mat.color.setHex(brandColor);
+                    mat.opacity = 0;
+                    mesh.scale.setScalar(6); // Sync with clusterHoverScale
                 } else {
                     mat.color.setHex(brandColor);
                     mat.opacity = 0;
