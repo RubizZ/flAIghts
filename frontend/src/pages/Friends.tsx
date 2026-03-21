@@ -179,7 +179,7 @@ export default function Friends() {
                         {/* Recibidas */}
                         <div className="flex flex-col gap-4">
                             <h2 className="text-xl font-bold text-content flex items-center gap-2">
-                                {t("friends.tabs.received")}
+                                {t("friends.requests.received")}
                                 <span className="bg-brand/10 text-brand px-2 py-0.5 rounded-full text-xs font-bold">{received.length}</span>
                             </h2>
                             {received.length === 0 ? (
@@ -221,7 +221,7 @@ export default function Friends() {
                         {/* Enviadas */}
                         <div className="flex flex-col gap-4">
                             <h2 className="text-xl font-bold text-content flex items-center gap-2">
-                                {t("friends.tabs.sent")}
+                                {t("friends.requests.sent")}
                                 <span className="bg-surface/10 text-content px-2 py-0.5 rounded-full text-xs font-bold">{sent.length}</span>
                             </h2>
                             {sent.length === 0 ? (
