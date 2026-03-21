@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useSearchResult } from "@/api/generated/search/search";
 import { useGetGlobeAirports } from "@/api/generated/airports/airports";
@@ -18,10 +18,14 @@ export default function SearchResults() {
     const [selectionStep, setSelectionStep] = useState<'departure' | 'return' | 'summary'>('departure');
     const [selectedDeparture, setSelectedDeparture] = useState<ItineraryResponse | null>(null);
     const [selectedReturn, setSelectedReturn] = useState<ItineraryResponse | null>(null);
-    const [windowWidth, setWindowWidth] = useState(window.innerWidth);
+    const [isSMScreen, setIsSMScreen] = useState(window.innerWidth >= 640);
+    const [isLargeScreen, setIsLargeScreen] = useState(window.innerWidth >= 1024);
 
     useEffect(() => {
-        const handleResize = () => setWindowWidth(window.innerWidth);
+        const handleResize = () => {
+            setIsSMScreen(window.innerWidth >= 640);
+            setIsLargeScreen(window.innerWidth >= 1024);
+        };
         window.addEventListener('resize', handleResize);
         return () => window.removeEventListener('resize', handleResize);
     }, []);
@@ -104,14 +108,6 @@ export default function SearchResults() {
         return formatted.charAt(0).toUpperCase() + formatted.slice(1).replace(/\./g, '');
     };
 
-    // Calculate offset to center globe in the right empty space
-    const globeOffset = useMemo(() => {
-        if (windowWidth >= 1280) return windowWidth * 0.30;
-        if (windowWidth >= 1024) return windowWidth * 0.325;
-
-        return 0;
-    }, [windowWidth]);
-
     if (error) {
         return (
             <div className="flex flex-col items-center justify-center min-h-screen bg-main text-red-500 gap-4 p-4 text-center">
@@ -128,7 +124,7 @@ export default function SearchResults() {
         );
     }
 
-    const showLoading = (isLoading && !data) || (windowWidth >= 1024 && !isGlobeReady);
+    const showLoading = (isLoading && !data) || (isLargeScreen && !isGlobeReady);
 
     const departureItineraries = sortItineraries(searchData?.departure_itineraries);
     const returnItineraries = sortItineraries(searchData?.return_itineraries);
@@ -167,8 +163,15 @@ export default function SearchResults() {
         window.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
+    const selectedAirports = useMemo(() =>
+        [globeRoute.origin, globeRoute.destination].filter(Boolean) as string[],
+        [globeRoute.origin, globeRoute.destination]
+    );
+
+    const handleGlobeReady = useCallback(() => setIsGlobeReady(true), []);
+
     return (
-        <div className="relative w-full h-screen overflow-hidden bg-main lg:bg-black text-content flex">
+        <div className="absolute inset-0 w-full h-full overflow-hidden bg-main lg:bg-black text-content flex">
             {/* Loading Overlay */}
             {showLoading && (
                 <div className="absolute inset-0 z-50 bg-black flex flex-col items-center justify-center gap-6">
@@ -198,9 +201,9 @@ export default function SearchResults() {
                             <div className="sticky top-6 lg:top-8 z-20 backdrop-blur-2xl bg-main/80 dark:bg-main/70 border border-line p-4 rounded-2xl shadow-2xl flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4 animate-in fade-in slide-in-from-top-4 duration-700">
                                 <div className="flex items-center gap-4">
                                     <button
-                                        onClick={selectionStep === 'departure' ? () => navigate('/') : handleGoBack}
+                                        onClick={selectionStep === 'departure' ? () => navigate(-1) : handleGoBack}
                                         className="p-2.5 bg-surface/50 hover:bg-surface border border-line/30 rounded-xl transition-all group active:scale-95 cursor-pointer"
-                                        title={selectionStep === 'departure' ? "Volver a la búsqueda" : "Paso anterior"}
+                                        title={selectionStep === 'departure' ? "Volver atrás" : "Paso anterior"}
                                     >
                                         <ArrowLeft size={20} className="text-content-muted group-hover:text-content" />
                                     </button>
@@ -384,14 +387,14 @@ export default function SearchResults() {
             )}
 
             {/* Desktop Globe (Absolute Full Screen with Offset) */}
-            <div className="hidden lg:block absolute inset-0 z-0">
+            <div className={`absolute inset-0 z-0 transition-opacity duration-700 ${!isLargeScreen ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
                 <Globe
                     originIata={globeRoute.origin}
                     destinationIata={globeRoute.destination}
-                    selectedAirports={[globeRoute.origin, globeRoute.destination].filter(Boolean) as string[]}
+                    selectedAirports={selectedAirports}
                     interactive={false}
-                    horizontalOffset={globeOffset}
-                    onReady={() => setIsGlobeReady(true)}
+                    horizontalOffset={isLargeScreen ? 450 : 0}
+                    onReady={handleGlobeReady}
                 />
             </div>
         </div>

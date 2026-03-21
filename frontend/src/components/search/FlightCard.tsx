@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, Fragment } from "react";
 import { ChevronDown, Clock, Info, PlaneLanding, PlaneTakeoff, Ticket } from "lucide-react";
 import type { ItineraryResponse, GlobeAirportResponse, LegResponse } from "@/api/generated/model";
 import FlightRouteInfo from "./FlightRouteInfo";
@@ -57,12 +57,12 @@ export default function FlightCard({ itinerary, formatTime, formatDuration, airp
                 <div className="px-5 pb-5 border-t border-line animate-in fade-in duration-300">
                     <div className="py-4 space-y-4">
                         {itinerary.legs.map((leg, legIndex) => (
-                            <>
+                            <Fragment key={legIndex}>
                                 {legIndex > 0 && leg.wait_time && leg.wait_time > 0 && (
                                     <StopoverDetails leg={leg} airportsMap={airportsMap} formatDuration={formatDuration} />
                                 )}
-                                <LegDetails key={legIndex} leg={leg} airportsMap={airportsMap} formatDuration={formatDuration} formatTime={formatTime} />
-                            </>
+                                <LegDetails leg={leg} airportsMap={airportsMap} formatDuration={formatDuration} formatTime={formatTime} />
+                            </Fragment>
                         ))}
                     </div>
                 </div>
