@@ -25,7 +25,7 @@ export default function AirportAutocomplete({ value, onChange, placeholder, clas
     const [query, setQuery] = useState(getDisplay(value));
     const [debouncedQuery, setDebouncedQuery] = useState("");
     const [isOpen, setIsOpen] = useState(false);
-
+    const [showFlatList, setShowFlatList] = useState(false);
     const sentinelRef = useRef<HTMLDivElement>(null);
     const scrollContainerRef = useRef<HTMLUListElement>(null);
 
@@ -69,11 +69,14 @@ export default function AirportAutocomplete({ value, onChange, placeholder, clas
 
     const suggestions = useMemo(() => data?.pages.flatMap(page => page.items) ?? [], [data]);
 
+    // Use only the first page for the initial grouped view to avoid fragmentation during pagination
+    const firstPageSuggestions = useMemo(() => data?.pages[0]?.items ?? [], [data]);
+
     const groupedSuggestions = useMemo(() => {
         const groups: Record<string, AirportResponse[]> = {};
         const countryOrder: string[] = [];
 
-        suggestions.forEach(airport => {
+        firstPageSuggestions.forEach(airport => {
             const countryCode = airport.country || "Otros";
             const countryName = (COUNTRY_NAMES[countryCode] && COUNTRY_NAMES[countryCode][1]) || countryCode;
 
@@ -85,7 +88,7 @@ export default function AirportAutocomplete({ value, onChange, placeholder, clas
         });
 
         return countryOrder.map(name => [name, groups[name]] as [string, AirportResponse[]]);
-    }, [suggestions]);
+    }, [firstPageSuggestions]);
 
     // Sync input with external value
     useEffect(() => {
@@ -94,18 +97,20 @@ export default function AirportAutocomplete({ value, onChange, placeholder, clas
         }
     }, [value, isOpen]);
 
-    // Debounce query
+    // Debounce query and reset to group view when query changes
     useEffect(() => {
         const timer = setTimeout(() => {
             if (isOpen || !value) {
                 setDebouncedQuery(query);
             }
+            setShowFlatList(false);
         }, 300);
         return () => clearTimeout(timer);
     }, [query, isOpen, value]);
 
-    // Infinite Scroll Observer
+    // Infinite Scroll Observer (only in flat view)
     useEffect(() => {
+        if (!showFlatList) return;
         const observer = new IntersectionObserver((entries) => {
             if (entries[0]?.isIntersecting && hasNextPage && !isFetchingNextPage) {
                 fetchNextPage();
@@ -117,7 +122,7 @@ export default function AirportAutocomplete({ value, onChange, placeholder, clas
         const el = sentinelRef.current;
         if (el) observer.observe(el);
         return () => { if (el) observer.unobserve(el); };
-    }, [hasNextPage, isFetchingNextPage, fetchNextPage, suggestions, scrollContainerRef.current]);
+    }, [hasNextPage, isFetchingNextPage, fetchNextPage, suggestions, scrollContainerRef.current, showFlatList]);
 
     const handleSelect = (airport: AirportResponse) => {
         const result = onChange(airport);
@@ -180,44 +185,79 @@ export default function AirportAutocomplete({ value, onChange, placeholder, clas
             }
         >
             <ul ref={scrollContainerRef} className="flex flex-col max-h-[400px] overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-                {groupedSuggestions.length > 0 ? (
-                    groupedSuggestions.map(([country, airports]) => (
-                        <div key={country} className="flex flex-col border-b border-line last:border-0">
-                            <div className="sticky top-0 z-10 bg-surface/95 backdrop-blur-md px-4 py-2 border-b border-line flex items-center">
-                                <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-content/50 pr-3 border-r border-line mr-3 leading-none">
-                                    {country}
-                                </span>
+                {/* Grouped view (first page only) */}
+                {!showFlatList && groupedSuggestions.length > 0 && (
+                    <>
+                        {groupedSuggestions.map(([country, airports]) => (
+                            <div key={country} className="flex flex-col border-b border-line last:border-0">
+                                <div className="sticky top-0 z-10 bg-surface/95 backdrop-blur-md px-4 py-2 border-b border-line flex items-center">
+                                    <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-content/50 pr-3 border-r border-line mr-3 leading-none">
+                                        {country}
+                                    </span>
+                                </div>
+                                {airports.map((airport) => (
+                                    <li
+                                        key={airport.iata_code}
+                                        className="px-4 py-3 hover:bg-surface transition-all cursor-pointer flex items-center gap-3 border-b border-line/40 last:border-0 group/suggestion"
+                                        onClick={() => handleSelect(airport)}
+                                    >
+                                        <div className="bg-surface/50 p-2 rounded-xl shrink-0 group-hover/suggestion:bg-brand/10 transition-colors">
+                                            <Plane size={16} className="text-content-muted/60 group-hover/suggestion:text-brand transition-colors" />
+                                        </div>
+                                        <div className="flex flex-col overflow-hidden">
+                                            <span className="text-sm font-semibold truncate group-hover/suggestion:text-brand transition-colors">
+                                                {airport.name} <span className="text-content-muted font-normal group-hover/suggestion:text-content-muted transition-colors">({airport.iata_code})</span>
+                                            </span>
+                                            <span className="text-xs text-content-muted truncate opacity-70">
+                                                {airport.city}, {(airport.country && COUNTRY_NAMES[airport.country]?.[1]) || airport.country}
+                                            </span>
+                                        </div>
+                                    </li>
+                                ))}
                             </div>
-                            {airports.map((airport) => (
-                                <li
-                                    key={airport.iata_code}
-                                    className="px-4 py-3 hover:bg-surface transition-all cursor-pointer flex items-center gap-3 border-b border-line/40 last:border-0 group/suggestion"
-                                    onClick={() => handleSelect(airport)}
-                                >
-                                    <div className="bg-surface/50 p-2 rounded-xl shrink-0 group-hover/suggestion:bg-brand/10 transition-colors">
-                                        <Plane size={16} className="text-content-muted/60 group-hover/suggestion:text-brand transition-colors" />
-                                    </div>
-                                    <div className="flex flex-col overflow-hidden">
-                                        <span className="text-sm font-semibold truncate group-hover/suggestion:text-brand transition-colors">
-                                            {airport.name} <span className="text-content-muted font-normal group-hover/suggestion:text-content-muted transition-colors">({airport.iata_code})</span>
-                                        </span>
-                                        <span className="text-xs text-content-muted truncate opacity-70">
-                                            {airport.city}, {(airport.country && COUNTRY_NAMES[airport.country]?.[1]) || airport.country}
-                                        </span>
-                                    </div>
-                                </li>
-                            ))}
-                        </div>
-                    ))
-                ) : null}
+                        ))}
 
-                {/* Loading Indicator & Sentinel for Infinite Scroll */}
-                {(isFetching || isFetchingNextPage) ? (
+                        {hasNextPage && (
+                            <button
+                                onClick={() => setShowFlatList(true)}
+                                className="w-full py-3 text-xs font-bold text-brand hover:bg-brand/5 transition-colors uppercase tracking-wider border-t border-line/50 cursor-pointer"
+                            >
+                                Ver más resultados
+                            </button>
+                        )}
+                    </>
+                )}
+
+                {/* Flat view (Infinite Scroll) */}
+                {showFlatList && suggestions.map((airport) => (
+                    <li
+                        key={`${airport.iata_code}-flat`}
+                        className="px-4 py-3 hover:bg-surface transition-all cursor-pointer flex items-center gap-3 border-b border-line/40 last:border-0 group/suggestion"
+                        onClick={() => handleSelect(airport)}
+                    >
+                        <div className="bg-surface/50 p-2 rounded-xl shrink-0 group-hover/suggestion:bg-brand/10 transition-colors">
+                            <Plane size={16} className="text-content-muted/60 group-hover/suggestion:text-brand transition-colors" />
+                        </div>
+                        <div className="flex flex-col overflow-hidden">
+                            <span className="text-sm font-semibold truncate group-hover/suggestion:text-brand transition-colors">
+                                {airport.name} <span className="text-content-muted font-normal group-hover/suggestion:text-content-muted transition-colors">({airport.iata_code})</span>
+                            </span>
+                            <span className="text-xs text-content-muted truncate opacity-70">
+                                {airport.city}, {(airport.country && COUNTRY_NAMES[airport.country]?.[1]) || airport.country}
+                            </span>
+                        </div>
+                    </li>
+                ))}
+
+                {/* Loading Indicator & Sentinel for Infinite Scroll (Visible only in flat view or initial load) */}
+                {(isFetching || (showFlatList && isFetchingNextPage)) ? (
                     <div ref={sentinelRef} className="px-6 py-4 flex items-center justify-center gap-3 text-content-muted">
                         <Loader2 className="animate-spin h-5 w-5" />
                         <span className="text-xs">{isFetchingNextPage ? "Cargando más..." : "Buscando..."}</span>
                     </div>
-                ) : (debouncedQuery.length >= 2 && groupedSuggestions.length === 0) ? (
+                ) : (showFlatList && hasNextPage) ? (
+                    <div ref={sentinelRef} className="h-4 w-full" />
+                ) : (debouncedQuery.length >= 2 && suggestions.length === 0 && !isFetching) ? (
                     <div className="px-6 py-10 flex flex-col items-center justify-center gap-3 text-center">
                         <div className="bg-surface/50 p-4 rounded-3xl text-content-muted/40">
                             <Search size={32} />
@@ -227,7 +267,7 @@ export default function AirportAutocomplete({ value, onChange, placeholder, clas
                             <p className="text-xs text-content-muted">Prueba con otro código o nombre de ciudad</p>
                         </div>
                     </div>
-                ) : <div ref={sentinelRef} />}
+                ) : null}
             </ul>
         </SmartPopover>
     );
