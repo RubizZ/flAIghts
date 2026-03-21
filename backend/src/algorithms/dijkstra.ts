@@ -15,13 +15,20 @@ export interface DijkstraFlightEdge {
     arrival_time: string;
 }
 
+export interface RoutePreferences {
+    price_weight: number;
+    duration_weight: number;
+    stops_weight: number;
+    airline_quality_weight: number;
+}
+
 @singleton()
 export class Dijkstra {
     public findPath(
         inicio: string,
         fin: string,
         edges: DijkstraFlightEdge[],
-        priority: "balanced" | "cheap" | "fast"
+        preferences: RoutePreferences
     ): DijkstraFlightEdge[] | null {
         
         const distancias: Record<string, number> = {};
@@ -69,7 +76,7 @@ export class Dijkstra {
                 }
 
                 const waitMinutes = Math.max(0, departureDate.getTime() - arrivalTimes[u]!.getTime()) / 60000;
-                const weight = this.calculateWeight(edge, waitMinutes, priority);
+                const weight = this.calculateWeight(edge, waitMinutes, preferences);
                 const alt = distancias[u]! + weight;
 
                 if (alt < distancias[edge.to]!) {
@@ -84,17 +91,15 @@ export class Dijkstra {
         return this.reconstructPath(prevEdge, fin);
     }
 
-    private calculateWeight(edge: DijkstraFlightEdge, waitMinutes: number, priority: "cheap" | "fast" | "balanced"): number {
-        switch (priority) {
-            case "cheap":
-                return edge.price;
-            case "fast":
-                return edge.duration;
-            case "balanced":
-                return edge.price + (edge.duration / 10);
-            default:
-                return edge.price;
-        }
+    private calculateWeight(edge: DijkstraFlightEdge, waitMinutes: number, preferences: RoutePreferences): number {
+        const durationTotal = edge.duration + waitMinutes;
+        
+        let weight = 0;
+        weight += edge.price * preferences.price_weight;
+        weight += (durationTotal * 0.1) * preferences.duration_weight;
+        weight += (edge.stops * 50) * preferences.stops_weight;
+        
+        return weight || edge.price;
     }
 
     private reconstructPath(

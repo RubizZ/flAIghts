@@ -7,7 +7,7 @@ import "./models/itinerary.model.js"; // Necesario para .populate("itineraries")
 import { SearchNotFoundError, SearchNotAuthorizedError } from "./search.errors.js";
 import { SerpapiStorageService } from "../serpapi-storage/serpapi-storage.service.js";
 import { Dijkstra, parseEdgeDateTime } from "@/algorithms/dijkstra.js";
-import type { DijkstraFlightEdge } from "@/algorithms/dijkstra.js";
+import type { DijkstraFlightEdge, RoutePreferences } from "@/algorithms/dijkstra.js";
 import type { ApiRequestParameters, SerpApiResponse, FlightRoute } from "@/services/serpapi/serpapi.types.js";
 import { AirportService } from "../airport/airport.service.js";
 import { UserService } from "../users/user.service.js";
@@ -115,8 +115,27 @@ export class SearchService {
         return this.formatSearchResponse(search.toJSON());
     }
 
-    private async runExploration(searchId: string, criteria: SearchRequest) {
+    private async runExploration(searchId: string, criteria: SearchRequest & { user_id?: string }) {
         try {
+            let userPreferences: RoutePreferences = {
+                price_weight: 0.4,
+                duration_weight: 0.2,
+                stops_weight: 0.2,
+                airline_quality_weight: 0.2
+            };
+
+            if (criteria.user_id) {
+                const targetUser = await this.userService.getUser(criteria.user_id);
+                if (targetUser && targetUser.preferences) {
+                    userPreferences = {
+                        price_weight: targetUser.preferences.price_weight,
+                        duration_weight: targetUser.preferences.duration_weight,
+                        stops_weight: targetUser.preferences.stops_weight,
+                        airline_quality_weight: targetUser.preferences.airline_quality_weight
+                    };
+                }
+            }
+
             const sequence = [criteria.origins[0], ...criteria.destinations].filter((node): node is string => !!node);
             let currentDate = criteria.departure_date.toISOString().split("T")[0]!;
             const dates = criteria.dates ?? [];
@@ -151,7 +170,16 @@ export class SearchService {
 
                 edges.push(...directFligtEdges);
 
-                const tramo = this.dijkstra.findPath(puntoA, puntoB, edges, criteria.criteria.priority);
+                if (userPreferences.stops_weight <= 0.4 && candidatos.length > 1) {
+                    const layoverConnectionsToday = (await this.getFlightsFromSerpApi(candidatos, candidatos, searchDate))
+                        .filter(edge => isValidNextFlight(edge.date, searchDate));
+                    const layoverConnectionsTomorrow = (await this.getFlightsFromSerpApi(candidatos, candidatos, addDays(searchDate, 1)))
+                        .filter(edge => isValidNextFlight(edge.date, searchDate));
+
+                    edges.push(...layoverConnectionsToday, ...layoverConnectionsTomorrow);
+                }
+
+                const tramo = this.dijkstra.findPath(puntoA, puntoB, edges, userPreferences);
 
                 if (!tramo) {
                     logger.warn(`Tramo inalcanzable: ${puntoA} -> ${puntoB} para búsqueda ${searchId}`);
@@ -305,19 +333,7 @@ export class SearchService {
 
         const edges = this.mapResponseToEdges(response);
 
-        if (origin.length === 1 && destination.length === 1) {
-            return edges;
-        }
-
-        if (origin.length === 1) {
-            return edges.filter(edge => edge.from === origin[0] && destination.includes(edge.to));
-        }
-
-        if (destination.length === 1) {
-            return edges.filter(edge => edge.to === destination[0] && origin.includes(edge.from));
-        }
-
-        return [];
+        return edges.filter(edge => origin.includes(edge.from) && destination.includes(edge.to) && edge.from !== edge.to);
 
     }
 
