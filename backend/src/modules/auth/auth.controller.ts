@@ -119,7 +119,11 @@ export class AuthController extends Controller {
     @Response<ForgotPasswordValidationFailResponse>(422, "Error de validación")
     public async forgotPassword(@Body() body: ForgotPasswordRequest): Promise<SuccessResponse<MessageResponseData>> {
         const { email } = body;
-        await this.authService.forgotPassword(email);
+        try {
+            await this.authService.forgotPassword(email);
+        } catch {
+            // Por seguridad, no se debe hacer nada si el usuario no existe.
+        }
         return {
             message: "Si existe un usuario asociado a esa cuenta, se ha enviado un email de recuperación."
         } satisfies MessageResponseData as any;

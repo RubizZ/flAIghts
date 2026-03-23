@@ -14,6 +14,7 @@ import compression from 'compression';
 import { Error as MongooseError } from 'mongoose';
 import { container } from 'tsyringe';
 import { ServerConfig } from './config/server.config.js';
+import { contextStorage, type RequestContext } from './utils/context.js';
 
 console.log(`
    __ _          _____      _     _       
@@ -69,6 +70,16 @@ app.use(express.raw({ type: 'application/octet-stream', limit: '10mb' }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
+
+// Request Context Middleware for auditing and tracking
+app.use((req, res, next) => {
+    const store: RequestContext = {
+        ip: (req.ip || req.socket.remoteAddress || '').replace('::ffff:', ''),
+        userAgent: req.headers['user-agent'] || '',
+        userId: null // Puede actualizarse en el middleware de autenticación si es necesario
+    };
+    contextStorage.run(store, next);
+});
 
 // Connect to database
 await connectDB(config.MONGODB_URI);
