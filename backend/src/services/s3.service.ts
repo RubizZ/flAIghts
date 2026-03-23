@@ -12,6 +12,8 @@ import { inject, injectable, singleton } from 'tsyringe'
 import bytes from 'bytes'
 
 import { AppError } from '@/utils/errors.js'
+import logger from '@/utils/logger.js'
+
 
 export class S3UploadError extends Error {
     constructor(public key: string, public details: { reason: string; stack?: string }) {
@@ -78,9 +80,9 @@ export class S3Service {
         })
 
         this.initializationPromise = this.initializeBucket().catch(error => {
-            console.warn('[S3Service] Failed to initialize bucket')
-            console.error(error)
+            logger.warn({ error }, '[S3Service] Failed to initialize bucket')
         })
+
     }
 
     private async initializeBucket(): Promise<void> {
@@ -94,13 +96,14 @@ export class S3Service {
             if (isNotFoundError && this.config.S3_AUTO_CREATE_BUCKET) {
                 try {
                     await this.s3Client.send(new CreateBucketCommand({ Bucket: this.config.S3_BUCKET_NAME }))
-                    console.log(`[S3Service] Bucket "${this.config.S3_BUCKET_NAME}" created successfully`)
+                    logger.info({ bucket: this.config.S3_BUCKET_NAME }, `[S3Service] Bucket created successfully `)
                 } catch (createError) {
-                    console.error(`[S3Service] Failed to auto-create bucket: ${createError instanceof Error ? createError.message : String(createError)}`)
+                    logger.error({ createError, bucket: this.config.S3_BUCKET_NAME }, `[S3Service] Failed to auto-create bucket`)
                 }
             } else {
-                console.warn(`[S3Service] Bucket "${this.config.S3_BUCKET_NAME}" could not be verified or accessed.`)
+                logger.warn({ bucket: this.config.S3_BUCKET_NAME }, `[S3Service] Bucket could not be verified or accessed.`)
             }
+
         }
     }
 
@@ -144,7 +147,7 @@ export class S3Service {
     private validateBuffer(buffer: Buffer): void {
         const maxSizeStr = this.config.S3_MAX_FILE_SIZE;
         const maxSizeInBytes = bytes(maxSizeStr);
-        
+
         if (maxSizeInBytes && buffer.length > maxSizeInBytes) {
             throw new S3FileTooLargeError(buffer.length, maxSizeInBytes);
         }

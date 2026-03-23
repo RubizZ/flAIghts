@@ -4,6 +4,7 @@ import { z } from "zod";
 import ms from "ms";
 import type { StringValue } from "ms";
 import bytes from "bytes";
+import logger from "../utils/logger.js";
 
 const emptyToUndefined = (val: unknown) => {
     if (typeof val !== "string") return val;
@@ -85,6 +86,35 @@ const serverConfigSchema = z.object({
     SERPAPI_API_KEY: z.preprocess(emptyToUndefined, z.string()),
 });
 
+function sanitize<K extends keyof ServerConfigType>(val: ServerConfigType[K], field: K): ServerConfigType[K] | string {
+    switch (field) {
+        // Secret keys and sensitive values
+        case "JWT_SECRET":
+        case "S3_SECRET_ACCESS_KEY":
+        case "S3_ACCESS_KEY_ID":
+        case "SMTP_PASS":
+        case "SMTP_USER":
+        case "SERPAPI_API_KEY":
+        case "MONGODB_URI":
+            return "[REDACTED] (please check .env file)";
+        // Other non-sensitive values
+        default:
+            return val;
+    }
+}
+
+type SanitizedConfig = {
+    [K in keyof ServerConfigType]: ServerConfigType[K] | string;
+}
+
+function sanitizeConfig(config: ServerConfigType): SanitizedConfig {
+    const obj = { ...config } as any;
+    for (const field of Object.keys(config) as (keyof ServerConfigType)[]) {
+        obj[field] = sanitize(config[field], field);
+    }
+    return obj as SanitizedConfig;
+}
+
 export type ServerConfigType = z.output<typeof serverConfigSchema>;
 
 @singleton()
@@ -93,13 +123,13 @@ export class ServerConfig {
         const result = serverConfigSchema.safeParse(process.env);
 
         if (!result.success) {
-            console.error("❌ Invalid environment variables:", result.error.format());
+            logger.error({ errors: result.error.format() }, "❌ Invalid environment variables");
             throw new Error("Invalid environment variables");
         }
 
         Object.assign(this, result.data);
 
-        console.log(`Server configuration loaded: ${JSON.stringify(this, null, 2)}`);
+        logger.info(sanitizeConfig(this), "Server configuration loaded");
     }
 }
 

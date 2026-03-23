@@ -13,6 +13,7 @@ import { AirportService } from "../airport/airport.service.js";
 import { UserService } from "../users/user.service.js";
 import type { IFriendUnpopulated } from "../users/models/user.model.js";
 import { AuditService } from "../audit/audit.service.js";
+import logger from "@/utils/logger.js";
 
 
 
@@ -154,7 +155,7 @@ export class SearchService {
                 const tramo = this.dijkstra.findPath(puntoA, puntoB, edges, criteria.criteria.priority);
 
                 if (!tramo) {
-                    console.warn(`Tramo inalcanzable: ${puntoA} -> ${puntoB}`);
+                    logger.warn(`Tramo inalcanzable: ${puntoA} -> ${puntoB} para búsqueda ${searchId}`);
                     await Search.updateOne({ _id: searchId }, { status: "failed" });
                     this.auditService.register({
                         resource: "SEARCH",
@@ -240,7 +241,7 @@ export class SearchService {
             }
 
         } catch (error) {
-            console.error(`Error en exploración ${searchId}:`, error);
+            logger.error({ error, searchId }, `Error en exploración ${searchId}`);
             await Search.updateOne({ _id: searchId }, { status: "failed" });
         }
     }

@@ -15,8 +15,10 @@ import { Error as MongooseError } from 'mongoose';
 import { container } from 'tsyringe';
 import { ServerConfig } from './config/server.config.js';
 import { contextStorage, type RequestContext } from './utils/context.js';
+import logger from './utils/logger.js';
 
-console.log(`
+
+logger.info(`
    __ _          _____      _     _       
   / _| |   /\\   |_   _|    | |   | |      
  | |_| |  /  \\    | |  __ _| |__ | |_ ___ 
@@ -26,6 +28,7 @@ console.log(`
                        __/ |              
                       |___/               
 `);
+
 
 
 const config = container.resolve(ServerConfig);
@@ -120,7 +123,7 @@ app.use((err: any, req: express.Request, res: express.Response, next: express.Ne
     // Validación de REQUEST: errores en los datos del HTTP request (tipo, formato, rango)
     // Estos errores vienen de tsoa antes de ejecutar el controlador
     if (err instanceof TsoaValidateError) {
-        console.log('REQUEST_VALIDATION_ERROR on path %s:\n', req.path, err);
+        logger.warn({ error: err }, `REQUEST_VALIDATION_ERROR on ${req.method} ${req.path}`);
         return res.status(422).json({
             status: 'fail',
             data: {
@@ -134,7 +137,7 @@ app.use((err: any, req: express.Request, res: express.Response, next: express.Ne
     // Validación de BASE DE DATOS: errores de Mongoose ValidationError
     // Estos errores vienen cuando un documento no cumple las validaciones del schema
     if (err instanceof MongooseError.ValidationError) {
-        console.log('DATABASE_VALIDATION_ERROR on path %s:\n', req.path, err);
+        logger.warn({ error: err }, `DATABASE_VALIDATION_ERROR on ${req.method} ${req.path}`);
         const details: Record<string, { message: string; value: any }> = {};
         for (const key in err.errors) {
             const error = err.errors[key];
@@ -158,7 +161,7 @@ app.use((err: any, req: express.Request, res: express.Response, next: express.Ne
     // Errores de NEGOCIO: errores del servicio
     // Incluye lógica de negocio, conflictos, recursos no encontrados, etc.
     if (err instanceof AppError) {
-        console.log('AppError on path %s:\n', req.path, err);
+        logger.info({ error: err.toJSON() }, `AppError on ${req.method} ${req.path}`);
         return res.status(err.statusCode).json({
             status: 'fail',
             data: err.toJSON()
@@ -167,7 +170,7 @@ app.use((err: any, req: express.Request, res: express.Response, next: express.Ne
 
     // Errores de CORS: bloqueo de orígenes no permitidos
     if (err instanceof CorsError) {
-        console.log(`CORS Error on path ${req.path}: ${err.message}`);
+        logger.warn({ origin: req.headers.origin }, `CORS Error on ${req.method} ${req.path}: ${err.message}`);
         return res.status(403).json({
             status: 'fail',
             message: err.message
@@ -176,7 +179,7 @@ app.use((err: any, req: express.Request, res: express.Response, next: express.Ne
 
     // Errores INTERNOS no capturados
     if (err instanceof Error) {
-        console.error('Unhandled Error on path %s:\n', req.path, err);
+        logger.error({ error: err }, `Unhandled Error on ${req.method} ${req.path}`);
         return res.status(500).json({
             status: 'error',
             message: 'Internal Server Error',
@@ -187,5 +190,5 @@ app.use((err: any, req: express.Request, res: express.Response, next: express.Ne
 });
 
 app.listen(PORT, () => {
-    console.log(`Server initialized successfully on port ${PORT}`);
+    logger.info(`Server initialized successfully on port ${PORT}`);
 });

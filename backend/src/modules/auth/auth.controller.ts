@@ -9,6 +9,8 @@ import { InvalidCredentialsError, LoginUserNotFoundError, InvalidPasswordError, 
 
 import { ServerConfig } from "../../config/server.config.js";
 
+import logger from "../../utils/logger.js";
+
 @injectable()
 @Route("auth")
 @Tags("Auth")
@@ -34,7 +36,7 @@ export class AuthController extends Controller {
 
             switch (responseType) {
                 case 'cookie':
-                    console.log('Setting cookie for user:', result.userId);
+                    logger.info(`Setting auth cookie for user: ${result.userId}`);
                     const isProduction = this.config.NODE_ENV === 'production';
                     request.res!.cookie('token', result.token, {
                         httpOnly: true,

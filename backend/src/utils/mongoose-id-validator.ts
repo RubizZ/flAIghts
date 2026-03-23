@@ -1,4 +1,5 @@
 import mongoose, { Schema, Document } from 'mongoose';
+import logger from "./logger.js";
 
 export default function idValidator(schema: Schema, options?: { message?: string }) {
     const defaultMessage = options?.message || "El valor '{VALUE}' de {PATH} no es un ID válido de {REF}";
@@ -64,9 +65,10 @@ export default function idValidator(schema: Schema, options?: { message?: string
                                 throw new Error(`Model file for ${modelName} not found in modules folder.`);
                             }
                         } catch (loadErr) {
-                            console.error(`[idValidator] Missing model ${modelName} could not be loaded dynamically. Skipping validation.`, loadErr);
+                            logger.error({ loadErr, modelName }, `[idValidator] Missing model ${modelName} could not be loaded dynamically. Skipping validation.`);
                             return true;
                         }
+
                     }
 
                     const validateSingle = async (val: any) => {
@@ -80,9 +82,10 @@ export default function idValidator(schema: Schema, options?: { message?: string
                             const doc = await targetModel.findOne(checkQuery).select('_id').lean().exec();
                             return !!doc;
                         } catch (e) {
-                            console.error(`[idValidator] validateSingle error for ${val}:`, e);
+                            logger.error({ error: e, val }, `[idValidator] validateSingle error for ${val}`);
                             return false;
                         }
+
                     };
 
                     if (Array.isArray(value)) {

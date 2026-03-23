@@ -2,6 +2,7 @@ import { singleton } from "tsyringe";
 import fuzzysort from "fuzzysort";
 import { Airport, type IAirport } from "./airport.model.js";
 import type { AirportResponse, ScoredAirport, GlobeAirportResponse } from "./airport.types.js";
+import logger from "../../utils/logger.js";
 
 // Radios base (km) para búsqueda de rutas
 const MIN_RADIUS_KM = 150;
@@ -20,7 +21,7 @@ export class AirportService {
 
     private async initializeCache() {
         try {
-            console.log("Initializing Airport Search Cache...");
+            logger.info("Initializing Airport Search Cache...");
             // Cargamos todos los aeropuertos en memoria
             const airports = await Airport.find({}).lean();
 
@@ -40,9 +41,9 @@ export class AirportService {
             });
 
             this.isInitialized = true;
-            console.log(`Airport cache ready with ${this.airportsCache.length} airports.`);
+            logger.info(`Airport cache ready: ${this.airportsCache.length} airports`);
         } catch (error) {
-            console.error("Failed to initialize airport cache:", error);
+            logger.error({ error }, "Failed to initialize airport cache");
         }
     }
 
@@ -179,7 +180,7 @@ export class AirportService {
                 .map(a => a.iata);
 
         } catch (error) {
-            console.error("getCandidateLayovers failed:", error);
+            logger.error({ error, originIata, destinationIata }, "getCandidateLayovers failed");
             return [];
         }
     }

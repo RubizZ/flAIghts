@@ -3,6 +3,7 @@ import { Audit, type IAudit } from "./audit.model.js";
 import type { AuditDetails, AuditEntry, AuditUser } from "./audit.types.js";
 import { singleton } from "tsyringe";
 import { contextStorage } from "../../utils/context.js";
+import logger from "../../utils/logger.js";
 
 @singleton()
 export class AuditService {
@@ -26,6 +27,9 @@ export class AuditService {
         });
 
         await audit.save();
+
+        // Technical logging for development/monitoring
+        logger.info(`Audit Registered: ${String(entry.resource)}:${String(entry.action)} by ${audit.user.id || 'anonymous'}`);
     }
 
     /**

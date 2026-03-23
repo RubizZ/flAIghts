@@ -1,13 +1,13 @@
 import nodemailer from "nodemailer";
 import { inject, singleton } from "tsyringe";
+import { ServerConfig } from "../config/server.config.js";
+import logger from "../utils/logger.js";
 
 export interface MailOptions {
     to: string;
     subject: string;
     html: string;
 }
-
-import { ServerConfig } from "../config/server.config.js";
 
 @singleton()
 export class MailService {
@@ -26,16 +26,15 @@ export class MailService {
 
     public async sendMail(to: string, subject: string, html: string): Promise<boolean> {
         try {
-            const info = await this.transporter.sendMail({
+            await this.transporter.sendMail({
                 from: this.config.SMTP_FROM,
                 to,
                 subject,
                 html,
             });
-            console.log(`[MAIL] Email sent successfully: ${info.messageId}`);
             return true;
         } catch (error) {
-            console.error("[MAIL] Failed to send email:", error);
+            logger.error({ error, to, subject }, "[MAIL] Failed to send email");
             return false;
         }
     }
