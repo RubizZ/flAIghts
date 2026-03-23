@@ -88,6 +88,9 @@ export class AuthService {
             action: "LOGIN",
             details: {
                 identifier
+            },
+            user: {
+                id: user._id.toString()
             }
         });
 
