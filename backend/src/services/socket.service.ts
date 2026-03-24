@@ -5,6 +5,7 @@ import { AuthService } from '../modules/auth/auth.service.js';
 import { MessageService } from '../modules/messages/message.service.js';
 import type { MessageResponse } from '../modules/messages/message.types.js';
 import { SearchService } from '../modules/search/search.service.js';
+import { ServerConfig } from '@/config/server.config.js'
 
 // Types of events and data that Server can send to Client
 interface ServerToClientEvents {
@@ -33,14 +34,15 @@ export class SocketService {
     constructor(
         @inject(AuthService) private authService: AuthService,
         @inject(MessageService) private messageService: MessageService,
-        @inject(SearchService) private searchService: SearchService
+        @inject(SearchService) private searchService: SearchService,
+        @inject(ServerConfig) private readonly config: ServerConfig
     ) { }
 
     public initialize(httpServer: HttpServer) {
         // Create new instance of Socket.IO server and link it to the main HTTP server
         this.io = new Server(httpServer, {
             cors: {
-                origin: process.env.FRONTEND_URL,
+                origin: this.config.FRONTEND_URL,
                 methods: ['GET', 'POST'],
                 credentials: true,
             },
@@ -95,7 +97,7 @@ export class SocketService {
             });
         });
 
-        console.log('✅ Socket.IO service initialized');
+        console.log('Socket.IO service initialized');
     }
 
     /**
