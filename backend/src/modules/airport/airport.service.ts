@@ -3,11 +3,12 @@ import fuzzysort from "fuzzysort";
 import axios from "axios";
 import ms from "ms";
 import { ServerConfig } from "../../config/server.config.js";
-import { Airport, type IAirport } from "./airport.model.js";
+import { Airport, AirportReport, type IAirport } from "./airport.model.js";
 import logger from "../../utils/logger.js";
 import { GeocodeCache } from "./geocode-cache.model.js";
 import type { AirportResponse, AirportSearchPaginatedResult, ScoredAirport, GlobeAirportResponse, CachedAirport, SearchResult, CityResponse } from "./airport.types.js";
 import { COUNTRY_NAMES } from "./countries.js";
+import type { MessageResponseData } from "../../utils/responses.js";
 
 // Radios base (km) para búsqueda de rutas
 const MIN_RADIUS_KM = 150;
@@ -310,6 +311,22 @@ export class AirportService {
         if (!iata || iata.length !== 3) return null;
         if (this.isInitialized) return this.airportsCache.find(a => a.iata_code === iata.toUpperCase()) || null;
         return await Airport.findOne({ iata_code: iata.toUpperCase() }).lean();
+    }
+
+    public async reportError(iata: string, reason: string, userId?: string): Promise<MessageResponseData> {
+        const airport = await Airport.findOne({ iata_code: iata.toUpperCase() });
+
+        if (!airport) {
+            throw new Error(`Airport with IATA ${iata} not found`);
+        }
+
+        await AirportReport.create({
+            airport_iata: iata.toUpperCase(),
+            reason,
+            user_id: userId
+        });
+
+        return { message: "Reporte recibido correctamente. Gracias por ayudarnos a mejorar." };
     }
 
     /**

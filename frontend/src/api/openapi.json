@@ -4776,6 +4776,108 @@
         "type": "object",
         "additionalProperties": false
       },
+      "SuccessResponseType_MessageResponseData_": {
+        "description": "Wrapper de éxito JSend (aplicado por el middleware global).",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "success"
+            ],
+            "nullable": false
+          },
+          "data": {
+            "$ref": "#/components/schemas/MessageResponseData"
+          }
+        },
+        "required": [
+          "status",
+          "data"
+        ],
+        "type": "object",
+        "additionalProperties": false
+      },
+      "ValidationDetails_PathPath__iata-string___": {
+        "properties": {
+          "path": {
+            "properties": {
+              "value": {},
+              "message": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "message"
+            ],
+            "type": "object"
+          },
+          "path.iata": {
+            "properties": {
+              "value": {},
+              "message": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "message"
+            ],
+            "type": "object"
+          }
+        },
+        "type": "object",
+        "description": "Generador de estructura de detalles.\r\nTransforma una unión de llaves ('body' | 'body.id') en el objeto que TSOA espera."
+      },
+      "RequestValidationFailResponse_ValidationDetails_PathPath__iata-string____": {
+        "properties": {
+          "data": {
+            "properties": {
+              "details": {
+                "$ref": "#/components/schemas/ValidationDetails_PathPath__iata-string___"
+              },
+              "message": {
+                "type": "string"
+              },
+              "code": {
+                "type": "string",
+                "enum": [
+                  "REQUEST_VALIDATION_ERROR"
+                ],
+                "nullable": false
+              }
+            },
+            "required": [
+              "details",
+              "message",
+              "code"
+            ],
+            "type": "object"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "fail"
+            ],
+            "nullable": false
+          }
+        },
+        "required": [
+          "data",
+          "status"
+        ],
+        "type": "object"
+      },
+      "AirportReportRequest": {
+        "properties": {
+          "reason": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "reason"
+        ],
+        "type": "object",
+        "additionalProperties": false
+      },
       "AirlineResponse": {
         "properties": {
           "code": {
@@ -7279,6 +7381,62 @@
             }
           }
         ]
+      }
+    },
+    "/airports/{iata}/report": {
+      "post": {
+        "operationId": "ReportAirportError",
+        "responses": {
+          "200": {
+            "description": "Reporte enviado con éxito",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponseType_MessageResponseData_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Error de validación",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestValidationFailResponse_ValidationDetails_PathPath__iata-string____"
+                }
+              }
+            }
+          }
+        },
+        "description": "Reporta un error en los datos de un aeropuerto.",
+        "tags": [
+          "Airports"
+        ],
+        "security": [
+          {
+            "jwt-optional": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "iata",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AirportReportRequest"
+              }
+            }
+          }
+        }
       }
     },
     "/airlines": {
