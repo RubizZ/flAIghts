@@ -1,4 +1,5 @@
 import { Schema, model } from "mongoose";
+import idValidator from "../../utils/mongoose-id-validator.js";
 
 export interface IAirport {
   iata_code: string;
@@ -82,7 +83,14 @@ const AirportSchema = new Schema<IAirport>({
 AirportSchema.index({ location: "2dsphere" });
 
 const AirportReportSchema = new Schema<IAirportReport>({
-  airport_iata: { type: String, required: true, uppercase: true },
+  airport_iata: {
+    type: String,
+    ref: "Airport",
+    refField: "iata_code",
+    required: true,
+    uppercase: true,
+    match: [/^[A-Z]{3}$/, "El código IATA debe ser 3 letras mayúsculas"]
+  },
   reason: {
     type: String,
     required: true,
@@ -92,6 +100,8 @@ const AirportReportSchema = new Schema<IAirportReport>({
   user_id: { type: String, ref: 'User', required: false },
   status: { type: String, enum: ['pending', 'resolved', 'rejected'], default: 'pending' }
 }, { timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' } });
+
+AirportReportSchema.plugin(idValidator);
 
 export const Airport = model<IAirport>("Airport", AirportSchema);
 export const AirportReport = model<IAirportReport>("AirportReport", AirportReportSchema);
