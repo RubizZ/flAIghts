@@ -113,7 +113,7 @@ export default function FlightCard({ itinerary, formatTime, formatDuration, airp
                                 <Calendar size={16} className="text-brand" />
                                 <span>Llegada final a <strong>{lastArrivalLeg?.destination}</strong>:</span>
                             </div>
-                            <span className="font-bold text-content text-sm capitalize">
+                            <span className="font-bold text-content text-sm first-letter:uppercase">
                                 {formattedArrivalDate} a las {formatTime(lastArrivalLeg?.arrival_time)}
                             </span>
                         </div>

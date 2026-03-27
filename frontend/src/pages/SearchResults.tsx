@@ -3,7 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useSearchResult } from "@/api/generated/search/search";
 import { useGetGlobeAirports } from "@/api/generated/airports/airports";
 import { AlertCircle, Loader2, Plane, ArrowLeft, ArrowRight, DollarSign, Clock, Calendar } from "lucide-react";
-import type { ItineraryResponse, GlobeAirportResponse } from "@/api/generated/model";
+import type { ItineraryResponse, GlobeAirportResponse, AirportResponse } from "@/api/generated/model";
 import StarsBackground from "@/components/ui/StarsBackground";
 import { toast } from "sonner";
 import Globe from "@/components/Globe";
@@ -20,6 +20,7 @@ export default function SearchResults() {
     const [selectedReturn, setSelectedReturn] = useState<ItineraryResponse | null>(null);
     const [isSMScreen, setIsSMScreen] = useState(window.innerWidth >= 640);
     const [isLargeScreen, setIsLargeScreen] = useState(window.innerWidth >= 1024);
+    const [isGlobeReady, setIsGlobeReady] = useState(false);
 
     useEffect(() => {
         const handleResize = () => {
@@ -30,7 +31,6 @@ export default function SearchResults() {
         return () => window.removeEventListener('resize', handleResize);
     }, []);
 
-    const [isGlobeReady, setIsGlobeReady] = useState(false);
 
     const { data: airportsData } = useGetGlobeAirports({
         query: { staleTime: Infinity, refetchOnWindowFocus: false }
@@ -107,6 +107,33 @@ export default function SearchResults() {
         // Example: "vie., 24 may." -> "Vie, 24 may"
         return formatted.charAt(0).toUpperCase() + formatted.slice(1).replace(/\./g, '');
     };
+
+    // Convert strings to AirportResponse objects for the Globe component
+    const originAirport = useMemo(() => {
+        const iata = globeRoute.origin;
+        if (!iata) return null;
+        const a = airportsMap.get(iata);
+        if (!a) return null;
+        return {
+            iata_code: a.i,
+            name: a.n,
+            city: a.ci,
+            location: { coordinates: [a.lo, a.la], type: "Point" }
+        } as AirportResponse;
+    }, [globeRoute.origin, airportsMap]);
+
+    const destinationAirport = useMemo(() => {
+        const iata = globeRoute.destination;
+        if (!iata) return null;
+        const a = airportsMap.get(iata);
+        if (!a) return null;
+        return {
+            iata_code: a.i,
+            name: a.n,
+            city: a.ci,
+            location: { coordinates: [a.lo, a.la], type: "Point" }
+        } as AirportResponse;
+    }, [globeRoute.destination, airportsMap]);
 
     if (error) {
         return (
@@ -414,9 +441,9 @@ export default function SearchResults() {
             {/* Desktop Globe (Absolute Full Screen with Offset) */}
             <div className={`absolute inset-0 z-0 transition-opacity duration-700 ${!isLargeScreen ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
                 <Globe
-                    originIata={globeRoute.origin}
-                    destinationIata={globeRoute.destination}
                     selectedAirports={selectedAirports}
+                    origin={originAirport}
+                    destination={destinationAirport}
                     interactive={false}
                     horizontalOffset={isLargeScreen ? 450 : 0}
                     onReady={handleGlobeReady}
