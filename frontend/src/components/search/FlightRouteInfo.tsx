@@ -24,6 +24,19 @@ export default function FlightRouteInfo({ itinerary, formatTime, formatDuration 
         return Array.from(airlines.entries());
     }, [itinerary.legs]);
 
+    const dayDiff = useMemo(() => {
+        if (!firstLeg?.departure_time || !lastLeg?.arrival_time) return 0;
+        const start = new Date(firstLeg.departure_time);
+        const end = new Date(lastLeg.arrival_time);
+
+        // Compare days ignoring hours 
+        const startDay = new Date(start.getFullYear(), start.getMonth(), start.getDate());
+        const endDay = new Date(end.getFullYear(), end.getMonth(), end.getDate());
+
+        const diff = endDay.getTime() - startDay.getTime();
+        return Math.round(diff / (1000 * 60 * 60 * 24));
+    }, [firstLeg?.departure_time, lastLeg?.arrival_time]);
+
     return (
         <div className="flex-1 w-full flex flex-col gap-4">
             <div className="flex items-center gap-3 overflow-hidden">
@@ -69,7 +82,10 @@ export default function FlightRouteInfo({ itinerary, formatTime, formatDuration 
                 </div>
 
                 <div className="text-center min-w-[70px]">
-                    <div className="text-2xl font-bold text-content tracking-tight">{formatTime(lastLeg?.arrival_time)}</div>
+                    <div className="text-2xl font-bold text-content tracking-tight">
+                        {formatTime(lastLeg?.arrival_time)}
+                        {dayDiff > 0 && <sup className="text-[12px] text-brand ml-0.5 font-bold">+{dayDiff}</sup>}
+                    </div>
                     <div className="text-xs font-bold text-content-muted/80 bg-surface/30 px-2 py-0.5 rounded-full inline-block mt-1">{lastLeg?.destination}</div>
                 </div>
             </div>

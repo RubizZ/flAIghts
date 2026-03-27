@@ -1,11 +1,45 @@
-import { useState, Fragment } from "react";
-import { ChevronDown, Clock, Info, PlaneLanding, PlaneTakeoff, Ticket } from "lucide-react";
+import { useState, Fragment, useMemo } from "react";
+import { ChevronDown, Clock, Info, PlaneLanding, PlaneTakeoff, Ticket, Calendar } from "lucide-react";
 import type { ItineraryResponse, GlobeAirportResponse, LegResponse } from "@/api/generated/model";
 import FlightRouteInfo from "./FlightRouteInfo";
 
-// Optimized Flight Card Component
-export default function FlightCard({ itinerary, formatTime, formatDuration, airportsMap, onHover, onSelect }: { itinerary: ItineraryResponse, formatTime: (s?: string) => string, formatDuration: (m: number) => string, airportsMap: Map<string, GlobeAirportResponse>, onHover: (it: ItineraryResponse | null) => void, onSelect: (itinerary: ItineraryResponse) => void }) {
+interface FlightCardProps {
+    itinerary: ItineraryResponse,
+    formatTime: (s?: string) => string,
+    formatDuration: (m: number) => string,
+    airportsMap: Map<string, GlobeAirportResponse>,
+    onHover: (it: ItineraryResponse | null) => void,
+    onSelect?: (itinerary: ItineraryResponse) => void,
+    showSelectButton?: boolean
+}
+
+interface StopoverDetailsProps {
+    leg: LegResponse,
+    airportsMap: Map<string, GlobeAirportResponse>,
+    formatDuration: (m: number) => string
+}
+
+interface LegDetailsProps {
+    leg: LegResponse,
+    airportsMap: Map<string, GlobeAirportResponse>,
+    formatDuration: (m: number) => string,
+    formatTime: (s?: string) => string,
+    itineraryStart?: string
+}
+
+export default function FlightCard({ itinerary, formatTime, formatDuration, airportsMap, onHover, onSelect, showSelectButton = true }: FlightCardProps) {
     const [isExpanded, setIsExpanded] = useState(false);
+    const firstDepartureTime = itinerary.legs[0]?.departure_time;
+    const lastArrivalLeg = itinerary.legs[itinerary.legs.length - 1];
+
+    const formattedArrivalDate = useMemo(() => {
+        if (!lastArrivalLeg?.arrival_time) return "";
+        return new Date(lastArrivalLeg.arrival_time).toLocaleDateString('es-ES', {
+            weekday: 'long',
+            day: 'numeric',
+            month: 'long'
+        });
+    }, [lastArrivalLeg?.arrival_time]);
 
     return (
         <div
@@ -33,15 +67,17 @@ export default function FlightCard({ itinerary, formatTime, formatDuration, airp
                             <span className="text-[10px] uppercase font-bold text-content-muted tracking-wider block mb-0.5">Precio total</span>
                             <span className="text-3xl font-black text-brand tracking-tight">{itinerary.total_price}€</span>
                         </div>
-                        <button
-                            onClick={(e) => {
-                                e.stopPropagation();
-                                onSelect(itinerary);
-                            }}
-                            className="px-6 py-2.5 bg-brand hover:bg-brand-hover text-white text-sm font-bold rounded-xl shadow-lg shadow-brand/20 transition-all hover:translate-y-[-1px] active:translate-y-[1px] cursor-pointer"
-                        >
-                            Seleccionar
-                        </button>
+                        {showSelectButton && onSelect && (
+                            <button
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    onSelect(itinerary);
+                                }}
+                                className="px-6 py-2.5 bg-brand hover:bg-brand-hover text-white text-sm font-bold rounded-xl shadow-lg shadow-brand/20 transition-all hover:translate-y-[-1px] active:translate-y-[1px] cursor-pointer"
+                            >
+                                Seleccionar
+                            </button>
+                        )}
                     </div>
                 </div>
 
@@ -54,16 +90,33 @@ export default function FlightCard({ itinerary, formatTime, formatDuration, airp
             </div>
 
             {isExpanded && (
-                <div className="px-5 pb-5 border-t border-line animate-in fade-in duration-300">
-                    <div className="py-4 space-y-4">
+                <div className="px-5 border-t border-line animate-in fade-in duration-300">
+                    <div className="pt-4 space-y-4">
                         {itinerary.legs.map((leg, legIndex) => (
                             <Fragment key={legIndex}>
                                 {legIndex > 0 && leg.wait_time && leg.wait_time > 0 && (
                                     <StopoverDetails leg={leg} airportsMap={airportsMap} formatDuration={formatDuration} />
                                 )}
-                                <LegDetails leg={leg} airportsMap={airportsMap} formatDuration={formatDuration} formatTime={formatTime} />
+                                <LegDetails
+                                    leg={leg}
+                                    airportsMap={airportsMap}
+                                    formatDuration={formatDuration}
+                                    formatTime={formatTime}
+                                    itineraryStart={firstDepartureTime}
+                                />
                             </Fragment>
                         ))}
+
+                        {/* Final arrival summary notice */}
+                        <div className="mt-4 border-t border-line flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-content-muted bg-surface/20 -mx-5 px-5 py-4">
+                            <div className="flex items-center gap-2">
+                                <Calendar size={16} className="text-brand" />
+                                <span>Llegada final a <strong>{lastArrivalLeg?.destination}</strong>:</span>
+                            </div>
+                            <span className="font-bold text-content text-sm capitalize">
+                                {formattedArrivalDate} a las {formatTime(lastArrivalLeg?.arrival_time)}
+                            </span>
+                        </div>
                     </div>
                 </div>
             )}
@@ -71,7 +124,7 @@ export default function FlightCard({ itinerary, formatTime, formatDuration, airp
     );
 }
 
-function StopoverDetails({ leg, formatDuration, airportsMap }: { leg: LegResponse, airportsMap: Map<string, GlobeAirportResponse>, formatDuration: (m: number) => string }) {
+function StopoverDetails({ leg, formatDuration, airportsMap }: StopoverDetailsProps) {
     return (
         <div className="flex items-center gap-4 text-xs text-content-muted border-t border-b border-line py-4 pl-2">
             <Clock size={16} className="text-orange-400 shrink-0" />
@@ -84,9 +137,29 @@ function StopoverDetails({ leg, formatDuration, airportsMap }: { leg: LegRespons
     );
 }
 
-function LegDetails({ leg, airportsMap, formatDuration, formatTime }: { leg: LegResponse, airportsMap: Map<string, GlobeAirportResponse>, formatDuration: (m: number) => string, formatTime: (s?: string) => string }) {
+function LegDetails({ leg, airportsMap, formatDuration, formatTime, itineraryStart }: LegDetailsProps) {
     const originAirport = airportsMap.get(leg.origin);
     const destinationAirport = airportsMap.get(leg.destination);
+
+    const calculateDayDiff = (targetTime?: string) => {
+        if (!itineraryStart || !targetTime) return 0;
+        const start = new Date(itineraryStart);
+        const end = new Date(targetTime);
+        const startDay = new Date(start.getFullYear(), start.getMonth(), start.getDate());
+        const endDay = new Date(end.getFullYear(), end.getMonth(), end.getDate());
+        const diff = endDay.getTime() - startDay.getTime();
+        return Math.round(diff / (1000 * 60 * 60 * 24));
+    };
+
+    const departureDayDiff = useMemo(() =>
+        calculateDayDiff(leg.departure_time),
+        [itineraryStart, leg.departure_time]
+    );
+
+    const arrivalDayDiff = useMemo(() =>
+        calculateDayDiff(leg.arrival_time),
+        [itineraryStart, leg.arrival_time]
+    );
 
     return (
         <div className="flex flex-col sm:flex-row gap-4 text-sm">
@@ -103,7 +176,10 @@ function LegDetails({ leg, airportsMap, formatDuration, formatTime }: { leg: Leg
                 <div className="flex items-start gap-4">
                     <PlaneTakeoff size={18} className="text-origin shrink-0 mt-1" />
                     <div className="flex flex-col">
-                        <span className="font-bold text-content">{formatTime(leg.departure_time)} - {leg.origin}</span>
+                        <span className="font-bold text-content">
+                            {formatTime(leg.departure_time)} - {leg.origin}
+                            {departureDayDiff > 0 && <sup className="text-[12px] text-brand ml-0.5 font-bold">+{departureDayDiff}</sup>}
+                        </span>
                         <span className="text-xs text-content-muted">{originAirport?.n}, {originAirport?.ci}</span>
                     </div>
                 </div>
@@ -111,7 +187,10 @@ function LegDetails({ leg, airportsMap, formatDuration, formatTime }: { leg: Leg
                 <div className="flex items-start gap-4">
                     <PlaneLanding size={18} className="text-destination shrink-0 mt-1" />
                     <div className="flex flex-col">
-                        <span className="font-bold text-content">{formatTime(leg.arrival_time)} - {leg.destination}</span>
+                        <span className="font-bold text-content">
+                            {formatTime(leg.arrival_time)} - {leg.destination}
+                            {arrivalDayDiff > 0 && <sup className="text-[12px] text-brand ml-0.5 font-bold">+{arrivalDayDiff}</sup>}
+                        </span>
                         <span className="text-xs text-content-muted">{destinationAirport?.n}, {destinationAirport?.ci}</span>
                     </div>
                 </div>

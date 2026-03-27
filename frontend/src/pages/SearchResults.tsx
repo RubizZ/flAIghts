@@ -173,18 +173,25 @@ export default function SearchResults() {
     return (
         <div className="absolute inset-0 w-full h-full overflow-hidden bg-main lg:bg-black text-content flex">
             {/* Loading Overlay */}
-            {showLoading && (
-                <div className="absolute inset-0 z-50 bg-black flex flex-col items-center justify-center gap-6">
-                    <StarsBackground className="opacity-40" />
-                    <div className="relative flex items-center justify-center">
-                        <div className="absolute w-20 h-20 rounded-full border border-brand/40 animate-radar" style={{ animationDelay: '0s' }} />
-                        <div className="absolute w-20 h-20 rounded-full border border-brand/25 animate-radar" style={{ animationDelay: '0.8s' }} />
-                        <div className="absolute w-20 h-20 rounded-full border border-brand/15 animate-radar" style={{ animationDelay: '1.6s' }} />
-                        <Loader2 className="w-10 h-10 animate-spin text-brand relative z-10" />
-                    </div>
-                    <p className="text-lg font-medium text-white/80 z-10">Buscando las mejores rutas...</p>
+            <div className={`absolute inset-0 z-50 bg-main flex flex-col items-center justify-center gap-6 transition-opacity duration-700 pointer-events-none ${showLoading ? 'opacity-100' : 'opacity-0'}`}>
+                <div className="relative flex items-center justify-center">
+                    {/* Radar rings — staggered expanding pulses using brand color */}
+                    <div className="absolute w-20 h-20 rounded-full border border-brand/40 animate-radar" style={{ animationDelay: '0s' }} />
+                    <div className="absolute w-20 h-20 rounded-full border border-brand/25 animate-radar" style={{ animationDelay: '0.8s' }} />
+                    <div className="absolute w-20 h-20 rounded-full border border-brand/15 animate-radar" style={{ animationDelay: '1.6s' }} />
+                    <svg className="w-10 h-10 text-brand relative z-10" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M21 16v-2l-8-5V3.5A1.5 1.5 0 0 0 11.5 2A1.5 1.5 0 0 0 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1l3.5 1v-1.5L13 19v-5.5l8 2.5z" />
+                    </svg>
                 </div>
-            )}
+                <div className="flex flex-col items-center gap-1">
+                    <span className="text-content-muted text-xs">Buscando las mejores rutas...</span>
+                </div>
+                <div className="flex gap-1.5">
+                    {[0, 1, 2].map(i => (
+                        <div key={i} className="w-1.5 h-1.5 rounded-full bg-brand/40 animate-pulse" style={{ animationDelay: `${i * 200}ms` }} />
+                    ))}
+                </div>
+            </div>
 
             {/* Mobile Background Globe (Full screen) */}
             <div className="absolute inset-0 z-0 lg:hidden">
@@ -288,9 +295,21 @@ export default function SearchResults() {
 
                                 {selectionStep === 'summary' && selectedDeparture && (
                                     <div className="space-y-8 animate-in fade-in duration-500">
-                                        <SelectedFlightSummary itinerary={selectedDeparture} type="Ida" />
+                                        <SelectedFlightSummary
+                                            itinerary={selectedDeparture}
+                                            type="Ida"
+                                            airportsMap={airportsMap}
+                                            formatTime={formatTime}
+                                            formatDuration={formatDuration}
+                                        />
                                         {selectedReturn && (
-                                            <SelectedFlightSummary itinerary={selectedReturn} type="Vuelta" />
+                                            <SelectedFlightSummary
+                                                itinerary={selectedReturn}
+                                                type="Vuelta"
+                                                airportsMap={airportsMap}
+                                                formatTime={formatTime}
+                                                formatDuration={formatDuration}
+                                            />
                                         )}
                                         <div className="bg-main/80 dark:bg-main/60 backdrop-blur-xl border border-line rounded-2xl shadow-lg p-6 flex flex-col sm:flex-row items-center justify-between gap-4">
                                             <div className="text-center sm:text-left">
@@ -338,7 +357,13 @@ export default function SearchResults() {
                                 {selectionStep === 'return' && returnItineraries && returnItineraries.length > 0 && (
                                     <>
                                         {selectedDeparture && (
-                                            <SelectedFlightSummary itinerary={selectedDeparture} type="Ida" />
+                                            <SelectedFlightSummary
+                                                itinerary={selectedDeparture}
+                                                type="Ida"
+                                                airportsMap={airportsMap}
+                                                formatTime={formatTime}
+                                                formatDuration={formatDuration}
+                                            />
                                         )}
 
                                         <div className="space-y-4 animate-in slide-in-from-bottom-8 fade-in duration-700 delay-200">
