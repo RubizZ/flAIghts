@@ -2493,6 +2493,21 @@
           "wait_time": {
             "type": "number",
             "format": "double"
+          },
+          "airplane": {
+            "type": "string"
+          },
+          "flight_number": {
+            "type": "string"
+          },
+          "travel_class": {
+            "type": "string"
+          },
+          "extensions": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
           }
         },
         "required": [
@@ -2504,7 +2519,10 @@
           "duration",
           "airline",
           "departure_time",
-          "arrival_time"
+          "arrival_time",
+          "airplane",
+          "flight_number",
+          "travel_class"
         ],
         "type": "object",
         "additionalProperties": false

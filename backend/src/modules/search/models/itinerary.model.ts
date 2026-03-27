@@ -13,6 +13,10 @@ export interface ILeg {
   departure_time: string;
   arrival_time: string;
   wait_time?: number;
+  airplane: string;
+  flight_number: string;
+  travel_class: string;
+  extensions?: string[];
 }
 
 export interface IItinerary {
@@ -61,24 +65,36 @@ const LegSchema = new Schema<ILeg>({
     required: true,
     min: [0, "La duración no puede ser negativa"]
   },
-  airline: { 
-    type: String, 
-    required: true 
+  airline: {
+    type: String,
+    required: true
   },
-  airline_logo: { 
-    type: String 
+  airline_logo: {
+    type: String
   },
-  departure_time: { 
-    type: String, 
-    required: true 
+  departure_time: {
+    type: String,
+    required: true
   },
-  arrival_time: { 
-    type: String, 
-    required: true 
+  arrival_time: {
+    type: String,
+    required: true
   },
   wait_time: {
     type: Number,
     min: [0, "El tiempo de espera no puede ser negativo"]
+  },
+  airplane: {
+    type: String
+  },
+  flight_number: {
+    type: String
+  },
+  travel_class: {
+    type: String
+  },
+  extensions: {
+    type: [String]
   }
 });
 

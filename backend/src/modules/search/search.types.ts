@@ -1,4 +1,5 @@
 import type { ValidationDetails, RequestValidationFailResponse, DatabaseValidationFailResponse, BodyPath } from "../../utils/responses.js";
+import type { DijkstraFlightEdge } from "@/algorithms/dijkstra.js";
 
 export interface SearchRequest {
     /**
@@ -45,6 +46,10 @@ export interface LegResponse {
     departure_time: string;
     arrival_time: string;
     wait_time?: number;
+    airplane: string;
+    flight_number: string;
+    travel_class: string;
+    extensions?: string[];
 }
 
 export interface ItineraryResponse {
@@ -92,3 +97,9 @@ export type SearchRequestValidationFailResponse = RequestValidationFailResponse<
 // Unión de todas las posibles respuestas 422 para search
 export type SearchValidationFailResponse = SearchRequestValidationFailResponse | DatabaseValidationFailResponse;
 
+export interface EnrichedFlightEdge extends DijkstraFlightEdge {
+    airplane: string;
+    flight_number: string;
+    travel_class: string;
+    extensions?: string[];
+}
