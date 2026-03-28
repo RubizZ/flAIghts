@@ -35,11 +35,10 @@ const FlightSearchInput: React.FC<FlightSearchInputProps> = ({
                 e.stopPropagation();
                 onMapClick();
             }}
-            className={`p-1.5 rounded-lg transition-all cursor-pointer ${
-                isMapSelecting
-                    ? 'text-brand bg-brand/10'
-                    : 'text-content-muted hover:bg-surface hover:text-brand'
-            }`}
+            className={`p-1.5 rounded-lg transition-all cursor-pointer ${isMapSelecting
+                ? 'text-brand bg-brand/10'
+                : 'text-content-muted hover:bg-surface hover:text-brand'
+                }`}
             title="Seleccionar en el mapa"
         >
             <Search size={isOrigin ? 16 : 14} />

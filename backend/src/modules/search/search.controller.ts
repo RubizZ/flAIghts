@@ -1,11 +1,11 @@
-import { Body, Controller, Get, Patch, Path, Post, Query, RequestProp, Response, Route, Security, SuccessResponse, Tags } from "tsoa";
-import type { SearchRequest, SearchResponseData, SearchValidationFailResponse, AssistantRequest, AssistantResponse, AssistantValidationFailResponse } from "./search.types.js";
+import { Body, Controller, Get, Patch, Path, Post, Query, RequestProp, Response, Route, Security, SuccessResponse, Tags, Request } from "tsoa";
+import * as express from 'express';
+import type { SearchRequest, SearchResponseData, SearchValidationFailResponse } from "./search.types.js";
 import { inject, injectable } from "tsyringe";
 import { SearchService } from "./search.service.js";
-import { SearchAssistantService } from "./search-assistant.service.js";
 import type { AuthenticatedUser } from "../auth/auth.types.js";
 import type { SuccessResponse as SuccessResponseType, FailResponseFromError, PathPath, QueryPath, ValidationDetails, RequestValidationFailResponse } from "../../utils/responses.js";
-import { SearchNotFoundError, SearchNotAuthorizedError, AssistantUnavailableError } from "./search.errors.js";
+import { SearchNotFoundError, SearchNotAuthorizedError } from "./search.errors.js";
 
 @injectable()
 @Route("search")
@@ -13,8 +13,7 @@ import { SearchNotFoundError, SearchNotAuthorizedError, AssistantUnavailableErro
 export class SearchController extends Controller {
 
     constructor(
-        @inject(SearchService) private readonly searchService: SearchService,
-        @inject(SearchAssistantService) private readonly assistantService: SearchAssistantService
+        @inject(SearchService) private readonly searchService: SearchService
     ) {
         super();
     }
@@ -36,6 +35,43 @@ export class SearchController extends Controller {
         this.setStatus(201);
         const result = await this.searchService.createSearch(request);
         return result satisfies SearchResponseData as any;
+    }
+
+    /**
+     * Canal de streaming para el progreso de la búsqueda (SSE).
+     */
+    @Post("/stream")
+    @Security("jwt-optional")
+    public async searchRequestStream(
+        @Body() body: SearchRequest,
+        @RequestProp('user') user: AuthenticatedUser | null,
+        @Request() request: express.Request
+    ): Promise<void> {
+        const requestData: SearchRequest & { user_id?: string } = { ...body };
+        if (user) requestData.user_id = user._id;
+
+        const res = request.res!;
+
+        res.setHeader('Content-Type', 'text/event-stream');
+        res.setHeader('Cache-Control', 'no-cache');
+        res.setHeader('Connection', 'keep-alive');
+        res.flushHeaders();
+
+        try {
+            for await (const event of this.searchService.createSearchStream(requestData)) {
+                res.write(`data: ${JSON.stringify(event)}\n\n`);
+                if ((res as any).flush) {
+                    (res as any).flush();
+                }
+            }
+        } catch (error: any) {
+            res.write(`data: ${JSON.stringify({ type: 'failed', message: error.message })}\n\n`);
+            if ((res as any).flush) {
+                (res as any).flush();
+            }
+        } finally {
+            res.end();
+        }
     }
 
     /**
@@ -97,16 +133,5 @@ export class SearchController extends Controller {
         const searches = await this.searchService.getSearches(userId, user?._id || undefined, page, limit);
         return searches satisfies { items: SearchResponseData[], total: number, page: number, totalPages: number } as any;
     }
-
-    /**
-     * Envía una lista de mensajes al asistente de búsqueda de vuelos y recibe una respuesta con datos extraídos.
-     */
-    @Post("/assistant")
-    @Response<AssistantValidationFailResponse>(422, "Error de validación")
-    @Response<FailResponseFromError<AssistantUnavailableError>>(503, "Servicio no disponible")
-    public async searchAssistant(@Body() body: AssistantRequest): Promise<SuccessResponseType<AssistantResponse>> {
-        const { messages, location } = body;
-        const result = await this.assistantService.extractSearchData(messages, location);
-        return result satisfies AssistantResponse as any;
-    }
 }
+

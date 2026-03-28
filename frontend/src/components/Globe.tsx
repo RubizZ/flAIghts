@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState, useMemo } from "react";
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
+import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
+import airplaneModelUrl from "@/assets/plane.glb";
 import { gsap } from "gsap";
 import { PlaneTakeoff, PlaneLanding, X } from "lucide-react";
 import { useGetGlobeAirports } from "@/api/generated/airports/airports";
@@ -17,9 +19,9 @@ interface AirportData {
 
 interface GlobeProps {
     onAirportSelect?: (airport: AirportResponse) => void;
-    selectedAirports: string[];
-    origin: AirportResponse | null;
-    destination: AirportResponse | null;
+    selectedAirports?: string[];
+    origin?: AirportResponse | null;
+    destination?: AirportResponse | null;
     interactive?: boolean;
     horizontalOffset?: number;
     onReady?: () => void;
@@ -32,9 +34,9 @@ interface GlobeProps {
 
 export default function Globe({
     onAirportSelect,
-    selectedAirports,
-    origin,
-    destination,
+    selectedAirports = [],
+    origin = null,
+    destination = null,
     interactive = false,
     horizontalOffset = 0,
     onReady,
@@ -71,7 +73,7 @@ export default function Globe({
     const sharedAirportGeo = useRef(new THREE.SphereGeometry(0.0004, 12, 12));
     const sharedClusterGeo = useRef(new THREE.SphereGeometry(0.002, 12, 12));
     const arcsGroupRef = useRef<THREE.Group>(new THREE.Group());
-    const planesRef = useRef<{ mesh: THREE.Object3D; curve: THREE.Curve<THREE.Vector3>; points: THREE.Vector3[]; line: THREE.Line; progress: number; speed: number }[]>([]);
+    const planesRef = useRef<{ mesh: THREE.Object3D; curve: THREE.Curve<THREE.Vector3>; points: THREE.Vector3[]; line: THREE.Line; progress: number; speed: number; totalLength: number }[]>([]);
 
     const sceneRef = useRef<THREE.Scene | null>(null);
     const earthGroupRef = useRef<THREE.Group>(new THREE.Group());
@@ -116,6 +118,7 @@ export default function Globe({
     };
 
     const [isLoaded, setIsLoaded] = useState(false);
+    const [modelLoaded, setModelLoaded] = useState(false);
     const [geoReady, setGeoReady] = useState(false);
     const [clusterThreshold, setClusterThreshold] = useState(0.025);
     const [contextMenu, setContextMenu] = useState<{
@@ -243,6 +246,9 @@ export default function Globe({
 
     useEffect(() => {
         interactiveRef.current = interactive;
+        if (rendererRef.current && !isUserInteractingRef.current) {
+            rendererRef.current.domElement.style.cursor = interactive ? "grab" : "default";
+        }
     }, [interactive]);
 
     // Reusable objects for performance (prevents Garbage Collection lag)
@@ -257,6 +263,20 @@ export default function Globe({
     useEffect(() => {
         if (geoReady && isLoaded && onReady) onReady();
     }, [geoReady, isLoaded, onReady]);
+
+    // Load Airplane Model
+    useEffect(() => {
+        const loader = new GLTFLoader();
+        loader.load(airplaneModelUrl, (gltf) => {
+            const model = gltf.scene;
+            // Center and scale the model so it fits the globe animations
+            model.scale.setScalar(0.001); // Initial scale, will be refined in arc creation
+            airplaneModelRef.current = model;
+            setModelLoaded(true);
+        }, undefined, (err) => {
+            console.error("Error loading airplane model:", err);
+        });
+    }, []);
 
     // 1. Initial 3D Setup (Runs ONLY once on mount)
     useEffect(() => {
@@ -341,11 +361,19 @@ export default function Globe({
         // Kill any ongoing camera animations when the user starts manual interaction
         controls.addEventListener('start', () => {
             isUserInteractingRef.current = true;
+            if (interactiveRef.current) {
+                renderer.domElement.style.cursor = "grabbing";
+            }
             if (cameraRef.current) gsap.killTweensOf(cameraRef.current.position);
         });
 
         controls.addEventListener('end', () => {
             isUserInteractingRef.current = false;
+            if (interactiveRef.current) {
+                renderer.domElement.style.cursor = "grab";
+            } else {
+                renderer.domElement.style.cursor = "default";
+            }
         });
 
         // Lights
@@ -532,6 +560,12 @@ export default function Globe({
             mouse.y = -((e.clientY - rect.top) / mountRef.current.clientHeight) * 2 + 1;
             mousePosRef.current.copy(mouse);
 
+            if (isUserInteractingRef.current && interactiveRef.current) {
+                renderer.domElement.style.cursor = "grabbing";
+                if (popupRef.current) popupRef.current.style.display = "none";
+                return;
+            }
+
             raycaster.setFromCamera(mouse, cameraRef.current);
             const intersects = raycaster.intersectObjects(airportGroupRef.current.children);
             if (intersects.length > 0 && intersects[0]?.object?.userData) {
@@ -562,7 +596,7 @@ export default function Globe({
                     popupRef.current.style.display = "block";
                 }
             } else {
-                renderer.domElement.style.cursor = "default";
+                renderer.domElement.style.cursor = interactiveRef.current ? "grab" : "default";
                 if (popupRef.current) popupRef.current.style.display = "none";
             }
         };
@@ -778,13 +812,22 @@ export default function Globe({
 
             planesRef.current.forEach(p => {
                 p.progress += p.speed;
-                if (p.progress > 1) {
+                // Total cycle includes flight (1.0) and wait time (0.15)
+                const loopCycle = 1.15;
+                if (p.progress > loopCycle) {
                     p.progress = 0;
                     const posAttr = p.line.geometry.getAttribute('position') as THREE.BufferAttribute;
                     if (posAttr) {
                         p.points.forEach((pt, i) => posAttr.setXYZ(i, pt.x, pt.y, pt.z));
                         posAttr.needsUpdate = true;
                     }
+                }
+
+                // Hide planes during waiting or initial stagger period
+                if (p.progress < 0 || p.progress > 1) {
+                    p.mesh.visible = false;
+                    p.line.visible = false;
+                    return;
                 }
                 const points = p.points;
                 const exactIdx = p.progress * (points.length - 1);
@@ -808,7 +851,49 @@ export default function Globe({
                         p.line.geometry.setDrawRange(0, nextIdx + 1);
                     }
                     const lookPoint = points[Math.min(baseIdx + 2, points.length - 1)];
-                    if (lookPoint) p.mesh.lookAt(lookPoint);
+                    if (lookPoint) {
+                        p.mesh.up.copy(p.mesh.position).normalize();
+                        p.mesh.lookAt(lookPoint);
+                    }
+
+                    // Apply fade-in and fade-out based on progress
+                    // Added separationDist to keep the plane invisible until it clears the airport area (symmetric)
+                    const fixedFadeDist = 0.03; // 3% of globe radius for the fade transition
+                    const separationDist = 0.01; // 1% of globe radius 'dead zone' at start and end
+                    const totalLen = (p as any).totalLength || 1;
+
+                    const offset = Math.min(0.15, separationDist / totalLen);
+                    const fade = Math.min(0.2, fixedFadeDist / totalLen);
+
+                    let opacity = 1.0;
+                    if (p.progress < offset || p.progress > 1.0 - offset) {
+                        opacity = 0;
+                    } else if (p.progress < offset + fade) {
+                        opacity = (p.progress - offset) / fade;
+                    } else if (p.progress > 1.0 - offset - fade) {
+                        opacity = (1.0 - offset - p.progress) / fade;
+                    }
+
+                    // Apply opacity to both the plane and the trajectory line
+                    p.mesh.visible = opacity > 0.10;
+                    if (p.line.material instanceof THREE.Material) {
+                        p.line.material.opacity = opacity * 0.9; // Maintain original peak opacity of 0.9
+                        p.line.material.transparent = true;
+                    }
+                    p.line.visible = opacity > 0.1;
+
+                    if (p.mesh.visible) {
+                        p.mesh.traverse((child) => {
+                            if (child instanceof THREE.Mesh) {
+                                if (Array.isArray(child.material)) {
+                                    child.material.forEach(m => { m.opacity = opacity; m.transparent = true; });
+                                } else if (child.material) {
+                                    child.material.opacity = opacity;
+                                    child.material.transparent = true;
+                                }
+                            }
+                        });
+                    }
                 }
             });
 
@@ -1363,12 +1448,12 @@ export default function Globe({
                 const dist = start.distanceTo(end);
                 const samples = Math.max(120, Math.floor(dist * 250));
                 const points: THREE.Vector3[] = [];
-                const cruiseAltitude = 0.02 + (dist * 0.04);
+                const cruiseAltitude = 0.01 + (dist * 0.02);
 
                 for (let i = 0; i <= samples; i++) {
                     const t = i / samples;
                     const point = new THREE.Vector3().copy(start).lerp(end, t).normalize();
-                    const altitudeFactor = Math.pow(Math.sin(Math.PI * t), 0.5);
+                    const altitudeFactor = Math.sin(Math.PI * t);
                     const altitude = 1.005 + (altitudeFactor * cruiseAltitude);
                     point.multiplyScalar(altitude);
                     points.push(point);
@@ -1380,14 +1465,59 @@ export default function Globe({
 
                 for (let i = 0; i < pCount; i++) {
                     const planeColor = getThemeColorHex('--color-origin', 0x0891b2);
-                    const planeMesh = new THREE.Mesh(
-                        new THREE.SphereGeometry(0.005, 12, 12),
-                        new THREE.MeshStandardMaterial({
-                            color: planeColor,
-                            emissive: planeColor,
-                            emissiveIntensity: 3
-                        })
-                    );
+                    let planeMesh: THREE.Object3D;
+
+                    if (airplaneModelRef.current) {
+                        const group = new THREE.Group();
+                        const model = airplaneModelRef.current.clone();
+                        // Scale up the model
+                        model.scale.setScalar(0.025);
+
+                        // Adjust rotation: corrected to -90 degrees to fix backward flight
+                        model.rotateY(-Math.PI / 2);
+
+                        group.add(model);
+                        planeMesh = group;
+
+                        // If the model has materials that need matching the route colors
+                        const meshes: THREE.Mesh[] = [];
+                        model.traverse((child) => {
+                            if (child instanceof THREE.Mesh) meshes.push(child);
+                        });
+
+                        meshes.forEach((child) => {
+                            // Ensure main material is transparent
+                            if (child.material) {
+                                if (Array.isArray(child.material)) {
+                                    child.material.forEach(m => {
+                                        m.transparent = true;
+                                        m.opacity = 1;
+                                    });
+                                } else {
+                                    child.material.transparent = true;
+                                    child.material.opacity = 1;
+                                }
+
+                                // Make it emissive to see it better
+                                if ('emissive' in child.material) {
+                                    (child.material as any).emissive = new THREE.Color(0xffffff);
+                                    (child.material as any).emissiveIntensity = 2;
+                                }
+                            }
+
+                            // TODO: Implement actual outline if needed, for now just ensure consistency
+                        });
+                    } else {
+                        const planeColor = getThemeColorHex('--color-origin', 0x0891b2);
+                        planeMesh = new THREE.Mesh(
+                            new THREE.SphereGeometry(0.005, 12, 12),
+                            new THREE.MeshStandardMaterial({
+                                color: planeColor,
+                                emissive: planeColor,
+                                emissiveIntensity: 3
+                            })
+                        );
+                    }
 
                     const trailGeometry = new THREE.BufferGeometry().setFromPoints(spacedPoints);
                     const positionAttr = trailGeometry.getAttribute('position') as THREE.BufferAttribute;
@@ -1411,14 +1541,15 @@ export default function Globe({
                         curve: curve,
                         points: spacedPoints,
                         line: trailLine,
-                        progress: i / pCount,
-                        speed: realSpeed
+                        progress: -(i * 0.35), // Staggered delay
+                        speed: realSpeed,
+                        totalLength: curve.getLength()
                     });
                     arcsGroupRef.current.add(planeMesh);
                 }
             }
         }
-    }, [isLoaded, originIata, destinationIata]);
+    }, [isLoaded, originIata, destinationIata, modelLoaded]);
 
     // 7. Handle camera positioning (Direct Action Driven)
     const lastPropsRef = useRef({ originIata, destinationIata, focusIata, interactive });

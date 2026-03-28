@@ -84,6 +84,11 @@ const serverConfigSchema = z.object({
         return v === undefined ? undefined : v === "true";
     }, z.boolean().default(false)),
     SERPAPI_API_KEY: z.preprocess(emptyToUndefined, z.string()),
+    OPENAI_API_KEY: z.preprocess(emptyToUndefined, z.string()),
+    OPENAI_BASE_URL: z.preprocess(emptyToUndefined, z.url().default("https://api.openai.com/v1")),
+    AVAILABLE_MODELS: z.preprocess(emptyToUndefined, z.string().optional().transform((val) =>
+        val ? val.split(",").map((o) => o.trim()) : []
+    )),
 });
 
 function sanitize<K extends keyof ServerConfigType>(val: ServerConfigType[K], field: K): ServerConfigType[K] | string {

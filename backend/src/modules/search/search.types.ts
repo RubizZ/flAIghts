@@ -30,6 +30,7 @@ export interface SearchRequest {
     };
 
     layover_days?: number[];
+    source?: "manual" | "agent";
 }
 
 export interface LegResponse {
@@ -80,6 +81,7 @@ export interface SearchResponseData {
         max_price?: number;
     };
     status: "searching" | "completed" | "failed";
+    source: "manual" | "agent";
     departure_itineraries?: ItineraryResponse[];
     return_itineraries?: ItineraryResponse[];
     /**
@@ -102,51 +104,10 @@ export interface EnrichedFlightEdge extends DijkstraFlightEdge {
     extensions?: string[];
 }
 
-/**
- * Estructura genérica de mensaje para el historial del chat.
- */
-export interface AssistantChatMessage {
-    role: "user" | "assistant" | "system";
-    content: string;
+export interface SearchProgressEvent {
+    type: "progress" | "completed" | "failed";
+    message: string;
+    step?: number;
+    total_steps?: number;
+    data?: SearchResponseData;
 }
-
-/**
- * Mensaje devuelto por el asistente en la respuesta.
- */
-export interface AssistantResponseMessage {
-    role: "assistant";
-    content: string;
-}
-
-/**
- * Mensaje enviado por el cliente al asistente. Solo permitimos 'user' y 'assistant'
- * para evitar que se inyecten mensajes de 'system'.
- */
-export interface AssistantRequestMessage {
-    role: "user" | "assistant";
-    content: string;
-}
-
-export interface AssistantExtractedData {
-    origin?: AirportResponse | null;
-    destination?: AirportResponse | null;
-    departure_date?: string | null;
-    return_date?: string | null;
-}
-
-export interface AssistantRequest {
-    messages: AssistantRequestMessage[];
-    location?: {
-        latitude: number;
-        longitude: number;
-    };
-}
-
-export interface AssistantResponse {
-    message: AssistantResponseMessage;
-    data: AssistantExtractedData;
-    ready: boolean;
-}
-
-export type AssistantValidationFailResponse = RequestValidationFailResponse<ValidationDetails<"body" | "body.messages" | "body.location">>;
-

@@ -84,13 +84,18 @@ export class AirportService {
 
         const sortedResults = results.map((result: any) => {
             const airport = result.obj;
-            // Calculamos un bonus basado en importancia y precisión de fuzzysort
-            // result.score es negativo (0 es match perfecto)
-            let finalScore = (airport.importance_score || 0) * 50 + result.score;
+            // El score de fuzzysort es el factor primario (negativo, 0 es mejor).
+            // Multiplicamos por 1000 para que cualquier diferencia en el match sea mucho más importante que la importancia.
+            let finalScore = (result.score * 1000) + (airport.importance_score || 0);
 
-            // Bonus por match exacto en IATA
+            // Bonus crítico por match exacto en IATA (el máximo posible)
             if (airport.iata_code?.toUpperCase() === cleanQuery.toUpperCase()) {
-                finalScore += 5000;
+                finalScore += 1000000;
+            }
+
+            // Bonus por match exacto en la ciudad
+            if (airport.city?.toLowerCase() === cleanQuery.toLowerCase()) {
+                finalScore += 500000;
             }
 
             return { ...airport, _sortScore: finalScore };
@@ -155,21 +160,6 @@ export class AirportService {
             s: a.importance_score,
             c: a.country
         }));
-    }
-
-    public async getTopAirportsSummary(limit: number = 100): Promise<string> {
-        const format = (a: IAirport) => `${a.city} (${a.iata_code}) [lat:${a.location.coordinates[1]}, lon:${a.location.coordinates[0]}]`;
-
-        if (!this.isInitialized) {
-            const airports = await Airport.find({}).sort({ importance_score: -1 }).limit(limit).lean();
-            return airports.map(format).join(", ");
-        }
-
-        return this.airportsCache
-            .sort((a, b) => (b.importance_score || 0) - (a.importance_score || 0))
-            .slice(0, limit)
-            .map(format)
-            .join(", ");
     }
 
     public async getAirportByIata(iata: string): Promise<IAirport | null> {

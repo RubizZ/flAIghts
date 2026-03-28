@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
-import { Compass, Menu, Users, X } from "lucide-react";
+import { Compass, Menu, Users, X, Sparkles } from "lucide-react";
 import NavIconButton from "../ui/NavIconButton";
 
 interface SidebarProps {
@@ -24,7 +24,7 @@ export default function Sidebar({ isOpen, onClose, onToggle, variant = 'classic'
     const location = useLocation();
     const navItems = [
         {
-            label: "Buscar vuelos",
+            label: "Inicio",
             path: "/",
             icon: <Compass size={20} />,
             show: true,

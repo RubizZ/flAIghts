@@ -92,7 +92,7 @@ export default function AirportAutocomplete({ value, onChange, placeholder, clas
 
     // Sync input with external value
     useEffect(() => {
-        if (!isOpen) {
+        if (!isOpen || value) {
             setQuery(getDisplay(value));
         }
     }, [value, isOpen]);

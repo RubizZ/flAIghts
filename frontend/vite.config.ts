@@ -19,6 +19,7 @@ export default defineConfig({
             condition: (file) => file.includes('openapi.json') || file.includes('orval.config.js'),
         })
     ],
+    assetsInclude: ['**/*.glb'],
     server: {
         port: 5173,
         host: '0.0.0.0',

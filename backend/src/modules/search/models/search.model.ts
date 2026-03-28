@@ -18,6 +18,7 @@ export interface ISearch {
     max_price?: number;
   };
   status: "searching" | "completed" | "failed";
+  source: "manual" | "agent";
   departure_itineraries?: IItinerary[];
   return_itineraries?: IItinerary[];
   created_at: Date;
@@ -59,6 +60,7 @@ const SearchSchema = new Schema<ISearch>({
     }
   },
   status: { type: String, enum: ["searching", "completed", "failed"], default: "searching" },
+  source: { type: String, enum: ["manual", "agent"], default: "manual" },
   departure_itineraries: [{ type: Schema.Types.ObjectId, ref: 'Itinerary' }],
   return_itineraries: [{ type: Schema.Types.ObjectId, ref: 'Itinerary' }],
   created_at: { type: Date, default: Date.now }
