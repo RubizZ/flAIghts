@@ -203,7 +203,7 @@ class ErrorBoundary extends Component<Props, State> {
                                 className="flex items-center gap-2 px-6 py-3 bg-brand text-content-on-brand rounded-full font-semibold hover:bg-brand/90 transition-all duration-300 shadow-md active:scale-95 group/btn cursor-pointer"
                             >
                                 <RefreshCcw size={18} className="group-hover/btn:rotate-180 transition-transform duration-500" />
-                                Recargar la pagina
+                                {i18n.t("errorBoundary.reloadButton")}
                             </button>
 
                             <button
@@ -211,7 +211,7 @@ class ErrorBoundary extends Component<Props, State> {
                                 className="flex items-center gap-2 px-6 py-3 bg-surface text-content rounded-full border border-line hover:bg-surface/80 transition-all duration-300 active:scale-95 cursor-pointer"
                             >
                                 <Home size={18} />
-                                Volver al inicio
+                                {i18n.t("errorBoundary.homeButton")}
                             </button>
                         </div>
                     </div>

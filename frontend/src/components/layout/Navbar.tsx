@@ -95,7 +95,7 @@ export default function Navbar({ variant = 'floating' }: { variant?: 'floating' 
                                 <UserAvatar user={req} size={32} />
                                 <span className="font-bold text-sm text-content">{req.username}</span>
                             </div>
-                            <span className="text-[10px] font-bold text-brand bg-brand/10 px-2 py-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity">Ver</span>
+                            <span className="text-[10px] font-bold text-brand bg-brand/10 px-2 py-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity">{t("navbar.view")}</span>
                         </div>
                     ))}
                 </div>

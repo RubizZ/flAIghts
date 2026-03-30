@@ -15,29 +15,24 @@
       "unknownError": "Error desconocido al enviar el correo"
     }
   },
-    "friends": {
+  "friends": {
     "title": "Amigos",
     "subtitle": "Gestiona a las personas con las que compartes tus viajes.",
-
     "tabs": {
       "friends": "Mis Amigos",
       "requests": "Solicitudes"
     },
-
     "addFriend": "Añadir amigo",
     "removeFriend": "Eliminar amigo",
     "sendMessage": "Enviar mensaje",
-
     "notLogged": {
       "title": "No has iniciado sesión",
       "login": "Iniciar sesión"
     },
-
     "emptyFriends": {
       "title": "Aún no tienes amigos",
       "description": "Busca a otros viajeros conectando con ellos y agregándolos a tu lista para planear viajes juntos."
     },
-
     "actions": {
       "message": "Mensaje",
       "remove": "Eliminar",
@@ -45,7 +40,6 @@
       "accept": "Aceptar",
       "reject": "Rechazar"
     },
-
     "requests": {
       "received": "Solicitudes Recibidas",
       "sent": "Solicitudes Enviadas",
@@ -53,7 +47,6 @@
       "noneSent": "No has enviado solicitudes de amistad.",
       "waiting": "Esperando respuesta..."
     },
-
     "toast": {
       "accepted": "Solicitud aceptada",
       "rejected": "Solicitud rechazada",
@@ -61,7 +54,7 @@
       "removed": "Amigo eliminado"
     }
   },
-    "login": {
+  "login": {
     "noAccount": "¿No tienes cuenta?",
     "title": "Inicio de sesión",
     "labels": {
@@ -86,7 +79,7 @@
       "invalidCredentials": "Credenciales inválidas"
     }
   },
-    "notFound": {
+  "notFound": {
     "title": "¡Oops! Página no encontrada",
     "description": "La página que buscas no existe o ha sido movida.",
     "actions": {
@@ -140,7 +133,7 @@
       "loginError": "Te has registrado correctamente, pero hubo un error al iniciar sesión. Por favor, identifícate."
     }
   },
-    "resetPassword": {
+  "resetPassword": {
     "title": "Restablecer contraseña",
     "labels": {
       "newPassword": "Nueva contraseña",
@@ -158,11 +151,10 @@
     "toast": {
       "success": "Contraseña restablecida correctamente",
       "tokenInvalid": "El token de restablecimiento es inválido o ha expirado",
-        "correctErrors": "Por favor corrige los errores"
-
+      "correctErrors": "Por favor corrige los errores"
     }
   },
-    "searchResults": {
+  "searchResults": {
     "title": "Resultados de búsqueda",
     "loading": "Cargando resultados...",
     "loadingMore": "Buscando más vuelos...",
@@ -176,7 +168,7 @@
       "totalPrice": "Precio total"
     }
   },
-    "settings": {
+  "settings": {
     "title": "Ajustes",
     "tabs": {
       "perfil": "Perfil",
@@ -451,6 +443,19 @@
     "toast": {
       "searchStarted": "Búsqueda iniciada",
       "searchError": "Error al buscar vuelos"
+    },
+    "geneticTrip": {
+      "modalTitle": "Ruta Optimizada (Genética)",
+      "modalSubtitle": "Encontraremos el mejor orden para visitar tus ciudades",
+      "originLabel": "Origen del Viaje",
+      "originPlaceholder": "Ciudad de salida y llegada",
+      "startDateLabel": "Fecha de Inicio",
+      "startDatePlaceholder": "Seleccionar fecha",
+      "daysPerCityLabel": "Días por Ciudad",
+      "visitCitiesLabel": "Ciudades a Visitar",
+      "addCityPlaceholder": "Añadir ciudad al viaje...",
+      "optimizeButton": "Optimizar mi Viaje Geneticamente",
+      "algorithmDesc": "Nuestro algoritmo probará miles de combinaciones para darte el precio más bajo"
     }
   },
   "floatingLabelInput": {
@@ -479,6 +484,7 @@
     "sessionExpiredDesc": "Tu sesión ha expirado o no tienes permisos para acceder a este recurso. Por favor, inicia sesión de nuevo.",
     "loginButton": "Iniciar sesión",
     "homeButton": "Volver al inicio",
+    "reloadButton": "Recargar la página",
     "errorTitle": "Vuelo interrumpido",
     "errorDesc": "Parece que hemos encontrado una turbulencia inesperada en el sistema. No hemos podido completar tu solicitud.",
     "showDetails": "Ver detalles técnicos",
@@ -486,6 +492,7 @@
     "copyError": "Copiar error"
   },
   "navbar": {
+    "view": "Ver",
     "notifications": "Notificaciones",
     "friendRequests": "Solicitudes de amistad",
     "newFriendRequests": "Tienes {{count}} nueva{{plural}}",
@@ -499,5 +506,68 @@
     "theme": "Tema",
     "authentication": "Autenticación",
     "options": "Opciones"
+  },
+  "termsOfService": {
+    "title": "Términos de Servicio",
+    "backToHome": "Volver al inicio",
+    "lastUpdated": "Última actualización",
+    "sections": {
+      "acceptance": {
+        "title": "1. Aceptación de los Términos",
+        "content": "Al acceder y utilizar este sitio web, usted acepta y se compromete a estar sujeto a los términos y disposiciones de este acuerdo. Además, al utilizar estos servicios en particular, estará sujeto a las pautas o reglas publicadas aplicables a dichos servicios. Cualquier participación en este servicio constituirá la aceptación de este acuerdo. Si no acepta cumplir con lo anterior, no utilice este servicio."
+      },
+      "privacy": {
+        "title": "2. Política de Privacidad",
+        "content": "Nuestra Política de Privacidad, que establece cómo utilizaremos su información, se puede encontrar en ",
+        "link": "Política de Privacidad",
+        "contentAfter": ". Al utilizar este Sitio, usted consiente el procesamiento descrito en la misma y garantiza que todos los datos proporcionados por usted son exactos."
+      },
+      "useSite": {
+        "title": "3. Uso del Sitio",
+        "content": "Se le permite utilizar nuestro sitio web para sus propios fines y para imprimir y descargar material de este Sitio siempre que no modifique ningún contenido sin nuestro consentimiento. El material de este sitio web no debe ser republicado en línea o fuera de línea sin nuestro permiso."
+      },
+      "liability": {
+        "title": "4. Limitación de Responsabilidad",
+        "content": "No seremos responsables ante usted respecto de ninguna pérdida que surja de cualquier evento o eventos fuera de nuestro control razonable. No seremos responsables ante usted respecto de ninguna pérdida de negocio, incluyendo (sin limitación) pérdida o daño a los beneficios, ingresos, producción, ahorros anticipados, negocios, contratos, oportunidades comerciales o fondos de comercio."
+      },
+      "changes": {
+        "title": "5. Cambios en los Términos",
+        "content": "Nos reservamos el derecho de modificar estos términos en cualquier momento. Lo hacemos publicando y atrayendo la atención a los términos actualizados en el Sitio. Su decisión de continuar visitando y utilizando el Sitio después de que se hayan realizado dichos cambios constituye su aceptación formal de los nuevos Términos de Servicio."
+      }
+    }
+  },
+  "privacyPolicy": {
+    "title": "Política de Privacidad",
+    "backToHome": "Volver al inicio",
+    "lastUpdated": "Última actualización",
+    "sections": {
+      "information": {
+        "title": "1. Información que Recopilamos",
+        "content": "Recopilamos información que nos proporciona directamente. Por ejemplo, recopilamos información cuando crea una cuenta, participa en cualquier función interactiva de nuestros servicios, completa un formulario, solicita asistencia al cliente o se comunica con nosotros de otra manera. Los tipos de información que podemos recopilar incluyen su nombre, dirección de correo electrónico, dirección postal, contraseña, preferencias de vuelo, historial de búsqueda y otra información de contacto o identificación que elija proporcionar."
+      },
+      "howWeUse": {
+        "title": "2. Cómo Utilizamos la Información",
+        "content": "Podemos utilizar la información que recopilamos de usted y sobre usted para:",
+        "items": {
+          "item1": "Proporcionar, mantener y mejorar nuestros servicios;",
+          "item2": "Procesar transacciones y enviar información relacionada, incluyendo confirmaciones y facturas;",
+          "item3": "Enviarle avisos técnicos, actualizaciones, alertas de seguridad y mensajes de soporte y administrativos;",
+          "item4": "Responder a sus comentarios, preguntas y solicitudes, y proporcionar servicio al cliente;",
+          "item5": "Comunicarnos con usted sobre productos, servicios, ofertas, promociones y eventos."
+        }
+      },
+      "security": {
+        "title": "3. Seguridad de los Datos",
+        "content": "Tomamos medidas razonables para ayudar a proteger la información sobre usted de la pérdida, robo, uso indebido y acceso no autorizado, divulgación, alteración y destrucción. Sin embargo, ningún sistema de seguridad es impenetrable y no podemos garantizar la seguridad de nuestros sistemas al 100%. En el caso de que cualquier información bajo nuestro control se vea comprometida como resultado de una violación de seguridad, tomaremos medidas razonables para investigar la situación y, cuando proceda, notificaremos a aquellas personas cuya información pueda haber sido comprometida y tomaremos otras medidas, de acuerdo con cualquier ley y regulación aplicable."
+      },
+      "cookies": {
+        "title": "4. Cookies y Seguimiento",
+        "content": "Nuestro sitio web puede utilizar \"cookies\" para mejorar la experiencia del usuario. El navegador web del usuario coloca cookies en su disco duro para fines de mantenimiento de registros y, a veces, para rastrear información sobre ellos. El usuario puede elegir configurar su navegador web para rechazar las cookies, o para alertarle cuando se envíen cookies. Si lo hacen, tenga en cuenta que algunas partes del Sitio pueden no funcionar correctamente."
+      },
+      "contact": {
+        "title": "5. Contáctenos",
+        "content": "Si tiene alguna pregunta sobre esta Política de Privacidad, contáctenos a través de los formularios disponibles en nuestra aplicación o a través de nuestro correo de soporte. Al utilizar este Sitio, significa que acepta esta política. Si no está de acuerdo con esta política, por favor no utilice nuestro Sitio."
+      }
+    }
   }
 }
