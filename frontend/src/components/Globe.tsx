@@ -30,6 +30,7 @@ interface GlobeProps {
     onAirportClick?: (airport: AirportResponse | null) => void;
     onMovementChange?: (isMoving: boolean, isUserInteracting: boolean) => void;
     focusIata?: string;
+    steps?: AirportResponse[][];
 }
 
 export default function Globe({
@@ -44,10 +45,13 @@ export default function Globe({
     onSetDestination,
     onAirportClick,
     onMovementChange,
-    focusIata
+    focusIata,
+    steps = []
 }: GlobeProps) {
     const originsIata = useMemo(() => origins.map(o => o.iata_code).filter(Boolean) as string[], [origins]);
     const destinationsIata = useMemo(() => destinations.map(d => d.iata_code).filter(Boolean) as string[], [destinations]);
+    const stepsIata = useMemo(() => (steps || []).map((step: AirportResponse[]) => step.map((s: AirportResponse) => s.iata_code).filter(Boolean) as string[]), [steps]);
+    const allStepsIata = useMemo(() => stepsIata.flat(), [stepsIata]);
 
     const toAirportResponse = (ad: AirportData): AirportResponse => ({
         iata_code: ad.iata,
@@ -85,6 +89,12 @@ export default function Globe({
         totalLength: number;
         isAmbient?: boolean;
         waitDuration: number;
+        // Fields for sequential itinerary legs
+        currentLayerIndex?: number;
+        arrivalIata?: string;
+        // Persistent dashed trail for multi-leg itineraries
+        persistentGroup?: THREE.Group;
+        currentPersistentLine?: THREE.Line | null;
     }[]>([]);
 
     const sceneRef = useRef<THREE.Scene | null>(null);
@@ -95,8 +105,15 @@ export default function Globe({
     const cameraRef = useRef<THREE.PerspectiveCamera | null>(null);
     const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
     const controlsRef = useRef<OrbitControls | null>(null);
-    const activeOriginsRef = useRef<string[]>(originsIata);
-    const activeDestsRef = useRef<string[]>(destinationsIata);
+    const activeOriginsRef = useRef<string[]>([]);
+    const activeDestsRef = useRef<string[]>([]);
+    const stepsIataRef = useRef<string[][]>([]);
+
+    useEffect(() => {
+        activeOriginsRef.current = originsIata;
+        activeDestsRef.current = destinationsIata;
+        stepsIataRef.current = stepsIata;
+    }, [originsIata, destinationsIata, stepsIata]);
     const mousePosRef = useRef<THREE.Vector2>(new THREE.Vector2(-999, -999));
     const onSelectRef = useRef(onAirportSelect);
     const selectedAirportsRef = useRef(selectedAirports);
@@ -109,11 +126,11 @@ export default function Globe({
 
     // Stable key for airports that must NOT be clustered (sorted to ignore order in swaps)
     const forcedAirportsKey = useMemo(() => {
-        return [...originsIata, ...destinationsIata, ...selectedAirports]
+        return [...originsIata, ...destinationsIata, ...allStepsIata, ...selectedAirports]
             .filter(Boolean)
             .sort()
             .join(',');
-    }, [originsIata, destinationsIata, selectedAirports]);
+    }, [originsIata, destinationsIata, allStepsIata, selectedAirports]);
     const lastCamQuatRef = useRef<THREE.Quaternion>(new THREE.Quaternion());
     const lastMoveTimeRef = useRef(0);
     const isUserInteractingRef = useRef(false);
@@ -212,6 +229,36 @@ export default function Globe({
         const texture = new THREE.CanvasTexture(canvas);
         texture.anisotropy = 4;
         clusterTextureCache.current[count] = texture;
+        return texture;
+    };
+
+    const scaleTextureCache = useRef<Record<number, THREE.CanvasTexture>>({});
+
+    const getScaleTexture = (index: number) => {
+        if (scaleTextureCache.current[index]) return scaleTextureCache.current[index];
+
+        const size = 64;
+        const canvas = document.createElement('canvas');
+        canvas.width = size;
+        canvas.height = size;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return null;
+
+        // White bold text with a strong shadow for visibility on any background color
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 44px "Inter", sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+
+        ctx.shadowColor = 'rgba(0, 0, 0, 0.9)';
+        ctx.shadowBlur = 8;
+        ctx.shadowOffsetX = 0;
+        ctx.shadowOffsetY = 2;
+        ctx.fillText(index.toString(), size / 2, size / 2);
+
+        const texture = new THREE.CanvasTexture(canvas);
+        texture.anisotropy = 4;
+        scaleTextureCache.current[index] = texture;
         return texture;
     };
 
@@ -356,18 +403,24 @@ export default function Globe({
 
         if (!origin || !dest) return;
 
-        const start = latLonToVector3(Number(origin.lat), Number(origin.lon));
-        const end = latLonToVector3(Number(dest.lat), Number(dest.lon));
+        const getPos = (iata: string, lat: number, lon: number) => {
+            const mesh = airportsMap.current[iata];
+            if (mesh) return mesh.position.clone();
+            return latLonToVector3(Number(lat), Number(lon));
+        };
+
+        const start = getPos(origin.iata, origin.lat, origin.lon);
+        const end = getPos(dest.iata, dest.lat, dest.lon);
         const dist = start.distanceTo(end);
 
         // Sampling
         const samples = Math.max(200, Math.floor(dist * 600));
-        const cruiseAltitude = 0.01 + (dist * 0.02);
+        const cruiseAltitude = (dist * 0.016);
         const points: THREE.Vector3[] = [];
         for (let i = 0; i <= samples; i++) {
             const t = i / samples;
             const pt = new THREE.Vector3().copy(start).lerp(end, t).normalize();
-            const altitude = 1.005 + (Math.sin(Math.PI * t) * cruiseAltitude);
+            const altitude = 1.002 + (Math.sin(Math.PI * t) * cruiseAltitude);
             pt.multiplyScalar(altitude);
             points.push(pt);
         }
@@ -381,8 +434,9 @@ export default function Globe({
         p.totalLength = curve.getLength();
         p.speed = (0.001 + Math.random() * 0.001) / (1 + dist * 2);
         p.progress = 0;
-        // Random wait: max 200% of flight time (2.0), more likely to be low (Skewed distribution)
-        p.waitDuration = 0.2 + Math.pow(Math.random(), 2) * 1.8;
+        // Absolute wait time grows less aggressively with distance
+        const waitBase = 0.2 + Math.pow(Math.random(), 2) * 1.8;
+        p.waitDuration = waitBase / (1 + dist * 1.2);
 
         // Update multiple jittered lines for a fuzzy cloud effect
         p.lines.forEach((line: THREE.Line, i: number) => {
@@ -401,27 +455,72 @@ export default function Globe({
         });
     };
 
-    const rebuildItineraryRoute = (p: any, oIatas: string[], dIatas: string[]) => {
-        if (oIatas.length === 0) return;
-        const idx = Math.floor(Math.random() * oIatas.length);
-        const oIata = oIatas[idx];
-        const dIata = dIatas[idx];
+    const rebuildItineraryRoute = (p: any, layers: string[][]) => {
+        if (layers.length < 2) return;
 
-        const origin = airportsDataRef.current.find(a => a.iata === oIata);
-        const dest = airportsDataRef.current.find(a => a.iata === dIata);
+        let startIata: string;
+        let endIata: string;
+        let nextLayerIdx: number;
+
+        // Determine next leg
+        const isFinished = p.currentLayerIndex === undefined || p.currentLayerIndex >= layers.length - 1;
+
+        if (isFinished) {
+            // Clear persistent trails when restarting the whole journey
+            if (p.persistentGroup) p.persistentGroup.clear();
+            p.currentPersistentLine = null;
+
+            // Start over from a random origin
+            const origins = layers[0] || [];
+            if (origins.length === 0) return;
+            startIata = origins[Math.floor(Math.random() * origins.length)]!;
+
+            const nextLayer = layers[1] || [];
+            if (nextLayer.length === 0) return;
+            endIata = nextLayer[Math.floor(Math.random() * nextLayer.length)]!;
+            nextLayerIdx = 1;
+        } else {
+            // Continue from where it arrived
+            startIata = p.arrivalIata || (layers[p.currentLayerIndex!] ? layers[p.currentLayerIndex!]![0]! : "");
+            if (!startIata) {
+                // Safety fallback if something went wrong with the chain
+                p.currentLayerIndex = undefined;
+                rebuildItineraryRoute(p, layers);
+                return;
+            }
+            nextLayerIdx = p.currentLayerIndex! + 1;
+
+            const nextLayer = layers[nextLayerIdx] || [];
+            if (nextLayer.length === 0) {
+                // Should not happen with valid layers, but safety reset
+                p.currentLayerIndex = undefined;
+                rebuildItineraryRoute(p, layers);
+                return;
+            }
+            endIata = nextLayer[Math.floor(Math.random() * nextLayer.length)]!;
+        }
+
+        const origin = airportsDataRef.current.find(a => a.iata === startIata);
+        const dest = airportsDataRef.current.find(a => a.iata === endIata);
         if (!origin || !dest) return;
 
-        const start = latLonToVector3(Number(origin.lat), Number(origin.lon));
-        const end = latLonToVector3(Number(dest.lat), Number(dest.lon));
+        const getPos = (iata: string, lat: number, lon: number) => {
+            const mesh = airportsMap.current[iata];
+            if (mesh) return mesh.position.clone();
+            return latLonToVector3(Number(lat), Number(lon));
+        };
+
+        const start = getPos(origin.iata, origin.lat, origin.lon);
+        const end = getPos(dest.iata, dest.lat, dest.lon);
         const dist = start.distanceTo(end);
 
-        const samples = Math.max(120, Math.floor(dist * 250));
-        const cruiseAltitude = 0.01 + (dist * 0.02);
+        const samples = Math.max(250, Math.floor(dist * 600));
+        const cruiseAltitude = (dist * 0.016);
         const points: THREE.Vector3[] = [];
         for (let i = 0; i <= samples; i++) {
             const t = i / samples;
             const pt = new THREE.Vector3().copy(start).lerp(end, t).normalize();
-            const altitude = 1.005 + (Math.sin(Math.PI * t) * cruiseAltitude);
+            const altitude = 1.002 + (Math.sin(Math.PI * t) * cruiseAltitude);
             pt.multiplyScalar(altitude);
             points.push(pt);
         }
@@ -435,8 +534,15 @@ export default function Globe({
         const baseSpeed = 0.002;
         p.speed = baseSpeed / (1 + dist * 2);
         p.progress = 0;
-        // Random wait: max 200% of flight time (2.0), more likely to be low (Skewed distribution)
-        p.waitDuration = 0.2 + Math.pow(Math.random(), 2) * 1.8;
+
+        // Fixed wait at stopovers (escalas), random only when the ship finishes its trip and restarts
+        const isScale = nextLayerIdx < layers.length - 1;
+        const waitBase = isScale ? 0.4 : (0.15 + Math.pow(Math.random(), 2) * 1.5);
+        p.waitDuration = waitBase / (1 + dist * 1.2);
+
+        // Save state for next leg
+        p.currentLayerIndex = nextLayerIdx;
+        p.arrivalIata = endIata;
 
         // Update multiple jittered lines for a fuzzy cloud effect
         p.lines.forEach((line: THREE.Line, i: number) => {
@@ -453,6 +559,28 @@ export default function Globe({
             if (posAttr) posAttr.setUsage(THREE.DynamicDrawUsage);
             line.geometry.setDrawRange(0, 0);
         });
+
+        // Handle persistent dashed trail for multi-leg routes
+        if (layers.length > 2 && p.persistentGroup) {
+            const brandColorHex = getThemeColorHex('--color-brand', 0x4f46e5);
+            const dashMat = new THREE.LineDashedMaterial({
+                color: brandColorHex,
+                dashSize: 0.004,
+                gapSize: 0.003,
+                transparent: true,
+                opacity: 0.35,
+                depthWrite: false
+            });
+            const dashGeo = new THREE.BufferGeometry().setFromPoints(spacedPoints);
+            const dashLine = new THREE.Line(dashGeo, dashMat);
+            dashLine.computeLineDistances();
+            dashLine.geometry.setDrawRange(0, 0);
+            dashLine.renderOrder = 15;
+            p.persistentGroup.add(dashLine);
+            p.currentPersistentLine = dashLine;
+        } else {
+            p.currentPersistentLine = null;
+        }
     };
 
     // Notify parent when globe is fully ready (geo + airports loaded)
@@ -862,7 +990,7 @@ export default function Globe({
                 const specialClusterScale = 8 * scaleFactor; // Balanced for 5x geometry
                 const clusterHoverScale = 6 * scaleFactor;   // Balanced for 5x geometry
                 const airportHoverScale = 28 * scaleFactor;
-                const labelRefScale = 0.045 * scaleFactor;
+                const labelRefScale = 0.026 * scaleFactor;
 
                 airportGroupRef.current.children.forEach(child => {
                     const mesh = child as THREE.Mesh;
@@ -936,8 +1064,8 @@ export default function Globe({
                         }
                     }
 
-                    // Integrated Cluster Label Positioning (3D Mesh)
-                    if (item.isCluster && mesh.userData.labelMesh) {
+                    // Integrated Cluster/Scale Label Positioning (3D Mesh)
+                    if ((item.isCluster || item.stepIdx !== undefined) && mesh.userData.labelMesh) {
                         const label = mesh.userData.labelMesh as THREE.Sprite;
 
                         _vec1.copy(mesh.position);
@@ -1014,7 +1142,8 @@ export default function Globe({
                     if (p.isAmbient) {
                         rebuildAmbientRoute(p);
                     } else {
-                        rebuildItineraryRoute(p, activeOriginsRef.current, activeDestsRef.current);
+                        const layers = [activeOriginsRef.current, ...stepsIataRef.current, activeDestsRef.current];
+                        rebuildItineraryRoute(p, layers);
                     }
                 }
 
@@ -1023,11 +1152,16 @@ export default function Globe({
 
                 // --- Sync Logic: Vanish and Appear together ---
                 // Start and End transition zones (proportional to path)
-                const totalLen = (p as any).totalLength || 1;
+                const totalLen = (p as any).totalLength || 0.1;
                 const fadeZone = Math.max(0.08, Math.min(0.25, 0.12 / totalLen));
 
-                // Proportional trail length: roughly 7.5% of path
-                const baseTrailLength = Math.max(12, Math.min(35, Math.floor(totalPoints * 0.075)));
+                // Dynamic density-aware trail and tail offset calculation
+                const pointsPerUnit = totalPoints / totalLen;
+                const tailOffset = Math.floor(0.008 * pointsPerUnit);
+
+                // Proportional trail length: grows with distance but at a decreasing rate 
+                // Increased multiplier and minimums to ensure visibility on short flights
+                const baseTrailLength = Math.max(tailOffset + 32, Math.floor(Math.sqrt(totalPoints) * 3.4));
                 let currentTrailLength = baseTrailLength;
 
                 // Synchronized disappearance: the trail shrinks into the plane as it lands
@@ -1065,11 +1199,12 @@ export default function Globe({
                     }
 
                     // Update all fuzzy lines in the group
+                    const TAIL_OFFSET = tailOffset; // Shift trail head to the airplane's tail
                     p.lines.forEach(line => {
                         const exactTailIdx = Math.max(0, p.progress * (totalPoints - 1) - currentTrailLength);
                         const startIdx = Math.floor(exactTailIdx);
                         const drawStart = Math.max(0, Math.min(startIdx, totalPoints - 1));
-                        const drawEnd = Math.floor(exactHeadIdx);
+                        const drawEnd = Math.max(0, Math.floor(exactHeadIdx) - TAIL_OFFSET);
                         const count = Math.max(0, drawEnd - drawStart + 1);
                         line.geometry.setDrawRange(drawStart, count);
 
@@ -1084,7 +1219,7 @@ export default function Globe({
 
                             for (let j = sJ; j <= eJ; j++) {
                                 // Progress relative to the current tail-head range (clamped to 0..1)
-                                const headPos = p.progress * (totalPoints - 1);
+                                const headPos = p.progress * (totalPoints - 1) - TAIL_OFFSET;
                                 const segmentProgress = Math.max(0, Math.min(1, (j - (headPos - currentTrailLength)) / range));
 
                                 const alpha = Math.pow(segmentProgress, 0.8);
@@ -1095,6 +1230,12 @@ export default function Globe({
                             colorAttr.needsUpdate = true;
                         }
                     });
+
+                    // Update persistent dashed trail
+                    if (p.currentPersistentLine) {
+                        const drawEnd = Math.max(0, Math.floor(exactHeadIdx) - TAIL_OFFSET);
+                        p.currentPersistentLine.geometry.setDrawRange(0, drawEnd + 1);
+                    }
 
                     // Unified Lifecycle Opacity (Temporal)
                     let unifiedOpacity = 1.0;
@@ -1113,12 +1254,12 @@ export default function Globe({
                                     child.material.forEach(m => {
                                         m.opacity = unifiedOpacity;
                                         m.transparent = true;
-                                        m.depthWrite = false;
+                                        m.depthWrite = true;
                                     });
                                 } else if (child.material) {
                                     child.material.opacity = unifiedOpacity;
                                     child.material.transparent = true;
-                                    child.material.depthWrite = false;
+                                    child.material.depthWrite = true;
                                 }
                             }
                         });
@@ -1135,6 +1276,12 @@ export default function Globe({
                                 line.material.transparent = true;
                             }
                         });
+                    }
+
+                    // Persistent trail visibility: persists during wait cycles until the whole journey cycle resets
+                    if (p.persistentGroup) {
+                        // Dash trail stays visible once it appears, until the plane restarts its journey
+                        p.persistentGroup.visible = p.progress >= 0 && (p.progress <= 1.0 ? unifiedOpacity > 0.01 : true);
                     }
                 }
             });
@@ -1339,7 +1486,7 @@ export default function Globe({
         airportsMap.current = {};
 
         const hM = isMobileRef.current ? 1.5 : 1.0;
-        const forcedSet = new Set([...selectedAirports, ...originsIata, ...destinationsIata].filter(Boolean) as string[]);
+        const forcedSet = new Set([...selectedAirports, ...originsIata, ...allStepsIata, ...destinationsIata].filter(Boolean) as string[]);
         const threshold = clusterThreshold;
 
         // 1. OOP Entity Class
@@ -1353,6 +1500,7 @@ export default function Globe({
             airports: any[];
             isSpecial: boolean;
             isCluster: boolean;
+            stepIdx?: number;
             id: string;
 
             constructor(data: any) {
@@ -1365,6 +1513,7 @@ export default function Globe({
                 this.airports = data.airports || [];
                 this.isSpecial = forcedSet.has(this.iata);
                 this.isCluster = !!data.isCluster;
+                this.stepIdx = data.stepIdx;
                 // Deterministic ID: for clusters, join sorted IATAs
                 if (this.isCluster) {
                     const sortedIatas = [...this.airports].map(a => a.iata).sort();
@@ -1420,9 +1569,18 @@ export default function Globe({
         // Processing Pipeline (Stable sort for determinism)
         let items = [...globeAirports]
             .sort((a, b) => a.i.localeCompare(b.i))
-            .map(a => new GlobeItem({
-                iata: a.i, lat: a.la, lon: a.lo, name: a.n, city: a.ci, v3: latLonToVector3(a.la, a.lo)
-            }));
+            .map(a => {
+                const sIdx = stepsIata.findIndex(step => step.includes(a.i));
+                return new GlobeItem({
+                    iata: a.i,
+                    lat: a.la,
+                    lon: a.lo,
+                    name: a.n,
+                    city: a.ci,
+                    v3: latLonToVector3(a.la, a.lo),
+                    stepIdx: sIdx !== -1 ? sIdx : undefined
+                });
+            });
 
         // 2b. Leader-based Clustering Pass (O(N) with Grid)
         // Prevents Transitive "Super-clusters" by ensuring each leader only picks its immediate neighbors.
@@ -1525,13 +1683,27 @@ export default function Globe({
         items.forEach(item => {
             const isOrigin = originsIata.includes(item.iata);
             const isDest = destinationsIata.includes(item.iata);
-            const isOriginDest = isOrigin || isDest;
-            const meshColor = isOriginDest
-                ? getThemeColorHex(isOrigin ? '--color-origin' : '--color-destination', 0x0891b2)
-                : (item.isSpecial ? 0x00ff00 : getThemeColorHex('--color-brand', 0x4f46e5));
+            const stepIdx = stepsIata.findIndex(step => step.includes(item.iata));
+            const isStep = stepIdx !== -1;
+            const isOriginDestStep = isOrigin || isDest || isStep;
 
-            const meshOpacity = (item.isSpecial || isOriginDest) ? 1 : 0.4;
-            const baseScale = isOriginDest ? 35 : (item.isSpecial ? 28 : (item.isCluster ? 2.4 : 1.6));
+            let meshColor = getThemeColorHex('--color-brand', 0x4f46e5);
+            if (isOrigin || isDest || isStep) {
+                const originColor = getThemeColorHex('--color-origin', 0x0891b2);
+                const destColor = getThemeColorHex('--color-destination', 0xc026d3);
+                if (isOrigin) meshColor = originColor;
+                else if (isDest) meshColor = destColor;
+                else {
+                    const t = (stepIdx + 1) / (stepsIata.length + 1);
+                    meshColor = new THREE.Color(originColor).lerp(new THREE.Color(destColor), t).getHex();
+                }
+            } else if (item.isSpecial) {
+                // item.isSpecial includes selectedAirports
+                meshColor = 0x00ff00;
+            }
+
+            const meshOpacity = (item.isSpecial || isOriginDestStep) ? 1 : 0.4;
+            const baseScale = (isOriginDestStep) ? 35 : (item.isSpecial ? 28 : (item.isCluster ? 2.4 : 1.6));
 
             const mesh = new THREE.Mesh(
                 item.isCluster ? sharedClusterGeo.current : sharedAirportGeo.current,
@@ -1545,15 +1717,16 @@ export default function Globe({
             mesh.position.copy(item.v3);
             mesh.scale.setScalar(baseScale);
             mesh.userData = { ...item }; // Plain object for userData
-            mesh.renderOrder = isOriginDest ? 10 : (item.isSpecial ? 5 : 1);
+            mesh.renderOrder = isOriginDestStep ? 10 : (item.isSpecial ? 5 : 1);
             airportGroupRef.current.add(mesh);
 
             if (item.isCluster) {
                 const texture = getClusterTexture(item.airports.length);
                 if (texture) {
-                    const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: texture, transparent: true, opacity: 0, depthWrite: false }));
-                    sprite.position.copy(item.v3).multiplyScalar(1.002);
-                    sprite.scale.setScalar(0.016);
+                    const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: texture, transparent: true, opacity: 0, depthWrite: false, depthTest: false }));
+                    sprite.position.copy(item.v3).multiplyScalar(1.015);
+                    sprite.renderOrder = 20;
+                    sprite.scale.setScalar(0.012);
                     sprite.visible = false;
                     labelGroupRef.current.add(sprite);
                     mesh.userData.labelMesh = sprite;
@@ -1562,6 +1735,24 @@ export default function Globe({
                     if (a && a.iata) airportsMap.current[a.iata] = mesh;
                 });
             } else {
+                if (item.stepIdx !== undefined) {
+                    const texture = getScaleTexture(item.stepIdx + 1);
+                    if (texture) {
+                        const sprite = new THREE.Sprite(new THREE.SpriteMaterial({
+                            map: texture,
+                            transparent: true,
+                            opacity: 0,
+                            depthWrite: false,
+                            depthTest: false
+                        }));
+                        sprite.position.copy(item.v3).multiplyScalar(1.015);
+                        sprite.renderOrder = 20;
+                        sprite.scale.setScalar(0.012);
+                        sprite.visible = false;
+                        labelGroupRef.current.add(sprite);
+                        mesh.userData.labelMesh = sprite;
+                    }
+                }
                 airportsMap.current[item.iata] = mesh;
             }
         });
@@ -1588,8 +1779,16 @@ export default function Globe({
             if (!item.isCluster) {
                 const isOrigin = originsIata.includes(item.iata);
                 const isDest = destinationsIata.includes(item.iata);
-                if (isOrigin || isDest) {
-                    mat.color.setHex(isOrigin ? originColor : destColor);
+                const stepIdx = stepsIata.findIndex(step => step.includes(item.iata));
+                const isStep = stepIdx !== -1;
+
+                if (isOrigin || isDest || isStep) {
+                    let meshColor = isOrigin ? originColor : (isDest ? destColor : brandColor);
+                    if (isStep) {
+                        const t = (stepIdx + 1) / (stepsIata.length + 1);
+                        meshColor = new THREE.Color(originColor).lerp(new THREE.Color(destColor), t).getHex();
+                    }
+                    mat.color.setHex(meshColor);
                     mat.opacity = 1;
                     mesh.scale.setScalar(12);
                 } else if (selSet.has(item.iata)) {
@@ -1601,19 +1800,19 @@ export default function Globe({
                 }
             } else {
                 // Determine if cluster contains a special airport
-                let hasOriginOrDest = false;
+                let hasOriginDestOrStep = false;
                 let hasSelected = false;
                 for (let i = 0; i < item.airports.length; i++) {
                     const iata = item.airports[i].iata;
-                    if (originsIata.includes(iata) || destinationsIata.includes(iata)) {
-                        hasOriginOrDest = true;
+                    if (originsIata.includes(iata) || destinationsIata.includes(iata) || allStepsIata.includes(iata)) {
+                        hasOriginDestOrStep = true;
                     }
                     if (selSet.has(iata)) {
                         hasSelected = true;
                     }
                 }
 
-                if (hasOriginOrDest) {
+                if (hasOriginDestOrStep) {
                     mat.color.setHex(brandColor);
                     mat.opacity = 0;
                     mesh.scale.setScalar(8); // Sync with specialClusterScale
@@ -1684,7 +1883,7 @@ export default function Globe({
 
         // Stability check: Bail out if itinerary content hasn't changed
         // This prevents planes from restarting if the parent re-renders while moving/zooming the globe
-        const currentKey = JSON.stringify(originsIata) + JSON.stringify(destinationsIata);
+        const currentKey = JSON.stringify(originsIata) + JSON.stringify(stepsIata) + JSON.stringify(destinationsIata);
         if (lastItineraryKeyRef.current === currentKey) return;
         lastItineraryKeyRef.current = currentKey;
 
@@ -1699,144 +1898,189 @@ export default function Globe({
                     arcsGroupRef.current.remove(p.lineGroup);
                     disposeObject(p.lineGroup);
                 }
+                if (p.persistentGroup) {
+                    arcsGroupRef.current.remove(p.persistentGroup);
+                    disposeObject(p.persistentGroup);
+                }
                 return false;
             }
             return true;
         });
 
-        // Draw Arcs for ALL combinations of origins and destinations
-        originsIata.forEach((oIata) => {
-            destinationsIata.forEach((dIata) => {
-                const origin = airportsDataRef.current.find(a => a.iata === oIata);
-                const dest = airportsDataRef.current.find(a => a.iata === dIata);
+        // Draw Arcs for consecutive legs: Origins -> Step 1 -> ... -> Destinations
+        const layers = [originsIata, ...stepsIata, destinationsIata];
+        const brandColorHex = getThemeColorHex('--color-brand', 0x4f46e5);
+        const brandColor = new THREE.Color(brandColorHex);
 
-                if (origin && dest) {
-                    const start = latLonToVector3(Number(origin.lat), Number(origin.lon));
-                    const end = latLonToVector3(Number(dest.lat), Number(dest.lon));
-                    const dist = start.distanceTo(end);
-                    const samples = Math.max(200, Math.floor(dist * 600));
-                    const points: THREE.Vector3[] = [];
-                    const cruiseAltitude = 0.01 + (dist * 0.02);
+        // Instead of redundant planes per route, we use exactly one logical plane 
+        // per starting origin, capped at 3 to keep the map clean.
+        const startingOrigins = layers[0] || [];
+        const numPlanesToSpawn = Math.min(3, startingOrigins.length);
 
-                    for (let i = 0; i <= samples; i++) {
-                        const t = i / samples;
-                        const point = new THREE.Vector3().copy(start).lerp(end, t).normalize();
-                        const altitudeFactor = Math.sin(Math.PI * t);
-                        const altitude = 1.005 + (altitudeFactor * cruiseAltitude);
-                        point.multiplyScalar(altitude);
-                        points.push(point);
-                    }
+        for (let i = 0; i < numPlanesToSpawn; i++) {
+            const startIata = startingOrigins[i % startingOrigins.length]!;
+            const nextLayer = layers[1] || [];
+            if (nextLayer.length === 0) continue;
+            const endIata = nextLayer[Math.floor(Math.random() * nextLayer.length)];
 
-                    const curve = new THREE.CatmullRomCurve3(points);
-                    const spacedPoints = curve.getSpacedPoints(samples);
-                    const pCount = 1;
+            const origin = airportsDataRef.current.find(a => a.iata === startIata);
+            const dest = airportsDataRef.current.find(a => a.iata === endIata);
 
-                    const brandColorHex = getThemeColorHex('--color-brand', 0x4f46e5);
-                    const brandColor = new THREE.Color(brandColorHex);
+            if (origin && dest) {
+                const getPos = (iata: string, lat: number, lon: number) => {
+                    const mesh = airportsMap.current[iata];
+                    if (mesh) return mesh.position.clone();
+                    return latLonToVector3(Number(lat), Number(lon));
+                };
 
-                    for (let i = 0; i < pCount; i++) {
-                        let planeMesh: THREE.Object3D;
+                const start = getPos(origin.iata, origin.lat, origin.lon);
+                const end = getPos(dest.iata, dest.lat, dest.lon);
+                const dist = start.distanceTo(end);
+                const samples = Math.max(200, Math.floor(dist * 600));
+                const cruiseAltitude = (dist * 0.016);
+                const points: THREE.Vector3[] = [];
 
-                        if (airplaneModelRef.current) {
-                            const group = new THREE.Group();
-                            const model = airplaneModelRef.current.clone();
-                            model.scale.setScalar(0.025);
-                            model.rotateY(-Math.PI / 2);
-                            group.add(model);
-                            planeMesh = group;
+                for (let j = 0; j <= samples; j++) {
+                    const t = j / samples;
+                    const point = new THREE.Vector3().copy(start).lerp(end, t).normalize();
+                    const altitude = 1.002 + (Math.sin(Math.PI * t) * cruiseAltitude);
+                    point.multiplyScalar(altitude);
+                    points.push(point);
+                }
 
-                            model.traverse((child) => {
-                                if (child instanceof THREE.Mesh) {
-                                    if (child.material) {
-                                        if (Array.isArray(child.material)) {
-                                            child.material = child.material.map(m => {
-                                                const mc = m.clone();
-                                                mc.transparent = true;
-                                                mc.opacity = 1;
-                                                mc.depthWrite = false; // Prevent culling elements behind
-                                                if ('emissive' in mc) {
-                                                    (mc as any).emissive = brandColor;
-                                                    (mc as any).emissiveIntensity = 2;
-                                                }
-                                                return mc;
-                                            });
-                                        } else {
-                                            child.material = child.material.clone();
-                                            child.material.transparent = true;
-                                            child.material.opacity = 1;
-                                            child.material.depthWrite = false;
-                                            if ('emissive' in child.material) {
-                                                (child.material as any).emissive = brandColor;
-                                                (child.material as any).emissiveIntensity = 2;
-                                            }
+                const curve = new THREE.CatmullRomCurve3(points);
+                const spacedPoints = curve.getSpacedPoints(samples);
+
+                let planeMesh: THREE.Object3D;
+                if (airplaneModelRef.current) {
+                    const group = new THREE.Group();
+                    const model = airplaneModelRef.current.clone();
+                    model.scale.setScalar(0.025);
+                    model.rotateY(-Math.PI / 2);
+                    group.add(model);
+                    planeMesh = group;
+
+                    model.traverse((child) => {
+                        if (child instanceof THREE.Mesh) {
+                            if (child.material) {
+                                if (Array.isArray(child.material)) {
+                                    child.material = child.material.map(m => {
+                                        const mc = m.clone();
+                                        mc.transparent = true;
+                                        mc.opacity = 1;
+                                        mc.depthWrite = true;
+                                        if ('emissive' in mc) {
+                                            (mc as any).emissive = brandColor;
+                                            (mc as any).emissiveIntensity = 2;
                                         }
+                                        return mc;
+                                    });
+                                } else {
+                                    child.material = child.material.clone();
+                                    child.material.transparent = true;
+                                    child.material.opacity = 1;
+                                    child.material.depthWrite = true;
+                                    if ('emissive' in child.material) {
+                                        (child.material as any).emissive = brandColor;
+                                        (child.material as any).emissiveIntensity = 2;
                                     }
                                 }
-                            });
-                        } else {
-                            planeMesh = new THREE.Mesh(
-                                new THREE.SphereGeometry(0.005, 12, 12),
-                                new THREE.MeshStandardMaterial({
-                                    color: brandColor,
-                                    emissive: brandColor,
-                                    emissiveIntensity: 3,
-                                    transparent: true,
-                                    depthWrite: false
-                                })
-                            );
+                            }
                         }
-
-                        const lineGroup = new THREE.Group();
-                        const lineList: THREE.Line[] = [];
-                        const lineInfo = [
-                            { h: 0, r: 0, op: 0.9 },
-                            { h: 0.001, r: 0.001, op: 0.3 },
-                            { h: -0.001, r: -0.001, op: 0.3 }
-                        ];
-
-                        lineInfo.forEach((info, idx) => {
-                            const fuzzyP = generateFuzzyPoints(spacedPoints, info.h, info.r, 0.4, idx);
-                            const geo = new THREE.BufferGeometry().setFromPoints(fuzzyP);
-                            if (geo.getAttribute('position')) (geo.getAttribute('position') as THREE.BufferAttribute).setUsage(THREE.DynamicDrawUsage);
-                            geo.setDrawRange(0, 0);
-
-                            const mat = new THREE.LineBasicMaterial({
-                                color: brandColor,
-                                transparent: true,
-                                opacity: info.op,
-                                depthWrite: false,
-                                vertexColors: true
-                            });
-                            const l = new THREE.Line(geo, mat);
-                            l.geometry.computeBoundingSphere();
-                            const colorArr = new Float32Array(spacedPoints.length * 3).fill(1);
-                            l.geometry.setAttribute('color', new THREE.BufferAttribute(colorArr, 3));
-                            patchStelaMaterial(l.material as THREE.LineBasicMaterial);
-                            lineGroup.add(l);
-                            lineList.push(l);
-                        });
-                        arcsGroupRef.current.add(lineGroup);
-
-                        const baseSpeed = 0.002;
-                        const realSpeed = baseSpeed / (1 + dist * 2);
-
-                        planesRef.current.push({
-                            mesh: planeMesh,
-                            curve: curve,
-                            points: spacedPoints,
-                            lineGroup: lineGroup,
-                            lines: lineList,
-                            progress: -Math.random() * 0.1, // Reduced initial delay for itinerary
-                            speed: realSpeed,
-                            totalLength: curve.getLength(),
-                            waitDuration: 0.2 + Math.pow(Math.random(), 2) * 1.8
-                        });
-                        arcsGroupRef.current.add(planeMesh);
-                    }
+                    });
+                } else {
+                    planeMesh = new THREE.Mesh(
+                        new THREE.SphereGeometry(0.005, 12, 12),
+                        new THREE.MeshStandardMaterial({
+                            color: brandColor,
+                            emissive: brandColor,
+                            emissiveIntensity: 3,
+                            transparent: true,
+                            depthWrite: false
+                        })
+                    );
                 }
-            });
-        });
-    }, [isLoaded, originsIata, destinationsIata, modelLoaded]);
+                planeMesh.traverse(c => { c.renderOrder = 15; });
+
+                const lineGroup = new THREE.Group();
+                const lineList: THREE.Line[] = [];
+                const lineInfo = [
+                    { h: 0, r: 0, op: 0.9 },
+                    { h: 0.001, r: 0.001, op: 0.3 },
+                    { h: -0.001, r: -0.001, op: 0.3 }
+                ];
+
+                lineInfo.forEach((info, idx) => {
+                    const fuzzyP = generateFuzzyPoints(spacedPoints, info.h, info.r, 0.4, idx);
+                    const geo = new THREE.BufferGeometry().setFromPoints(fuzzyP);
+                    if (geo.getAttribute('position')) (geo.getAttribute('position') as THREE.BufferAttribute).setUsage(THREE.DynamicDrawUsage);
+                    geo.setDrawRange(0, 0);
+
+                    const mat = new THREE.LineBasicMaterial({
+                        color: brandColor,
+                        transparent: true,
+                        opacity: info.op,
+                        depthWrite: false,
+                        vertexColors: true
+                    });
+                    const l = new THREE.Line(geo, mat);
+                    l.geometry.computeBoundingSphere();
+                    l.renderOrder = 15;
+                    const colorArr = new Float32Array(spacedPoints.length * 3).fill(1);
+                    l.geometry.setAttribute('color', new THREE.BufferAttribute(colorArr, 3));
+                    patchStelaMaterial(l.material as THREE.LineBasicMaterial);
+                    lineGroup.add(l);
+                    lineList.push(l);
+                });
+                lineGroup.renderOrder = 15;
+                arcsGroupRef.current.add(lineGroup);
+
+                // Persistent trail group for multi-leg itineraries
+                const persistentGroup = new THREE.Group();
+                let currentPersistentLine: THREE.Line | null = null;
+                if (layers.length > 2) {
+                    const dashMat = new THREE.LineDashedMaterial({
+                        color: brandColor,
+                        dashSize: 0.004,
+                        gapSize: 0.003,
+                        transparent: true,
+                        opacity: 0.35,
+                        depthWrite: true
+                    });
+                    const dashGeo = new THREE.BufferGeometry().setFromPoints(spacedPoints);
+                    const dashLine = new THREE.Line(dashGeo, dashMat);
+                    dashLine.computeLineDistances();
+                    dashLine.geometry.setDrawRange(0, 0);
+                    dashLine.renderOrder = 15;
+                    persistentGroup.add(dashLine);
+                    currentPersistentLine = dashLine;
+                }
+                persistentGroup.renderOrder = 15;
+                arcsGroupRef.current.add(lineGroup);
+                arcsGroupRef.current.add(persistentGroup);
+
+                planeMesh.renderOrder = 15;
+
+                planesRef.current.push({
+                    mesh: planeMesh,
+                    curve,
+                    points: spacedPoints,
+                    lineGroup,
+                    lines: lineList,
+                    progress: -Math.random() * 0.5,
+                    speed: (0.002) / (1 + dist * 2),
+                    totalLength: curve.getLength(),
+                    // Use fixed wait if first leg is a scale (multi-leg itinerary)
+                    waitDuration: (layers.length > 2 ? 0.4 : (0.15 + Math.pow(Math.random(), 2) * 1.5)) / (1 + dist * 1.2),
+                    currentLayerIndex: 1, // Next layer to visit
+                    arrivalIata: endIata,
+                    persistentGroup,
+                    currentPersistentLine
+                });
+                arcsGroupRef.current.add(planeMesh);
+            }
+        }
+    }, [isLoaded, originsIata, stepsIata, destinationsIata, modelLoaded]);
 
     const ambientStartedRef = useRef(false);
     // 6.5 Handle ambient planes creation (Only runs once)
@@ -1846,23 +2090,29 @@ export default function Globe({
 
         const airData = airportsDataRef.current;
         if (airData.length >= 2) {
-            const ambientCount = 8;
+            const ambientCount = 6;
             for (let i = 0; i < ambientCount; i++) {
                 let origin = airData[Math.floor(Math.random() * airData.length)];
                 let dest = airData[Math.floor(Math.random() * airData.length)];
                 if (!origin || !dest || origin === dest) continue;
 
-                const start = latLonToVector3(Number(origin.lat), Number(origin.lon));
-                const endPos = latLonToVector3(Number(dest.lat), Number(dest.lon));
+                const getPos = (iata: string, lat: number, lon: number) => {
+                    const mesh = airportsMap.current[iata];
+                    if (mesh) return mesh.position.clone();
+                    return latLonToVector3(Number(lat), Number(lon));
+                };
+
+                const start = getPos(origin.iata, origin.lat, origin.lon);
+                const endPos = getPos(dest.iata, dest.lat, dest.lon);
                 const dist = start.distanceTo(endPos);
                 const samples = Math.max(200, Math.floor(dist * 600));
-                const cruiseAltitude = 0.01 + (dist * 0.02);
+                const cruiseAltitude = (dist * 0.016);
                 const points: THREE.Vector3[] = [];
 
                 for (let j = 0; j <= samples; j++) {
                     const t = j / samples;
                     const point = new THREE.Vector3().copy(start).lerp(endPos, t).normalize();
-                    const altitude = 1.005 + (Math.sin(Math.PI * t) * cruiseAltitude);
+                    const altitude = 1.002 + (Math.sin(Math.PI * t) * cruiseAltitude);
                     point.multiplyScalar(altitude);
                     points.push(point);
                 }
@@ -1887,6 +2137,7 @@ export default function Globe({
                                         const mc = m.clone();
                                         mc.transparent = true;
                                         mc.opacity = 1;
+                                        mc.depthWrite = true;
                                         if ('emissive' in mc) {
                                             (mc as any).emissive = new THREE.Color(0xffffff);
                                             (mc as any).emissiveIntensity = 2;
@@ -1897,6 +2148,7 @@ export default function Globe({
                                     child.material = child.material.clone();
                                     child.material.transparent = true;
                                     child.material.opacity = 1;
+                                    child.material.depthWrite = true;
                                     if ('emissive' in child.material) {
                                         (child.material as any).emissive = new THREE.Color(0xffffff);
                                         (child.material as any).emissiveIntensity = 2;
@@ -1911,10 +2163,11 @@ export default function Globe({
                         new THREE.MeshBasicMaterial({
                             color: 0xffffff,
                             transparent: true,
-                            depthWrite: false
+                            depthWrite: true
                         })
                     );
                 }
+                planeMesh.traverse(c => { c.renderOrder = 15; });
 
                 const lineGroup = new THREE.Group();
                 const lineList: THREE.Line[] = [];
@@ -1936,12 +2189,16 @@ export default function Globe({
                         new THREE.BufferGeometry().setFromPoints(fuzzyP),
                         mat
                     );
+                    trailLine.renderOrder = 15;
                     const colorArr = new Float32Array(spacedPoints.length * 3).fill(1);
                     trailLine.geometry.setAttribute('color', new THREE.BufferAttribute(colorArr, 3));
                     patchStelaMaterial(mat);
                     lineGroup.add(trailLine);
                     lineList.push(trailLine);
                 });
+
+                lineGroup.renderOrder = 15;
+                planeMesh.renderOrder = 15;
 
                 const speed = (0.001 + Math.random() * 0.001) / (1 + dist * 2);
 
@@ -1951,11 +2208,11 @@ export default function Globe({
                     points: spacedPoints,
                     lineGroup: lineGroup,
                     lines: lineList,
-                    progress: -Math.random(),
+                    progress: -Math.random() * 0.8, // Slightly more staggered start
                     speed: speed,
                     totalLength: curve.getLength(),
                     isAmbient: true,
-                    waitDuration: 0.3 + Math.pow(Math.random(), 2) * 1.7
+                    waitDuration: (0.2 + Math.pow(Math.random(), 2) * 1.6) / (1 + dist * 1.2)
                 });
                 arcsGroupRef.current.add(lineGroup);
                 arcsGroupRef.current.add(planeMesh);
@@ -1964,13 +2221,13 @@ export default function Globe({
     }, [isLoaded, modelLoaded]);
 
     // 7. Handle camera positioning (Direct Action Driven)
-    const lastPropsRef = useRef({ originsIata, destinationsIata, focusIata, interactive });
+    const lastPropsRef = useRef({ originsIata, destinationsIata, focusIata, interactive, selectedAirports: [] as string[] });
 
     useEffect(() => {
         if (!isLoaded || !cameraRef.current) return;
 
         const prev = lastPropsRef.current;
-        const current = { originsIata, destinationsIata, focusIata, interactive };
+        const current = { originsIata, destinationsIata, focusIata, interactive, selectedAirports };
         lastPropsRef.current = current;
 
         // Determine if we should trigger a camera movement based on what changed
@@ -1981,36 +2238,28 @@ export default function Globe({
         const originsChanged = JSON.stringify(current.originsIata) !== JSON.stringify(prev.originsIata);
         const destsChanged = JSON.stringify(current.destinationsIata) !== JSON.stringify(prev.destinationsIata);
         const focusChanged = current.focusIata !== prev.focusIata;
+        const selectedChanged = JSON.stringify(current.selectedAirports) !== JSON.stringify(prev.selectedAirports);
         const interactiveChanged = current.interactive !== prev.interactive;
 
-        // Default "itinerary" target based on current state
+        const allActiveIatas = [...new Set([...current.originsIata, ...allStepsIata, ...current.destinationsIata, ...current.selectedAirports])].filter(Boolean);
+
+        // Default "itinerary" target based on current state.
+        // Focus (inspection) takes priority over the route framing.
         const getAutoTarget = () => {
-            if (current.originsIata.length > 0 && current.destinationsIata.length > 0) return { type: 'route' as const };
-            if (current.originsIata.length > 0 || current.destinationsIata.length > 0) {
-                return { type: 'single' as const, iata: current.originsIata[0] || current.destinationsIata[0] };
-            }
+            if (current.focusIata) return { type: 'focus' as const, iata: current.focusIata };
+            if (allActiveIatas.length >= 2) return { type: 'route' as const };
+            if (allActiveIatas.length === 1) return { type: 'single' as const, iata: allActiveIatas[0] };
             return { type: 'home' as const };
         };
 
-        if (originsChanged || destsChanged) {
-            // Case A: Route was modified (added, removed, or changed)
+        if (originsChanged || destsChanged || selectedChanged || focusChanged) {
+            // Route, selection or focus was modified
             shouldMove = true;
             const res = getAutoTarget();
             targetType = res.type;
             targetIata = (res as any).iata;
-        } else if (focusChanged) {
-            // Case B: Focus was added or removed
-            shouldMove = true;
-            if (current.focusIata) {
-                targetType = 'focus';
-                targetIata = current.focusIata;
-            } else {
-                const res = getAutoTarget();
-                targetType = res.type;
-                targetIata = (res as any).iata;
-            }
         } else if (interactiveChanged && !current.interactive) {
-            // Case C: Map mode deactivated -> View current route or home
+            // Map mode deactivated -> View current route or home
             shouldMove = true;
             const res = getAutoTarget();
             targetType = res.type;
@@ -2021,11 +2270,16 @@ export default function Globe({
 
         if (!shouldMove) return;
 
+        const activeAirports = allActiveIatas
+            .map(iata => airportsDataRef.current.find(a => a.iata === iata))
+            .filter(Boolean) as AirportData[];
+
         if (targetType === 'focus' || targetType === 'single') {
             const iata = targetIata;
             const airport = iata ? airportsDataRef.current.find(a => a.iata === iata) : null;
             if (airport) {
-                const targetPoint = latLonToVector3(Number(airport.lat), Number(airport.lon));
+                const mesh = airportsMap.current[iata];
+                const targetPoint = mesh ? mesh.position.clone() : latLonToVector3(Number(airport.lat), Number(airport.lon));
                 const targetPos = targetPoint.clone().normalize().multiplyScalar(1.5);
                 gsap.to(cameraRef.current.position, {
                     x: targetPos.x, y: targetPos.y, z: targetPos.z,
@@ -2033,31 +2287,64 @@ export default function Globe({
                     onUpdate: () => { cameraRef.current?.lookAt(0, 0, 0); }
                 });
             }
-        } else if (targetType === 'route' && current.originsIata.length > 0 && current.destinationsIata.length > 0) {
-            // Use first origin and last destination for overall framing
-            const origin = airportsDataRef.current.find(a => a.iata === current.originsIata[0]);
-            const dest = airportsDataRef.current.find(a => a.iata === current.destinationsIata[current.destinationsIata.length - 1]);
-            if (origin && dest) {
-                const start = latLonToVector3(Number(origin.lat), Number(origin.lon));
-                const end = latLonToVector3(Number(dest.lat), Number(dest.lon));
-                const routeDist = start.distanceTo(end);
-                const cameraDistance = 2.2 + (routeDist * 0.8);
-                const midPos = start.clone().lerp(end, 0.5).normalize();
-                let arcNormal = start.clone().cross(end).normalize();
-                if (arcNormal.lengthSq() < 0.1) {
-                    arcNormal = Math.abs(midPos.y) < 0.9 ? new THREE.Vector3(0, 1, 0) : new THREE.Vector3(1, 0, 0);
+        } else if (targetType === 'route' && activeAirports.length >= 2) {
+            // Find two furthest airports in the selection to define the span
+            let maxD = -1;
+            let pair = [activeAirports[0]!, activeAirports[1]!];
+
+            for (let i = 0; i < activeAirports.length; i++) {
+                const a1 = activeAirports[i];
+                if (!a1) continue;
+                const m1 = airportsMap.current[a1.iata];
+                const p1 = m1 ? m1.position.clone() : latLonToVector3(a1.lat, a1.lon);
+                for (let j = i + 1; j < activeAirports.length; j++) {
+                    const a2 = activeAirports[j];
+                    if (!a2) continue;
+                    const m2 = airportsMap.current[a2.iata];
+                    const p2 = m2 ? m2.position.clone() : latLonToVector3(a2.lat, a2.lon);
+                    const d = p1.distanceTo(p2);
+                    if (d > maxD) {
+                        maxD = d;
+                        pair = [a1, a2];
+                    }
                 }
-                if (arcNormal.y > 0 || (Math.abs(arcNormal.y) < 0.001 && arcNormal.x > 0)) {
-                    arcNormal.multiplyScalar(-1);
-                }
-                const tiltedPos = midPos.clone().lerp(arcNormal, 0.20).normalize();
-                const targetPos = tiltedPos.multiplyScalar(cameraDistance);
-                gsap.to(cameraRef.current.position, {
-                    x: targetPos.x, y: targetPos.y, z: targetPos.z,
-                    duration: 1.8, ease: "power3.inOut", overwrite: "auto",
-                    onUpdate: () => { cameraRef.current?.lookAt(0, 0, 0); }
-                });
             }
+
+            const mStart = airportsMap.current[pair[0]!.iata];
+            const start = mStart ? mStart.position.clone() : latLonToVector3(Number(pair[0]!.lat), Number(pair[0]!.lon));
+            const mEnd = airportsMap.current[pair[1]!.iata];
+            const end = mEnd ? mEnd.position.clone() : latLonToVector3(Number(pair[1]!.lat), Number(pair[1]!.lon));
+            const routeDist = start.distanceTo(end);
+
+            // Refined distance: balanced for both close and transcontinental flights
+            const cameraDistance = 1.75 + (routeDist * 0.58);
+
+            // Centroid of ALL active points for precise framing
+            const midPos = new THREE.Vector3();
+            activeAirports.forEach(a => {
+                const m = airportsMap.current[a.iata];
+                midPos.add(m ? m.position.clone() : latLonToVector3(a.lat, a.lon));
+            });
+            midPos.divideScalar(activeAirports.length).normalize();
+
+            // Calculate local arc normal for the "furthest" pair to keep tilt consistent
+            let arcNormal = start.clone().cross(end).normalize();
+            if (arcNormal.lengthSq() < 0.1) {
+                arcNormal = Math.abs(midPos.y) < 0.9 ? new THREE.Vector3(0, 1, 0) : new THREE.Vector3(1, 0, 0);
+            }
+            if (arcNormal.y > 0 || (Math.abs(arcNormal.y) < 0.001 && arcNormal.x > 0)) {
+                arcNormal.multiplyScalar(-1);
+            }
+
+            // Subtle tilt: reduced from 0.20 to 0.08 to keep airports centered enough on closer zoom
+            const tiltedPos = midPos.clone().lerp(arcNormal, 0.08).normalize();
+            const targetPos = tiltedPos.multiplyScalar(cameraDistance);
+
+            gsap.to(cameraRef.current.position, {
+                x: targetPos.x, y: targetPos.y, z: targetPos.z,
+                duration: 1.8, ease: "power3.inOut", overwrite: "auto",
+                onUpdate: () => { cameraRef.current?.lookAt(0, 0, 0); }
+            });
         } else if (targetType === 'home' && geoReady) {
             gsap.to(cameraRef.current.position, {
                 x: homePositionRef.current.x, y: homePositionRef.current.y, z: homePositionRef.current.z,
@@ -2065,7 +2352,8 @@ export default function Globe({
                 onUpdate: () => { cameraRef.current?.lookAt(0, 0, 0); }
             });
         }
-    }, [isLoaded, originsIata, destinationsIata, focusIata, interactive, geoReady]);
+    }, [isLoaded, originsIata, destinationsIata, focusIata, interactive, geoReady, selectedAirports, allStepsIata]);
+
 
 
 

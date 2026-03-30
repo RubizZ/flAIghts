@@ -167,6 +167,26 @@ export default function SearchResults() {
             })
             .filter((a): a is AirportResponse => !!a);
     }, [hoveredItinerary, expandedItinerary, searchData?.destinations, airportsMap]);
+    
+    const currentSteps = useMemo(() => {
+        const activeItinerary = hoveredItinerary || expandedItinerary;
+        if (!activeItinerary || activeItinerary.legs.length < 2) return [];
+        
+        const steps: AirportResponse[][] = [];
+        for (let i = 0; i < activeItinerary.legs.length - 1; i++) {
+            const iata = activeItinerary.legs[i]?.destination;
+            const a = iata ? airportsMap.get(iata) : null;
+            if (a) {
+                steps.push([{
+                    iata_code: a.i,
+                    name: a.n,
+                    city: a.ci,
+                    location: { coordinates: [a.lo, a.la], type: "Point" }
+                } as AirportResponse]);
+            }
+        }
+        return steps;
+    }, [hoveredItinerary, expandedItinerary, airportsMap]);
 
     if (error) {
         return (
@@ -225,9 +245,10 @@ export default function SearchResults() {
         window.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
+    const allStepsIata = useMemo(() => currentSteps.flat().map(s => s.iata_code).filter(Boolean) as string[], [currentSteps]);
     const selectedAirports = useMemo(() =>
-        [globeRoute.origin, globeRoute.destination].filter(Boolean) as string[],
-        [globeRoute.origin, globeRoute.destination]
+        [globeRoute.origin, ...allStepsIata, globeRoute.destination].filter(Boolean) as string[],
+        [globeRoute.origin, allStepsIata, globeRoute.destination]
     );
 
     const handleGlobeReady = useCallback(() => setIsGlobeReady(true), []);
@@ -478,6 +499,7 @@ export default function SearchResults() {
                     selectedAirports={selectedAirports}
                     origins={currentOrigins}
                     destinations={currentDestinations}
+                    steps={currentSteps}
                     interactive={false}
                     horizontalOffset={isLargeScreen ? 450 : 0}
                     onReady={handleGlobeReady}
