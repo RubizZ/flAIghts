@@ -18,26 +18,21 @@
   "friends": {
     "title": "Friends",
     "subtitle": "Manage the people you share your trips with.",
-
     "tabs": {
       "friends": "My Friends",
       "requests": "Requests"
     },
-
     "addFriend": "Add Friend",
     "removeFriend": "Remove Friend",
     "sendMessage": "Send Message",
-
     "notLogged": {
       "title": "You are not logged in",
       "login": "Login"
     },
-
     "emptyFriends": {
       "title": "You don't have friends yet",
       "description": "Find other travelers and connect with them to plan trips together."
     },
-
     "actions": {
       "message": "Message",
       "remove": "Remove",
@@ -45,7 +40,6 @@
       "accept": "Accept",
       "reject": "Reject"
     },
-
     "requests": {
       "received": "Received Requests",
       "sent": "Sent Requests",
@@ -53,7 +47,6 @@
       "noneSent": "You haven't sent any friend requests.",
       "waiting": "Waiting for response..."
     },
-
     "toast": {
       "accepted": "Friend request accepted",
       "rejected": "Friend request rejected",
@@ -61,7 +54,7 @@
       "removed": "Friend removed"
     }
   },
-    "login": {
+  "login": {
     "noAccount": "Don't have an account?",
     "title": "Login",
     "labels": {
@@ -86,7 +79,7 @@
       "invalidCredentials": "Invalid credentials"
     }
   },
-    "notFound": {
+  "notFound": {
     "title": "Oops! Page not found",
     "description": "The page you are looking for does not exist or has been moved.",
     "actions": {
@@ -94,7 +87,7 @@
       "home": "Return to home"
     }
   },
-    "register": {
+  "register": {
     "iAccept": "I accept the ",
     "alreadyHaveAccount": "Already have an account?",
     "codeSent": "We have sent a code to ",
@@ -140,7 +133,7 @@
       "loginError": "You have registered successfully, but there was an error logging in. Please login."
     }
   },
-    "resetPassword": {
+  "resetPassword": {
     "title": "Reset Password",
     "labels": {
       "newPassword": "New Password",
@@ -161,7 +154,7 @@
       "tokenInvalid": "The reset token is invalid or has expired"
     }
   },
-    "searchResults": {
+  "searchResults": {
     "title": "Search Results",
     "loading": "Loading results...",
     "loadingMore": "Searching for more flights...",
@@ -450,6 +443,19 @@
     "toast": {
       "searchStarted": "Search started",
       "searchError": "Error searching for flights"
+    },
+    "geneticTrip": {
+      "modalTitle": "Optimized Route (Genetic)",
+      "modalSubtitle": "We will find the best order to visit your cities",
+      "originLabel": "Trip Origin",
+      "originPlaceholder": "Departure and arrival city",
+      "startDateLabel": "Start Date",
+      "startDatePlaceholder": "Select date",
+      "daysPerCityLabel": "Days per City",
+      "visitCitiesLabel": "Cities to Visit",
+      "addCityPlaceholder": "Add city to trip...",
+      "optimizeButton": "Optimize my Trip Genetically",
+      "algorithmDesc": "Our algorithm will try thousands of combinations to give you the lowest price"
     }
   },
   "floatingLabelInput": {
@@ -474,6 +480,7 @@
     "termsOfService": "Terms of Service"
   },
   "navbar": {
+    "view": "View",
     "notifications": "Notifications",
     "friendRequests": "Friend Requests",
     "newFriendRequests": "You have {{count}} new{{plural}}",
@@ -493,10 +500,74 @@
     "sessionExpiredDesc": "Your session has expired or you don't have permissions to access this resource. Please log in again.",
     "loginButton": "Log in",
     "homeButton": "Return to home",
+    "reloadButton": "Reload page",
     "errorTitle": "Flight Interrupted",
     "errorDesc": "It seems we encountered unexpected turbulence in the system. We couldn't complete your request.",
     "showDetails": "Show technical details",
     "hideDetails": "Hide technical details",
     "copyError": "Copy error"
+  },
+  "termsOfService": {
+    "title": "Terms of Service",
+    "backToHome": "Back to Home",
+    "lastUpdated": "Last updated",
+    "sections": {
+      "acceptance": {
+        "title": "1. Acceptance of Terms",
+        "content": "By accessing and using this website, you accept and agree to be bound by the terms and provision of this agreement. In addition, when using these particular services, you shall be subject to any posted guidelines or rules applicable to such services. Any participation in this service will constitute acceptance of this agreement. If you do not agree to abide by the above, please do not use this service."
+      },
+      "privacy": {
+        "title": "2. Privacy Policy",
+        "content": "Our Privacy Policy, which sets out how we will use your information, can be found at ",
+        "link": "Privacy Policy",
+        "contentAfter": ". By using this Website, you consent to the processing described therein and warrant that all data provided by you is accurate."
+      },
+      "useSite": {
+        "title": "3. Use of the Site",
+        "content": "You are permitted to use our website for your own purposes and to print and download material from this Website provided that you do not modify any content without our consent. Material on this website must not be republished online or offline without our permission."
+      },
+      "liability": {
+        "title": "4. Limitation of Liability",
+        "content": "We shall not be liable to you in respect of any losses arising out of any event or events beyond our reasonable control. We will not be liable to you in respect of any business losses, including (without limitation) loss of or damage to profits, income, revenue, use, production, anticipated savings, business, contracts, commercial opportunities or goodwill."
+      },
+      "changes": {
+        "title": "5. Changes to the Terms",
+        "content": "We reserve the right to modify these terms at any time. We do so by posting and drawing attention to the updated terms on the Site. Your decision to continue to visit and make use of the Site after such changes have been made constitutes your formal acceptance of the new Terms of Service."
+      }
+    }
+  },
+  "privacyPolicy": {
+    "title": "Privacy Policy",
+    "backToHome": "Back to Home",
+    "lastUpdated": "Last updated",
+    "sections": {
+      "information": {
+        "title": "1. Information We Collect",
+        "content": "We collect information you provide directly to us. For example, we collect information when you create an account, participate in any interactive features of our services, fill out a form, request customer support, or otherwise communicate with us. The types of information we may collect include your name, email address, postal address, password, flight preferences, search history, and other contact or identifying information you choose to provide."
+      },
+      "howWeUse": {
+        "title": "2. How We Use Information",
+        "content": "We may use the information we collect from and about you to:",
+        "items": {
+          "item1": "Provide, maintain, and improve our services;",
+          "item2": "Process transactions and send related information, including confirmations and invoices;",
+          "item3": "Send you technical notices, updates, security alerts, and support and administrative messages;",
+          "item4": "Respond to your comments, questions, and requests, and provide customer service;",
+          "item5": "Communicate with you about products, services, offers, promotions, and events."
+        }
+      },
+      "security": {
+        "title": "3. Data Security",
+        "content": "We take reasonable measures to help protect information about you from loss, theft, misuse and unauthorized access, disclosure, alteration and destruction. However, no security system is impenetrable and we cannot guarantee the security of our systems 100%. In the event that any information under our control is compromised as a result of a breach of security, we will take reasonable steps to investigate the situation and, where appropriate, notify those individuals whose information may have been compromised and take other steps, in accordance with any applicable laws and regulations."
+      },
+      "cookies": {
+        "title": "4. Cookies and Tracking",
+        "content": "Our website may use \"cookies\" to enhance User experience. User's web browser places cookies on their hard drive for record-keeping purposes and sometimes to track information about them. User may choose to set their web browser to refuse cookies, or to alert you when cookies are being sent. If they do so, note that some parts of the Site may not function properly."
+      },
+      "contact": {
+        "title": "5. Contact Us",
+        "content": "If you have any questions about this Privacy Policy, please contact us through the available forms on our application or via our support email. By using this Site, you signify your acceptance of this policy. If you do not agree to this policy, please do not use our Site."
+      }
+    }
   }
 }

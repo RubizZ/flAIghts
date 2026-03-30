@@ -3,11 +3,11 @@ import { PriorityQueue } from "../structures/priority-queue.js";
 
 export interface DijkstraFlightEdge {
     id: string; // booking_token o un ID único
-    from: string;           
-    to: string;             
-    price: number;          
-    duration: number;       
-    stops: number;   
+    from: string;
+    to: string;
+    price: number;
+    duration: number;
+    stops: number;
     date: string; //YYYY-MM-DD
     airline: string;
     airline_logo?: string;
@@ -28,9 +28,10 @@ export class Dijkstra {
         inicio: string,
         fin: string,
         edges: DijkstraFlightEdge[],
-        preferences: RoutePreferences
+        preferences: RoutePreferences,
+        previousArrival?: Date
     ): DijkstraFlightEdge[] | null {
-        
+
         const distancias: Record<string, number> = {};
         const prevEdge: Record<string, DijkstraFlightEdge | null> = {};
         const arrivalTimes: Record<string, Date> = {};
@@ -57,10 +58,13 @@ export class Dijkstra {
             arrivalTimes[nodo] = new Date(-8640000000000000);
         }
 
-        if (!nodos.has(inicio)) return null;
+        if (!nodos.has(inicio)) {
+            return null;
+        }
+
 
         distancias[inicio] = 0;
-        arrivalTimes[inicio] = new Date(-8640000000000000);
+        arrivalTimes[inicio] = previousArrival || new Date(-8640000000000000);
         pq.enqueue(inicio, 0);
 
         while (!pq.isEmpty()) {
@@ -88,29 +92,32 @@ export class Dijkstra {
             }
         }
 
-        return this.reconstructPath(prevEdge, fin);
+        const result = this.reconstructPath(prevEdge, fin);
+
+
+        return result;
     }
 
     private calculateWeight(edge: DijkstraFlightEdge, waitMinutes: number, preferences: RoutePreferences): number {
         const durationTotal = edge.duration + waitMinutes;
-        
+
         let weight = 0;
         weight += edge.price * preferences.price_weight;
         weight += (durationTotal * 0.1) * preferences.duration_weight;
         weight += (edge.stops * 50) * preferences.stops_weight;
-        
+
         return weight || edge.price;
     }
 
     private reconstructPath(
-        prevEdge: Record<string, DijkstraFlightEdge | null>, 
+        prevEdge: Record<string, DijkstraFlightEdge | null>,
         target: string
     ): DijkstraFlightEdge[] | null {
         const path: DijkstraFlightEdge[] = [];
         let curr: string | null = target;
         while (curr !== null && prevEdge[curr] !== null) {
-            const edge: DijkstraFlightEdge = prevEdge[curr]!; 
-            
+            const edge: DijkstraFlightEdge = prevEdge[curr]!;
+
             path.unshift(edge);
             curr = edge.from;
         }

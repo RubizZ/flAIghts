@@ -1,5 +1,6 @@
 import { Compass, Users } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
+import { useTranslation } from "react-i18next";
 
 export interface NavItem {
     label: string;
@@ -14,16 +15,17 @@ export interface NavItem {
  */
 export function useNavItems(): NavItem[] {
     const { isAuthenticated } = useAuth();
+    const { t } = useTranslation();
 
     return [
         {
-            label: "Buscar vuelos",
+            label: t("sidebar.searchFlights"),
             path: "/",
             icon: <Compass size={20} />,
             show: true,
         },
         {
-            label: "Amigos",
+            label: t("sidebar.friends"),
             path: "/friends",
             icon: <Users size={20} />,
             show: isAuthenticated,
