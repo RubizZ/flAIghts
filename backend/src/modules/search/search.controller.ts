@@ -1,5 +1,5 @@
 import { Body, Controller, Get, Patch, Path, Post, Query, RequestProp, Response, Route, Security, SuccessResponse as SuccessResponseDecorator, Tags } from "tsoa";
-import type { SearchRequest, SearchResponseData, SearchValidationFailResponse } from "./search.types.js";
+import type { GeneticTripRequest, SearchRequest, SearchResponseData, SearchValidationFailResponse } from "./search.types.js";
 import { inject, injectable } from "tsyringe";
 import { SearchService } from "./search.service.js";
 import type { AuthenticatedUser } from "../auth/auth.types.js";
@@ -33,6 +33,23 @@ export class SearchController extends Controller {
         if (user) request.user_id = user._id;
         this.setStatus(201);
         const result = await this.searchService.createSearch(request);
+        return result satisfies SearchResponseData as any;
+    }
+
+    /**
+     * Crea una nueva búsqueda de viaje optimizada mediante algoritmos genéticos.
+     */
+    @Post("/genetic")
+    @Security('jwt-optional')
+    @Response<SearchValidationFailResponse>(422, "Error de validación")
+    @SuccessResponseDecorator(201, "Búsqueda genética creada")
+    public async geneticTrip(
+        @Body() body: GeneticTripRequest,
+        @RequestProp('user') user: AuthenticatedUser | null
+    ): Promise<SuccessResponse<SearchResponseData>> {
+        const request = { ...body, user_id: user?._id };
+        this.setStatus(201);
+        const result = await this.searchService.createGeneticSearch(request);
         return result satisfies SearchResponseData as any;
     }
 

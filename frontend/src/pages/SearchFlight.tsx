@@ -1,9 +1,10 @@
 import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import Globe from "../components/Globe.tsx"
-import { ArrowLeftRight, Plus, Calendar as CalendarIcon, MapPin, Search, Bot, SlidersHorizontal, Globe as GlobeIcon, Maximize2, Info, PlaneTakeoff, PlaneLanding, AlertTriangle, X, Plane } from "lucide-react";
+import { ArrowLeftRight, Plus, Calendar as CalendarIcon, MapPin, Search, Bot, SlidersHorizontal, Globe as GlobeIcon, Maximize2, Info, PlaneTakeoff, PlaneLanding, AlertTriangle, X, Plane, Zap } from "lucide-react";
 import AirportAutocomplete from "../components/AirportAutocomplete.tsx";
-import { useSearchRequest } from "@/api/generated/search/search";
+import { useSearchRequest, useGeneticTrip } from "@/api/generated/search/search";
+import GeneticTripModal from "../components/GeneticTripModal";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import Calendar from "../components/ui/Calendar.tsx";
@@ -36,7 +37,9 @@ function SearchFlight() {
 
     const navigate = useNavigate();
 
-    const { mutate: searchRequest, isPending } = useSearchRequest({
+    const [isGeneticModalOpen, setIsGeneticModalOpen] = useState(false);
+
+    const { mutate: searchRequest, isPending: isSearchPending } = useSearchRequest({
         mutation: {
             onSuccess: (data) => {
                 toast.success(t("searchFlight.toast.searchStarted"));
@@ -48,6 +51,21 @@ function SearchFlight() {
             }
         }
     });
+
+    const { mutate: geneticRequest, isPending: isGeneticPending } = useGeneticTrip({
+        mutation: {
+            onSuccess: (data) => {
+                toast.success(t("searchFlight.geneticTrip.toast.success"));
+                navigate(`/search/${data._id}`);
+            },
+            onError: (error: any) => {
+                console.error(error);
+                toast.error(error?.message || t("searchFlight.geneticTrip.toast.error"));
+            }
+        }
+    });
+
+    const isPending = isSearchPending || isGeneticPending;
 
     const handleSwitch = () => {
         const temp = origin;
@@ -87,14 +105,19 @@ function SearchFlight() {
             setDestination(iata);
             setDestinationDisplay(displayText);
         } else if (selectingType && selectingType.startsWith('layover-')) {
-            const index = parseInt(selectingType.split('-')[1]);
+            const indexStr = selectingType.split('-')[1];
+            if (!indexStr) return;
+            const index = parseInt(indexStr);
             const newLayovers = [...layovers];
             if (iata === origin || iata === destination || layovers.some((l, i) => i !== index && l.iata === iata)) {
                 toast.error(t("searchFlight.validation.sameOriginDestination"));
             } else if (index >= 0 && index < newLayovers.length) {
-                newLayovers[index].iata = iata;
-                newLayovers[index].display = displayText;
-                setLayovers(newLayovers);
+                const layover = newLayovers[index];
+                if (layover) {
+                    layover.iata = iata;
+                    layover.display = displayText;
+                    setLayovers(newLayovers);
+                }
             }
         } else {
             if (!origin) {
@@ -222,9 +245,13 @@ function SearchFlight() {
                 return false;
             }
         }
-        newLayovers[index][field] = value;
-        setLayovers(newLayovers);
-        return true;
+        const layover = newLayovers[index];
+        if (layover) {
+            layover[field] = value;
+            setLayovers(newLayovers);
+            return true;
+        }
+        return false;
     };
 
     const handleSearch = () => {
@@ -363,7 +390,7 @@ function SearchFlight() {
                                             handleLayoverChange(index, 'date', date);
                                             setActiveDeparturePopover(null);
                                         }}
-                                        minDate={index === 0 ? departureDate || today : layovers[index - 1].date || departureDate || today}
+                                        minDate={index === 0 ? departureDate || today : (layovers[index - 1]?.date || departureDate || today)}
                                         trigger={
                                             <div
                                                 onClick={() => setActiveDeparturePopover(activeDeparturePopover === `layover-${mode}-${index}` ? null : `layover-${mode}-${index}`)}
@@ -475,24 +502,48 @@ function SearchFlight() {
                     </div>
                 </div>
 
-                <button
-                    onClick={handleSearch}
-                    disabled={isPending || !origin || !destination || !departureDate}
-                    className={`group relative flex items-center justify-center gap-2 bg-brand text-content-on-brand rounded-2xl font-bold hover:bg-brand-hover transition-all disabled:opacity-40 disabled:grayscale disabled:cursor-not-allowed overflow-hidden shadow-lg shadow-brand/20 active:scale-95 shrink-0 px-8 cursor-pointer ${isHorizontal ? 'w-full md:w-40 py-3.5 md:py-0' : 'py-4 lg:py-4.5 text-lg'}`}
-                >
-                    <div className="absolute inset-0 bg-linear-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
-                    {isPending ? (
-                        <div className="flex items-center gap-2">
-                            <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                            <span>{t("searchFlight.actions.searching")}</span>
-                        </div>
-                    ) : (
+                <div className="flex flex-col sm:flex-row gap-4 mt-2">
+                    <button
+                        onClick={handleSearch}
+                        disabled={isPending || !origin || !destination || !departureDate}
+                        className={`group relative flex items-center justify-center gap-2 bg-brand text-content-on-brand rounded-2xl font-bold hover:bg-brand-hover transition-all disabled:opacity-40 disabled:grayscale disabled:cursor-not-allowed overflow-hidden shadow-lg shadow-brand/20 active:scale-95 shrink-0 px-8 cursor-pointer ${isHorizontal ? 'w-full md:w-40 py-3.5 md:py-0' : 'py-4 lg:py-4.5 text-lg w-full'}`}
+                    >
+                        <div className="absolute inset-0 bg-linear-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
+                        {isPending ? (
+                            <div className="flex items-center gap-2">
+                                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                <span>{t("searchFlight.actions.searching")}</span>
+                            </div>
+                        ) : (
+                            <>
+                                <Search size={18} />
+                                <span>{isHorizontal ? t("searchFlight.actions.search") : t("searchFlight.actions.exploreFlights")}</span>
+                            </>
+                        )}
+                    </button>
+
+                    {!isHorizontal && (
                         <>
-                            <Search size={18} />
-                            <span>{isHorizontal ? t("searchFlight.actions.search") : t("searchFlight.actions.exploreFlights")}</span>
+                            <button
+                                onClick={() => setIsGeneticModalOpen(true)}
+                                disabled={isPending}
+                                className="w-full bg-surface hover:bg-surface-hover text-content border border-line py-4 rounded-2xl font-bold transition-all active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 cursor-pointer group"
+                                title={t("searchFlight.geneticTrip.tooltip")}
+                            >
+                                <Zap className="text-brand group-hover:scale-110 transition-transform" size={20} fill="currentColor" />
+                                <span className="text-lg">{t("searchFlight.geneticTrip.actionTitle")}</span>
+                            </button>
+
+                            <GeneticTripModal
+                                isOpen={isGeneticModalOpen}
+                                onClose={() => setIsGeneticModalOpen(false)}
+                                onSubmit={(data) => {
+                                    geneticRequest({ data });
+                                }}
+                            />
                         </>
                     )}
-                </button>
+                </div>
             </div>
         );
     }

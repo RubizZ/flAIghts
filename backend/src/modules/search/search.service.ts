@@ -1,17 +1,16 @@
 import { singleton, inject } from "tsyringe";
 import type { SearchRequest, SearchResponseData, LegResponse } from "./search.types.js";
 import { Itinerary } from "./models/itinerary.model.js";
-import { SerpApiClient } from "@/services/serpapi/serpapi.client.js";
 import { Search, type ISearch } from "./models/search.model.js";
 import "./models/itinerary.model.js"; // Necesario para .populate("itineraries")
 import { SearchNotFoundError, SearchNotAuthorizedError } from "./search.errors.js";
 import { SerpapiStorageService } from "../serpapi-storage/serpapi-storage.service.js";
 import { Dijkstra, parseEdgeDateTime } from "@/algorithms/dijkstra.js";
 import type { DijkstraFlightEdge, RoutePreferences } from "@/algorithms/dijkstra.js";
-import type { ApiRequestParameters, SerpApiResponse, FlightRoute } from "@/services/serpapi/serpapi.types.js";
 import { AirportService } from "../airport/airport.service.js";
 import { UserService } from "../users/user.service.js";
 import type { IFriendUnpopulated } from "../users/models/user.model.js";
+import { GeneticTripOptimizer } from "@/algorithms/genetic-trip.js";
 
 
 
@@ -20,15 +19,29 @@ export class SearchService {
     constructor(
         @inject(SerpapiStorageService) private readonly storageService: SerpapiStorageService,
         @inject(AirportService) private readonly airportService: AirportService,
-        @inject(SerpApiClient) private readonly serpApiClient: SerpApiClient,
         @inject(Dijkstra) private readonly dijkstra: Dijkstra,
-        @inject(UserService) private readonly userService: UserService
+        @inject(UserService) private readonly userService: UserService,
+        @inject(GeneticTripOptimizer) private readonly geneticOptimizer: GeneticTripOptimizer
     ) { }
     public async createSearch(data: SearchRequest & { user_id?: string }): Promise<SearchResponseData> {
         const createdData: Partial<ISearch> = { ...data };
         createdData.shared = !data.user_id;
         const search = await Search.create(createdData);
         this.runExploration(search._id, data);
+        return this.formatSearchResponse(search.toJSON());
+    }
+
+    public async createGeneticSearch(data: { origin: string, cities: string[], startDate: Date, daysPerCity: number, user_id?: string }): Promise<SearchResponseData> {
+        const createdData: Partial<ISearch> = {
+            origins: [data.origin],
+            destinations: data.cities,
+            departure_date: data.startDate,
+            criteria: { priority: "balanced" },
+            user_id: data.user_id,
+            shared: !data.user_id
+        };
+        const search = await Search.create(createdData);
+        this.runGeneticTrip(search._id, data);
         return this.formatSearchResponse(search.toJSON());
     }
 
@@ -106,6 +119,7 @@ export class SearchService {
             let currentDate = criteria.departure_date.toISOString().split("T")[0]!;
             const dates = criteria.dates ?? [];
             const fullPath: DijkstraFlightEdge[] = [];
+            let previousArrival: Date | undefined = undefined;
 
             for (let i = 0; i < sequence.length - 1; i++) {
                 const puntoA = sequence[i];
@@ -114,46 +128,47 @@ export class SearchService {
 
                 if (!puntoA || !puntoB) continue;
 
-                const searchDate = dates[i] ?? currentDate;
+                // Dates array corresponds to departures from layovers: i=0 is departure_date, i=1 is dates[0], etc.
+                const searchDate = (i === 0 ? currentDate : dates[i - 1]) ?? currentDate;
 
                 const candidatos = await this.airportService.getCandidateLayovers(puntoA, puntoB);
-                let originArray = [puntoA];
-                let destinationArray = candidatos.length > 0 ? candidatos : [puntoB];
-                const originToLayoversEdges = (await this.getFlightsFromSerpApi(originArray, destinationArray, searchDate)).filter(edge => isValidNextFlight(edge.date, searchDate));
 
-                edges.push(...originToLayoversEdges);
+                const layoverOrigins = candidatos.length > 0 ? candidatos : [puntoA];
+                const fetchLayoverConnections = userPreferences.stops_weight <= 0.4 && candidatos.length > 1;
 
-                originArray = candidatos.length > 0 ? candidatos : [puntoA];
-                destinationArray = [puntoB];
-                const layoversToDestEdgesToday = (await this.getFlightsFromSerpApi(originArray, destinationArray, searchDate))
-                    .filter(edge => isValidNextFlight(edge.date, searchDate));
-                const layoversToDestEdgesTomorrow = (await this.getFlightsFromSerpApi(originArray, destinationArray, addDays(searchDate, 1)))
-                    .filter(edge => isValidNextFlight(edge.date, searchDate));
+                const fetchPromises = [
+                    // 1. Origin -> Layovers
+                    this.getFlightsFromSerpApi([puntoA], candidatos.length > 0 ? candidatos : [puntoB], searchDate),
+                    // 2. Layovers -> Destination (today and tomorrow)
+                    this.getFlightsFromSerpApi(layoverOrigins, [puntoB], searchDate),
+                    this.getFlightsFromSerpApi(layoverOrigins, [puntoB], addDays(searchDate, 1)),
+                    // 3. Always fetch direct flight: Origin -> Destination
+                    this.getFlightsFromSerpApi([puntoA], [puntoB], searchDate)
+                ];
 
-                edges.push(...layoversToDestEdgesToday, ...layoversToDestEdgesTomorrow);
-
-                const directFligtEdges = (await this.getFlightsFromSerpApi([puntoA], [puntoB], searchDate)).filter(edge => isValidNextFlight(edge.date, searchDate));
-
-                edges.push(...directFligtEdges);
-
-                if (userPreferences.stops_weight <= 0.4 && candidatos.length > 1) {
-                    const layoverConnectionsToday = (await this.getFlightsFromSerpApi(candidatos, candidatos, searchDate))
-                        .filter(edge => isValidNextFlight(edge.date, searchDate));
-                    const layoverConnectionsTomorrow = (await this.getFlightsFromSerpApi(candidatos, candidatos, addDays(searchDate, 1)))
-                        .filter(edge => isValidNextFlight(edge.date, searchDate));
-
-                    edges.push(...layoverConnectionsToday, ...layoverConnectionsTomorrow);
+                if (fetchLayoverConnections) {
+                    // 4. Layover-to-layover connections (only when stops are not heavily penalised)
+                    fetchPromises.push(
+                        this.getFlightsFromSerpApi(candidatos, candidatos, searchDate),
+                        this.getFlightsFromSerpApi(candidatos, candidatos, addDays(searchDate, 1))
+                    );
                 }
 
-                const tramo = this.dijkstra.findPath(puntoA, puntoB, edges, userPreferences);
+                const results = await Promise.all(fetchPromises);
+
+                for (const resultEdges of results) {
+                    edges.push(...resultEdges.filter(edge => isValidNextFlight(edge.date, searchDate)));
+                }
+
+                const tramo = this.dijkstra.findPath(puntoA, puntoB, edges, userPreferences, previousArrival);
 
                 if (!tramo) {
-                    console.warn(`Tramo inalcanzable: ${puntoA} -> ${puntoB}`);
                     await Search.updateOne({ _id: searchId }, { status: "failed" });
                     return;
                 }
-                currentDate = tramo[tramo.length - 1]!.date;
-
+                const lastEdge = tramo[tramo.length - 1]!;
+                currentDate = lastEdge.date;
+                previousArrival = parseEdgeDateTime(lastEdge.arrival_time);
 
                 fullPath.push(...tramo);
             }
@@ -213,13 +228,82 @@ export class SearchService {
                     }
                 );
 
-                console.log(`Exploración finalizada para ${searchId}: ${fullPath.length} vuelos encontrados.`);
             } else {
                 await Search.updateOne({ _id: searchId }, { status: "failed" });
             }
 
         } catch (error) {
-            console.error(`Error en exploración ${searchId}:`, error);
+            await Search.updateOne({ _id: searchId }, { status: "failed" });
+        }
+    }
+
+    private async runGeneticTrip(searchId: string, data: { origin: string, cities: string[], startDate: Date, daysPerCity: number }) {
+        try {
+            const result = await this.geneticOptimizer.findBestTrip(
+                data.origin,
+                data.cities,
+                data.startDate,
+                data.daysPerCity
+            );
+
+            if (!result || !result.route || result.route.length === 0) {
+                await Search.updateOne({ _id: searchId }, { status: "failed" });
+                return;
+            }
+
+
+            const legs: LegResponse[] = [];
+            let currentPrice = 0;
+            let currentDuration = 0;
+
+            for (let i = 0; i < result.route.length - 1; i++) {
+                const from = result.route[i]!;
+                const to = result.route[i + 1]!;
+                const date = addDays(data.startDate.toISOString().split("T")[0]!, data.daysPerCity * i);
+
+                const edges = await this.storageService.getFlightEdges([from], [to], date);
+                if (edges.length === 0) {
+                    await Search.updateOne({ _id: searchId }, { status: "failed" });
+                    return;
+                }
+                const bestEdge = edges.reduce((min, cur) => cur.price < min.price ? cur : min, edges[0]!);
+
+                currentPrice += bestEdge.price;
+                currentDuration += bestEdge.duration;
+
+                legs.push({
+                    order: i + 1,
+                    flight_id: bestEdge.id,
+                    origin: bestEdge.from,
+                    destination: bestEdge.to,
+                    price: bestEdge.price,
+                    duration: bestEdge.duration,
+                    airline: bestEdge.airline,
+                    airline_logo: bestEdge.airline_logo ?? "",
+                    departure_time: bestEdge.departure_time,
+                    arrival_time: bestEdge.arrival_time,
+                    wait_time: 0 // For now, we don't calculate wait times for genetic trip legs
+                });
+            }
+
+            const itinerary = await Itinerary.create({
+                total_price: currentPrice,
+                total_duration: currentDuration,
+                legs: legs,
+                city_order: result.route,
+                score: 10,
+                created_at: new Date()
+            });
+
+            await Search.updateOne(
+                { _id: searchId },
+                {
+                    status: "completed",
+                    $push: { departure_itineraries: itinerary._id }
+                }
+            );
+
+        } catch (error) {
             await Search.updateOne({ _id: searchId }, { status: "failed" });
         }
     }
@@ -277,53 +361,7 @@ export class SearchService {
     }
 
     private async getFlightsFromSerpApi(origin: string[], destination: string[], date: string): Promise<DijkstraFlightEdge[]> {
-
-        const response = await this.serpApiClient.search(this.createApiParams(origin, destination, date));
-
-        const edges = this.mapResponseToEdges(response);
-
-        return edges.filter(edge => origin.includes(edge.from) && destination.includes(edge.to) && edge.from !== edge.to);
-
-    }
-
-    private createApiParams(origins: string[], destinations: string[], date: string): ApiRequestParameters {
-
-        const params: ApiRequestParameters = {
-            departure_id: origins,
-            arrival_id: destinations,
-            outbound_date: date,
-            gl: "es",
-            hl: "es",
-            currency: "EUR",
-            type: 2
-
-        }
-        return params;
-    }
-
-    private mapResponseToEdges(response: SerpApiResponse): DijkstraFlightEdge[] {
-        const allFlights: FlightRoute[] = [
-            ...(response.best_flights || []),
-            ...(response.other_flights || [])
-        ];
-        return allFlights.map((flight): DijkstraFlightEdge => {
-            const firstSegment = flight.flights[0];
-            const lastSegment = flight.flights[flight.flights.length - 1];
-
-            return {
-                id: flight.booking_token,
-                from: firstSegment!.departure_airport.id,
-                to: lastSegment!.arrival_airport.id,
-                price: flight.price,
-                duration: flight.total_duration,
-                stops: flight.layovers ? flight.layovers.length : 0,
-                date: response.search_parameters.outbound_date,
-                airline: firstSegment!.airline,
-                airline_logo: firstSegment!.airline_logo ?? "",
-                departure_time: firstSegment!.departure_airport.time,
-                arrival_time: lastSegment!.arrival_airport.time
-            };
-        });
+        return this.storageService.getFlightEdges(origin, destination, date);
     }
 }
 

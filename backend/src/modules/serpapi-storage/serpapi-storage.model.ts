@@ -35,14 +35,14 @@ const FlightSchema = new Schema<Flight>({
     departure_airport: { type: AirportInfoSchema, required: true },
     arrival_airport: { type: AirportInfoSchema, required: true },
     duration: { type: Number, required: true },
-    airplane: { type: String, required: true },
+    airplane: { type: String, required: false },
     airline: { type: String, required: true },
     airline_logo: { type: String, required: false },
     travel_class: { type: String, required: true },
     flight_number: { type: String, required: true },
-    extensions: { type: [String], required: true },
-    ticket_also_sold_by: { type: [String], required: true },
-    legroom: { type: String, required: true },
+    extensions: { type: [String], required: false },
+    ticket_also_sold_by: { type: [String], required: false },
+    legroom: { type: String, required: false },
     overnight: { type: Boolean, required: false },
     often_delayed_by_30_min: { type: Boolean, required: false },
     plane_and_crew_by: { type: String, required: false },
@@ -56,14 +56,14 @@ const FlightRouteSchema = new Schema<FlightRoute>({
     price: { type: Number, required: true },
     type: { type: String, required: true },
     airline_logo: { type: String, required: false },
-    extensions: { type: [String], required: true },
+    extensions: { type: [String], required: false },
     departure_token: { type: String, required: false }, // required for round-trip flights only
     booking_token: { type: String, required: true },
 }, { _id: false });
 
 const PriceInsightsSchema = new Schema<PriceInsights>({
     lowest_price: { type: Number, required: true },
-    price_level: { type: String, enum: ["low", "medium", "high"], required: true },
+    price_level: { type: String, enum: ["low", "medium", "high", "typical"], required: true },
     typical_price_range: { type: [Number], required: true }, // [min, max]
     price_history: { type: [[Number]], required: true }, // [[timestamp, price], ...]
 }, { _id: false });

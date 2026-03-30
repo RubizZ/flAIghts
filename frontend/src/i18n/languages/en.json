@@ -455,7 +455,13 @@
       "visitCitiesLabel": "Cities to Visit",
       "addCityPlaceholder": "Add city to trip...",
       "optimizeButton": "Optimize my Trip Genetically",
-      "algorithmDesc": "Our algorithm will try thousands of combinations to give you the lowest price"
+      "algorithmDesc": "Our algorithm will try thousands of combinations to give you the lowest price",
+      "actionTitle": "Genetic Trip",
+      "tooltip": "Plan a smart multi-city trip",
+      "toast": {
+        "success": "Genetic search started successfully",
+        "error": "Error starting genetic search"
+      }
     }
   },
   "floatingLabelInput": {
