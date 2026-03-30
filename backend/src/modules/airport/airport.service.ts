@@ -61,11 +61,9 @@ export class AirportService {
     /**
      * Búsqueda con detección de errores (typos) usando fuzzysort y normalización
      */
-    public async searchAirports(query: string, page: number = 1, limit: number = 10): Promise<PaginatedAirportResponse> {
+    public async searchAirports(query: string, userLat?: number, userLon?: number, page: number = 1, limit: number = 10): Promise<PaginatedAirportResponse> {
         if (!this.isInitialized) {
-            // Fallback si por alguna razón no está listo (aunque es poco probable)
-            const results = await this.searchDatabase(query, page, limit);
-            return results;
+            return await this.searchDatabase(query, page, limit);
         }
 
         const cleanQuery = query?.trim();
@@ -73,45 +71,47 @@ export class AirportService {
             return { items: [], total: 0, page, totalPages: 0 };
         }
 
-        // Normalizamos la query para que coincida con nuestros campos normalizados
         const normalizedQuery = this.normalize(cleanQuery);
 
-        // Fuzzysort en los campos normalizados
         const results = fuzzysort.go(normalizedQuery, this.airportsCache, {
             keys: ['_normIata', '_normCity', '_normName', '_normCountry', '_normCountryNames'],
-            threshold: -10000, // Ajustable según sensibilidad deseada
+            threshold: -10000,
         });
 
         const sortedResults = results.map((result: any) => {
             const airport = result.obj;
-            // El score de fuzzysort es el factor primario (negativo, 0 es mejor).
-            // Multiplicamos por 1000 para que cualquier diferencia en el match sea mucho más importante que la importancia.
             let finalScore = (result.score * 1000) + (airport.importance_score || 0);
 
-            // Bonus crítico por match exacto en IATA (el máximo posible)
+            let distance_km: number | undefined = undefined;
+            if (userLat !== undefined && userLon !== undefined) {
+                const [lon, lat] = airport.location.coordinates;
+                distance_km = this.haversine(userLat, userLon, lat, lon);
+                const distanceBonus = Math.max(0, 100000 * (1 - distance_km / 5000));
+                finalScore += distanceBonus;
+            }
+
             if (airport.iata_code?.toUpperCase() === cleanQuery.toUpperCase()) {
                 finalScore += 1000000;
             }
 
-            // Bonus por match exacto en la ciudad
             if (airport.city?.toLowerCase() === cleanQuery.toLowerCase()) {
                 finalScore += 500000;
             }
 
-            return { ...airport, _sortScore: finalScore };
-        }).sort((a, b) => b._sortScore - a._sortScore);
+            return { 
+                ...airport, 
+                combined_score: finalScore,
+                distance_km: distance_km ? Math.round(distance_km) : undefined
+            };
+        }).sort((a, b) => (b.combined_score || 0) - (a.combined_score || 0));
 
         const total = sortedResults.length;
-        const paginatedItems = sortedResults
-            .slice((page - 1) * limit, page * limit)
-            .map(({ _sortScore, searchKey, ...airport }) => airport as any);
+        const totalPages = Math.ceil(total / limit);
+        const start = (page - 1) * limit;
+        const items = sortedResults.slice(start, start + limit)
+             .map(({ _normIata, _normCity, _normName, _normCountry, _normCountryNames, ...airport }) => airport as any);
 
-        return {
-            items: paginatedItems,
-            total,
-            page,
-            totalPages: Math.ceil(total / limit)
-        };
+        return { items, total, page, totalPages };
     }
 
     private async searchDatabase(query: string, page: number = 1, limit: number = 10): Promise<PaginatedAirportResponse> {

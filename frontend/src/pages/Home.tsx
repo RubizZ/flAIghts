@@ -11,8 +11,8 @@ import NavIconButton from "../components/ui/NavIconButton.tsx";
 import HomeCard from "../components/home/HomeCard.tsx";
 
 export default function Home() {
-    const [origin, setOrigin] = useState<AirportResponse | null>(null);
-    const [destination, setDestination] = useState<AirportResponse | null>(null);
+    const [origins, setOrigins] = useState<AirportResponse[]>([]);
+    const [destinations, setDestinations] = useState<AirportResponse[]>([]);
     const [departureDate, setDepartureDate] = useState("");
     const [activeDeparturePopover, setActiveDeparturePopover] = useState<'main' | 'map' | null>(null);
     const [returnDate, setReturnDate] = useState("");
@@ -100,27 +100,36 @@ export default function Home() {
 
     const handleMapSelect = (airport: AirportResponse) => {
         if (selectingType === 'origin') {
-            if (airport.iata_code === destination?.iata_code) {
+            if (destinations.some(d => d.iata_code === airport.iata_code)) {
                 toast.error("El origen y el destino no pueden ser el mismo");
                 return;
             }
-            setOrigin(airport);
+            if (origins.some(o => o.iata_code === airport.iata_code)) {
+                toast.error("Ese aeropuerto ya está seleccionado como origen");
+                return;
+            }
+            setOrigins([...origins, airport]);
         } else if (selectingType === 'destination') {
-            if (airport.iata_code === origin?.iata_code) {
+            if (origins.some(o => o.iata_code === airport.iata_code)) {
                 toast.error("El origen y el destino no pueden ser el mismo");
                 return;
             }
-            setDestination(airport);
+            if (destinations.some(d => d.iata_code === airport.iata_code)) {
+                toast.error("Ese aeropuerto ya está seleccionado como destino");
+                return;
+            }
+            setDestinations([...destinations, airport]);
         } else {
-            if (!origin) {
-                if (airport.iata_code === destination?.iata_code) return;
-                setOrigin(airport);
-            } else if (!destination && origin.iata_code !== airport.iata_code) {
-                setDestination(airport);
+            // Default logic if not specifically selecting for one side (e.g. from general map click)
+            if (origins.length === 0) {
+                if (destinations.some(d => d.iata_code === airport.iata_code)) return;
+                setOrigins([airport]);
+            } else if (destinations.length === 0 && !origins.some(o => o.iata_code === airport.iata_code)) {
+                setDestinations([airport]);
             } else {
-                if (airport.iata_code === destination?.iata_code) return;
-                setOrigin(airport);
-                setDestination(null);
+                if (destinations.some(d => d.iata_code === airport.iata_code)) return;
+                setOrigins([airport]);
+                setDestinations([]);
             }
         }
 
@@ -210,11 +219,15 @@ export default function Home() {
     }, [isSelectingOnMap]);
 
     const handleSetOrigin = (airport: AirportResponse) => {
-        if (airport.iata_code === destination?.iata_code) {
+        if (destinations.some(d => d.iata_code === airport.iata_code)) {
             toast.error("El origen y el destino no pueden ser el mismo");
             return;
         }
-        setOrigin(airport);
+        if (origins.some(o => o.iata_code === airport.iata_code)) {
+            toast.error("Ese aeropuerto ya está seleccionado como origen");
+            return;
+        }
+        setOrigins([...origins, airport]);
         setInspectedAirport(null);
         setSearchMode('manual');
 
@@ -226,11 +239,15 @@ export default function Home() {
     }
 
     const handleSetDestination = (airport: AirportResponse) => {
-        if (airport.iata_code === origin?.iata_code) {
+        if (origins.some(o => o.iata_code === airport.iata_code)) {
             toast.error("El origen y el destino no pueden ser el mismo");
             return;
         }
-        setDestination(airport);
+        if (destinations.some(d => d.iata_code === airport.iata_code)) {
+            toast.error("Ese aeropuerto ya está seleccionado como destino");
+            return;
+        }
+        setDestinations([...destinations, airport]);
         setInspectedAirport(null);
         setSearchMode('manual');
 
@@ -242,14 +259,14 @@ export default function Home() {
     }
 
     const handleSearch = () => {
-        if (!origin || !destination || !departureDate) {
+        if (origins.length === 0 || destinations.length === 0 || !departureDate) {
             toast.error("Por favor, completa origen, destino y fecha de salida");
             return;
         }
 
         const requestData = {
-            origins: [origin.iata_code],
-            destinations: [destination.iata_code],
+            origins: origins.map(o => o.iata_code),
+            destinations: destinations.map(d => d.iata_code),
             criteria: {
                 priority: "balanced" as const,
             },
@@ -266,10 +283,10 @@ export default function Home() {
         const isMapMode = mode === 'map';
         return (
             <ManualSearchForm
-                origin={origin}
-                setOrigin={setOrigin}
-                destination={destination}
-                setDestination={setDestination}
+                origins={origins}
+                setOrigins={setOrigins}
+                destinations={destinations}
+                setDestinations={setDestinations}
                 departureDate={departureDate}
                 setDepartureDate={setDepartureDate}
                 returnDate={returnDate}
@@ -297,9 +314,9 @@ export default function Home() {
             <div className={`absolute inset-0 z-0 transition-opacity duration-700 ${!isLargeScreen && !isSelectingOnMap ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
                 <Globe
                     onAirportSelect={selectingType ? handleMapSelect : undefined}
-                    selectedAirports={[origin?.iata_code, destination?.iata_code, inspectedAirport?.iata_code].filter(Boolean) as string[]}
-                    origin={origin}
-                    destination={destination}
+                    selectedAirports={[...origins.map(o => o.iata_code), ...destinations.map(d => d.iata_code), inspectedAirport?.iata_code].filter(Boolean) as string[]}
+                    origins={origins}
+                    destinations={destinations}
                     interactive={isSelectingOnMap && !(inspectedAirport && !isLargeScreen)}
                     horizontalOffset={isSelectingOnMap ? 0 : (isLargeScreen ? 306 : 0)}
                     onReady={() => setGlobeReady(true)}
@@ -383,7 +400,7 @@ export default function Home() {
                         }`}>
                         <button
                             onClick={handleSearch}
-                            disabled={isPending || !origin || !destination || !departureDate}
+                            disabled={isPending || origins.length === 0 || destinations.length === 0 || !departureDate}
                             className="group relative flex items-center justify-center gap-2.5 px-6 py-3 bg-brand text-content-on-brand rounded-xl font-bold shadow-[0_15px_40px_rgba(var(--brand-rgb),0.25)] active:scale-95 transition-all outline-hidden disabled:opacity-50 disabled:grayscale cursor-pointer overflow-hidden w-auto"
                         >
                             <div className="absolute inset-0 bg-linear-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
@@ -410,10 +427,10 @@ export default function Home() {
                 }`}>
                 <div className="relative">
                     <HomeCard
-                        origin={origin}
-                        setOrigin={setOrigin}
-                        destination={destination}
-                        setDestination={setDestination}
+                        origins={origins}
+                        setOrigins={setOrigins}
+                        destinations={destinations}
+                        setDestinations={setDestinations}
                         departureDate={departureDate}
                         setDepartureDate={setDepartureDate}
                         returnDate={returnDate}
@@ -467,8 +484,8 @@ export default function Home() {
                                         <div className="flex items-center gap-2">
                                             <Plane size={14} className="text-brand rotate-45 shrink-0" />
                                             <span>
-                                                {origin && destination
-                                                    ? `${origin.iata_code} → ${destination.iata_code}`
+                                                {origins.length > 0 && destinations.length > 0
+                                                    ? `${origins[0]?.iata_code || '???'}${origins.length > 1 ? '...' : ''} → ${destinations[0]?.iata_code || '???'}${destinations.length > 1 ? '...' : ''}`
                                                     : "Configuración del viaje"}
                                             </span>
                                         </div>
@@ -477,9 +494,9 @@ export default function Home() {
                                 {!isMobileCardExpanded && (
                                     <div className="flex items-center gap-1.5 mt-0.5">
                                         <div className="flex items-center gap-1 overflow-hidden">
-                                            <span className="text-content-muted text-[10px] font-medium truncate">{origin ? (origin.city || origin.name || origin.iata_code) : "Origen"}</span>
+                                            <span className="text-content-muted text-[10px] font-medium truncate">{origins.length > 0 ? (origins[0]?.city || origins[0]?.name || origins[0]?.iata_code || "Origen") + (origins.length > 1 ? ` +${origins.length - 1}` : '') : "Origen"}</span>
                                             <ChevronRight size={8} className="text-content-muted/30 shrink-0" />
-                                            <span className="text-content-muted text-[10px] font-medium truncate">{destination ? (destination.city || destination.name || destination.iata_code) : "Destino"}</span>
+                                            <span className="text-content-muted text-[10px] font-medium truncate">{destinations.length > 0 ? (destinations[0]?.city || destinations[0]?.name || destinations[0]?.iata_code || "Destino") + (destinations.length > 1 ? ` +${destinations.length - 1}` : '') : "Destino"}</span>
                                         </div>
                                         {(departureDate || returnDate) && (
                                             <>

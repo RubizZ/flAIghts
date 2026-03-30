@@ -8,7 +8,9 @@ export interface AirportResponse {
   location: {
     type: "Point";
     coordinates: number[];
-  }
+  };
+  combined_score?: number;
+  distance_km?: number;
 }
 
 export interface ScoredAirport {
@@ -16,7 +18,7 @@ export interface ScoredAirport {
   score: number;
 }
 
-export interface PaginatedAirportResponse {
+export interface AirportSearchPaginatedResult {
     items: AirportResponse[];
     total: number;
     page: number;

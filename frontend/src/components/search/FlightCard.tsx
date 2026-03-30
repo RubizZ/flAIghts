@@ -9,6 +9,7 @@ interface FlightCardProps {
     formatDuration: (m: number) => string,
     airportsMap: Map<string, GlobeAirportResponse>,
     onHover: (it: ItineraryResponse | null) => void,
+    onExpandChange?: (it: ItineraryResponse | null) => void,
     onSelect?: (itinerary: ItineraryResponse) => void,
     showSelectButton?: boolean
 }
@@ -27,7 +28,7 @@ interface LegDetailsProps {
     itineraryStart?: string
 }
 
-export default function FlightCard({ itinerary, formatTime, formatDuration, airportsMap, onHover, onSelect, showSelectButton = true }: FlightCardProps) {
+export default function FlightCard({ itinerary, formatTime, formatDuration, airportsMap, onHover, onExpandChange, onSelect, showSelectButton = true }: FlightCardProps) {
     const [isExpanded, setIsExpanded] = useState(false);
     const firstDepartureTime = itinerary.legs[0]?.departure_time;
     const lastArrivalLeg = itinerary.legs[itinerary.legs.length - 1];
@@ -49,7 +50,11 @@ export default function FlightCard({ itinerary, formatTime, formatDuration, airp
         >
             <div
                 className="group relative pt-5 px-5 pb-10 cursor-pointer"
-                onClick={() => setIsExpanded(!isExpanded)}
+                onClick={() => {
+                    const next = !isExpanded;
+                    setIsExpanded(next);
+                    onExpandChange?.(next ? itinerary : null);
+                }}
             >
                 {/* Hover Shine Effect */}
                 <div className="absolute inset-0 bg-linear-to-r from-transparent via-white/5 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 pointer-events-none" />
@@ -73,7 +78,7 @@ export default function FlightCard({ itinerary, formatTime, formatDuration, airp
                                     e.stopPropagation();
                                     onSelect(itinerary);
                                 }}
-                                className="px-6 py-2.5 bg-brand hover:bg-brand-hover text-white text-sm font-bold rounded-xl shadow-lg shadow-brand/20 transition-all hover:translate-y-[-1px] active:translate-y-[1px] cursor-pointer"
+                                className="px-6 py-2.5 bg-brand hover:bg-brand-hover text-white text-sm font-bold rounded-xl shadow-lg shadow-brand/20 transition-all hover:-translate-y-px active:translate-y-px cursor-pointer"
                             >
                                 Seleccionar
                             </button>

@@ -5,10 +5,10 @@ import ManualSearchForm from "../search/ManualSearchForm";
 import AgentChat from "./AgentChat";
 
 interface HomeCardProps {
-    origin: AirportResponse | null;
-    setOrigin: (airport: AirportResponse | null) => void;
-    destination: AirportResponse | null;
-    setDestination: (airport: AirportResponse | null) => void;
+    origins: AirportResponse[];
+    setOrigins: (airports: AirportResponse[]) => void;
+    destinations: AirportResponse[];
+    setDestinations: (airports: AirportResponse[]) => void;
     departureDate: string;
     setDepartureDate: (date: string) => void;
     returnDate: string;
@@ -29,10 +29,10 @@ interface HomeCardProps {
 }
 
 export default function HomeCard({
-    origin,
-    setOrigin,
-    destination,
-    setDestination,
+    origins,
+    setOrigins,
+    destinations,
+    setDestinations,
     departureDate,
     setDepartureDate,
     returnDate,
@@ -122,10 +122,10 @@ export default function HomeCard({
                 >
                     <div className="flex flex-col gap-6">
                         <ManualSearchForm
-                            origin={origin}
-                            setOrigin={setOrigin}
-                            destination={destination}
-                            setDestination={setDestination}
+                            origins={origins}
+                            setOrigins={setOrigins}
+                            destinations={destinations}
+                            setDestinations={setDestinations}
                             departureDate={departureDate}
                             setDepartureDate={setDepartureDate}
                             returnDate={returnDate}
@@ -167,12 +167,12 @@ export default function HomeCard({
                             messages={messages}
                             setMessages={setMessages}
                             location={userLocation}
-                            origin={origin}
-                            destination={destination}
+                            origins={origins}
+                            destinations={destinations}
                             departureDate={departureDate}
                             setReturnDate={setReturnDate}
-                            setOrigin={setOrigin}
-                            setDestination={setDestination}
+                            setOrigins={setOrigins}
+                            setDestinations={setDestinations}
                             setDepartureDate={setDepartureDate}
                         />
 

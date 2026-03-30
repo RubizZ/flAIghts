@@ -20,8 +20,8 @@ interface AirportData {
 interface GlobeProps {
     onAirportSelect?: (airport: AirportResponse) => void;
     selectedAirports?: string[];
-    origin?: AirportResponse | null;
-    destination?: AirportResponse | null;
+    origins?: AirportResponse[];
+    destinations?: AirportResponse[];
     interactive?: boolean;
     horizontalOffset?: number;
     onReady?: () => void;
@@ -35,8 +35,8 @@ interface GlobeProps {
 export default function Globe({
     onAirportSelect,
     selectedAirports = [],
-    origin = null,
-    destination = null,
+    origins = [],
+    destinations = [],
     interactive = false,
     horizontalOffset = 0,
     onReady,
@@ -46,8 +46,8 @@ export default function Globe({
     onMovementChange,
     focusIata
 }: GlobeProps) {
-    const originIata = origin?.iata_code;
-    const destinationIata = destination?.iata_code;
+    const originsIata = useMemo(() => origins.map(o => o.iata_code).filter(Boolean) as string[], [origins]);
+    const destinationsIata = useMemo(() => destinations.map(d => d.iata_code).filter(Boolean) as string[], [destinations]);
 
     const toAirportResponse = (ad: AirportData): AirportResponse => ({
         iata_code: ad.iata,
@@ -60,8 +60,8 @@ export default function Globe({
     } as AirportResponse);
     const mountRef = useRef<HTMLDivElement | null>(null);
     const popupRef = useRef<HTMLDivElement | null>(null);
-    const originLabelRef = useRef<HTMLDivElement | null>(null);
-    const destLabelRef = useRef<HTMLDivElement | null>(null);
+    const originLabelRefs = useRef<(HTMLDivElement | null)[]>([]);
+    const destLabelRefs = useRef<(HTMLDivElement | null)[]>([]);
     const contextMenuContainerRef = useRef<HTMLDivElement | null>(null);
     const labelGroupRef = useRef<THREE.Group>(new THREE.Group());
     const clusterTextureCache = useRef<Record<number, THREE.CanvasTexture>>({});
@@ -70,10 +70,22 @@ export default function Globe({
     const airplaneModelRef = useRef<THREE.Group | null>(null);
     const airportsDataRef = useRef<AirportData[]>([]);
     const airportsMap = useRef<Record<string, THREE.Mesh>>({});
+    const lastItineraryKeyRef = useRef<string>("");
     const sharedAirportGeo = useRef(new THREE.SphereGeometry(0.0004, 12, 12));
     const sharedClusterGeo = useRef(new THREE.SphereGeometry(0.002, 12, 12));
     const arcsGroupRef = useRef<THREE.Group>(new THREE.Group());
-    const planesRef = useRef<{ mesh: THREE.Object3D; curve: THREE.Curve<THREE.Vector3>; points: THREE.Vector3[]; line: THREE.Line; progress: number; speed: number; totalLength: number }[]>([]);
+    const planesRef = useRef<{
+        mesh: THREE.Object3D;
+        curve: THREE.Curve<THREE.Vector3>;
+        points: THREE.Vector3[];
+        lineGroup: THREE.Group;
+        lines: THREE.Line[];
+        progress: number;
+        speed: number;
+        totalLength: number;
+        isAmbient?: boolean;
+        waitDuration: number;
+    }[]>([]);
 
     const sceneRef = useRef<THREE.Scene | null>(null);
     const earthGroupRef = useRef<THREE.Group>(new THREE.Group());
@@ -83,8 +95,8 @@ export default function Globe({
     const cameraRef = useRef<THREE.PerspectiveCamera | null>(null);
     const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
     const controlsRef = useRef<OrbitControls | null>(null);
-    const activeOriginRef = useRef<string | undefined>(originIata);
-    const activeDestRef = useRef<string | undefined>(destinationIata);
+    const activeOriginsRef = useRef<string[]>(originsIata);
+    const activeDestsRef = useRef<string[]>(destinationsIata);
     const mousePosRef = useRef<THREE.Vector2>(new THREE.Vector2(-999, -999));
     const onSelectRef = useRef(onAirportSelect);
     const selectedAirportsRef = useRef(selectedAirports);
@@ -97,11 +109,11 @@ export default function Globe({
 
     // Stable key for airports that must NOT be clustered (sorted to ignore order in swaps)
     const forcedAirportsKey = useMemo(() => {
-        return [originIata, destinationIata, ...selectedAirports]
+        return [...originsIata, ...destinationsIata, ...selectedAirports]
             .filter(Boolean)
             .sort()
             .join(',');
-    }, [originIata, destinationIata, selectedAirports]);
+    }, [originsIata, destinationsIata, selectedAirports]);
     const lastCamQuatRef = useRef<THREE.Quaternion>(new THREE.Quaternion());
     const lastMoveTimeRef = useRef(0);
     const isUserInteractingRef = useRef(false);
@@ -235,14 +247,37 @@ export default function Globe({
         return texture;
     };
 
+    const trailTextureRef = useRef<THREE.Texture | null>(null);
+    const getTrailTexture = () => {
+        if (trailTextureRef.current) return trailTextureRef.current;
+        const size = 64;
+        const canvas = document.createElement('canvas');
+        canvas.width = size;
+        canvas.height = size;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return null;
+
+        const gradient = ctx.createRadialGradient(size / 2, size / 2, 0, size / 2, size / 2, size / 2);
+        gradient.addColorStop(0, 'rgba(255, 255, 255, 1)');
+        gradient.addColorStop(0.3, 'rgba(255, 255, 255, 0.6)');
+        gradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
+
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, 0, size, size);
+
+        const texture = new THREE.CanvasTexture(canvas);
+        trailTextureRef.current = texture;
+        return texture;
+    };
+
     useEffect(() => {
-        activeOriginRef.current = originIata;
-        activeDestRef.current = destinationIata;
+        activeOriginsRef.current = originsIata;
+        activeDestsRef.current = destinationsIata;
         onSelectRef.current = onAirportSelect;
         onAirportClickRef.current = onAirportClick;
         selectedAirportsRef.current = selectedAirports;
         selectedAirportsSetRef.current = new Set(selectedAirports);
-    }, [originIata, destinationIata, onAirportSelect, onAirportClick, selectedAirports]);
+    }, [originsIata, destinationsIata, onAirportSelect, onAirportClick, selectedAirports]);
 
     useEffect(() => {
         interactiveRef.current = interactive;
@@ -254,10 +289,171 @@ export default function Globe({
     // Reusable objects for performance (prevents Garbage Collection lag)
     const _vec1 = new THREE.Vector3();
     const _vec2 = new THREE.Vector3();
+    const _vec3 = new THREE.Vector3();
     const _camNorm = new THREE.Vector3();
 
-    // Refs for objects that need persistence and access in multiple effects
+    const generateFuzzyPoints = (points: THREE.Vector3[], hOff: number, rOff: number, freq: number, phase: number) => {
+        return points.map((p, i) => {
+            const normal = p.clone().normalize();
+            const tangent = i < points.length - 1
+                ? points[i + 1]!.clone().sub(p).normalize()
+                : p.clone().sub(points[Math.max(0, i - 1)]!).normalize();
+            const right = new THREE.Vector3().crossVectors(normal, tangent).normalize();
+
+            const jitterScale = 0.5 + 0.5 * Math.sin(i * freq + phase);
+            const res = p.clone();
+            res.addScaledVector(normal, hOff * jitterScale);
+            res.addScaledVector(right, rOff * (Math.cos(i * freq + phase)));
+            return res;
+        });
+    };
+
     const cloudsRef = useRef<THREE.Mesh | null>(null);
+
+    // Helper to allow vertex alpha in basic lines using the color attribute
+    const patchStelaMaterial = (mat: THREE.LineBasicMaterial) => {
+        mat.transparent = true;
+        if ((mat as any)._isStelaPatched) return;
+        (mat as any)._isStelaPatched = true;
+        mat.onBeforeCompile = (shader) => {
+            shader.fragmentShader = shader.fragmentShader.replace(
+                '#include <color_fragment>',
+                'diffuseColor.a *= vColor.r; '
+            );
+        };
+    };
+
+    // Helper to recursively dispose of Three.js objects
+    const disposeObject = (obj: THREE.Object3D) => {
+        obj.traverse((child) => {
+            if (child instanceof THREE.Mesh || child instanceof THREE.Line || child instanceof THREE.Sprite || child instanceof THREE.Points) {
+                child.geometry.dispose();
+                if (Array.isArray(child.material)) {
+                    child.material.forEach(m => {
+                        if (m.map) m.map.dispose();
+                        m.dispose();
+                    });
+                } else if (child.material) {
+                    if (child.material.map) child.material.map.dispose();
+                    child.material.dispose();
+                }
+            }
+        });
+    };
+
+    const rebuildAmbientRoute = (p: any) => {
+        const data = airportsDataRef.current;
+        if (data.length < 2) return;
+
+        // Pick random and ensure they are different
+        let origin = data[Math.floor(Math.random() * data.length)];
+        let dest = data[Math.floor(Math.random() * data.length)];
+        let attempts = 0;
+        while (origin === dest && attempts < 10) {
+            dest = data[Math.floor(Math.random() * data.length)];
+            attempts++;
+        }
+
+        if (!origin || !dest) return;
+
+        const start = latLonToVector3(Number(origin.lat), Number(origin.lon));
+        const end = latLonToVector3(Number(dest.lat), Number(dest.lon));
+        const dist = start.distanceTo(end);
+
+        // Sampling
+        const samples = Math.max(200, Math.floor(dist * 600));
+        const cruiseAltitude = 0.01 + (dist * 0.02);
+        const points: THREE.Vector3[] = [];
+        for (let i = 0; i <= samples; i++) {
+            const t = i / samples;
+            const pt = new THREE.Vector3().copy(start).lerp(end, t).normalize();
+            const altitude = 1.005 + (Math.sin(Math.PI * t) * cruiseAltitude);
+            pt.multiplyScalar(altitude);
+            points.push(pt);
+        }
+
+        const curve = new THREE.CatmullRomCurve3(points);
+        const spacedPoints = curve.getSpacedPoints(samples);
+
+        // Update plane object
+        p.curve = curve;
+        p.points = spacedPoints;
+        p.totalLength = curve.getLength();
+        p.speed = (0.001 + Math.random() * 0.001) / (1 + dist * 2);
+        p.progress = 0;
+        // Random wait: max 200% of flight time (2.0), more likely to be low (Skewed distribution)
+        p.waitDuration = 0.2 + Math.pow(Math.random(), 2) * 1.8;
+
+        // Update multiple jittered lines for a fuzzy cloud effect
+        p.lines.forEach((line: THREE.Line, i: number) => {
+            const h = (i === 0) ? 0 : (i === 1 ? 0.001 : -0.001);
+            const r = (i === 0) ? 0 : (i === 1 ? 0.001 : -0.001);
+            const fuzzyPoints = generateFuzzyPoints(spacedPoints, h, r, 0.4, i);
+            line.geometry.dispose();
+            line.geometry = new THREE.BufferGeometry().setFromPoints(fuzzyPoints);
+            line.geometry.computeBoundingSphere(); // Stability fix
+            const colorArr = new Float32Array(spacedPoints.length * 3).fill(1);
+            line.geometry.setAttribute('color', new THREE.BufferAttribute(colorArr, 3));
+            patchStelaMaterial(line.material as THREE.LineBasicMaterial);
+            const posAttr = line.geometry.getAttribute('position') as THREE.BufferAttribute;
+            if (posAttr) posAttr.setUsage(THREE.DynamicDrawUsage);
+            line.geometry.setDrawRange(0, 0);
+        });
+    };
+
+    const rebuildItineraryRoute = (p: any, oIatas: string[], dIatas: string[]) => {
+        if (oIatas.length === 0) return;
+        const idx = Math.floor(Math.random() * oIatas.length);
+        const oIata = oIatas[idx];
+        const dIata = dIatas[idx];
+
+        const origin = airportsDataRef.current.find(a => a.iata === oIata);
+        const dest = airportsDataRef.current.find(a => a.iata === dIata);
+        if (!origin || !dest) return;
+
+        const start = latLonToVector3(Number(origin.lat), Number(origin.lon));
+        const end = latLonToVector3(Number(dest.lat), Number(dest.lon));
+        const dist = start.distanceTo(end);
+
+        const samples = Math.max(120, Math.floor(dist * 250));
+        const cruiseAltitude = 0.01 + (dist * 0.02);
+        const points: THREE.Vector3[] = [];
+        for (let i = 0; i <= samples; i++) {
+            const t = i / samples;
+            const pt = new THREE.Vector3().copy(start).lerp(end, t).normalize();
+            const altitude = 1.005 + (Math.sin(Math.PI * t) * cruiseAltitude);
+            pt.multiplyScalar(altitude);
+            points.push(pt);
+        }
+
+        const curve = new THREE.CatmullRomCurve3(points);
+        const spacedPoints = curve.getSpacedPoints(samples);
+
+        p.curve = curve;
+        p.points = spacedPoints;
+        p.totalLength = curve.getLength();
+        const baseSpeed = 0.002;
+        p.speed = baseSpeed / (1 + dist * 2);
+        p.progress = 0;
+        // Random wait: max 200% of flight time (2.0), more likely to be low (Skewed distribution)
+        p.waitDuration = 0.2 + Math.pow(Math.random(), 2) * 1.8;
+
+        // Update multiple jittered lines for a fuzzy cloud effect
+        p.lines.forEach((line: THREE.Line, i: number) => {
+            const h = (i === 0) ? 0 : (i === 1 ? 0.001 : -0.001);
+            const r = (i === 0) ? 0 : (i === 1 ? 0.001 : -0.001);
+            const fuzzyPoints = generateFuzzyPoints(spacedPoints, h, r, 0.4, i);
+            line.geometry.dispose();
+            line.geometry = new THREE.BufferGeometry().setFromPoints(fuzzyPoints);
+            line.geometry.computeBoundingSphere();
+            const colorArr = new Float32Array(spacedPoints.length * 3).fill(1);
+            line.geometry.setAttribute('color', new THREE.BufferAttribute(colorArr, 3));
+            patchStelaMaterial(line.material as THREE.LineBasicMaterial);
+            const posAttr = line.geometry.getAttribute('position') as THREE.BufferAttribute;
+            if (posAttr) posAttr.setUsage(THREE.DynamicDrawUsage);
+            line.geometry.setDrawRange(0, 0);
+        });
+    };
 
     // Notify parent when globe is fully ready (geo + airports loaded)
     useEffect(() => {
@@ -652,8 +848,8 @@ export default function Globe({
                 }
 
                 _camNorm.copy(cam.position).normalize();
-                const activeOrigin = activeOriginRef.current;
-                const activeDest = activeDestRef.current;
+                const activeOrigins = activeOriginsRef.current;
+                const activeDests = activeDestsRef.current;
                 const selSet = selectedAirportsSetRef.current;
 
                 const distFactor = camDist / 3.2;
@@ -679,13 +875,13 @@ export default function Globe({
                     if (item.isCluster) {
                         for (let i = 0; i < item.airports.length; i++) {
                             const iata = item.airports[i].iata;
-                            if (iata === activeOrigin || iata === activeDest || selSet.has(iata)) {
+                            if (activeOrigins.includes(iata) || activeDests.includes(iata) || selSet.has(iata)) {
                                 isSpecial = true;
                                 break;
                             }
                         }
                     } else {
-                        isSpecial = item.iata === activeOrigin || item.iata === activeDest || selSet.has(item.iata);
+                        isSpecial = activeOrigins.includes(item.iata) || activeDests.includes(item.iata) || selSet.has(item.iata);
                     }
 
                     let targetOpacity = 0;
@@ -812,85 +1008,131 @@ export default function Globe({
 
             planesRef.current.forEach(p => {
                 p.progress += p.speed;
-                // Total cycle includes flight (1.0) and wait time (0.15)
-                const loopCycle = 1.15;
+                // Total cycle includes flight (1.0) and random wait time
+                const loopCycle = 1.0 + (p.waitDuration || 0.15);
                 if (p.progress > loopCycle) {
-                    p.progress = 0;
-                    const posAttr = p.line.geometry.getAttribute('position') as THREE.BufferAttribute;
-                    if (posAttr) {
-                        p.points.forEach((pt, i) => posAttr.setXYZ(i, pt.x, pt.y, pt.z));
-                        posAttr.needsUpdate = true;
+                    if (p.isAmbient) {
+                        rebuildAmbientRoute(p);
+                    } else {
+                        rebuildItineraryRoute(p, activeOriginsRef.current, activeDestsRef.current);
                     }
                 }
 
                 // Hide planes during waiting or initial stagger period
-                if (p.progress < 0 || p.progress > 1) {
+                const totalPoints = p.points.length;
+
+                // --- Sync Logic: Vanish and Appear together ---
+                // Start and End transition zones (proportional to path)
+                const totalLen = (p as any).totalLength || 1;
+                const fadeZone = Math.max(0.08, Math.min(0.25, 0.12 / totalLen));
+
+                // Proportional trail length: roughly 7.5% of path
+                const baseTrailLength = Math.max(12, Math.min(35, Math.floor(totalPoints * 0.075)));
+                let currentTrailLength = baseTrailLength;
+
+                // Synchronized disappearance: the trail shrinks into the plane as it lands
+                if (p.progress > 1.0 - fadeZone) {
+                    const landingFactor = Math.max(0, (1.0 - p.progress) / fadeZone);
+                    currentTrailLength = baseTrailLength * landingFactor;
+                }
+
+                // Allow progress to go slightly beyond 1.0 for the wait cycle, but visual lifecycle ends at 1.0
+                if (p.progress < 0 || p.progress > loopCycle) {
                     p.mesh.visible = false;
-                    p.line.visible = false;
+                    p.lineGroup.visible = false;
                     return;
                 }
-                const points = p.points;
-                const exactIdx = p.progress * (points.length - 1);
-                const baseIdx = Math.floor(exactIdx);
-                const pt1 = points[baseIdx], pt2 = points[Math.min(baseIdx + 1, points.length - 1)];
+
+                // Head index (where the plane is) clamped to [0, totalPoints-1]
+                const headProgress = Math.min(1.0, p.progress);
+                const exactHeadIdx = headProgress * (totalPoints - 1);
+                const baseIdx = Math.floor(exactHeadIdx);
+                const pt1 = p.points[baseIdx];
+                const pt2 = p.points[Math.min(baseIdx + 1, totalPoints - 1)];
+
                 if (pt1 && pt2) {
-                    _vec1.copy(pt1).lerp(pt2, exactIdx - baseIdx);
+                    // Head interpolation
+                    const headInterp = exactHeadIdx - baseIdx;
+                    _vec1.copy(pt1).lerp(pt2, headInterp);
                     p.mesh.position.copy(_vec1);
 
-                    const positionAttr = p.line.geometry.getAttribute('position') as THREE.BufferAttribute;
-                    if (positionAttr) {
-                        const nextIdx = Math.min(baseIdx + 1, points.length - 1);
-                        const lastIdx = (p as any)._lastTipIdx;
-                        if (lastIdx !== undefined && points[lastIdx]) {
-                            const orig = points[lastIdx];
-                            positionAttr.setXYZ(lastIdx, orig.x, orig.y, orig.z);
-                        }
-                        positionAttr.setXYZ(nextIdx, _vec1.x, _vec1.y, _vec1.z);
-                        positionAttr.needsUpdate = true;
-                        (p as any)._lastTipIdx = nextIdx;
-                        p.line.geometry.setDrawRange(0, nextIdx + 1);
-                    }
-                    const lookPoint = points[Math.min(baseIdx + 2, points.length - 1)];
-                    if (lookPoint) {
+                    // Orient the plane
+                    const lookIdx = Math.min(baseIdx + 2, totalPoints - 1);
+                    const lookPoint = p.points[lookIdx];
+                    if (lookPoint && headProgress < 1.0) {
                         p.mesh.up.copy(p.mesh.position).normalize();
                         p.mesh.lookAt(lookPoint);
                     }
 
-                    // Apply fade-in and fade-out based on progress
-                    // Added separationDist to keep the plane invisible until it clears the airport area (symmetric)
-                    const fixedFadeDist = 0.03; // 3% of globe radius for the fade transition
-                    const separationDist = 0.01; // 1% of globe radius 'dead zone' at start and end
-                    const totalLen = (p as any).totalLength || 1;
+                    // Update all fuzzy lines in the group
+                    p.lines.forEach(line => {
+                        const exactTailIdx = Math.max(0, p.progress * (totalPoints - 1) - currentTrailLength);
+                        const startIdx = Math.floor(exactTailIdx);
+                        const drawStart = Math.max(0, Math.min(startIdx, totalPoints - 1));
+                        const drawEnd = Math.floor(exactHeadIdx);
+                        const count = Math.max(0, drawEnd - drawStart + 1);
+                        line.geometry.setDrawRange(drawStart, count);
 
-                    const offset = Math.min(0.15, separationDist / totalLen);
-                    const fade = Math.min(0.2, fixedFadeDist / totalLen);
+                        // Relative Segment Gradient: Tail (0) to Head (1)
+                        const colorAttr = line.geometry.getAttribute('color') as THREE.BufferAttribute;
+                        if (colorAttr && count > 0) {
+                            const colors = colorAttr.array as Float32Array;
+                            const range = Math.max(1, currentTrailLength);
+                            // Only update indices that are actually in the buffer
+                            const sJ = drawStart;
+                            const eJ = Math.min(drawEnd, totalPoints - 1);
 
-                    let opacity = 1.0;
-                    if (p.progress < offset || p.progress > 1.0 - offset) {
-                        opacity = 0;
-                    } else if (p.progress < offset + fade) {
-                        opacity = (p.progress - offset) / fade;
-                    } else if (p.progress > 1.0 - offset - fade) {
-                        opacity = (1.0 - offset - p.progress) / fade;
+                            for (let j = sJ; j <= eJ; j++) {
+                                // Progress relative to the current tail-head range (clamped to 0..1)
+                                const headPos = p.progress * (totalPoints - 1);
+                                const segmentProgress = Math.max(0, Math.min(1, (j - (headPos - currentTrailLength)) / range));
+
+                                const alpha = Math.pow(segmentProgress, 0.8);
+                                colors[j * 3] = alpha;
+                                colors[j * 3 + 1] = alpha;
+                                colors[j * 3 + 2] = alpha;
+                            }
+                            colorAttr.needsUpdate = true;
+                        }
+                    });
+
+                    // Unified Lifecycle Opacity (Temporal)
+                    let unifiedOpacity = 1.0;
+                    if (p.progress < fadeZone) {
+                        unifiedOpacity = p.progress / fadeZone;
+                    } else if (p.progress > 1.0 - fadeZone) {
+                        unifiedOpacity = Math.max(0, (1.0 - p.progress) / fadeZone);
                     }
 
-                    // Apply opacity to both the plane and the trajectory line
-                    p.mesh.visible = opacity > 0.10;
-                    if (p.line.material instanceof THREE.Material) {
-                        p.line.material.opacity = opacity * 0.9; // Maintain original peak opacity of 0.9
-                        p.line.material.transparent = true;
-                    }
-                    p.line.visible = opacity > 0.1;
-
+                    // Plane Mesh: Lands and disappears together with its trail head at 1.0
+                    p.mesh.visible = unifiedOpacity > 0.01 && p.progress <= 1.0;
                     if (p.mesh.visible) {
                         p.mesh.traverse((child) => {
                             if (child instanceof THREE.Mesh) {
                                 if (Array.isArray(child.material)) {
-                                    child.material.forEach(m => { m.opacity = opacity; m.transparent = true; });
+                                    child.material.forEach(m => {
+                                        m.opacity = unifiedOpacity;
+                                        m.transparent = true;
+                                        m.depthWrite = false;
+                                    });
                                 } else if (child.material) {
-                                    child.material.opacity = opacity;
+                                    child.material.opacity = unifiedOpacity;
                                     child.material.transparent = true;
+                                    child.material.depthWrite = false;
                                 }
+                            }
+                        });
+                    }
+
+                    // Trail Line: Global lifecycle synced PERFECLTY with airplane
+                    p.lineGroup.visible = p.progress <= 1.0 && unifiedOpacity > 0.01;
+                    if (p.lineGroup.visible) {
+                        p.lines.forEach((line, i) => {
+                            if (line.material instanceof THREE.LineBasicMaterial) {
+                                // Sync material opacity with aircraft unified Lifecycle
+                                // This maintains the exact same fade in/out temporal curve
+                                line.material.opacity = (i === 0 ? 0.9 : 0.3) * unifiedOpacity;
+                                line.material.transparent = true;
                             }
                         });
                     }
@@ -922,8 +1164,12 @@ export default function Globe({
                     }
                 }
             };
-            updateLabel(activeOriginRef.current, originLabelRef.current);
-            updateLabel(activeDestRef.current, destLabelRef.current);
+            activeOriginsRef.current.forEach((iata, idx) => {
+                updateLabel(iata, originLabelRefs.current[idx] || null);
+            });
+            activeDestsRef.current.forEach((iata, idx) => {
+                updateLabel(iata, destLabelRefs.current[idx] || null);
+            });
 
             // Integrated Cluster labels into the airport group loop above for performance
 
@@ -1009,12 +1255,18 @@ export default function Globe({
             sceneRef.current = null;
             controlsRef.current = null;
 
-            earthGroupRef.current.clear();
+            airportGroupRef.current.children.forEach(c => disposeObject(c));
             airportGroupRef.current.clear();
+            labelGroupRef.current.children.forEach(c => disposeObject(c));
             labelGroupRef.current.clear();
+            countryLabelsGroupRef.current.children.forEach(c => disposeObject(c));
             countryLabelsGroupRef.current.clear();
+            starGroupRef.current.children.forEach(c => disposeObject(c));
             starGroupRef.current.clear();
+            arcsGroupRef.current.children.forEach(c => disposeObject(c));
             arcsGroupRef.current.clear();
+            earthGroupRef.current.children.forEach(c => disposeObject(c));
+            earthGroupRef.current.clear();
         };
     }, []);
 
@@ -1080,11 +1332,14 @@ export default function Globe({
     useEffect(() => {
         if (!isAirportsLoaded || !globeAirports) return;
 
+        airportGroupRef.current.children.forEach(c => disposeObject(c));
         airportGroupRef.current.clear();
+        labelGroupRef.current.children.forEach(c => disposeObject(c));
+        labelGroupRef.current.clear();
         airportsMap.current = {};
 
         const hM = isMobileRef.current ? 1.5 : 1.0;
-        const forcedSet = new Set([...selectedAirports, originIata, destinationIata].filter(Boolean) as string[]);
+        const forcedSet = new Set([...selectedAirports, ...originsIata, ...destinationsIata].filter(Boolean) as string[]);
         const threshold = clusterThreshold;
 
         // 1. OOP Entity Class
@@ -1268,9 +1523,11 @@ export default function Globe({
 
         // 3. Build Scene
         items.forEach(item => {
-            const isOriginDest = item.iata === originIata || item.iata === destinationIata;
+            const isOrigin = originsIata.includes(item.iata);
+            const isDest = destinationsIata.includes(item.iata);
+            const isOriginDest = isOrigin || isDest;
             const meshColor = isOriginDest
-                ? getThemeColorHex(item.iata === originIata ? '--color-origin' : '--color-destination', 0x0891b2)
+                ? getThemeColorHex(isOrigin ? '--color-origin' : '--color-destination', 0x0891b2)
                 : (item.isSpecial ? 0x00ff00 : getThemeColorHex('--color-brand', 0x4f46e5));
 
             const meshOpacity = (item.isSpecial || isOriginDest) ? 1 : 0.4;
@@ -1309,7 +1566,8 @@ export default function Globe({
             }
         });
 
-        airportsDataRef.current = globeAirports.map(a => ({ iata: a.i, lat: a.la, lon: a.lo, name: a.n, city: a.ci, v3: latLonToVector3(a.la, a.lo) }));
+        const airDataMapped = globeAirports.map(a => ({ iata: a.i, lat: a.la, lon: a.lo, name: a.n, city: a.ci, v3: latLonToVector3(a.la, a.lo) }));
+        airportsDataRef.current = airDataMapped;
         setIsLoaded(true);
     }, [isAirportsLoaded, globeAirports, clusterThreshold, forcedAirportsKey]);
 
@@ -1328,8 +1586,10 @@ export default function Globe({
             const mat = mesh.material as THREE.MeshBasicMaterial;
 
             if (!item.isCluster) {
-                if (item.iata === originIata || item.iata === destinationIata) {
-                    mat.color.setHex(item.iata === originIata ? originColor : destColor);
+                const isOrigin = originsIata.includes(item.iata);
+                const isDest = destinationsIata.includes(item.iata);
+                if (isOrigin || isDest) {
+                    mat.color.setHex(isOrigin ? originColor : destColor);
                     mat.opacity = 1;
                     mesh.scale.setScalar(12);
                 } else if (selSet.has(item.iata)) {
@@ -1345,7 +1605,7 @@ export default function Globe({
                 let hasSelected = false;
                 for (let i = 0; i < item.airports.length; i++) {
                     const iata = item.airports[i].iata;
-                    if (iata === originIata || iata === destinationIata) {
+                    if (originsIata.includes(iata) || destinationsIata.includes(iata)) {
                         hasOriginOrDest = true;
                     }
                     if (selSet.has(iata)) {
@@ -1367,7 +1627,7 @@ export default function Globe({
                 }
             }
         });
-    }, [isLoaded, originIata, destinationIata, selectedAirports.join(',')]);
+    }, [isLoaded, originsIata, destinationsIata, selectedAirports.join(',')]);
 
     // 3. Update Interactive State
     useEffect(() => {
@@ -1418,147 +1678,299 @@ export default function Globe({
         return () => window.removeEventListener("resize", handleResize);
     }, [horizontalOffset]);
 
-    // 6. Handle arcs and planes creation (Flight path remains stable)
+    // 6. Handle itinerary planes creation (Flight path remains stable)
     useEffect(() => {
-        if (!isLoaded || !sceneRef.current) return;
+        if (!isLoaded || !sceneRef.current || !modelLoaded) return;
 
-        // Clear previous arcs and planes
-        while (arcsGroupRef.current.children.length > 0) {
-            const child = arcsGroupRef.current.children[0];
-            if (child) {
-                if (child instanceof THREE.Mesh) {
-                    child.geometry.dispose();
-                    if (child.material instanceof THREE.Material) {
-                        child.material.dispose();
+        // Stability check: Bail out if itinerary content hasn't changed
+        // This prevents planes from restarting if the parent re-renders while moving/zooming the globe
+        const currentKey = JSON.stringify(originsIata) + JSON.stringify(destinationsIata);
+        if (lastItineraryKeyRef.current === currentKey) return;
+        lastItineraryKeyRef.current = currentKey;
+
+        // Surgical clear: only remove itinerary planes
+        planesRef.current = planesRef.current.filter(p => {
+            if (!p.isAmbient) {
+                if (p.mesh) {
+                    arcsGroupRef.current.remove(p.mesh);
+                    disposeObject(p.mesh);
+                }
+                if (p.lineGroup) {
+                    arcsGroupRef.current.remove(p.lineGroup);
+                    disposeObject(p.lineGroup);
+                }
+                return false;
+            }
+            return true;
+        });
+
+        // Draw Arcs for ALL combinations of origins and destinations
+        originsIata.forEach((oIata) => {
+            destinationsIata.forEach((dIata) => {
+                const origin = airportsDataRef.current.find(a => a.iata === oIata);
+                const dest = airportsDataRef.current.find(a => a.iata === dIata);
+
+                if (origin && dest) {
+                    const start = latLonToVector3(Number(origin.lat), Number(origin.lon));
+                    const end = latLonToVector3(Number(dest.lat), Number(dest.lon));
+                    const dist = start.distanceTo(end);
+                    const samples = Math.max(200, Math.floor(dist * 600));
+                    const points: THREE.Vector3[] = [];
+                    const cruiseAltitude = 0.01 + (dist * 0.02);
+
+                    for (let i = 0; i <= samples; i++) {
+                        const t = i / samples;
+                        const point = new THREE.Vector3().copy(start).lerp(end, t).normalize();
+                        const altitudeFactor = Math.sin(Math.PI * t);
+                        const altitude = 1.005 + (altitudeFactor * cruiseAltitude);
+                        point.multiplyScalar(altitude);
+                        points.push(point);
+                    }
+
+                    const curve = new THREE.CatmullRomCurve3(points);
+                    const spacedPoints = curve.getSpacedPoints(samples);
+                    const pCount = 1;
+
+                    const brandColorHex = getThemeColorHex('--color-brand', 0x4f46e5);
+                    const brandColor = new THREE.Color(brandColorHex);
+
+                    for (let i = 0; i < pCount; i++) {
+                        let planeMesh: THREE.Object3D;
+
+                        if (airplaneModelRef.current) {
+                            const group = new THREE.Group();
+                            const model = airplaneModelRef.current.clone();
+                            model.scale.setScalar(0.025);
+                            model.rotateY(-Math.PI / 2);
+                            group.add(model);
+                            planeMesh = group;
+
+                            model.traverse((child) => {
+                                if (child instanceof THREE.Mesh) {
+                                    if (child.material) {
+                                        if (Array.isArray(child.material)) {
+                                            child.material = child.material.map(m => {
+                                                const mc = m.clone();
+                                                mc.transparent = true;
+                                                mc.opacity = 1;
+                                                mc.depthWrite = false; // Prevent culling elements behind
+                                                if ('emissive' in mc) {
+                                                    (mc as any).emissive = brandColor;
+                                                    (mc as any).emissiveIntensity = 2;
+                                                }
+                                                return mc;
+                                            });
+                                        } else {
+                                            child.material = child.material.clone();
+                                            child.material.transparent = true;
+                                            child.material.opacity = 1;
+                                            child.material.depthWrite = false;
+                                            if ('emissive' in child.material) {
+                                                (child.material as any).emissive = brandColor;
+                                                (child.material as any).emissiveIntensity = 2;
+                                            }
+                                        }
+                                    }
+                                }
+                            });
+                        } else {
+                            planeMesh = new THREE.Mesh(
+                                new THREE.SphereGeometry(0.005, 12, 12),
+                                new THREE.MeshStandardMaterial({
+                                    color: brandColor,
+                                    emissive: brandColor,
+                                    emissiveIntensity: 3,
+                                    transparent: true,
+                                    depthWrite: false
+                                })
+                            );
+                        }
+
+                        const lineGroup = new THREE.Group();
+                        const lineList: THREE.Line[] = [];
+                        const lineInfo = [
+                            { h: 0, r: 0, op: 0.9 },
+                            { h: 0.001, r: 0.001, op: 0.3 },
+                            { h: -0.001, r: -0.001, op: 0.3 }
+                        ];
+
+                        lineInfo.forEach((info, idx) => {
+                            const fuzzyP = generateFuzzyPoints(spacedPoints, info.h, info.r, 0.4, idx);
+                            const geo = new THREE.BufferGeometry().setFromPoints(fuzzyP);
+                            if (geo.getAttribute('position')) (geo.getAttribute('position') as THREE.BufferAttribute).setUsage(THREE.DynamicDrawUsage);
+                            geo.setDrawRange(0, 0);
+
+                            const mat = new THREE.LineBasicMaterial({
+                                color: brandColor,
+                                transparent: true,
+                                opacity: info.op,
+                                depthWrite: false,
+                                vertexColors: true
+                            });
+                            const l = new THREE.Line(geo, mat);
+                            l.geometry.computeBoundingSphere();
+                            const colorArr = new Float32Array(spacedPoints.length * 3).fill(1);
+                            l.geometry.setAttribute('color', new THREE.BufferAttribute(colorArr, 3));
+                            patchStelaMaterial(l.material as THREE.LineBasicMaterial);
+                            lineGroup.add(l);
+                            lineList.push(l);
+                        });
+                        arcsGroupRef.current.add(lineGroup);
+
+                        const baseSpeed = 0.002;
+                        const realSpeed = baseSpeed / (1 + dist * 2);
+
+                        planesRef.current.push({
+                            mesh: planeMesh,
+                            curve: curve,
+                            points: spacedPoints,
+                            lineGroup: lineGroup,
+                            lines: lineList,
+                            progress: -Math.random() * 0.1, // Reduced initial delay for itinerary
+                            speed: realSpeed,
+                            totalLength: curve.getLength(),
+                            waitDuration: 0.2 + Math.pow(Math.random(), 2) * 1.8
+                        });
+                        arcsGroupRef.current.add(planeMesh);
                     }
                 }
-                arcsGroupRef.current.remove(child);
-            }
-        }
-        planesRef.current = [];
+            });
+        });
+    }, [isLoaded, originsIata, destinationsIata, modelLoaded]);
 
-        // Draw Arc if origin and destination are set
-        if (originIata && destinationIata) {
-            const origin = airportsDataRef.current.find(a => a.iata === originIata);
-            const dest = airportsDataRef.current.find(a => a.iata === destinationIata);
+    const ambientStartedRef = useRef(false);
+    // 6.5 Handle ambient planes creation (Only runs once)
+    useEffect(() => {
+        if (!isLoaded || !sceneRef.current || !modelLoaded || ambientStartedRef.current) return;
+        ambientStartedRef.current = true;
 
-            if (origin && dest) {
+        const airData = airportsDataRef.current;
+        if (airData.length >= 2) {
+            const ambientCount = 8;
+            for (let i = 0; i < ambientCount; i++) {
+                let origin = airData[Math.floor(Math.random() * airData.length)];
+                let dest = airData[Math.floor(Math.random() * airData.length)];
+                if (!origin || !dest || origin === dest) continue;
+
                 const start = latLonToVector3(Number(origin.lat), Number(origin.lon));
-                const end = latLonToVector3(Number(dest.lat), Number(dest.lon));
-                const dist = start.distanceTo(end);
-                const samples = Math.max(120, Math.floor(dist * 250));
-                const points: THREE.Vector3[] = [];
+                const endPos = latLonToVector3(Number(dest.lat), Number(dest.lon));
+                const dist = start.distanceTo(endPos);
+                const samples = Math.max(200, Math.floor(dist * 600));
                 const cruiseAltitude = 0.01 + (dist * 0.02);
+                const points: THREE.Vector3[] = [];
 
-                for (let i = 0; i <= samples; i++) {
-                    const t = i / samples;
-                    const point = new THREE.Vector3().copy(start).lerp(end, t).normalize();
-                    const altitudeFactor = Math.sin(Math.PI * t);
-                    const altitude = 1.005 + (altitudeFactor * cruiseAltitude);
+                for (let j = 0; j <= samples; j++) {
+                    const t = j / samples;
+                    const point = new THREE.Vector3().copy(start).lerp(endPos, t).normalize();
+                    const altitude = 1.005 + (Math.sin(Math.PI * t) * cruiseAltitude);
                     point.multiplyScalar(altitude);
                     points.push(point);
                 }
 
                 const curve = new THREE.CatmullRomCurve3(points);
                 const spacedPoints = curve.getSpacedPoints(samples);
-                const pCount = 1;
 
-                for (let i = 0; i < pCount; i++) {
-                    const planeColor = getThemeColorHex('--color-origin', 0x0891b2);
-                    let planeMesh: THREE.Object3D;
+                let planeMesh: THREE.Object3D;
+                if (airplaneModelRef.current) {
+                    const group = new THREE.Group();
+                    const model = airplaneModelRef.current.clone();
+                    model.scale.setScalar(0.025);
+                    model.rotateY(-Math.PI / 2);
+                    group.add(model);
+                    planeMesh = group;
 
-                    if (airplaneModelRef.current) {
-                        const group = new THREE.Group();
-                        const model = airplaneModelRef.current.clone();
-                        // Scale up the model
-                        model.scale.setScalar(0.025);
-
-                        // Adjust rotation: corrected to -90 degrees to fix backward flight
-                        model.rotateY(-Math.PI / 2);
-
-                        group.add(model);
-                        planeMesh = group;
-
-                        // If the model has materials that need matching the route colors
-                        const meshes: THREE.Mesh[] = [];
-                        model.traverse((child) => {
-                            if (child instanceof THREE.Mesh) meshes.push(child);
-                        });
-
-                        meshes.forEach((child) => {
-                            // Ensure main material is transparent
+                    model.traverse((child) => {
+                        if (child instanceof THREE.Mesh) {
                             if (child.material) {
                                 if (Array.isArray(child.material)) {
-                                    child.material.forEach(m => {
-                                        m.transparent = true;
-                                        m.opacity = 1;
+                                    child.material = child.material.map((m: any) => {
+                                        const mc = m.clone();
+                                        mc.transparent = true;
+                                        mc.opacity = 1;
+                                        if ('emissive' in mc) {
+                                            (mc as any).emissive = new THREE.Color(0xffffff);
+                                            (mc as any).emissiveIntensity = 2;
+                                        }
+                                        return mc;
                                     });
                                 } else {
+                                    child.material = child.material.clone();
                                     child.material.transparent = true;
                                     child.material.opacity = 1;
-                                }
-
-                                // Make it emissive to see it better
-                                if ('emissive' in child.material) {
-                                    (child.material as any).emissive = new THREE.Color(0xffffff);
-                                    (child.material as any).emissiveIntensity = 2;
+                                    if ('emissive' in child.material) {
+                                        (child.material as any).emissive = new THREE.Color(0xffffff);
+                                        (child.material as any).emissiveIntensity = 2;
+                                    }
                                 }
                             }
+                        }
+                    });
+                } else {
+                    planeMesh = new THREE.Mesh(
+                        new THREE.SphereGeometry(0.005),
+                        new THREE.MeshBasicMaterial({
+                            color: 0xffffff,
+                            transparent: true,
+                            depthWrite: false
+                        })
+                    );
+                }
 
-                            // TODO: Implement actual outline if needed, for now just ensure consistency
-                        });
-                    } else {
-                        const planeColor = getThemeColorHex('--color-origin', 0x0891b2);
-                        planeMesh = new THREE.Mesh(
-                            new THREE.SphereGeometry(0.005, 12, 12),
-                            new THREE.MeshStandardMaterial({
-                                color: planeColor,
-                                emissive: planeColor,
-                                emissiveIntensity: 3
-                            })
-                        );
-                    }
-
-                    const trailGeometry = new THREE.BufferGeometry().setFromPoints(spacedPoints);
-                    const positionAttr = trailGeometry.getAttribute('position') as THREE.BufferAttribute;
-                    if (positionAttr) positionAttr.setUsage(THREE.DynamicDrawUsage);
-                    trailGeometry.setDrawRange(0, 0);
-
-                    const trailMaterial = new THREE.LineBasicMaterial({
+                const lineGroup = new THREE.Group();
+                const lineList: THREE.Line[] = [];
+                const lineMats = [
+                    { h: 0, r: 0, op: 0.4 },
+                    { h: 0.001, r: 0.001, op: 0.15 },
+                    { h: -0.001, r: -0.001, op: 0.15 }
+                ];
+                lineMats.forEach((mInfo, i) => {
+                    const fuzzyP = generateFuzzyPoints(spacedPoints, mInfo.h, mInfo.r, 0.4, i);
+                    const mat = new THREE.LineBasicMaterial({
                         color: 0xffffff,
                         transparent: true,
-                        opacity: 0.9,
-                        depthWrite: false
+                        opacity: mInfo.op,
+                        depthWrite: false,
+                        vertexColors: true
                     });
-                    const trailLine = new THREE.Line(trailGeometry, trailMaterial);
-                    arcsGroupRef.current.add(trailLine);
+                    const trailLine = new THREE.Line(
+                        new THREE.BufferGeometry().setFromPoints(fuzzyP),
+                        mat
+                    );
+                    const colorArr = new Float32Array(spacedPoints.length * 3).fill(1);
+                    trailLine.geometry.setAttribute('color', new THREE.BufferAttribute(colorArr, 3));
+                    patchStelaMaterial(mat);
+                    lineGroup.add(trailLine);
+                    lineList.push(trailLine);
+                });
 
-                    const baseSpeed = 0.002;
-                    const realSpeed = baseSpeed / (1 + dist * 2);
+                const speed = (0.001 + Math.random() * 0.001) / (1 + dist * 2);
 
-                    planesRef.current.push({
-                        mesh: planeMesh,
-                        curve: curve,
-                        points: spacedPoints,
-                        line: trailLine,
-                        progress: -(i * 0.35), // Staggered delay
-                        speed: realSpeed,
-                        totalLength: curve.getLength()
-                    });
-                    arcsGroupRef.current.add(planeMesh);
-                }
+                planesRef.current.push({
+                    mesh: planeMesh,
+                    curve: curve,
+                    points: spacedPoints,
+                    lineGroup: lineGroup,
+                    lines: lineList,
+                    progress: -Math.random(),
+                    speed: speed,
+                    totalLength: curve.getLength(),
+                    isAmbient: true,
+                    waitDuration: 0.3 + Math.pow(Math.random(), 2) * 1.7
+                });
+                arcsGroupRef.current.add(lineGroup);
+                arcsGroupRef.current.add(planeMesh);
             }
         }
-    }, [isLoaded, originIata, destinationIata, modelLoaded]);
+    }, [isLoaded, modelLoaded]);
 
     // 7. Handle camera positioning (Direct Action Driven)
-    const lastPropsRef = useRef({ originIata, destinationIata, focusIata, interactive });
+    const lastPropsRef = useRef({ originsIata, destinationsIata, focusIata, interactive });
 
     useEffect(() => {
         if (!isLoaded || !cameraRef.current) return;
 
         const prev = lastPropsRef.current;
-        const current = { originIata, destinationIata, focusIata, interactive };
+        const current = { originsIata, destinationsIata, focusIata, interactive };
         lastPropsRef.current = current;
 
         // Determine if we should trigger a camera movement based on what changed
@@ -1566,38 +1978,44 @@ export default function Globe({
         let targetType: 'focus' | 'route' | 'single' | 'home' | null = null;
         let targetIata: string | undefined = undefined;
 
+        const originsChanged = JSON.stringify(current.originsIata) !== JSON.stringify(prev.originsIata);
+        const destsChanged = JSON.stringify(current.destinationsIata) !== JSON.stringify(prev.destinationsIata);
         const focusChanged = current.focusIata !== prev.focusIata;
-        const originChanged = current.originIata !== prev.originIata;
-        const destChanged = current.destinationIata !== prev.destinationIata;
         const interactiveChanged = current.interactive !== prev.interactive;
 
-        const originSetOrChanged = originChanged && !!current.originIata;
-        const destSetOrChanged = destChanged && !!current.destinationIata;
-
-        if (originSetOrChanged || destSetOrChanged) {
-            // Case A: Origin or Destination was explicitly SET or UPDATED
-            // This takes top priority (e.g., when confirming an inspected airport)
-            shouldMove = true;
-            if (current.originIata && current.destinationIata) targetType = 'route';
-            else {
-                targetType = 'single';
-                targetIata = current.originIata || current.destinationIata;
+        // Default "itinerary" target based on current state
+        const getAutoTarget = () => {
+            if (current.originsIata.length > 0 && current.destinationsIata.length > 0) return { type: 'route' as const };
+            if (current.originsIata.length > 0 || current.destinationsIata.length > 0) {
+                return { type: 'single' as const, iata: current.originsIata[0] || current.destinationsIata[0] };
             }
-        } else if (focusChanged && current.focusIata) {
-            // Case B: A new airport was focused (inspected)
+            return { type: 'home' as const };
+        };
+
+        if (originsChanged || destsChanged) {
+            // Case A: Route was modified (added, removed, or changed)
             shouldMove = true;
-            targetType = 'focus';
-            targetIata = current.focusIata;
+            const res = getAutoTarget();
+            targetType = res.type;
+            targetIata = (res as any).iata;
+        } else if (focusChanged) {
+            // Case B: Focus was added or removed
+            shouldMove = true;
+            if (current.focusIata) {
+                targetType = 'focus';
+                targetIata = current.focusIata;
+            } else {
+                const res = getAutoTarget();
+                targetType = res.type;
+                targetIata = (res as any).iata;
+            }
         } else if (interactiveChanged && !current.interactive) {
-            // Case C: Map was closed -> Return to route or home
+            // Case C: Map mode deactivated -> View current route or home
             shouldMove = true;
-            if (current.originIata && current.destinationIata) targetType = 'route';
-            else if (current.originIata || current.destinationIata) {
-                targetType = 'single';
-                targetIata = current.originIata || current.destinationIata;
-            } else targetType = 'home';
+            const res = getAutoTarget();
+            targetType = res.type;
+            targetIata = (res as any).iata;
         } else {
-            // Focus removed or irrelevant change -> Stay still
             shouldMove = false;
         }
 
@@ -1615,9 +2033,10 @@ export default function Globe({
                     onUpdate: () => { cameraRef.current?.lookAt(0, 0, 0); }
                 });
             }
-        } else if (targetType === 'route' && current.originIata && current.destinationIata) {
-            const origin = airportsDataRef.current.find(a => a.iata === current.originIata);
-            const dest = airportsDataRef.current.find(a => a.iata === current.destinationIata);
+        } else if (targetType === 'route' && current.originsIata.length > 0 && current.destinationsIata.length > 0) {
+            // Use first origin and last destination for overall framing
+            const origin = airportsDataRef.current.find(a => a.iata === current.originsIata[0]);
+            const dest = airportsDataRef.current.find(a => a.iata === current.destinationsIata[current.destinationsIata.length - 1]);
             if (origin && dest) {
                 const start = latLonToVector3(Number(origin.lat), Number(origin.lon));
                 const end = latLonToVector3(Number(dest.lat), Number(dest.lon));
@@ -1639,14 +2058,14 @@ export default function Globe({
                     onUpdate: () => { cameraRef.current?.lookAt(0, 0, 0); }
                 });
             }
-        } else if (targetType === 'home' && !current.interactive && geoReady) {
+        } else if (targetType === 'home' && geoReady) {
             gsap.to(cameraRef.current.position, {
                 x: homePositionRef.current.x, y: homePositionRef.current.y, z: homePositionRef.current.z,
                 duration: 1.5, ease: "power2.inOut", overwrite: "auto",
                 onUpdate: () => { cameraRef.current?.lookAt(0, 0, 0); }
             });
         }
-    }, [isLoaded, originIata, destinationIata, focusIata, interactive, geoReady]);
+    }, [isLoaded, originsIata, destinationsIata, focusIata, interactive, geoReady]);
 
 
 
@@ -1662,27 +2081,33 @@ export default function Globe({
             />
 
 
-            {/* Origin Tag */}
-            <div
-                ref={originLabelRef}
-                className="pointer-events-none absolute z-40 hidden -translate-x-1/2 -translate-y-[calc(100%+12px)] flex-col items-center transition-opacity duration-300"
-            >
-                <div className="bg-origin/10 backdrop-blur-md border border-origin/40 px-3 py-1 rounded-full text-[10px] font-bold text-origin shadow-[0_4px_12px_rgba(0,0,0,0.5)] whitespace-nowrap">
-                    {origin ? (origin.city || origin.name || origin.iata_code) : originIata}
+            {/* Origin Tags */}
+            {origins.map((origin, idx) => (
+                <div
+                    key={`origin-${origin.iata_code || idx}`}
+                    ref={el => { originLabelRefs.current[idx] = el; }}
+                    className="pointer-events-none absolute z-40 hidden -translate-x-1/2 -translate-y-[calc(100%+12px)] flex-col items-center transition-opacity duration-300"
+                >
+                    <div className="bg-origin/10 backdrop-blur-md border border-origin/40 px-3 py-1 rounded-full text-[10px] font-bold text-origin shadow-[0_4px_12px_rgba(0,0,0,0.5)] whitespace-nowrap">
+                        {origin.city || origin.name || origin.iata_code}
+                    </div>
+                    <div className="w-px h-6 bg-linear-to-b from-origin/40 to-transparent" />
                 </div>
-                <div className="w-px h-6 bg-linear-to-b from-origin/40 to-transparent" />
-            </div>
+            ))}
 
-            {/* Destination Tag */}
-            <div
-                ref={destLabelRef}
-                className="pointer-events-none absolute z-40 hidden -translate-x-1/2 -translate-y-[calc(100%+12px)] flex-col items-center transition-opacity duration-300"
-            >
-                <div className="bg-destination/10 backdrop-blur-md border border-destination/40 px-3 py-1 rounded-full text-[10px] font-bold text-destination shadow-[0_4px_12px_rgba(0,0,0,0.5)] whitespace-nowrap">
-                    {destination ? (destination.city || destination.name || destination.iata_code) : destinationIata}
+            {/* Destination Tags */}
+            {destinations.map((dest, idx) => (
+                <div
+                    key={`dest-${dest.iata_code || idx}`}
+                    ref={el => { destLabelRefs.current[idx] = el; }}
+                    className="pointer-events-none absolute z-40 hidden -translate-x-1/2 -translate-y-[calc(100%+12px)] flex-col items-center transition-opacity duration-300"
+                >
+                    <div className="bg-destination/10 backdrop-blur-md border border-destination/40 px-3 py-1 rounded-full text-[10px] font-bold text-destination shadow-[0_4px_12px_rgba(0,0,0,0.5)] whitespace-nowrap">
+                        {dest.city || dest.name || dest.iata_code}
+                    </div>
+                    <div className="w-px h-6 bg-linear-to-b from-destination/40 to-transparent" />
                 </div>
-                <div className="w-px h-6 bg-linear-to-b from-destination/40 to-transparent" />
-            </div>
+            ))}
 
             {!isLoaded && (
                 <div className="z-10 text-white animate-pulse font-medium">

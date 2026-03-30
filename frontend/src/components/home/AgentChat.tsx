@@ -18,12 +18,12 @@ interface AgentChatProps {
     messages: ChatMessage[];
     setMessages: (messages: ChatMessage[]) => void;
     location?: { latitude: number; longitude: number };
-    origin?: AirportResponse | null;
-    destination?: AirportResponse | null;
+    origins?: AirportResponse[];
+    destinations?: AirportResponse[];
     departureDate?: string;
     returnDate?: string;
-    setOrigin?: (airport: AirportResponse | null) => void;
-    setDestination?: (airport: AirportResponse | null) => void;
+    setOrigins?: (airports: AirportResponse[]) => void;
+    setDestinations?: (airports: AirportResponse[]) => void;
     setDepartureDate?: (date: string) => void;
     setReturnDate?: (date: string) => void;
 }
@@ -347,12 +347,12 @@ const AgentChat = forwardRef<any, AgentChatProps>(({
     messages,
     setMessages,
     location,
-    origin,
-    destination,
+    origins,
+    destinations,
     departureDate,
     returnDate,
-    setOrigin,
-    setDestination,
+    setOrigins,
+    setDestinations,
     setDepartureDate,
     setReturnDate
 }, ref) => {
@@ -447,8 +447,8 @@ const AgentChat = forwardRef<any, AgentChatProps>(({
                     model: selectedModel,
                     location,
                     manual_state: {
-                        origin: origin?.iata_code,
-                        destination: destination?.iata_code,
+                        origins: origins?.map(o => o.iata_code),
+                        destinations: destinations?.map(d => d.iata_code),
                         departure_date: departureDate,
                         return_date: returnDate
                     }
@@ -497,15 +497,19 @@ const AgentChat = forwardRef<any, AgentChatProps>(({
                                 // Sync UI state for searches
                                 if (event.type === 'tool_call' && event.name === 'performSearch') {
                                     const args = event.args || {};
-                                    if (args.origins?.[0] && setOrigin) {
-                                        getAirportByIata(args.origins[0]).then(res => {
-                                            if (res) setOrigin(res);
-                                        }).catch(console.error);
+                                    if (args.origins && args.origins.length > 0 && setOrigins) {
+                                        Promise.all(args.origins.map((iata: string) => getAirportByIata(iata)))
+                                            .then(res => {
+                                                const valid = res.filter(Boolean) as AirportResponse[];
+                                                if (valid.length > 0) setOrigins(valid);
+                                            }).catch(console.error);
                                     }
-                                    if (args.destinations?.[0] && setDestination) {
-                                        getAirportByIata(args.destinations[0]).then(res => {
-                                            if (res) setDestination(res);
-                                        }).catch(console.error);
+                                    if (args.destinations && args.destinations.length > 0 && setDestinations) {
+                                        Promise.all(args.destinations.map((iata: string) => getAirportByIata(iata)))
+                                            .then(res => {
+                                                const valid = res.filter(Boolean) as AirportResponse[];
+                                                if (valid.length > 0) setDestinations(valid);
+                                            }).catch(console.error);
                                     }
                                     if (args.departure_date && setDepartureDate) setDepartureDate(args.departure_date);
                                     if (args.return_date && setReturnDate) setReturnDate(args.return_date);
@@ -632,7 +636,7 @@ const AgentChat = forwardRef<any, AgentChatProps>(({
 
         scrollToBottom(isStreaming);
         return () => observer.disconnect();
-    }, [messages.length, isStreaming]); 
+    }, [messages.length, isStreaming]);
 
     const handleSend = (text: string = input) => {
         const trimmed = text.trim();

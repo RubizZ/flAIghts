@@ -6,12 +6,13 @@ import PremiumInput from "../ui/PremiumInput";
 
 interface FlightSearchInputProps {
     type: 'origin' | 'destination';
-    value: AirportResponse | null;
-    onChange: (airport: AirportResponse | null, query?: string) => boolean;
+    value: AirportResponse[];
+    onChange: (airports: AirportResponse[]) => void;
     onMapClick: () => void;
     isMapSelecting?: boolean;
     placeholder?: string;
     className?: string;
+    otherSelected?: AirportResponse[];
 }
 
 const FlightSearchInput: React.FC<FlightSearchInputProps> = ({
@@ -22,10 +23,11 @@ const FlightSearchInput: React.FC<FlightSearchInputProps> = ({
     isMapSelecting = false,
     placeholder,
     className = "",
+    otherSelected = [],
 }) => {
     const isOrigin = type === 'origin';
     const label = isOrigin ? "Origen" : "Destino";
-    const iconColorClass = value
+    const iconColorClass = value.length > 0
         ? (isOrigin ? "text-origin" : "text-destination")
         : "text-content-muted";
 
@@ -58,6 +60,7 @@ const FlightSearchInput: React.FC<FlightSearchInputProps> = ({
                 className="bg-transparent border-none p-0 text-content placeholder:text-content-muted/60 focus:outline-none w-full text-sm lg:text-base font-sans"
                 value={value}
                 onChange={onChange}
+                otherSelected={otherSelected}
             />
         </PremiumInput>
     );

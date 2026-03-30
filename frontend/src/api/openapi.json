@@ -4146,6 +4146,14 @@
               "type"
             ],
             "type": "object"
+          },
+          "combined_score": {
+            "type": "number",
+            "format": "double"
+          },
+          "distance_km": {
+            "type": "number",
+            "format": "double"
           }
         },
         "required": [
@@ -4160,7 +4168,7 @@
         "type": "object",
         "additionalProperties": false
       },
-      "PaginatedAirportResponse": {
+      "AirportSearchPaginatedResult": {
         "properties": {
           "items": {
             "items": {
@@ -4190,7 +4198,7 @@
         "type": "object",
         "additionalProperties": false
       },
-      "SuccessResponseType_PaginatedAirportResponse_": {
+      "SuccessResponseType_AirportSearchPaginatedResult_": {
         "description": "Wrapper de éxito JSend (aplicado por el middleware global).",
         "properties": {
           "status": {
@@ -4201,7 +4209,7 @@
             "nullable": false
           },
           "data": {
-            "$ref": "#/components/schemas/PaginatedAirportResponse"
+            "$ref": "#/components/schemas/AirportSearchPaginatedResult"
           }
         },
         "required": [
@@ -6387,7 +6395,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/SuccessResponseType_PaginatedAirportResponse_"
+                  "$ref": "#/components/schemas/SuccessResponseType_AirportSearchPaginatedResult_"
                 }
               }
             }
@@ -6432,6 +6440,24 @@
             "required": false,
             "schema": {
               "default": 10,
+              "format": "double",
+              "type": "number"
+            }
+          },
+          {
+            "in": "query",
+            "name": "lat",
+            "required": false,
+            "schema": {
+              "format": "double",
+              "type": "number"
+            }
+          },
+          {
+            "in": "query",
+            "name": "lon",
+            "required": false,
+            "schema": {
               "format": "double",
               "type": "number"
             }

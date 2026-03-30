@@ -15,6 +15,7 @@ export default function SearchResults() {
     const navigate = useNavigate();
     const [sortBy, setSortBy] = useState<'price' | 'duration'>('price');
     const [hoveredItinerary, setHoveredItinerary] = useState<ItineraryResponse | null>(null);
+    const [expandedItinerary, setExpandedItinerary] = useState<ItineraryResponse | null>(null);
     const [selectionStep, setSelectionStep] = useState<'departure' | 'return' | 'summary'>('departure');
     const [selectedDeparture, setSelectedDeparture] = useState<ItineraryResponse | null>(null);
     const [selectedReturn, setSelectedReturn] = useState<ItineraryResponse | null>(null);
@@ -58,11 +59,14 @@ export default function SearchResults() {
         return map;
     }, [airportsData]);
 
-    // Extract origin and destination from search criteria or hovered itinerary to visualize route in Globe
+    // Extract origin and destination from search criteria or hovered/expanded itinerary to visualize route in Globe
     const globeRoute = useMemo(() => {
-        if (hoveredItinerary) {
-            const origin = hoveredItinerary.legs[0]?.origin;
-            const destination = hoveredItinerary.legs[hoveredItinerary.legs.length - 1]?.destination;
+        // Hovered takes precedence, then expanded
+        const activeItinerary = hoveredItinerary || expandedItinerary;
+
+        if (activeItinerary) {
+            const origin = activeItinerary.legs[0]?.origin;
+            const destination = activeItinerary.legs[activeItinerary.legs.length - 1]?.destination;
             return { origin, destination };
         }
 
@@ -73,7 +77,7 @@ export default function SearchResults() {
         const destination = searchData.destinations?.[0] || (firstItinerary ? firstItinerary.legs[firstItinerary.legs.length - 1]?.destination : undefined);
 
         return { origin, destination };
-    }, [searchData, hoveredItinerary]);
+    }, [searchData, hoveredItinerary, expandedItinerary]);
 
     const sortItineraries = (itineraries?: ItineraryResponse[]) => {
         if (!itineraries) return [];
@@ -108,32 +112,61 @@ export default function SearchResults() {
         return formatted.charAt(0).toUpperCase() + formatted.slice(1).replace(/\./g, '');
     };
 
-    // Convert strings to AirportResponse objects for the Globe component
-    const originAirport = useMemo(() => {
-        const iata = globeRoute.origin;
-        if (!iata) return null;
-        const a = airportsMap.get(iata);
-        if (!a) return null;
-        return {
-            iata_code: a.i,
-            name: a.n,
-            city: a.ci,
-            location: { coordinates: [a.lo, a.la], type: "Point" }
-        } as AirportResponse;
-    }, [globeRoute.origin, airportsMap]);
+    const currentOrigins = useMemo(() => {
+        const activeItinerary = hoveredItinerary || expandedItinerary;
+        if (activeItinerary) {
+            const iata = activeItinerary.legs[0]?.origin;
+            const a = iata ? airportsMap.get(iata) : null;
+            if (!a) return [];
+            return [{
+                iata_code: a.i,
+                name: a.n,
+                city: a.ci,
+                location: { coordinates: [a.lo, a.la], type: "Point" }
+            } as AirportResponse];
+        }
+        if (!searchData?.origins) return [];
+        return searchData.origins
+            .map(iata => {
+                const a = airportsMap.get(iata);
+                if (!a) return null;
+                return {
+                    iata_code: a.i,
+                    name: a.n,
+                    city: a.ci,
+                    location: { coordinates: [a.lo, a.la], type: "Point" }
+                } as AirportResponse;
+            })
+            .filter((a): a is AirportResponse => !!a);
+    }, [hoveredItinerary, expandedItinerary, searchData?.origins, airportsMap]);
 
-    const destinationAirport = useMemo(() => {
-        const iata = globeRoute.destination;
-        if (!iata) return null;
-        const a = airportsMap.get(iata);
-        if (!a) return null;
-        return {
-            iata_code: a.i,
-            name: a.n,
-            city: a.ci,
-            location: { coordinates: [a.lo, a.la], type: "Point" }
-        } as AirportResponse;
-    }, [globeRoute.destination, airportsMap]);
+    const currentDestinations = useMemo(() => {
+        const activeItinerary = hoveredItinerary || expandedItinerary;
+        if (activeItinerary) {
+            const iata = activeItinerary.legs[activeItinerary.legs.length - 1]?.destination;
+            const a = iata ? airportsMap.get(iata) : null;
+            if (!a) return [];
+            return [{
+                iata_code: a.i,
+                name: a.n,
+                city: a.ci,
+                location: { coordinates: [a.lo, a.la], type: "Point" }
+            } as AirportResponse];
+        }
+        if (!searchData?.destinations) return [];
+        return searchData.destinations
+            .map(iata => {
+                const a = airportsMap.get(iata);
+                if (!a) return null;
+                return {
+                    iata_code: a.i,
+                    name: a.n,
+                    city: a.ci,
+                    location: { coordinates: [a.lo, a.la], type: "Point" }
+                } as AirportResponse;
+            })
+            .filter((a): a is AirportResponse => !!a);
+    }, [hoveredItinerary, expandedItinerary, searchData?.destinations, airportsMap]);
 
     if (error) {
         return (
@@ -159,6 +192,7 @@ export default function SearchResults() {
     const isOneWay = !searchData?.return_date || !returnItineraries || returnItineraries.length === 0;
 
     const handleSelectItinerary = (itinerary: ItineraryResponse, type: 'departure' | 'return') => {
+        setExpandedItinerary(null);
         if (type === 'departure') {
             setSelectedDeparture(itinerary);
             if (isOneWay) {
@@ -175,6 +209,7 @@ export default function SearchResults() {
     };
 
     const handleGoBack = () => {
+        setExpandedItinerary(null);
         if (selectionStep === 'return') {
             setSelectionStep('departure');
             setSelectedDeparture(null);
@@ -243,18 +278,15 @@ export default function SearchResults() {
                                     </button>
                                     <div>
                                         <h1 className="text-lg md:text-xl font-bold flex items-center gap-3 text-content">
-                                            {selectionStep === 'departure' && (
+                                            {(selectionStep === 'departure' || selectionStep === 'return') && (
                                                 <>
-                                                    {globeRoute.origin}
-                                                    <Plane className="w-5 h-5 text-brand rotate-90" />
-                                                    {globeRoute.destination}
-                                                </>
-                                            )}
-                                            {selectionStep === 'return' && (
-                                                <>
-                                                    {globeRoute.destination}
-                                                    <Plane className="w-5 h-5 text-brand rotate-90" />
-                                                    {globeRoute.origin}
+                                                    <span className="truncate max-w-50 md:max-w-none">
+                                                        {searchData.origins?.join(' + ') || (searchData.departure_itineraries?.[0]?.legs?.[0]?.origin)}
+                                                    </span>
+                                                    <Plane className="w-5 h-5 text-brand rotate-45 shrink-0" />
+                                                    <span className="truncate max-w-50 md:max-w-none">
+                                                        {searchData.destinations?.join(' + ') || (searchData.departure_itineraries?.[0]?.legs?.at(-1)?.destination)}
+                                                    </span>
                                                 </>
                                             )}
                                             {selectionStep === 'summary' && `Resumen de tu viaje`}
@@ -373,6 +405,7 @@ export default function SearchResults() {
                                                     formatDuration={formatDuration}
                                                     airportsMap={airportsMap}
                                                     onHover={setHoveredItinerary}
+                                                    onExpandChange={setExpandedItinerary}
                                                     onSelect={(it) => handleSelectItinerary(it, 'departure')}
                                                 />
                                             ))}
@@ -409,6 +442,7 @@ export default function SearchResults() {
                                                         formatDuration={formatDuration}
                                                         airportsMap={airportsMap}
                                                         onHover={setHoveredItinerary}
+                                                        onExpandChange={setExpandedItinerary}
                                                         onSelect={(it) => handleSelectItinerary(it, 'return')}
                                                     />
                                                 ))}
@@ -442,8 +476,8 @@ export default function SearchResults() {
             <div className={`absolute inset-0 z-0 transition-opacity duration-700 ${!isLargeScreen ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
                 <Globe
                     selectedAirports={selectedAirports}
-                    origin={originAirport}
-                    destination={destinationAirport}
+                    origins={currentOrigins}
+                    destinations={currentDestinations}
                     interactive={false}
                     horizontalOffset={isLargeScreen ? 450 : 0}
                     onReady={handleGlobeReady}
