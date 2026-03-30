@@ -649,7 +649,7 @@ export default function Globe({
 
         const controls = new OrbitControls(camera, renderer.domElement);
         controls.enableDamping = true;
-        controls.dampingFactor = 0.03;
+        controls.dampingFactor = 0.15; // Increased for better responsiveness and "sticky" feel
         controls.minDistance = 1.25; // Aligned to 0.25 step
         controls.maxDistance = 6.25; // Aligned to 0.25 step
         controls.enablePan = false;
@@ -971,8 +971,10 @@ export default function Globe({
                 raycaster.setFromCamera(mousePosRef.current, cam);
 
                 if (controlsRef.current) {
-                    // Slower, more deliberate rotation speed
-                    controlsRef.current.rotateSpeed = 0.4 - (0.32 * zoomFactor);
+                    // Precise 1:1 dragging: rotation angle must scale with the distance to the surface (camDist - 1)
+                    const fovRad = THREE.MathUtils.degToRad(cam.fov);
+                    const speed = ((camDist - 1) * Math.tan(fovRad / 2)) / Math.PI;
+                    controlsRef.current.rotateSpeed = speed;
                 }
 
                 _camNorm.copy(cam.position).normalize();
