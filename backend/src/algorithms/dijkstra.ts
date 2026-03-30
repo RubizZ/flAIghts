@@ -13,6 +13,10 @@ export interface DijkstraFlightEdge {
     airline_logo?: string;
     departure_time: string;
     arrival_time: string;
+    airplane: string;
+    flight_number: string;
+    travel_class: string;
+    extensions?: string[];
 }
 
 export interface RoutePreferences {

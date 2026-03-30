@@ -7,7 +7,7 @@ import logger from "../../utils/logger.js";
 // Radios base (km) para búsqueda de rutas
 const MIN_RADIUS_KM = 150;
 const MAX_RADIUS_KM = 800;
-const MAX_LAYOVERS = 6;
+const MAX_LAYOVERS = 4;
 import { COUNTRY_NAMES } from "./countries.js";
 
 @singleton()

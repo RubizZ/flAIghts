@@ -13,6 +13,8 @@ import UserProfile from "@/pages/UserProfile.tsx";
 import Friends from "@/pages/Friends.tsx";
 import UserSearch from "@/pages/UserSearch.tsx";
 import Settings from "@/pages/Settings.tsx";
+import TermsOfService from "@/pages/TermsOfService.tsx";
+import PrivacyPolicy from "@/pages/PrivacyPolicy.tsx";
 
 export const routes: RouteObject[] = [
     {
@@ -37,6 +39,8 @@ export const routes: RouteObject[] = [
                     { path: "/user/:id", element: <UserProfile /> },
                     { path: "/user/search", element: <UserSearch /> },
                     { path: "/settings", element: <Settings /> },
+                    { path: "/terms", element: <TermsOfService /> },
+                    { path: "/privacy", element: <PrivacyPolicy /> },
                     { path: "*", element: <NotFound /> },
                 ]
             }

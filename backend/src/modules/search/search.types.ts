@@ -29,9 +29,26 @@ export interface SearchRequest {
     };
 
     dates?: string[];
+}
 
-
-
+export interface GeneticTripRequest {
+    /**
+     * @pattern ^[A-Z]{3}$
+     */
+    origin: string;
+    /**
+     * @minItems 1
+     * @pattern ^[A-Z]{3}$
+     */
+    cities: string[];
+    /**
+     * @isDateTime Fecha de inicio del viaje
+     */
+    startDate: Date;
+    /**
+     * @minimum 1
+     */
+    daysPerCity: number;
 }
 
 export interface LegResponse {
@@ -97,9 +114,3 @@ export type SearchRequestValidationFailResponse = RequestValidationFailResponse<
 // Unión de todas las posibles respuestas 422 para search
 export type SearchValidationFailResponse = SearchRequestValidationFailResponse | DatabaseValidationFailResponse;
 
-export interface EnrichedFlightEdge extends DijkstraFlightEdge {
-    airplane: string;
-    flight_number: string;
-    travel_class: string;
-    extensions?: string[];
-}
