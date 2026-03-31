@@ -38,6 +38,7 @@ jobs:
       S3_ACCESS_KEY_ID: "test-key"
       S3_SECRET_ACCESS_KEY: "test-secret"
       SERPAPI_API_KEY: "test-serpapi-key"
+      OPENAI_API_KEY: "test-openai-key"
 
     steps:
       - uses: actions/checkout@v4
