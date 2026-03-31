@@ -59,7 +59,7 @@ export class AgentService {
         messages: AssistantRequestMessage[],
         userId: string,
         location?: { latitude: number; longitude: number },
-        manual_state?: { origin?: string; destination?: string; departure_date?: string; return_date?: string },
+        manual_state?: { origins?: string[]; destinations?: string[]; departure_date?: string; return_date?: string },
         model?: string
     ): Promise<AgentResponse> {
         let finalResponse: AgentResponse = {
@@ -81,7 +81,7 @@ export class AgentService {
         messages: AssistantRequestMessage[],
         userId: string,
         location?: { latitude: number; longitude: number },
-        manual_state?: { origin?: string; destination?: string; departure_date?: string; return_date?: string },
+        manual_state?: { origins?: string[]; destinations?: string[]; departure_date?: string; return_date?: string },
         model?: string,
         date?: Date
     ): AsyncGenerator<AgentStreamEvent> {
@@ -119,10 +119,10 @@ export class AgentService {
                             * **Prohibición de preguntas técnicas**: NUNCA preguntes "puedo buscar aeropuertos?", simplemente hazlo.
                             * **Inputs Manuales**: Si ves datos en la sección "DATOS DE LA SESIÓN" de abajo, utilízalos con prioridad pero confírmalos si hay contradicciones.
 
-                            ${manual_state && (manual_state.origin || manual_state.destination || manual_state.departure_date || manual_state.return_date) ? `
+                            ${manual_state && (manual_state.origins?.length || manual_state.destinations?.length || manual_state.departure_date || manual_state.return_date) ? `
                             ### DATOS DE LA SESIÓN ACTUAL (DISPONIBLES EN LA INTERFAZ):
-                            ${manual_state.origin ? `  * Origen configurado: Aeropuerto IATA "${manual_state.origin}"` : ''}
-                            ${manual_state.destination ? `  * Destino configurado: Aeropuerto IATA "${manual_state.destination}"` : ''}
+                            ${manual_state.origins?.length ? `  * Origenes configurados: Aeropuerto IATA "${manual_state.origins.join(', ')}"` : ''}
+                            ${manual_state.destinations?.length ? `  * Destinos configurados: Aeropuerto IATA "${manual_state.destinations.join(', ')}"` : ''}
                             ${manual_state.departure_date ? `  * Fecha de salida: ${manual_state.departure_date}` : ''}
                             ${manual_state.return_date ? `  * Fecha de regreso: ${manual_state.return_date}` : ''}
                             Usa estos datos como base de tu contexto actual.` : ''}

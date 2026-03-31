@@ -29,12 +29,33 @@ export interface AirportSearchPaginatedResult {
  * Compact format for globe visualization
  */
 export interface GlobeAirportResponse {
-  i: string;  // iata_code
-  n: string;  // name
-  ci: string; // city
-  la: number; // latitude
-  lo: number; // longitude
-  s: number;  // importance_score
-  c: string;  // country (ISO)
+  /**
+   * IATA code
+   */
+  i: string;
+  /**
+   * Name
+   */
+  n: string;
+  /**
+   * City
+   */
+  ci: string;
+  /**
+   * Latitude
+   */
+  la: number;
+  /**
+   * Longitude
+   */
+  lo: number;
+  /**
+   * Importance score
+   */
+  s: number;
+  /**
+   * Country (ISO)
+   */
+  c: string;
 }
 

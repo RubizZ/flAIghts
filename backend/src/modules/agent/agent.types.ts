@@ -35,8 +35,8 @@ export interface AgentRequest {
     };
     date?: Date;
     manual_state?: {
-        origin?: string;
-        destination?: string;
+        origins?: string[];
+        destinations?: string[];
         departure_date?: string;
         return_date?: string;
     };

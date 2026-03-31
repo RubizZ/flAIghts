@@ -1,7 +1,8 @@
 import { useState, Fragment, useMemo } from "react";
-import { ChevronDown, Clock, Info, PlaneLanding, PlaneTakeoff, Ticket, Calendar } from "lucide-react";
+import { ChevronDown, Clock, Info, PlaneLanding, PlaneTakeoff, Ticket, Calendar, Moon, AlertTriangle } from "lucide-react";
 import type { ItineraryResponse, GlobeAirportResponse, LegResponse } from "@/api/generated/model";
 import FlightRouteInfo from "./FlightRouteInfo";
+import { COUNTRY_NAMES } from "@/constants/countries";
 
 interface FlightCardProps {
     itinerary: ItineraryResponse,
@@ -100,7 +101,14 @@ export default function FlightCard({ itinerary, formatTime, formatDuration, airp
                         {itinerary.legs.map((leg, legIndex) => (
                             <Fragment key={legIndex}>
                                 {legIndex > 0 && leg.wait_time && leg.wait_time > 0 && (
-                                    <StopoverDetails leg={leg} airportsMap={airportsMap} formatDuration={formatDuration} />
+                                    <StopoverDetails
+                                        leg={leg}
+                                        airportsMap={airportsMap}
+                                        formatDuration={formatDuration}
+                                        index={legIndex}
+                                        totalSteps={itinerary.legs.length - 1}
+                                        previousLeg={itinerary.legs[legIndex - 1]!}
+                                    />
                                 )}
                                 <LegDetails
                                     leg={leg}
@@ -108,6 +116,8 @@ export default function FlightCard({ itinerary, formatTime, formatDuration, airp
                                     formatDuration={formatDuration}
                                     formatTime={formatTime}
                                     itineraryStart={firstDepartureTime}
+                                    originColor={legIndex === 0 ? 'var(--color-origin)' : `color-mix(in srgb, var(--color-origin), var(--color-destination) ${(legIndex / itinerary.legs.length) * 100}%)`}
+                                    destinationColor={legIndex === itinerary.legs.length - 1 ? 'var(--color-destination)' : `color-mix(in srgb, var(--color-origin), var(--color-destination) ${((legIndex + 1) / itinerary.legs.length) * 100}%)`}
                                 />
                             </Fragment>
                         ))}
@@ -115,7 +125,7 @@ export default function FlightCard({ itinerary, formatTime, formatDuration, airp
                         {/* Final arrival summary notice */}
                         <div className="mt-4 border-t border-line flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-content-muted bg-surface/20 -mx-5 px-5 py-4">
                             <div className="flex items-center gap-2">
-                                <Calendar size={16} className="text-brand" />
+                                <Clock size={16} className="text-brand" />
                                 <span>Llegada final a <strong>{lastArrivalLeg?.destination}</strong>:</span>
                             </div>
                             <span className="font-bold text-content text-sm first-letter:uppercase">
@@ -129,20 +139,78 @@ export default function FlightCard({ itinerary, formatTime, formatDuration, airp
     );
 }
 
-function StopoverDetails({ leg, formatDuration, airportsMap }: StopoverDetailsProps) {
+interface StopoverDetailsPropsWithParams extends StopoverDetailsProps {
+    index: number;
+    totalSteps: number;
+    previousLeg: LegResponse;
+}
+
+function StopoverDetails({ leg, formatDuration, airportsMap, index, totalSteps, previousLeg }: StopoverDetailsPropsWithParams) {
+    const airport = airportsMap.get(leg.origin);
+    const t = index / (totalSteps + 1);
+    const stopoverColor = `color-mix(in srgb, var(--color-origin), var(--color-destination) ${t * 100}%)`;
+
+    const isOvernight = useMemo(() => {
+        const arrivalDate = new Date(previousLeg.arrival_time).getDate();
+        const departureDate = new Date(leg.departure_time).getDate();
+        const isLongLayover = (leg.wait_time || 0) > 240; // > 4 hours
+
+        return (isLongLayover && arrivalDate !== departureDate);
+    }, [leg, previousLeg]);
+
+    const isShortLayover = (leg.wait_time || 0) < 70; // Escada < 1h 10m
+
     return (
-        <div className="flex items-center gap-4 text-xs text-content-muted border-t border-b border-line py-4 pl-2">
-            <Clock size={16} className="text-orange-400 shrink-0" />
-            <span className="font-bold text-orange-400">
-                {formatDuration(leg.wait_time!)} de escala
-            </span>
+        <div
+            className="flex items-center gap-4 text-xs text-content-muted border-t border-b border-line py-4 pl-2 -mx-5 px-5"
+            style={{ backgroundColor: `color-mix(in srgb, ${stopoverColor} 8%, transparent)` }}
+        >
+            <div className="flex items-center gap-2">
+                <div
+                    className="w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-black text-white shrink-0"
+                    style={{ backgroundColor: stopoverColor }}
+                >
+                    {index}
+                </div>
+                <div className="flex flex-col">
+                    <span className="font-bold whitespace-nowrap" style={{ color: stopoverColor }}>
+                        {index}ª Escala - {formatDuration(leg.wait_time!)}
+                    </span>
+                    <div className="flex flex-col gap-0.5 mt-0.5">
+                        {isOvernight && (
+                            <div className="flex items-center gap-1 text-[10px] text-amber-600 dark:text-amber-400 font-bold uppercase tracking-tighter">
+                                <Moon size={10} className="fill-current" />
+                                Escala nocturna
+                            </div>
+                        )}
+                        {isShortLayover && (
+                            <div className="flex items-center gap-1 text-[10px] text-red-600 dark:text-red-400 font-black uppercase tracking-tight">
+                                <AlertTriangle size={11} className="fill-current" strokeWidth={3} />
+                                Escala muy corta
+                            </div>
+                        )}
+                    </div>
+                </div>
+            </div>
             <div className="w-1 h-1 bg-line rounded-full" />
-            <span className="font-medium">{airportsMap.get(leg.origin)?.n} ({leg.origin})</span>
+            <div className="flex flex-col min-w-0">
+                <span className="font-bold text-content truncate">
+                    {airport?.ci}, {airport?.c && (COUNTRY_NAMES[airport.c]?.[1] || airport.c)}
+                </span>
+                <span className="font-medium text-[10px] text-content-muted truncate">
+                    {airport?.n} ({leg.origin})
+                </span>
+            </div>
         </div>
     );
 }
 
-function LegDetails({ leg, airportsMap, formatDuration, formatTime, itineraryStart }: LegDetailsProps) {
+interface LegDetailsPropsWithColors extends LegDetailsProps {
+    originColor: string;
+    destinationColor: string;
+}
+
+function LegDetails({ leg, airportsMap, formatDuration, formatTime, itineraryStart, originColor, destinationColor }: LegDetailsPropsWithColors) {
     const originAirport = airportsMap.get(leg.origin);
     const destinationAirport = airportsMap.get(leg.destination);
 
@@ -179,24 +247,28 @@ function LegDetails({ leg, airportsMap, formatDuration, formatTime, itinerarySta
                     )}
                 </div>
                 <div className="flex items-start gap-4">
-                    <PlaneTakeoff size={18} className="text-origin shrink-0 mt-1" />
+                    <PlaneTakeoff size={18} className="shrink-0 mt-1" style={{ color: originColor }} />
                     <div className="flex flex-col">
                         <span className="font-bold text-content">
                             {formatTime(leg.departure_time)} - {leg.origin}
                             {departureDayDiff > 0 && <sup className="text-[12px] text-brand ml-0.5 font-bold">+{departureDayDiff}</sup>}
                         </span>
-                        <span className="text-xs text-content-muted">{originAirport?.n}, {originAirport?.ci}</span>
+                        <span className="text-xs text-content-muted">
+                            {originAirport?.ci}, {originAirport?.c && (COUNTRY_NAMES[originAirport.c]?.[1] || originAirport.c)} • {originAirport?.n}
+                        </span>
                     </div>
                 </div>
 
                 <div className="flex items-start gap-4">
-                    <PlaneLanding size={18} className="text-destination shrink-0 mt-1" />
+                    <PlaneLanding size={18} className="shrink-0 mt-1" style={{ color: destinationColor }} />
                     <div className="flex flex-col">
                         <span className="font-bold text-content">
                             {formatTime(leg.arrival_time)} - {leg.destination}
                             {arrivalDayDiff > 0 && <sup className="text-[12px] text-brand ml-0.5 font-bold">+{arrivalDayDiff}</sup>}
                         </span>
-                        <span className="text-xs text-content-muted">{destinationAirport?.n}, {destinationAirport?.ci}</span>
+                        <span className="text-xs text-content-muted">
+                            {destinationAirport?.ci}, {destinationAirport?.c && (COUNTRY_NAMES[destinationAirport.c]?.[1] || destinationAirport.c)} • {destinationAirport?.n}
+                        </span>
                     </div>
                 </div>
             </div>

@@ -686,7 +686,7 @@ export default function Globe({
         targetZoomDistRef.current = camera.position.length();
 
         const onWheel = (e: WheelEvent) => {
-            if (isMobileRef.current) return;
+            if (isMobileRef.current || !interactiveRef.current) return;
             e.preventDefault();
 
             const direction = e.deltaY > 0 ? 1 : -1;
@@ -981,6 +981,7 @@ export default function Globe({
         });
 
         const onClick = (e: MouseEvent) => {
+            if (!interactiveRef.current) return;
             const dist = Math.sqrt(Math.pow(e.clientX - mouseDownPos.x, 2) + Math.pow(e.clientY - mouseDownPos.y, 2));
             if (dist > 5) return;
 
@@ -1023,6 +1024,7 @@ export default function Globe({
 
         const onContextMenu = (e: MouseEvent) => {
             e.preventDefault();
+            if (!interactiveRef.current) return;
             if (!cameraRef.current || !mountRef.current) return;
             const rect = mountRef.current.getBoundingClientRect();
             mouse.x = ((e.clientX - rect.left) / mountRef.current.clientWidth) * 2 - 1;
@@ -1064,7 +1066,13 @@ export default function Globe({
             mouse.y = -((e.clientY - rect.top) / mountRef.current.clientHeight) * 2 + 1;
             mousePosRef.current.copy(mouse);
 
-            if (isUserInteractingRef.current && interactiveRef.current) {
+            if (!interactiveRef.current) {
+                renderer.domElement.style.cursor = "default";
+                if (popupRef.current) popupRef.current.style.display = "none";
+                return;
+            }
+
+            if (isUserInteractingRef.current) {
                 renderer.domElement.style.cursor = "grabbing";
                 if (popupRef.current) popupRef.current.style.display = "none";
                 return;
@@ -1100,7 +1108,7 @@ export default function Globe({
                     popupRef.current.style.display = "block";
                 }
             } else {
-                renderer.domElement.style.cursor = interactiveRef.current ? "grab" : "default";
+                renderer.domElement.style.cursor = "grab";
                 if (popupRef.current) popupRef.current.style.display = "none";
             }
         };

@@ -455,6 +455,11 @@ const AgentChat = forwardRef<any, AgentChatProps>(({
                 })
             });
 
+            if (!response.ok) {
+                // Si hay error (ej: 400 de validación), forzamos al catch para mostrar "Pensando..."
+                throw new Error(`HTTP Error: ${response.status}`);
+            }
+
             const reader = response.body?.getReader();
             const decoder = new TextDecoder();
 

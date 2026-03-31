@@ -167,11 +167,11 @@ export default function SearchResults() {
             })
             .filter((a): a is AirportResponse => !!a);
     }, [hoveredItinerary, expandedItinerary, searchData?.destinations, airportsMap]);
-    
+
     const currentSteps = useMemo(() => {
         const activeItinerary = hoveredItinerary || expandedItinerary;
         if (!activeItinerary || activeItinerary.legs.length < 2) return [];
-        
+
         const steps: AirportResponse[][] = [];
         for (let i = 0; i < activeItinerary.legs.length - 1; i++) {
             const iata = activeItinerary.legs[i]?.destination;
@@ -254,9 +254,9 @@ export default function SearchResults() {
     const handleGlobeReady = useCallback(() => setIsGlobeReady(true), []);
 
     return (
-        <div className="absolute inset-0 w-full h-full overflow-hidden bg-main lg:bg-black text-content flex">
+        <div className="relative min-h-screen w-full overflow-y-auto overflow-x-hidden bg-main lg:bg-black text-content flex lg:block">
             {/* Loading Overlay */}
-            <div className={`absolute inset-0 z-50 bg-main flex flex-col items-center justify-center gap-6 transition-opacity duration-700 pointer-events-none ${showLoading ? 'opacity-100' : 'opacity-0'}`}>
+            <div className={`fixed inset-0 z-50 bg-main flex flex-col items-center justify-center gap-6 transition-opacity duration-700 pointer-events-none ${showLoading ? 'opacity-100' : 'opacity-0'}`}>
                 <div className="relative flex items-center justify-center">
                     {/* Radar rings — staggered expanding pulses using brand color */}
                     <div className="absolute w-20 h-20 rounded-full border border-brand/40 animate-radar" style={{ animationDelay: '0s' }} />
@@ -277,14 +277,14 @@ export default function SearchResults() {
             </div>
 
             {/* Mobile Background Globe (Full screen) */}
-            <div className="absolute inset-0 z-0 lg:hidden">
+            <div className="fixed inset-0 z-0 lg:hidden">
                 <StarsBackground className="opacity-30" />
             </div>
 
             {/* Left Column: Results List */}
             {searchData && (
-                <div className="relative z-10 w-full lg:w-[65%] xl:w-[60%] h-full">
-                    <div className="relative w-full h-full overflow-y-auto overflow-x-hidden scroll-smooth [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+                <div className="relative z-10 w-full lg:w-[65%] xl:w-[60%]">
+                    <div className="relative w-full">
                         <div className="max-w-3xl mx-auto px-4 pt-24 pb-6 lg:pt-24 lg:pb-10 min-h-full flex flex-col gap-6 lg:gap-8">
 
                             {/* Header Card */}
@@ -493,8 +493,8 @@ export default function SearchResults() {
                 </div>
             )}
 
-            {/* Desktop Globe (Absolute Full Screen with Offset) */}
-            <div className={`absolute inset-0 z-0 transition-opacity duration-700 ${!isLargeScreen ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
+            {/* Desktop Globe (Fixed Full Screen with Offset) */}
+            <div className={`fixed inset-0 z-0 transition-opacity duration-700 pointer-events-none ${!isLargeScreen ? 'opacity-0' : 'opacity-100'}`}>
                 <Globe
                     selectedAirports={selectedAirports}
                     origins={currentOrigins}

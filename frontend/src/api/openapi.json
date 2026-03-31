@@ -4223,28 +4223,35 @@
         "description": "Compact format for globe visualization",
         "properties": {
           "i": {
-            "type": "string"
+            "type": "string",
+            "description": "IATA code"
           },
           "n": {
-            "type": "string"
+            "type": "string",
+            "description": "Name"
           },
           "ci": {
-            "type": "string"
+            "type": "string",
+            "description": "City"
           },
           "la": {
             "type": "number",
-            "format": "double"
+            "format": "double",
+            "description": "Latitude"
           },
           "lo": {
             "type": "number",
-            "format": "double"
+            "format": "double",
+            "description": "Longitude"
           },
           "s": {
             "type": "number",
-            "format": "double"
+            "format": "double",
+            "description": "Importance score"
           },
           "c": {
-            "type": "string"
+            "type": "string",
+            "description": "Country (ISO)"
           }
         },
         "required": [
@@ -4656,11 +4663,17 @@
               "departure_date": {
                 "type": "string"
               },
-              "destination": {
-                "type": "string"
+              "destinations": {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
               },
-              "origin": {
-                "type": "string"
+              "origins": {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
               }
             },
             "type": "object"
