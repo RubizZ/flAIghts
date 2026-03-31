@@ -4224,7 +4224,31 @@
         "type": "object",
         "additionalProperties": false
       },
-      "SuccessResponse_AirportResponse_": {
+      "SuccessResponseType_GlobeAirportResponse-Array_": {
+        "description": "Wrapper de éxito JSend (aplicado por el middleware global).",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "success"
+            ],
+            "nullable": false
+          },
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/GlobeAirportResponse"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "status",
+          "data"
+        ],
+        "type": "object",
+        "additionalProperties": false
+      },
+      "SuccessResponseType_AirportResponse_": {
         "description": "Wrapper de éxito JSend (aplicado por el middleware global).",
         "properties": {
           "status": {
@@ -6093,11 +6117,11 @@
         "operationId": "GetAirportByIata",
         "responses": {
           "200": {
-            "description": "Ok",
+            "description": "Aeropuerto encontrado",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/SuccessResponse_AirportResponse_"
+                  "$ref": "#/components/schemas/SuccessResponseType_AirportResponse_"
                 }
               }
             }

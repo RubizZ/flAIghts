@@ -1,7 +1,7 @@
 import { Controller, Get, Route, Query, Tags, Response, SuccessResponse } from "tsoa";
 import { injectable, inject } from "tsyringe";
 import { AirportService } from "./airport.service.js";
-import type { PaginatedAirportResponse, GlobeAirportResponse } from "./airport.types.js";
+import type { AirportResponse, PaginatedAirportResponse, GlobeAirportResponse } from "./airport.types.js";
 import type { SuccessResponse as SuccessResponseType, RequestValidationFailResponse, ValidationDetails, QueryPath } from "../../utils/responses.js";
 
 @injectable()
@@ -33,8 +33,8 @@ export class AirportController extends Controller {
     }
 
     @Get("/{iata}")
-    @Response<SuccessResponse<AirportResponse>>(200, "Aeropuerto encontrado")
-    public async getAirportByIata(iata: string): Promise<SuccessResponse<AirportResponse>> {
+    @SuccessResponse(200, "Aeropuerto encontrado")
+    public async getAirportByIata(iata: string): Promise<SuccessResponseType<AirportResponse>> {
         const result = await this.airportService.getAirportByIata(iata);
         if (!result) {
             this.setStatus(404);
