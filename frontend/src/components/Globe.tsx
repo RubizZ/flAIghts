@@ -1176,14 +1176,16 @@ export default function Globe({
                 const scaleFactor = distFactor;
                 const proximityBase = 0.03 * Math.pow(distFactor, 2.2);
 
+                const isMobile = isMobileRef.current;
+                const hitboxMultiplier = isMobile ? 2.5 : 1.0;
+                const invHitboxMultiplier = 1 / hitboxMultiplier;
+
                 const baseScale = 1.5 * scaleFactor;
                 const specialScale = 35 * scaleFactor;
                 const specialClusterScale = 8 * scaleFactor; // Balanced for 5x geometry
                 const clusterHoverScale = 6 * scaleFactor;   // Balanced for 5x geometry
                 const airportHoverScale = 28 * scaleFactor;
                 const labelRefScale = 0.026 * scaleFactor;
-
-                const hitboxMultiplier = isMobileRef.current ? 2.5 : 1.0;
                 airportGroupRef.current.children.forEach(child => {
                     const mesh = child as THREE.Mesh;
                     const item = mesh.userData;
@@ -1243,15 +1245,16 @@ export default function Globe({
                     // Apply to Mesh (Hitbox is the parent)
                     // We apply the 'hitboxMultiplier' to the parent but the inverse to the visual child
                     // so things still FEEL correct but interact from further out.
-                    if (Math.abs(mat.opacity - targetOpacity) > 0.001 || Math.abs(mesh.scale.x - (targetScale * hitboxMultiplier)) > 0.001) {
+                    const finalHitboxScale = targetScale * hitboxMultiplier;
+                    if (Math.abs(mat.opacity - targetOpacity) > 0.001 || Math.abs(mesh.scale.x - finalHitboxScale) > 0.001) {
                         mat.opacity += (targetOpacity - mat.opacity) * 0.06;
-
-                        const nextHitboxScale = mesh.scale.x + (targetScale * hitboxMultiplier - mesh.scale.x) * 0.06;
+                        const nextHitboxScale = mesh.scale.x + (finalHitboxScale - mesh.scale.x) * 0.06;
                         mesh.scale.setScalar(nextHitboxScale);
+                    }
 
-                        if (visual) {
-                            visual.scale.setScalar(1 / hitboxMultiplier);
-                        }
+                    // Always enforce visual scale compensation every frame to prevent 'stuck' large sizes on mobile
+                    if (visual) {
+                        visual.scale.setScalar(invHitboxMultiplier);
                     }
 
                     if (item.isCluster) {
@@ -2228,17 +2231,13 @@ export default function Globe({
                         meshColor = new THREE.Color(originColor).lerp(new THREE.Color(destColor), t).getHex();
                     }
                     mat.color.setHex(meshColor);
-                    mat.opacity = 1;
-                    mesh.scale.setScalar(12);
                 } else if (selSet.has(item.iata)) {
                     mat.color.setHex(0x00ff00);
-                    mat.opacity = 1;
-                    mesh.scale.setScalar(8);
                 } else {
                     mat.color.setHex(brandColor);
                 }
             } else {
-                // Determine if cluster contains a special airport
+                // Determine if cluster contains a special airport for color indication
                 let hasOriginDestOrStep = false;
                 let hasSelected = false;
                 for (let i = 0; i < item.airports.length; i++) {
@@ -2250,23 +2249,13 @@ export default function Globe({
                         hasSelected = true;
                     }
                 }
-
-                if (hasOriginDestOrStep) {
-                    mat.color.setHex(brandColor);
-                    mat.opacity = 0;
-                    mesh.scale.setScalar(8); // Sync with specialClusterScale
-                } else if (hasSelected) {
-                    mat.color.setHex(brandColor);
-                    mat.opacity = 0;
-                    mesh.scale.setScalar(6); // Sync with clusterHoverScale
-                } else {
-                    mat.color.setHex(brandColor);
-                    mat.opacity = 0;
-                }
+                
+                // Clusters are indicator sprites, base mesh stays hidden.
+                mat.color.setHex(brandColor);
+                mat.opacity = 0;
             }
         });
-    }, [isLoaded, originsIata, destinationsIata, selectedAirports.join(',')]);
-
+    }, [isLoaded, originsIata, destinationsIata, selectedAirports.join(','), stepsIata]);
     // 3. Update Interactive State
     useEffect(() => {
         if (controlsRef.current) controlsRef.current.enabled = interactive;
