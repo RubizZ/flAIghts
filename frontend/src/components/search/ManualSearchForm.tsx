@@ -56,7 +56,7 @@ const ManualSearchForm: React.FC<ManualSearchFormProps> = ({
     return (
         <div className={`grow ${isHorizontal ? 'flex flex-row items-stretch gap-4 w-full' : 'flex flex-col gap-3'}`}>
             {/* ── ORIGIN & DESTINATION ── */}
-            <div className={`relative flex gap-3 grow ${isHorizontal ? 'flex-3 min-w-0 flex-row items-center' : (isMapMode ? 'flex-col sm:flex-row items-stretch sm:items-center' : 'flex-col items-stretch')}`}>
+            <div className={`relative flex gap-3 grow ${isHorizontal ? 'flex-3 min-w-0 flex-row items-stretch' : (isMapMode ? 'flex-col sm:flex-row items-stretch sm:items-center' : 'flex-col items-stretch')}`}>
                 {/* Origin */}
                 <FlightSearchInput
                     type="origin"
@@ -67,7 +67,7 @@ const ManualSearchForm: React.FC<ManualSearchFormProps> = ({
                     }}
                     onMapClick={() => startMapSelection('origin')}
                     isMapSelecting={selectingType === 'origin'}
-                    className={'flex-1 min-w-0'}
+                    className={'flex-1 min-w-0 h-full'}
                     otherSelected={destinations}
                 />
 
@@ -94,7 +94,7 @@ const ManualSearchForm: React.FC<ManualSearchFormProps> = ({
                     }}
                     onMapClick={() => startMapSelection('destination')}
                     isMapSelecting={selectingType === 'destination'}
-                    className={'flex-1 min-w-0'}
+                    className={'flex-1 min-w-0 h-full'}
                     otherSelected={origins}
                 />
             </div>

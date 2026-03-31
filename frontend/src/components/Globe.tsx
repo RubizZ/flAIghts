@@ -48,6 +48,8 @@ export default function Globe({
     focusIata,
     steps = []
 }: GlobeProps) {
+    const DEBUG_HITBOXES = false;
+
     const originsIata = useMemo(() => origins.map(o => o.iata_code).filter(Boolean) as string[], [origins]);
     const destinationsIata = useMemo(() => destinations.map(d => d.iata_code).filter(Boolean) as string[], [destinations]);
     const stepsIata = useMemo(() => (steps || []).map((step: AirportResponse[]) => step.map((s: AirportResponse) => s.iata_code).filter(Boolean) as string[]), [steps]);
@@ -69,6 +71,9 @@ export default function Globe({
     const contextMenuContainerRef = useRef<HTMLDivElement | null>(null);
     const labelGroupRef = useRef<THREE.Group>(new THREE.Group());
     const clusterTextureCache = useRef<Record<number, THREE.CanvasTexture>>({});
+    const zoomDistRef = useRef(3.2);
+    const lastClusteredDistRef = useRef(3.2);
+    const clusteredDataCacheRef = useRef<Record<string, any>>({});
     const zoomTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
     const airplaneModelRef = useRef<THREE.Group | null>(null);
@@ -76,7 +81,7 @@ export default function Globe({
     const airportsMap = useRef<Record<string, THREE.Mesh>>({});
     const lastItineraryKeyRef = useRef<string>("");
     const sharedAirportGeo = useRef(new THREE.SphereGeometry(0.0004, 12, 12));
-    const sharedClusterGeo = useRef(new THREE.SphereGeometry(0.002, 12, 12));
+    const sharedClusterGeo = useRef(new THREE.BoxGeometry(0.002, 0.002, 0.002));
     const arcsGroupRef = useRef<THREE.Group>(new THREE.Group());
     const planesRef = useRef<{
         mesh: THREE.Object3D;
@@ -101,6 +106,8 @@ export default function Globe({
     const earthGroupRef = useRef<THREE.Group>(new THREE.Group());
     const countryLabelsGroupRef = useRef<THREE.Group>(new THREE.Group());
     const airportGroupRef = useRef<THREE.Group>(new THREE.Group());
+    const fadingOutGroupRef = useRef<THREE.Group>(new THREE.Group());
+    const fadingOutLabelsRef = useRef<THREE.Group>(new THREE.Group());
     const starGroupRef = useRef<THREE.Group>(new THREE.Group());
     const shootingStarGroupRef = useRef<THREE.Group>(new THREE.Group());
     const shootingStarsRef = useRef<{
@@ -193,6 +200,12 @@ export default function Globe({
         }
     });
 
+    const getThemeColorHex = (varName: string, defaultHex: number): number => {
+        const value = typeof window !== 'undefined' ? getComputedStyle(document.documentElement).getPropertyValue(varName).trim() : '';
+        if (!value) return defaultHex;
+        return parseInt(value.replace('#', '0x'), 16);
+    };
+
     const latLonToVector3 = (lat: number, lon: number, radius: number = 1) => {
         const phi = (90 - lat) * (Math.PI / 180);
         const theta = (lon + 180) * (Math.PI / 180);
@@ -204,10 +217,165 @@ export default function Globe({
         );
     };
 
-    const getThemeColorHex = (varName: string, defaultHex: number): number => {
-        const value = getComputedStyle(document.documentElement).getPropertyValue(varName).trim();
-        if (!value) return defaultHex;
-        return parseInt(value.replace('#', '0x'), 16);
+
+    class GlobeItem {
+        v3: THREE.Vector3;
+        iata: string;
+        name: string;
+        city: string;
+        lat: number;
+        lon: number;
+        airports: any[];
+        isSpecial: boolean;
+        isCluster: boolean;
+        stepIdx?: number;
+        id: string;
+        threshold: number;
+        hM: number;
+
+        constructor(data: any, forcedSet: Set<string>, threshold: number, hM: number) {
+            this.v3 = data.v3.clone();
+            this.iata = data.iata || '';
+            this.name = data.name || '';
+            this.city = data.city || '';
+            this.lat = data.lat;
+            this.lon = data.lon;
+            this.threshold = threshold;
+            this.hM = hM;
+            this.airports = data.airports || [];
+            this.isSpecial = forcedSet.has(this.iata);
+            this.isCluster = !!data.isCluster;
+            this.stepIdx = data.stepIdx;
+            if (this.isCluster) {
+                const sortedIatas = [...this.airports].map(a => a.iata).sort();
+                this.id = `c-${sortedIatas.join('-')}`;
+            } else {
+                this.id = this.iata;
+            }
+        }
+
+        get radius() { return this.threshold * 0.5; }
+        collides(other: GlobeItem) {
+            const minDist = (this.radius + other.radius) * this.hM;
+            return this.v3.distanceTo(other.v3) < minDist;
+        }
+    }
+
+    const getClusteredAirports = (
+        globeAirports: any[],
+        threshold: number,
+        forcedSet: Set<string>,
+        hM: number,
+        stepsIata: string[][]
+    ): GlobeItem[] => {
+        // 2. Spatial Grid Class
+        class SpatialGrid {
+            grid: Map<string, GlobeItem[]>;
+            size: number;
+            constructor(size: number) {
+                this.grid = new Map();
+                this.size = size;
+            }
+            insert(it: GlobeItem) {
+                const gx = Math.floor(it.v3.x / this.size);
+                const gy = Math.floor(it.v3.y / this.size);
+                const gz = Math.floor(it.v3.z / this.size);
+                const k = `${gx},${gy},${gz}`;
+                if (!this.grid.has(k)) this.grid.set(k, []);
+                this.grid.get(k)!.push(it);
+            }
+            getNeighbors(it: GlobeItem) {
+                const res: GlobeItem[] = [];
+                const gx = Math.floor(it.v3.x / this.size);
+                const gy = Math.floor(it.v3.y / this.size);
+                const gz = Math.floor(it.v3.z / this.size);
+                for (let x = gx - 1; x <= gx + 1; x++) {
+                    for (let y = gy - 1; y <= gy + 1; y++) {
+                        for (let z = gz - 1; z <= gz + 1; z++) {
+                            const n = this.grid.get(`${x},${y},${z}`);
+                            if (n) res.push(...n);
+                        }
+                    }
+                }
+                return res;
+            }
+        }
+
+        let items = [...globeAirports]
+            .sort((a, b) => (a.i || '').localeCompare(b.i || ''))
+            .map(a => {
+                const sIdx = stepsIata.findIndex(step => step.includes(a.i));
+                return new GlobeItem({
+                    iata: a.i, lat: a.la, lon: a.lo, name: a.n, city: a.ci,
+                    v3: latLonToVector3(a.la, a.lo),
+                    stepIdx: sIdx !== -1 ? sIdx : undefined
+                }, forcedSet, threshold, hM);
+            });
+
+        const assigned = new Set<string>();
+        const resultItems: GlobeItem[] = [];
+        const mergeGrid = new SpatialGrid(threshold * 1.5 * hM);
+        items.forEach(it => { if (!it.isSpecial) mergeGrid.insert(it); });
+
+        items.forEach(it => {
+            if (assigned.has(it.id)) return;
+            if (it.isSpecial) {
+                resultItems.push(it);
+                assigned.add(it.id);
+                return;
+            }
+            const clusterMembers: any[] = [{ iata: it.iata, lat: it.lat, lon: it.lon, name: it.name, city: it.city }];
+            assigned.add(it.id);
+            const neighbors = mergeGrid.getNeighbors(it);
+            for (const nb of neighbors) {
+                if (!nb.isSpecial && !assigned.has(nb.id) && it.collides(nb)) {
+                    clusterMembers.push({ iata: nb.iata, lat: nb.lat, lon: nb.lon, name: nb.name, city: nb.city });
+                    assigned.add(nb.id);
+                }
+            }
+            if (clusterMembers.length > 1) {
+                const avgLat = clusterMembers.reduce((s, a) => s + a.lat, 0) / clusterMembers.length;
+                const avgLon = clusterMembers.reduce((s, a) => s + a.lon, 0) / clusterMembers.length;
+                resultItems.push(new GlobeItem({
+                    isCluster: true, airports: clusterMembers, lat: avgLat, lon: avgLon, v3: latLonToVector3(avgLat, avgLon)
+                }, forcedSet, threshold, hM));
+            } else resultItems.push(it);
+        });
+
+        items = resultItems;
+
+        // Repulsion Pass
+        const vRep = new THREE.Vector3();
+        for (let iter = 0; iter < 4; iter++) {
+            const grid = new SpatialGrid(threshold * 1.5 * hM);
+            items.forEach(it => grid.insert(it));
+            for (let i = 0; i < items.length; i++) {
+                const a = items[i];
+                if (!a) continue;
+                const neighbors = grid.getNeighbors(a);
+                for (const b of neighbors) {
+                    if (a === b || a.id < b.id) continue;
+                    const minDist = (a.radius + b.radius) * hM;
+                    const d = a.v3.distanceTo(b.v3);
+                    if (d < minDist) {
+                        const diff = vRep.subVectors(a.v3, b.v3);
+                        if (d < 0.0001) diff.set(Math.sin(a.lat), Math.cos(a.lat), Math.sin(a.lon));
+                        diff.normalize();
+                        const push = minDist - d;
+                        if (a.isSpecial && b.isSpecial) {
+                            a.v3.addScaledVector(diff, push * 0.5).normalize();
+                            b.v3.addScaledVector(diff, -push * 0.5).normalize();
+                        } else if (a.isSpecial) b.v3.addScaledVector(diff, -push).normalize();
+                        else if (b.isSpecial) a.v3.addScaledVector(diff, push).normalize();
+                        else {
+                            a.v3.addScaledVector(diff, push * 0.5).normalize();
+                            b.v3.addScaledVector(diff, -push * 0.5).normalize();
+                        }
+                    }
+                }
+            }
+        }
+        return items;
     };
 
     // Update refs for the animation loop to prevent stale closures
@@ -734,23 +902,30 @@ export default function Globe({
         };
         const onControlsChange = () => {
             if (camera.position.length() !== 0) {
-                const dist = camera.position.length();
-                // Snap distance to step for deterministic threshold calculation
-                const steppedDist = Math.round(dist / ZOOM_STEP) * ZOOM_STEP;
-                // Snapped threshold calculation for categorical zoom "notches"
-                // Formula tuned to range [0.012, 0.045] over dist [1.25, 6.25]
-                // With greedy clustering, we need higher thresholds to perceive grouping.
-                const rawThreshold = (steppedDist - 1.25) * 0.007 + 0.012;
-                const nextThreshold = Math.max(0.012, Math.min(0.045, rawThreshold));
+                const camDist = camera.position.length();
+                // Discrete snapshots for clustering (0.25 units) for maximum performance
+                const steppedDist = Math.round(camDist / ZOOM_STEP) * ZOOM_STEP;
 
-                // Debounce threshold update to avoid lag during zoom
+                // Original formula: tuned to range [0.012, 0.045] over dist [1.25, 6.25]
+                const rawThreshold = (steppedDist - 1.25) * 0.007 + 0.012;
+                const nextThreshold = Math.max(0.012, Math.min(0.055, rawThreshold));
+
+                // 2. Eagerly update clustering if we cross a 0.25 step boundary
+                // Using steppedDist here reduces rebuild frequency significantly (Lagfix)
+                if (Math.abs(steppedDist - lastClusteredDistRef.current) >= ZOOM_STEP) {
+                    lastClusteredDistRef.current = steppedDist;
+                    setClusterThreshold(nextThreshold);
+                }
+
+                // 3. Final debounced update for safety
                 if (zoomTimeoutRef.current) clearTimeout(zoomTimeoutRef.current);
+                zoomDistRef.current = camDist;
                 zoomTimeoutRef.current = setTimeout(() => {
                     setClusterThreshold(prev => {
                         if (Math.abs(prev - nextThreshold) < 0.001) return prev;
                         return nextThreshold;
                     });
-                }, 50);
+                }, 80);
             }
         };
         controls.addEventListener('change', onControlsChange);
@@ -886,6 +1061,8 @@ export default function Globe({
         const earthGroup = earthGroupRef.current;
         scene.add(earthGroup);
         earthGroup.add(arcsGroupRef.current);
+        earthGroup.add(fadingOutGroupRef.current);
+        earthGroup.add(fadingOutLabelsRef.current);
         earthGroup.add(airportGroupRef.current);
         earthGroup.add(labelGroupRef.current);
         earthGroup.add(countryLabelsGroupRef.current);
@@ -1066,12 +1243,6 @@ export default function Globe({
             mouse.y = -((e.clientY - rect.top) / mountRef.current.clientHeight) * 2 + 1;
             mousePosRef.current.copy(mouse);
 
-            if (!interactiveRef.current) {
-                renderer.domElement.style.cursor = "default";
-                if (popupRef.current) popupRef.current.style.display = "none";
-                return;
-            }
-
             if (isUserInteractingRef.current) {
                 renderer.domElement.style.cursor = "grabbing";
                 if (popupRef.current) popupRef.current.style.display = "none";
@@ -1080,35 +1251,47 @@ export default function Globe({
 
             raycaster.setFromCamera(mouse, cameraRef.current);
             const intersects = raycaster.intersectObjects(airportGroupRef.current.children);
+            
             if (intersects.length > 0 && intersects[0]?.object?.userData) {
-                renderer.domElement.style.cursor = "pointer";
-                if (popupRef.current) {
-                    const item = intersects[0].object.userData;
-                    let x = e.clientX - rect.left + 10;
-                    let y = e.clientY - rect.top + 10;
-                    const popupWidth = popupRef.current.offsetWidth || 200;
-                    const popupHeight = popupRef.current.offsetHeight || 40;
+                const item = intersects[0].object.userData;
+                const isSpecial = item.isSpecial;
 
-                    if (x + popupWidth > rect.width - 10) {
-                        x = e.clientX - rect.left - popupWidth - 10;
-                    }
-                    if (y + popupHeight > rect.height - 10) {
-                        y = e.clientY - rect.top - popupHeight - 10;
-                    }
+                if (interactiveRef.current || isSpecial) {
+                    renderer.domElement.style.cursor = "pointer";
+                    if (popupRef.current) {
+                        let x = e.clientX - rect.left + 10;
+                        let y = e.clientY - rect.top + 10;
+                        const popupWidth = popupRef.current.offsetWidth || 200;
+                        const popupHeight = popupRef.current.offsetHeight || 40;
 
-                    popupRef.current.style.left = x + "px";
-                    popupRef.current.style.top = y + "px";
-                    if (item.isCluster) {
-                        popupRef.current.innerHTML = `<b>${item.airports.length} aeropuertos</b> en esta zona`;
-                    } else {
-                        const a = item as AirportData;
-                        const displayName = a.name || a.city || "Ubicación desconocida";
-                        popupRef.current.innerHTML = `<b>${displayName}</b> (${a.iata || 'N/A'})`;
+                        if (x + popupWidth > rect.width - 10) {
+                            x = e.clientX - rect.left - popupWidth - 10;
+                        }
+                        if (y + popupHeight > rect.height - 10) {
+                            y = e.clientY - rect.top - popupHeight - 10;
+                        }
+
+                        popupRef.current.style.left = x + "px";
+                        popupRef.current.style.top = y + "px";
+                        if (item.isCluster) {
+                            popupRef.current.innerHTML = `<b>${item.airports.length} aeropuertos</b> en esta zona`;
+                        } else {
+                            const a = item as AirportData;
+                            const displayName = a.name || a.city || "Ubicación desconocida";
+                            popupRef.current.innerHTML = `<b>${displayName}</b> (${a.iata || 'N/A'})`;
+                        }
+                        popupRef.current.style.display = "block";
                     }
-                    popupRef.current.style.display = "block";
+                } else {
+                    renderer.domElement.style.cursor = "default";
+                    if (popupRef.current) popupRef.current.style.display = "none";
                 }
             } else {
-                renderer.domElement.style.cursor = "grab";
+                if (interactiveRef.current) {
+                    renderer.domElement.style.cursor = "grab";
+                } else {
+                    renderer.domElement.style.cursor = "default";
+                }
                 if (popupRef.current) popupRef.current.style.display = "none";
             }
         };
@@ -1180,11 +1363,11 @@ export default function Globe({
                 const hitboxMultiplier = isMobile ? 2.5 : 1.0;
                 const invHitboxMultiplier = 1 / hitboxMultiplier;
 
-                const baseScale = 1.5 * scaleFactor;
-                const specialScale = 35 * scaleFactor;
-                const specialClusterScale = 8 * scaleFactor; // Balanced for 5x geometry
-                const clusterHoverScale = 6 * scaleFactor;   // Balanced for 5x geometry
-                const airportHoverScale = 28 * scaleFactor;
+                const baseScale = 2.0 * scaleFactor;
+                const specialScale = 22 * scaleFactor;
+                const specialClusterScale = 6 * scaleFactor; 
+                const clusterHoverScale = 4.5 * scaleFactor;  
+                const airportHoverScale = 18 * scaleFactor;
                 const labelRefScale = 0.026 * scaleFactor;
                 airportGroupRef.current.children.forEach(child => {
                     const mesh = child as THREE.Mesh;
@@ -1209,47 +1392,48 @@ export default function Globe({
 
                     let targetOpacity = 0;
                     let targetScale = baseScale;
+                    let hoverFactor = 0;
+
+                    _vec1.copy(mesh.position);
+                    const dot = _camNorm.dot(_vec1);
+
+                    // Compute hover factor if special (always responsive) or regular (only if interactive)
+                    if (dot >= 0.1 && (isSpecial || interactiveRef.current)) {
+                        if (isMobile) {
+                            hoverFactor = Math.pow(Math.max(0, (dot - 0.90) / 0.10), 1.5);
+                        } else {
+                            const distToRay = raycaster.ray.distanceSqToPoint(_vec1);
+                            if (distToRay < proximityBase) {
+                                hoverFactor = 1 - (distToRay / proximityBase);
+                            }
+                        }
+                    }
 
                     if (isSpecial) {
                         targetOpacity = 1;
-                        const s = item.isCluster ? specialClusterScale : specialScale;
-                        targetScale = s * Math.max(0.5, globalZoomFade);
+                        // Special items: Larger base + extra growth on hover
+                        const specialBase = item.isCluster ? specialClusterScale : specialScale;
+                        targetScale = specialBase * (1 + hoverFactor * 0.12); // subtle growth
                     } else if (interactiveRef.current) {
-                        _vec1.copy(mesh.position);
-                        const dot = _camNorm.dot(_vec1);
-
-                        if (dot >= 0.1) {
-                            let factor = 0;
-                            if (isMobileRef.current) {
-                                // Much wider angle for mobile to make targeting easier (hitbox interaction)
-                                factor = Math.pow(Math.max(0, (dot - 0.90) / 0.10), 1.5);
-                            } else if (!isMoving) {
-                                const distToRay = raycaster.ray.distanceSqToPoint(_vec1);
-                                if (distToRay < proximityBase) {
-                                    factor = 1 - (distToRay / proximityBase);
-                                }
-                            }
-
-                            if (factor > 0) {
-                                // Slightly more gradual ramp
-                                targetOpacity = Math.min(1, factor * 2.5) * globalZoomFade;
-                                const hS = item.isCluster ? clusterHoverScale : airportHoverScale;
-                                targetScale = (baseScale + (hS - baseScale) * factor) * Math.max(0.5, globalZoomFade);
-                            } else {
-                                targetOpacity = 0;
-                                targetScale = baseScale;
-                            }
-                        }
+                        // Regular items: Dynamic reveal based on proximity
+                        targetOpacity = hoverFactor;
+                        const sizeMult = 0.5 + hoverFactor * 0.5;
+                        targetScale = (item.isCluster ? clusterHoverScale : airportHoverScale) * sizeMult;
                     }
 
                     // Apply to Mesh (Hitbox is the parent)
                     // We apply the 'hitboxMultiplier' to the parent but the inverse to the visual child
                     // so things still FEEL correct but interact from further out.
                     const finalHitboxScale = targetScale * hitboxMultiplier;
-                    if (Math.abs(mat.opacity - targetOpacity) > 0.001 || Math.abs(mesh.scale.x - finalHitboxScale) > 0.001) {
+
+                    // Opacity continues to fade smoothly
+                    if (Math.abs(mat.opacity - targetOpacity) > 0.001) {
                         mat.opacity += (targetOpacity - mat.opacity) * 0.06;
-                        const nextHitboxScale = mesh.scale.x + (finalHitboxScale - mesh.scale.x) * 0.06;
-                        mesh.scale.setScalar(nextHitboxScale);
+                    }
+
+                    // Scale changes are now interpolated for a smooth "size fade" effect
+                    if (Math.abs(mesh.scale.x - finalHitboxScale) > 0.001) {
+                        mesh.scale.setScalar(mesh.scale.x + (finalHitboxScale - mesh.scale.x) * 0.08);
                     }
 
                     // Always enforce visual scale compensation every frame to prevent 'stuck' large sizes on mobile
@@ -1258,7 +1442,13 @@ export default function Globe({
                     }
 
                     if (item.isCluster) {
-                        mat.opacity = 0; // Cluster parent always invisible, interaction only.
+                        mat.opacity = (DEBUG_HITBOXES && interactiveRef.current) ? 0.3 : 0; 
+                        mat.wireframe = (DEBUG_HITBOXES && interactiveRef.current);
+                    } else if (DEBUG_HITBOXES && interactiveRef.current) {
+                        mat.opacity = Math.max(mat.opacity, 0.2);
+                        mat.wireframe = true;
+                    } else {
+                        mat.wireframe = false;
                     }
 
                     // Integrated Cluster/Scale Label Positioning (3D Mesh)
@@ -1306,6 +1496,28 @@ export default function Globe({
                         const labelScale = labelRefScale * (0.5 + 0.5 * (logicalScale / (35 * scaleFactor)));
                         if (Math.abs(label.scale.x - (labelScale)) > 0.0001) {
                             label.scale.setScalar(labelScale);
+                        }
+                    }
+                });
+
+                // --- CROSSFADE: Gracefully Fade Out Old State ---
+                [fadingOutGroupRef.current, fadingOutLabelsRef.current].forEach(group => {
+                    for (let i = group.children.length - 1; i >= 0; i--) {
+                        const child = group.children[i] as any;
+                        let mat = child.material;
+                        // For clusters/stems, we might have nested materials or different structures
+                        if (!mat && child.userData?.visualMesh) mat = child.userData.visualMesh.material;
+
+                        if (mat) {
+                            mat.opacity *= 0.85; // Faster decay for crossfade
+                            if (mat.opacity < 0.005) {
+                                group.remove(child);
+                                // Optional: Recursive disposal if this was a heavy object
+                                // However, we usually dispose them in the clustering useEffect
+                            }
+                        } else {
+                            // If no material found, just remove it
+                            group.remove(child);
                         }
                     }
                 });
@@ -1863,213 +2075,59 @@ export default function Globe({
     useEffect(() => {
         if (!isAirportsLoaded || !globeAirports) return;
 
-        airportGroupRef.current.children.forEach(c => disposeObject(c));
-        airportGroupRef.current.clear();
-        labelGroupRef.current.children.forEach(c => disposeObject(c));
-        labelGroupRef.current.clear();
-        airportsMap.current = {};
-
         const hM = isMobileRef.current ? 1.4 : 1.0;
         const forcedSet = new Set([...selectedAirports, ...originsIata, ...allStepsIata, ...destinationsIata].filter(Boolean) as string[]);
-        const threshold = clusterThreshold;
 
-        // 1. OOP Entity Class
-        class GlobeItem {
-            v3: THREE.Vector3;
-            iata: string;
-            name: string;
-            city: string;
-            lat: number;
-            lon: number;
-            airports: any[];
-            isSpecial: boolean;
-            isCluster: boolean;
-            stepIdx?: number;
-            id: string;
-
-            constructor(data: any) {
-                this.v3 = data.v3.clone();
-                this.iata = data.iata || '';
-                this.name = data.name || '';
-                this.city = data.city || '';
-                this.lat = data.lat;
-                this.lon = data.lon;
-                this.airports = data.airports || [];
-                this.isSpecial = forcedSet.has(this.iata);
-                this.isCluster = !!data.isCluster;
-                this.stepIdx = data.stepIdx;
-                // Deterministic ID: for clusters, join sorted IATAs
-                if (this.isCluster) {
-                    const sortedIatas = [...this.airports].map(a => a.iata).sort();
-                    this.id = `c-${sortedIatas.join('-')}`;
-                } else {
-                    this.id = this.iata;
-                }
-            }
-
-            get radius() {
-                return threshold * 0.5;
-            }
-
-            collides(other: GlobeItem) {
-                const minDist = (this.radius + other.radius) * hM;
-                return this.v3.distanceTo(other.v3) < minDist;
-            }
+        // 1. Calculate items first for differential update logic
+        const cacheKey = `${clusterThreshold.toFixed(4)}_${forcedAirportsKey}`;
+        let items: GlobeItem[] = clusteredDataCacheRef.current[cacheKey];
+        if (!items) {
+            items = getClusteredAirports(globeAirports!, clusterThreshold, forcedSet, hM, stepsIata);
+            clusteredDataCacheRef.current[cacheKey] = items;
         }
 
-        // 2. Spatial Grid Class for O(N) Complexity
-        class SpatialGrid {
-            grid: Map<string, GlobeItem[]>;
-            size: number;
-            constructor(size: number) {
-                this.grid = new Map();
-                this.size = size;
-            }
-            insert(it: GlobeItem) {
-                const gx = Math.floor(it.v3.x / this.size);
-                const gy = Math.floor(it.v3.y / this.size);
-                const gz = Math.floor(it.v3.z / this.size);
-                const k = `${gx},${gy},${gz}`;
-                if (!this.grid.has(k)) this.grid.set(k, []);
-                this.grid.get(k)!.push(it);
-            }
-            getNeighbors(it: GlobeItem) {
-                const res: GlobeItem[] = [];
-                const gx = Math.floor(it.v3.x / this.size);
-                const gy = Math.floor(it.v3.y / this.size);
-                const gz = Math.floor(it.v3.z / this.size);
-                for (let x = gx - 1; x <= gx + 1; x++) {
-                    for (let y = gy - 1; y <= gy + 1; y++) {
-                        for (let z = gz - 1; z <= gz + 1; z++) {
-                            const n = this.grid.get(`${x},${y},${z}`);
-                            if (n) res.push(...n);
-                        }
-                    }
-                }
-                return res;
-            }
-        }
+        const newItemIds = new Set(items.map(it => it.id));
 
-        // Processing Pipeline (Stable sort for determinism)
-        let items = [...globeAirports]
-            .sort((a, b) => a.i.localeCompare(b.i))
-            .map(a => {
-                const sIdx = stepsIata.findIndex(step => step.includes(a.i));
-                return new GlobeItem({
-                    iata: a.i,
-                    lat: a.la,
-                    lon: a.lo,
-                    name: a.n,
-                    city: a.ci,
-                    v3: latLonToVector3(a.la, a.lo),
-                    stepIdx: sIdx !== -1 ? sIdx : undefined
-                });
-            });
-
-        // 2b. Leader-based Clustering Pass (O(N) with Grid)
-        // Prevents Transitive "Super-clusters" by ensuring each leader only picks its immediate neighbors.
-        // This creates an organic mesh of clusters instead of long chains.
-        const assigned = new Set<string>();
-        const resultItems: GlobeItem[] = [];
-
-        // Pre-insert non-special items into grid for fast neighborhood search
-        const mergeGrid = new SpatialGrid(threshold * 1.5 * hM);
-        items.forEach(it => { if (!it.isSpecial) mergeGrid.insert(it); });
-
-        // Process items carefully: special airports first to ensure they aren't swallowed
-        // We look at airports in a deterministic order
-        items.forEach(it => {
-            if (assigned.has(it.id)) return;
-
-            // 1. Handle special airports (origin, dest, selected) -> they remain as single points
-            if (it.isSpecial) {
-                resultItems.push(it);
-                assigned.add(it.id);
-                return;
-            }
-
-            // 2. Start a new cluster centered at 'it'
-            const clusterMembers: any[] = [{ iata: it.iata, lat: it.lat, lon: it.lon, name: it.name, city: it.city }];
-            assigned.add(it.id);
-
-            // 3. Absorb immediate unassigned neighbors within threshold radius
-            const neighbors = mergeGrid.getNeighbors(it);
-            for (const nb of neighbors) {
-                if (!nb.isSpecial && !assigned.has(nb.id) && it.collides(nb)) {
-                    clusterMembers.push({ iata: nb.iata, lat: nb.lat, lon: nb.lon, name: nb.name, city: nb.city });
-                    assigned.add(nb.id);
-                }
-            }
-
-            // 4. Finalize cluster or single item
-            if (clusterMembers.length > 1) {
-                const avgLat = clusterMembers.reduce((s, a) => s + a.lat, 0) / clusterMembers.length;
-                const avgLon = clusterMembers.reduce((s, a) => s + a.lon, 0) / clusterMembers.length;
-                resultItems.push(new GlobeItem({
-                    isCluster: true,
-                    airports: clusterMembers,
-                    lat: avgLat,
-                    lon: avgLon,
-                    v3: latLonToVector3(avgLat, avgLon)
-                }));
-            } else {
-                resultItems.push(it);
-            }
+        // 2. Map existing objects for reuse
+        const existingMeshes = new Map<string, THREE.Mesh>();
+        airportGroupRef.current.children.forEach(c => {
+            const mesh = (c as THREE.Mesh);
+            if (mesh.userData.id) existingMeshes.set(mesh.userData.id, mesh);
         });
 
-        items = resultItems;
+        // 3. Identification pass: Move leavers to fade out, keep stayers
+        for (let i = airportGroupRef.current.children.length - 1; i >= 0; i--) {
+            const mesh = airportGroupRef.current.children[i] as THREE.Mesh;
+            const id = mesh.userData.id;
+            if (!newItemIds.has(id)) {
+                // Leaver: gracefully fade out
+                mesh.userData.isFadingOut = true;
+                if (mesh.userData.visualMesh) (mesh.userData.visualMesh.material as THREE.Material).transparent = true;
+                fadingOutGroupRef.current.add(mesh);
 
-        // 2c. Repulsion Pass (O(N) with Grid)
-        const vRep = new THREE.Vector3();
-        for (let iter = 0; iter < 4; iter++) {
-            const grid = new SpatialGrid(threshold * 1.5 * hM);
-            items.forEach(it => grid.insert(it));
-            for (let i = 0; i < items.length; i++) {
-                const a = items[i];
-                if (!a) continue;
-                const neighbors = grid.getNeighbors(a);
-                for (const b of neighbors) {
-                    if (a === b || a.id < b.id) continue;
-                    const minDist = (a.radius + b.radius) * hM;
-                    const d = a.v3.distanceTo(b.v3);
-                    if (d < minDist) {
-                        const diff = vRep.subVectors(a.v3, b.v3);
-                        // Deterministic jitter based on coordinates instead of Math.random()
-                        if (d < 0.0001) {
-                            const jitterX = Math.sin(a.lat * 123.456 + a.lon * 456.789);
-                            const jitterY = Math.cos(a.lat * 456.789 + a.lon * 123.456);
-                            const jitterZ = Math.sin(a.lat * 321.654 + a.lon * 654.321);
-                            diff.set(jitterX, jitterY, jitterZ);
-                        }
-                        diff.normalize();
-                        const push = minDist - d;
-                        if (a.isSpecial && b.isSpecial) {
-                            const p2 = push * 0.5;
-                            a.v3.addScaledVector(diff, p2).normalize();
-                            b.v3.addScaledVector(diff, -p2).normalize();
-                        } else if (a.isSpecial) {
-                            b.v3.addScaledVector(diff, -push).normalize();
-                        } else if (b.isSpecial) {
-                            a.v3.addScaledVector(diff, push).normalize();
-                        } else {
-                            const p2 = push * 0.5;
-                            a.v3.addScaledVector(diff, p2).normalize();
-                            b.v3.addScaledVector(diff, -p2).normalize();
-                        }
-                    }
-                }
+                // Also move its labels if any
+                if (mesh.userData.labelMesh) fadingOutLabelsRef.current.add(mesh.userData.labelMesh);
+                if (mesh.userData.stemMesh) fadingOutLabelsRef.current.add(mesh.userData.stemMesh);
+                if (mesh.userData.anchorMesh) fadingOutLabelsRef.current.add(mesh.userData.anchorMesh);
             }
         }
 
-        labelGroupRef.current.clear();
+        // --- Important: Re-initialize airportsMap to fresh state for the current pass ---
+        airportsMap.current = {};
 
-        // 3. Build Scene
+        // 4. Build or Update Scene: Use camera-aware scaling to prevent "always-big" markers
+        const camDist = cameraRef.current ? cameraRef.current.position.length() : 3.2;
+        const sFact = camDist / 3.2;
+        const hitboxMult = isMobileRef.current ? 2.5 : 1.0;
+        const invHitboxMult = 1 / hitboxMult;
+
         items.forEach(item => {
             const isOrigin = originsIata.includes(item.iata);
             const isDest = destinationsIata.includes(item.iata);
             const stepIdx = stepsIata.findIndex(step => step.includes(item.iata));
             const isStep = stepIdx !== -1;
-            const isOriginDestStep = isOrigin || isDest || isStep;
+            const isSelected = selectedAirportsSetRef.current.has(item.iata);
+            const isSpecial = isOrigin || isDest || isStep || isSelected;
 
             let meshColor = getThemeColorHex('--color-brand', 0x4f46e5);
             if (isOrigin || isDest || isStep) {
@@ -2081,112 +2139,87 @@ export default function Globe({
                     const t = (stepIdx + 1) / (stepsIata.length + 1);
                     meshColor = new THREE.Color(originColor).lerp(new THREE.Color(destColor), t).getHex();
                 }
-            } else if (item.isSpecial) {
-                // item.isSpecial includes selectedAirports
-                meshColor = 0x00ff00;
-            }
+            } else if (isSpecial) meshColor = 0x00ff00;
 
-            const meshOpacity = (item.isSpecial || isOriginDestStep) ? 1 : 0.4;
-            const baseScale = (isOriginDestStep) ? 35 : (item.isSpecial ? 28 : (item.isCluster ? 2.4 : 1.6));
+            let mesh = existingMeshes.get(item.id);
 
-            const hitboxMult = isMobileRef.current ? 2.5 : 1.0;
-            const mesh = new THREE.Mesh(
-                item.isCluster ? sharedClusterGeo.current : sharedAirportGeo.current,
-                new THREE.MeshBasicMaterial({
-                    color: meshColor,
-                    transparent: true,
-                    opacity: 0, // Hitbox always invisible for raycasting
-                    depthWrite: false,
-                })
-            );
-
-            mesh.position.copy(item.v3);
-            mesh.scale.setScalar(baseScale * hitboxMult);
-            mesh.userData = { ...item }; // Plain object for userData
-            mesh.renderOrder = isOriginDestStep ? 10 : (item.isSpecial ? 5 : 1);
-            airportGroupRef.current.add(mesh);
-
-            // Add visual child so interaction box can be independent of visuals
-            if (!item.isCluster) {
-                const visual = new THREE.Mesh(sharedAirportGeo.current, new THREE.MeshBasicMaterial({
-                    color: meshColor,
-                    transparent: true,
-                    opacity: 0, // Start secondary invisible
-                    depthWrite: false,
-                }));
-                visual.userData.isVisual = true;
-                visual.scale.setScalar(1 / hitboxMult);
-                mesh.add(visual);
-                mesh.userData.visualMesh = visual;
-            }
-
-            if (item.isCluster) {
-                const texture = getClusterTexture(item.airports.length);
-                if (texture) {
-                    const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: texture, transparent: true, opacity: 0, depthWrite: false, depthTest: false }));
-                    sprite.position.copy(item.v3).multiplyScalar(1.015);
-                    sprite.renderOrder = 20;
-                    sprite.scale.setScalar(0.012);
-                    sprite.visible = false;
-                    labelGroupRef.current.add(sprite);
-                    mesh.userData.labelMesh = sprite;
-                }
-
-                // Create "Stems" (hairlines) connecting the cluster indicator to the actual airport locations
-                const stemPoints: THREE.Vector3[] = [];
-                item.airports.forEach((a: any) => {
-                    const targetPos = latLonToVector3(a.lat, a.lon, 1.001); // Geographic position
-                    stemPoints.push(item.v3.clone().multiplyScalar(1.015)); // Visual cluster center
-                    stemPoints.push(targetPos);
-                });
-
-                if (stemPoints.length > 0) {
-                    const stemGeo = new THREE.BufferGeometry().setFromPoints(stemPoints);
-                    const stemMat = new THREE.LineBasicMaterial({
+            if (!mesh) {
+                mesh = new THREE.Mesh(
+                    item.isCluster ? sharedClusterGeo.current : sharedAirportGeo.current,
+                    new THREE.MeshBasicMaterial({
                         color: meshColor,
-                        transparent: true,
-                        opacity: 0, // Sync with label visibility
-                        depthWrite: false,
-                        depthTest: false
-                    });
-                    const stems = new THREE.LineSegments(stemGeo, stemMat);
-                    stems.renderOrder = 18;
-                    stems.visible = false;
-                    labelGroupRef.current.add(stems);
-                    mesh.userData.stemMesh = stems;
-
-                    // Anchor points at the globe surface (geographic positions)
-                    const anchorGeo = new THREE.BufferGeometry().setFromPoints(stemPoints.filter((_, i) => i % 2 === 1));
-                    const anchorMat = new THREE.PointsMaterial({
-                        color: meshColor,
-                        size: 0.0015,
-                        sizeAttenuation: true,
                         transparent: true,
                         opacity: 0,
                         depthWrite: false,
-                        depthTest: false
-                    });
-                    const anchors = new THREE.Points(anchorGeo, anchorMat);
-                    anchors.renderOrder = 19;
-                    anchors.visible = false;
-                    labelGroupRef.current.add(anchors);
-                    mesh.userData.anchorMesh = anchors;
-                }
+                    })
+                );
 
-                item.airports.forEach((a: any) => {
-                    if (a && a.iata) airportsMap.current[a.iata] = mesh;
-                });
-            } else {
-                if (item.stepIdx !== undefined) {
+                // Correct initial scale: use camDist to prevent popping
+                const initialBaseScale = isSpecial ? (item.isCluster ? 7 : 22) : (item.isCluster ? 4 : 1.8);
+
+                // Position hitboxes slightly above surface for better raycasting and to match visual altitude
+                const altitudeOffset = item.isCluster ? 1.015 : 1.005;
+                mesh.scale.setScalar(initialBaseScale * sFact * hitboxMult);
+                mesh.position.copy(item.v3).multiplyScalar(altitudeOffset);
+                mesh.userData = { ...item, isAirportObject: true, isSpecial, id: item.id };
+                mesh.renderOrder = isSpecial ? 10 : 1;
+                airportGroupRef.current.add(mesh);
+
+                // Visual child
+                const visual = new THREE.Mesh(
+                    item.isCluster ? sharedClusterGeo.current : sharedAirportGeo.current,
+                    new THREE.MeshBasicMaterial({
+                        color: meshColor,
+                        transparent: true,
+                        opacity: isSpecial ? 1 : 0,
+                        depthWrite: false,
+                    })
+                );
+                visual.scale.setScalar(invHitboxMult);
+                mesh.add(visual);
+                mesh.userData.visualMesh = visual;
+
+                // Handle Labels/Cluster visuals
+                if (item.isCluster) {
+                    const texture = getClusterTexture(item.airports.length);
+                    if (texture) {
+                        const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: texture, transparent: true, opacity: 0, depthWrite: false, depthTest: false }));
+                        sprite.position.copy(item.v3).multiplyScalar(1.015);
+                        sprite.renderOrder = 20;
+                        sprite.scale.setScalar(0.012);
+                        sprite.visible = false;
+                        labelGroupRef.current.add(sprite);
+                        mesh.userData.labelMesh = sprite;
+                    }
+
+                    const stemPoints: THREE.Vector3[] = [];
+                    item.airports.forEach((a: any) => {
+                        const targetPos = latLonToVector3(a.lat, a.lon, 1.001);
+                        stemPoints.push(item.v3.clone().multiplyScalar(1.015));
+                        stemPoints.push(targetPos);
+                    });
+
+                    if (stemPoints.length > 0) {
+                        const stemGeo = new THREE.BufferGeometry().setFromPoints(stemPoints);
+                        const stemMat = new THREE.LineBasicMaterial({ color: meshColor, transparent: true, opacity: 0, depthWrite: false, depthTest: false });
+                        const stems = new THREE.LineSegments(stemGeo, stemMat);
+                        stems.renderOrder = 18;
+                        stems.visible = false;
+                        labelGroupRef.current.add(stems);
+                        mesh.userData.stemMesh = stems;
+
+                        const anchorGeo = new THREE.BufferGeometry().setFromPoints(stemPoints.filter((_, i) => i % 2 === 1));
+                        const anchorMat = new THREE.PointsMaterial({ color: meshColor, size: 0.0015, sizeAttenuation: true, transparent: true, opacity: 0, depthWrite: false, depthTest: false });
+                        const anchors = new THREE.Points(anchorGeo, anchorMat);
+                        anchors.renderOrder = 19;
+                        anchors.visible = false;
+                        labelGroupRef.current.add(anchors);
+                        mesh.userData.anchorMesh = anchors;
+                    }
+                } else if (item.stepIdx !== undefined) {
                     const texture = getScaleTexture(item.stepIdx + 1);
                     if (texture) {
-                        const sprite = new THREE.Sprite(new THREE.SpriteMaterial({
-                            map: texture,
-                            transparent: true,
-                            opacity: 0,
-                            depthWrite: false,
-                            depthTest: false
-                        }));
+                        const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: texture, transparent: true, opacity: 0, depthWrite: false, depthTest: false }));
                         sprite.position.copy(item.v3).multiplyScalar(1.015);
                         sprite.renderOrder = 20;
                         sprite.scale.setScalar(0.012);
@@ -2195,7 +2228,55 @@ export default function Globe({
                         mesh.userData.labelMesh = sprite;
                     }
                 }
-                airportsMap.current[item.iata] = mesh;
+            } else {
+                // Reuse and update position/userData (Repulsion might have shifted it)
+                const alt = item.isCluster ? 1.015 : 1.005;
+                _vec1.copy(item.v3).multiplyScalar(alt);
+
+                if (mesh.position.distanceTo(_vec1) > 0.0001) {
+                    gsap.to(mesh.position, {
+                        x: _vec1.x,
+                        y: _vec1.y,
+                        z: _vec1.z,
+                        duration: 0.4,
+                        ease: "power2.out"
+                    });
+
+                    if (mesh.userData.labelMesh) {
+                        gsap.to(mesh.userData.labelMesh.position, {
+                            x: item.v3.x * 1.015,
+                            y: item.v3.y * 1.015,
+                            z: item.v3.z * 1.015,
+                            duration: 0.4,
+                            ease: "power2.out"
+                        });
+                    }
+                    if (mesh.userData.stemMesh) {
+                        const stemPoints: THREE.Vector3[] = [];
+                        item.airports.forEach((a: any) => {
+                            const targetPos = latLonToVector3(a.lat, a.lon, 1.001);
+                            stemPoints.push(item.v3.clone().multiplyScalar(1.015));
+                            stemPoints.push(targetPos);
+                        });
+                        mesh.userData.stemMesh.geometry.dispose();
+                        mesh.userData.stemMesh.geometry = new THREE.BufferGeometry().setFromPoints(stemPoints);
+                    }
+                }
+
+                // Update properties
+                mesh.userData = { ...mesh.userData, ...item, isAirportObject: true, isSpecial, id: item.id, isFadingOut: false };
+                mesh.renderOrder = isSpecial ? 10 : 1;
+                const mat = (mesh.userData.visualMesh ? (mesh.userData.visualMesh.material as THREE.MeshBasicMaterial) : (mesh.material as THREE.MeshBasicMaterial));
+                if (mat.color.getHex() !== meshColor) mat.color.setHex(meshColor);
+            }
+
+            // Always update mapping
+            if (item.isCluster) {
+                item.airports.forEach((a: any) => {
+                    if (a && a.iata) airportsMap.current[a.iata] = mesh!;
+                });
+            } else {
+                airportsMap.current[item.iata] = mesh!;
             }
         });
 
@@ -2249,10 +2330,11 @@ export default function Globe({
                         hasSelected = true;
                     }
                 }
-                
-                // Clusters are indicator sprites, base mesh stays hidden.
+
+                // Clusters are indicator sprites, base mesh stays hidden unless debugging.
                 mat.color.setHex(brandColor);
-                mat.opacity = 0;
+                mat.opacity = DEBUG_HITBOXES ? 0.3 : 0;
+                mat.wireframe = DEBUG_HITBOXES;
             }
         });
     }, [isLoaded, originsIata, destinationsIata, selectedAirports.join(','), stepsIata]);

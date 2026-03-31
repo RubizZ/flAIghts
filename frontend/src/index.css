@@ -95,6 +95,25 @@ body,
     border-color: var(--color-brand);
     box-shadow: 0 0 20px -5px rgba(var(--color-brand), 0.2);
   }
+
+  /* Small & Discrete Scrollbar System */
+  .custom-scrollbar::-webkit-scrollbar {
+    height: 3px;
+    width: 3px;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: color-mix(in srgb, var(--color-brand) 20%, transparent);
+    border-radius: 20px;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: color-mix(in srgb, var(--color-brand) 40%, transparent);
+  }
 }
 
 #nprogress .bar {

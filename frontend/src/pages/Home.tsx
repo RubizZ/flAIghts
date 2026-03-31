@@ -540,6 +540,15 @@ export default function Home() {
                         </button>
                     )}
                 </div>
+
+                {/* Floating validation bubble attached to the card summary (detalles) ONLY ON MOBILE */}
+                {origins.length > 0 && destinations.length > 0 && !departureDate && !isMobileCardExpanded && !isLargeScreen && (
+                    <div className="absolute top-full mt-3 left-1/2 -translate-x-1/2 bg-red-500/90 backdrop-blur-md text-white text-[9px] font-black uppercase tracking-widest px-3 py-1.5 rounded-lg shadow-2xl border border-white/20 animate-bounce flex items-center gap-1.5 whitespace-nowrap z-50">
+                        <CalendarIcon size={10} />
+                        <span>Falta fecha de salida</span>
+                        <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-red-500 rotate-45" />
+                    </div>
+                )}
             </div>
 
             {!isLargeScreen && isCardVisible && (

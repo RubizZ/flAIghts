@@ -26,7 +26,7 @@ const PremiumInput: React.FC<PremiumInputProps> = ({
     return (
         <div
             onClick={!disabled ? onClick : undefined}
-            className={`premium-input group flex items-center gap-1.5 lg:gap-2 rounded-2xl px-2.5 lg:px-3.5 py-2.5 lg:py-3 transition-all ${disabled ? "opacity-50 cursor-not-allowed grayscale" : onClick ? "cursor-pointer" : ""
+            className={`premium-input group flex items-center gap-1.5 lg:gap-2 rounded-2xl px-2.5 lg:px-3.5 py-1.5 lg:py-2 transition-all ${disabled ? "opacity-50 cursor-not-allowed grayscale" : onClick ? "cursor-pointer" : ""
                 } ${error ? "border-red-500/50" : ""} ${className}`}
         >
             <div className={`shrink-0 transition-colors ${iconColorClass}`}>
@@ -37,7 +37,7 @@ const PremiumInput: React.FC<PremiumInputProps> = ({
                 <span className="text-[9px] text-content-muted uppercase font-bold tracking-wider">
                     {label}
                 </span>
-                <div className="relative flex items-center min-h-5 lg:min-h-6">
+                <div className="relative flex items-center h-7 lg:h-8">
                     {children}
                 </div>
                 {error && (
