@@ -105,7 +105,7 @@ export default function HomeCard({
                     </div>
 
                     {/* Title & Subtitle - Middle on mobile, left on desktop */}
-                    <div className="flex flex-col gap-0.5 order-2 lg:order-1 items-center lg:items-start text-center lg:text-left">
+                    <div className="flex flex-col gap-0.5 order-2 lg:order-1 items-center lg:items-start text-center lg:text-left pt-4 lg:pt-0">
                         <div className="flex items-center gap-3">
                             <h1 className={`font-bold text-content tracking-tight transition-all duration-500 ease-in-out ${searchMode === 'ai' ? 'text-2xl' : 'text-3xl'}`}>Vuela más allá.</h1>
                         </div>

@@ -102,12 +102,35 @@ export default function Globe({
     const countryLabelsGroupRef = useRef<THREE.Group>(new THREE.Group());
     const airportGroupRef = useRef<THREE.Group>(new THREE.Group());
     const starGroupRef = useRef<THREE.Group>(new THREE.Group());
+    const shootingStarGroupRef = useRef<THREE.Group>(new THREE.Group());
+    const shootingStarsRef = useRef<{
+        mesh: THREE.Line | THREE.Group;
+        velocity: THREE.Vector3;
+        life: number;
+        maxLife: number;
+        isMeteor?: boolean;
+    }[]>([]);
+    const solarSystemGroupRef = useRef<THREE.Group>(new THREE.Group());
+    const planetsRef = useRef<{
+        mesh: THREE.Object3D;
+        distance: number;
+        speed: number;
+        theta: number;
+    }[]>([]);
+    const moonRef = useRef<THREE.Mesh | null>(null);
+    const sunRef = useRef<THREE.Group | null>(null);
+    const solarGroupRef = useRef<THREE.Group>(new THREE.Group());
     const cameraRef = useRef<THREE.PerspectiveCamera | null>(null);
     const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
     const controlsRef = useRef<OrbitControls | null>(null);
     const activeOriginsRef = useRef<string[]>([]);
     const activeDestsRef = useRef<string[]>([]);
     const stepsIataRef = useRef<string[][]>([]);
+
+    // Zoom control state for smooth stepped interaction
+    const ZOOM_STEP = 0.25;
+    const zoomAnimationRef = useRef<gsap.core.Tween | null>(null);
+    const targetZoomDistRef = useRef<number>(3.25);
 
     useEffect(() => {
         activeOriginsRef.current = originsIata;
@@ -138,10 +161,9 @@ export default function Globe({
     // Dynamic distance calculation based on aspect ratio to fit globe on mobile
     const calculateDistance = (w: number, h: number) => {
         const aspect = w / h;
-        const ZOOM_STEP = 0.25;
         if (aspect < 1) {
             const raw = 1.8 / (aspect * 0.4142);
-            return Math.round(raw / ZOOM_STEP) * ZOOM_STEP;
+            return Math.ceil(raw / ZOOM_STEP) * ZOOM_STEP;
         }
         return 3.25; // Multiple of 0.25
     };
@@ -616,7 +638,7 @@ export default function Globe({
         const scene = new THREE.Scene();
         sceneRef.current = scene;
 
-        const camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 1000);
+        const camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 5000);
         // Default: Greenwich meridian. IP geo will override this asynchronously if available.
         const idealDist = calculateDistance(width, height);
         const defaultPos = latLonToVector3(0, 0, idealDist);
@@ -641,7 +663,11 @@ export default function Globe({
             .catch(() => { /* silent fail, camera stays at Greenwich default */ })
             .finally(() => { setGeoReady(true); });
 
-        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        const renderer = new THREE.WebGLRenderer({
+            antialias: true,
+            alpha: true,
+            powerPreference: 'high-performance'
+        });
         renderer.setSize(width, height);
         renderer.setPixelRatio(window.devicePixelRatio);
         mount.appendChild(renderer.domElement);
@@ -649,18 +675,65 @@ export default function Globe({
 
         const controls = new OrbitControls(camera, renderer.domElement);
         controls.enableDamping = true;
-        controls.dampingFactor = 0.15; // Increased for better responsiveness and "sticky" feel
-        controls.minDistance = 1.25; // Aligned to 0.25 step
-        controls.maxDistance = 6.25; // Aligned to 0.25 step
+        controls.dampingFactor = 0.08; // Smoother, more "liquid" feel
+        controls.minDistance = 1.25;
+        controls.maxDistance = 6.25;
         controls.enablePan = false;
+        controls.enableZoom = isMobileRef.current; // Handled manually on desktop for smooth stepped feeling
         controlsRef.current = controls;
+
+        // Initialize target distance from camera's starting position
+        targetZoomDistRef.current = camera.position.length();
+
+        const onWheel = (e: WheelEvent) => {
+            if (isMobileRef.current) return;
+            e.preventDefault();
+
+            const direction = e.deltaY > 0 ? 1 : -1;
+
+            // Calculate current distance more accurately
+            const currentDist = camera.position.length();
+
+            // Ensure we jump from a base aligned to ZOOM_STEP
+            // If we are between steps, we jump to the next/prev boundary
+            let nextTarget = targetZoomDistRef.current;
+            if (direction > 0) {
+                // Zoom OUT
+                nextTarget = Math.floor((targetZoomDistRef.current + 0.01) / ZOOM_STEP) * ZOOM_STEP + ZOOM_STEP;
+            } else {
+                // Zoom IN
+                nextTarget = Math.ceil((targetZoomDistRef.current - 0.01) / ZOOM_STEP) * ZOOM_STEP - ZOOM_STEP;
+            }
+
+            // Clamp results
+            nextTarget = Math.max(controls.minDistance, Math.min(controls.maxDistance, nextTarget));
+            targetZoomDistRef.current = nextTarget;
+
+            // Animate only the distance along the normalized direction vector to keep orientation stable
+            const zoomProxy = { distance: currentDist };
+            if (zoomAnimationRef.current) zoomAnimationRef.current.kill();
+
+            zoomAnimationRef.current = gsap.to(zoomProxy, {
+                distance: nextTarget,
+                duration: 0.8,
+                ease: "power2.out",
+                overwrite: "auto",
+                onUpdate: () => {
+                    if (!cameraRef.current || !controlsRef.current) return;
+                    const dir = cameraRef.current.position.clone().normalize();
+                    cameraRef.current.position.copy(dir.multiplyScalar(zoomProxy.distance));
+                    controlsRef.current.update();
+                }
+            });
+        };
+
+        renderer.domElement.addEventListener('wheel', onWheel, { passive: false });
 
         const hideContextMenu = () => {
             setContextMenu(prev => prev.visible ? { ...prev, visible: false } : prev);
         };
         const onControlsChange = () => {
             if (camera.position.length() !== 0) {
-                const ZOOM_STEP = 0.25;
                 const dist = camera.position.length();
                 // Snap distance to step for deterministic threshold calculation
                 const steppedDist = Math.round(dist / ZOOM_STEP) * ZOOM_STEP;
@@ -689,10 +762,15 @@ export default function Globe({
                 renderer.domElement.style.cursor = "grabbing";
             }
             if (cameraRef.current) gsap.killTweensOf(cameraRef.current.position);
+            if (zoomAnimationRef.current) zoomAnimationRef.current.kill();
+            setContextMenu(prev => prev.visible ? { ...prev, visible: false } : prev);
         });
 
         controls.addEventListener('end', () => {
             isUserInteractingRef.current = false;
+            // Capture the exact distance user ended at for future stepped increments
+            targetZoomDistRef.current = camera.position.length();
+
             if (interactiveRef.current) {
                 renderer.domElement.style.cursor = "grab";
             } else {
@@ -701,14 +779,16 @@ export default function Globe({
         });
 
         // Lights
-        scene.add(new THREE.AmbientLight(0xffffff, 0.8));
-        const pointLight = new THREE.PointLight(0xffffff, 1);
-        pointLight.position.set(5, 3, 5);
-        scene.add(pointLight);
+        scene.add(new THREE.AmbientLight(0xffffff, 0.4)); // Lower ambient for better sun contrast
+        const sunLight = new THREE.PointLight(0xffffff, 2, 5000); // Very strong solar light
+        scene.add(sunLight);
+
+        const loader = new THREE.TextureLoader();
 
         // Starfield
         const starGroup = starGroupRef.current;
         scene.add(starGroup);
+
         const starGeometry = new THREE.BufferGeometry();
         const starVertices = [];
         for (let i = 0; i < 5000; i++) {
@@ -717,6 +797,90 @@ export default function Globe({
         starGeometry.setAttribute('position', new THREE.Float32BufferAttribute(starVertices, 3));
         const stars = new THREE.Points(starGeometry, new THREE.PointsMaterial({ color: 0xffffff, size: 0.7, transparent: true, opacity: 0.8, sizeAttenuation: true }));
         starGroup.add(stars);
+
+        // Shooting Stars & Meteorites Group
+        scene.add(shootingStarGroupRef.current);
+
+        // Stylized Sun (Orbits Earth independently)
+        const sunGroup = new THREE.Group();
+        sunRef.current = sunGroup;
+        scene.add(sunGroup);
+
+        const sunMesh = new THREE.Mesh(
+            new THREE.SphereGeometry(15, 32, 32),
+            new THREE.MeshBasicMaterial({ color: 0xffff00 })
+        );
+        sunGroup.add(sunMesh);
+
+        // Sun Glow Effect
+        const sunGlow = new THREE.Mesh(
+            new THREE.SphereGeometry(22, 32, 32),
+            new THREE.MeshBasicMaterial({
+                color: 0xffaa00,
+                transparent: true,
+                opacity: 0.3,
+                side: THREE.BackSide
+            })
+        );
+        sunGroup.add(sunGlow);
+
+        // Reset Solar Group for geocentric planets
+        const solarGroup = solarGroupRef.current;
+        scene.add(solarGroup);
+
+        const planetData = [
+            { name: "Mercury", dist: 400, size: 0.8, color: 0x999999, speed: 0.004 },
+            { name: "Venus", dist: 550, size: 1.8, color: 0xe3bb76, speed: 0.003 },
+            { name: "Mars", dist: 700, size: 1.2, color: 0xef5d49, speed: 0.002 },
+            { name: "Jupiter", dist: 1000, size: 6.0, color: 0xeb9350, speed: 0.001 },
+            { name: "Saturn", dist: 1300, size: 5.0, color: 0xeed096, speed: 0.0008, hasRings: true },
+            { name: "Uranus", dist: 1600, size: 3.5, color: 0x93b8d4, speed: 0.0006 },
+            { name: "Neptune", dist: 1800, size: 3.4, color: 0x3d5ef9, speed: 0.0005 }
+        ];
+
+        planetData.forEach(data => {
+            const planetMesh = new THREE.Mesh(
+                new THREE.SphereGeometry(data.size, 16, 16),
+                new THREE.MeshStandardMaterial({
+                    color: data.color,
+                    roughness: 0.7,
+                    metalness: 0.2
+                })
+            );
+
+            if (data.hasRings) {
+                const ringGeo = new THREE.RingGeometry(data.size * 1.4, data.size * 2.2, 32);
+                const ringMat = new THREE.MeshBasicMaterial({
+                    color: data.color,
+                    side: THREE.DoubleSide,
+                    transparent: true,
+                    opacity: 0.4
+                });
+                const rings = new THREE.Mesh(ringGeo, ringMat);
+                rings.rotation.x = Math.PI / 2.5;
+                planetMesh.add(rings);
+            }
+
+            const theta = Math.random() * Math.PI * 2;
+            const phi = (Math.random() - 0.5) * 0.2; // Keep them near the ecliptic plane
+            planetMesh.position.set(
+                data.dist * Math.cos(theta),
+                data.dist * Math.sin(phi),
+                data.dist * Math.sin(theta)
+            );
+
+            solarGroup.add(planetMesh);
+            planetsRef.current.push({
+                mesh: planetMesh,
+                distance: data.dist,
+                speed: data.speed,
+                theta: theta
+            });
+        });
+
+        // Initialize sun position
+        sunGroup.position.set(1200, 0, 0);
+        let sunTheta = 0;
 
         // Earth — visible immediately at the correct camera position set by IP geo
         const earthGroup = earthGroupRef.current;
@@ -756,7 +920,23 @@ export default function Globe({
             .catch(() => { /* borders are cosmetic, fail silently */ });
 
         const currentMonth = (new Date().getMonth() + 1).toString().padStart(2, '0');
-        const loader = new THREE.TextureLoader();
+        // loader was declared above for the galaxy to solve scope issues
+
+        // Stylized Moon (Close Earth satellite)
+        const moonGroup = new THREE.Group();
+        scene.add(moonGroup);
+        const moon = new THREE.Mesh(
+            new THREE.SphereGeometry(0.25, 32, 32),
+            new THREE.MeshStandardMaterial({
+                map: loader.load("https://threejs.org/examples/textures/planets/moon_1024.jpg"),
+                roughness: 1,
+                metalness: 0
+            })
+        );
+        moon.position.set(10, 0, 0); // Moved farther than camera maxDistance (6.25) to avoid clipping and occultation
+        moonGroup.add(moon);
+        moonRef.current = moon;
+        let moonTheta = Math.random() * Math.PI * 2;
 
         const earth = new THREE.Mesh(
             new THREE.SphereGeometry(1, 64, 64),
@@ -932,6 +1112,7 @@ export default function Globe({
         };
 
         renderer.domElement.addEventListener("click", onClick);
+        renderer.domElement.addEventListener("contextmenu", onContextMenu);
         renderer.domElement.addEventListener("mousemove", onMouseMove);
         renderer.domElement.addEventListener("mouseleave", onMouseLeave);
 
@@ -994,10 +1175,12 @@ export default function Globe({
                 const airportHoverScale = 28 * scaleFactor;
                 const labelRefScale = 0.026 * scaleFactor;
 
+                const hitboxMultiplier = isMobileRef.current ? 2.5 : 1.0;
                 airportGroupRef.current.children.forEach(child => {
                     const mesh = child as THREE.Mesh;
                     const item = mesh.userData;
-                    const mat = mesh.material as THREE.MeshBasicMaterial;
+                    const visual = mesh.userData.visualMesh as THREE.Mesh | undefined;
+                    const mat = (visual ? visual.material : mesh.material) as THREE.MeshBasicMaterial;
 
                     // Handle cluster or single airport 
                     // (Optimization: avoid .some if not special)
@@ -1028,8 +1211,8 @@ export default function Globe({
                         if (dot >= 0.1) {
                             let factor = 0;
                             if (isMobileRef.current) {
-                                // Slightly wider angle for mobile to make targeting easier
-                                factor = Math.pow(Math.max(0, (dot - 0.94) / 0.06), 1.5);
+                                // Much wider angle for mobile to make targeting easier (hitbox interaction)
+                                factor = Math.pow(Math.max(0, (dot - 0.90) / 0.10), 1.5);
                             } else if (!isMoving) {
                                 const distToRay = raycaster.ray.distanceSqToPoint(_vec1);
                                 if (distToRay < proximityBase) {
@@ -1049,21 +1232,22 @@ export default function Globe({
                         }
                     }
 
-                    // Apply to Mesh (only if not a cluster)
-                    if (!item.isCluster) {
-                        if (Math.abs(mat.opacity - targetOpacity) > 0.001 || Math.abs(mesh.scale.x - targetScale) > 0.001) {
-                            mat.opacity += (targetOpacity - mat.opacity) * 0.06; // Slower temporal fade
-                            const nextScale = mesh.scale.x + (targetScale - mesh.scale.x) * 0.06;
-                            mesh.scale.setScalar(nextScale);
+                    // Apply to Mesh (Hitbox is the parent)
+                    // We apply the 'hitboxMultiplier' to the parent but the inverse to the visual child
+                    // so things still FEEL correct but interact from further out.
+                    if (Math.abs(mat.opacity - targetOpacity) > 0.001 || Math.abs(mesh.scale.x - (targetScale * hitboxMultiplier)) > 0.001) {
+                        mat.opacity += (targetOpacity - mat.opacity) * 0.06;
+
+                        const nextHitboxScale = mesh.scale.x + (targetScale * hitboxMultiplier - mesh.scale.x) * 0.06;
+                        mesh.scale.setScalar(nextHitboxScale);
+
+                        if (visual) {
+                            visual.scale.setScalar(1 / hitboxMultiplier);
                         }
-                    } else {
-                        // For clusters, mesh is invisible. 
-                        // Keep a moderate scale for raycasting, but avoid "enlarged" hitboxes
-                        mat.opacity = 0;
-                        const clusterHitScale = targetScale;
-                        if (Math.abs(mesh.scale.x - clusterHitScale) > 0.01) {
-                            mesh.scale.setScalar(mesh.scale.x + (clusterHitScale - mesh.scale.x) * 0.06);
-                        }
+                    }
+
+                    if (item.isCluster) {
+                        mat.opacity = 0; // Cluster parent always invisible, interaction only.
                     }
 
                     // Integrated Cluster/Scale Label Positioning (3D Mesh)
@@ -1085,8 +1269,30 @@ export default function Globe({
                             label.visible = isVisible;
                         }
 
+                        // Sync cluster stems visibility and opacity
+                        if (mesh.userData.stemMesh) {
+                            const stems = mesh.userData.stemMesh as THREE.LineSegments;
+                            const stemMat = stems.material as THREE.LineBasicMaterial;
+                            if (Math.abs(stemMat.opacity - label.material.opacity * 0.5) > 0.001) {
+                                stemMat.opacity = label.material.opacity * 0.5;
+                            }
+                            if (stems.visible !== isVisible) stems.visible = isVisible;
+                        }
+
+                        // Sync anchor points visibility and opacity
+                        if (mesh.userData.anchorMesh) {
+                            const anchors = mesh.userData.anchorMesh as THREE.Points;
+                            const anchorMat = anchors.material as THREE.PointsMaterial;
+                            if (Math.abs(anchorMat.opacity - label.material.opacity * 0.7) > 0.001) {
+                                anchorMat.opacity = label.material.opacity * 0.7;
+                            }
+                            if (anchors.visible !== isVisible) anchors.visible = isVisible;
+                        }
+
                         // Scale effect for the label (relative to mesh scale which is already distance-aware)
-                        const labelScale = labelRefScale * (0.5 + 0.5 * (mesh.scale.x / (35 * scaleFactor)));
+                        // Use base scale (without hitbox boost) for visual consistency
+                        const logicalScale = mesh.scale.x / hitboxMultiplier;
+                        const labelScale = labelRefScale * (0.5 + 0.5 * (logicalScale / (35 * scaleFactor)));
                         if (Math.abs(label.scale.x - (labelScale)) > 0.0001) {
                             label.scale.setScalar(labelScale);
                         }
@@ -1105,8 +1311,8 @@ export default function Globe({
 
                     if (interactiveRef.current && dot >= 0.1) {
                         if (isMobileRef.current) {
-                            // Mobile: Show based on camera looking towards it, exactly like airports
-                            let factor = Math.pow(Math.max(0, (dot - 0.94) / 0.06), 1.5);
+                            // Mobile: Show based on camera looking towards it, with a generous angle 
+                            let factor = Math.pow(Math.max(0, (dot - 0.90) / 0.10), 1.5);
                             if (factor > 0) {
                                 targetOpacity = 0.4 * factor * globalZoomFade;
                             }
@@ -1361,14 +1567,171 @@ export default function Globe({
                 }
             }
 
+            // --- Update Solar System ---
+            // The Moon orbits the Earth closely but outside the camera range
+            if (moonRef.current) {
+                moonTheta += 0.0005; // Cinematic slow orbit
+                const moonDist = 10.0;
+                moonRef.current.position.set(
+                    moonDist * Math.cos(moonTheta),
+                    moonDist * Math.sin(moonTheta) * 0.1, // Slight tilt
+                    moonDist * Math.sin(moonTheta)
+                );
+                moonRef.current.lookAt(0, 0, 0); // Acoplamiento de marea: siempre mira a la Tierra
+            }
+
+            // The Sun orbits the Earth
+            if (sunRef.current) {
+                sunTheta += 0.00005; // Very slow solar progression
+                const sunDist = 1200;
+                sunRef.current.position.set(
+                    sunDist * Math.cos(sunTheta),
+                    0,
+                    sunDist * Math.sin(sunTheta)
+                );
+                // Update sun light to follow the Sun
+                sunLight.position.copy(sunRef.current.position);
+            }
+
+            // Planets orbit the Earth directly (geocentric)
+            planetsRef.current.forEach(p => {
+                p.theta += p.speed * 0.02; // Minimal planetary movement
+                p.mesh.position.set(
+                    p.distance * Math.cos(p.theta),
+                    p.mesh.position.y, // Maintain its slight ecliptic tilt
+                    p.distance * Math.sin(p.theta)
+                );
+                p.mesh.rotation.y += 0.005; // Self-rotation stays consistent
+            });
+
+            // --- Update Shooting Stars and Meteorites ---
+            if (Math.random() < 0.015) { // Spawn chance per frame
+                const isMeteor = Math.random() < 0.2; // 20% chance it's a meteorite
+
+                // Random spawn point on a large sphere
+                const theta = Math.random() * Math.PI * 2;
+                const phi = Math.acos(2 * Math.random() - 1);
+                const radius = 400 + Math.random() * 200;
+                const startPos = new THREE.Vector3(
+                    radius * Math.sin(phi) * Math.cos(theta),
+                    radius * Math.sin(phi) * Math.sin(theta),
+                    radius * Math.cos(phi)
+                );
+
+                // Target: somewhere near the origin but with some random offset
+                const targetPos = new THREE.Vector3(
+                    (Math.random() - 0.5) * 100,
+                    (Math.random() - 0.5) * 100,
+                    (Math.random() - 0.5) * 100
+                );
+
+                const direction = targetPos.clone().sub(startPos).normalize();
+                const speed = isMeteor ? 1.5 + Math.random() * 1.5 : 4.0 + Math.random() * 4.0;
+                const velocity = direction.multiplyScalar(speed);
+
+                let mesh: THREE.Line | THREE.Group;
+                if (isMeteor) {
+                    // Meteorite visual: A group with a core and a bright trail
+                    const group = new THREE.Group();
+
+                    // Core
+                    const coreGeo = new THREE.SphereGeometry(0.5 + Math.random(), 8, 8);
+                    const coreMat = new THREE.MeshBasicMaterial({
+                        color: 0xffaa00,
+                        transparent: true,
+                        opacity: 0.9
+                    });
+                    const core = new THREE.Mesh(coreGeo, coreMat);
+                    group.add(core);
+
+                    // Glow/Fire Trail (using a line for simplicity but could be more complex)
+                    const trailPoints = [new THREE.Vector3(0, 0, 0), direction.clone().multiplyScalar(-15)];
+                    const trailGeo = new THREE.BufferGeometry().setFromPoints(trailPoints);
+                    const trailMat = new THREE.LineBasicMaterial({
+                        color: 0xff4400,
+                        transparent: true,
+                        opacity: 0.6,
+                        linewidth: 2
+                    });
+                    const trail = new THREE.Line(trailGeo, trailMat);
+                    group.add(trail);
+
+                    mesh = group;
+                } else {
+                    // Shooting star visual: A simple bright line
+                    const points = [new THREE.Vector3(0, 0, 0), direction.clone().multiplyScalar(-10)];
+                    const geometry = new THREE.BufferGeometry().setFromPoints(points);
+                    const material = new THREE.LineBasicMaterial({
+                        color: 0x88ccff,
+                        transparent: true,
+                        opacity: 0.8
+                    });
+                    mesh = new THREE.Line(geometry, material);
+                }
+
+                // Pre-store materials for fast opacity updates in animate loop
+                const mats: THREE.Material[] = [];
+                mesh.traverse(c => {
+                    if ((c as any).material) {
+                        const m = (c as any).material as THREE.Material;
+                        m.transparent = true;
+                        m.userData.baseOpacity = m.opacity;
+                        mats.push(m);
+                    }
+                });
+                mesh.userData.materials = mats;
+
+                mesh.position.copy(startPos);
+                shootingStarGroupRef.current.add(mesh);
+                shootingStarsRef.current.push({
+                    mesh,
+                    velocity,
+                    life: 0,
+                    maxLife: isMeteor ? 120 + Math.random() * 100 : 40 + Math.random() * 30,
+                    isMeteor
+                });
+            }
+
+            // Update existing shooting stars
+            for (let i = shootingStarsRef.current.length - 1; i >= 0; i--) {
+                const s = shootingStarsRef.current[i];
+                if (!s) continue;
+
+                s.life++;
+                s.mesh.position.add(s.velocity);
+
+                const alpha = 1 - (s.life / s.maxLife);
+                if (Array.isArray(s.mesh.userData.materials)) {
+                    s.mesh.userData.materials.forEach((m: THREE.Material) => {
+                        m.opacity = (m.userData.baseOpacity || 1) * alpha;
+                    });
+                } else if (s.mesh instanceof THREE.Line) {
+                    (s.mesh.material as THREE.LineBasicMaterial).opacity = 0.8 * alpha;
+                }
+
+                if (s.life >= s.maxLife) {
+                    shootingStarGroupRef.current.remove(s.mesh);
+                    if (s.mesh instanceof THREE.Line) {
+                        s.mesh.geometry.dispose();
+                        (s.mesh.material as THREE.Material).dispose();
+                    } else {
+                        s.mesh.traverse(child => {
+                            if (child instanceof THREE.Mesh || child instanceof THREE.Line) {
+                                child.geometry.dispose();
+                                if (Array.isArray(child.material)) child.material.forEach(m => m.dispose());
+                                else child.material.dispose();
+                            }
+                        });
+                    }
+                    shootingStarsRef.current.splice(i, 1);
+                }
+            }
+
             renderer.render(scene, camera);
         };
         animationId = requestAnimationFrame(animate);
 
-        renderer.domElement.addEventListener("click", onClick);
-        renderer.domElement.addEventListener("contextmenu", onContextMenu);
-        renderer.domElement.addEventListener("mousemove", onMouseMove);
-        renderer.domElement.addEventListener("mouseleave", onMouseLeave);
+
 
         const onResize = () => {
             const w = mount.clientWidth;
@@ -1393,6 +1756,7 @@ export default function Globe({
             renderer.domElement.removeEventListener("mousemove", onMouseMove);
             renderer.domElement.removeEventListener("mouseleave", onMouseLeave);
 
+            renderer.domElement.removeEventListener('wheel', onWheel);
             controls.removeEventListener('change', onControlsChange);
             controls.dispose();
             if (zoomTimeoutRef.current) clearTimeout(zoomTimeoutRef.current);
@@ -1412,6 +1776,13 @@ export default function Globe({
             countryLabelsGroupRef.current.clear();
             starGroupRef.current.children.forEach(c => disposeObject(c));
             starGroupRef.current.clear();
+            shootingStarGroupRef.current.children.forEach(c => disposeObject(c));
+            shootingStarGroupRef.current.clear();
+            shootingStarsRef.current = [];
+            solarGroupRef.current.children.forEach(c => disposeObject(c));
+            solarGroupRef.current.clear();
+            if (moonRef.current) disposeObject(moonRef.current);
+            planetsRef.current = [];
             arcsGroupRef.current.children.forEach(c => disposeObject(c));
             arcsGroupRef.current.clear();
             earthGroupRef.current.children.forEach(c => disposeObject(c));
@@ -1487,7 +1858,7 @@ export default function Globe({
         labelGroupRef.current.clear();
         airportsMap.current = {};
 
-        const hM = isMobileRef.current ? 1.5 : 1.0;
+        const hM = isMobileRef.current ? 1.4 : 1.0;
         const forcedSet = new Set([...selectedAirports, ...originsIata, ...allStepsIata, ...destinationsIata].filter(Boolean) as string[]);
         const threshold = clusterThreshold;
 
@@ -1707,20 +2078,36 @@ export default function Globe({
             const meshOpacity = (item.isSpecial || isOriginDestStep) ? 1 : 0.4;
             const baseScale = (isOriginDestStep) ? 35 : (item.isSpecial ? 28 : (item.isCluster ? 2.4 : 1.6));
 
+            const hitboxMult = isMobileRef.current ? 2.5 : 1.0;
             const mesh = new THREE.Mesh(
                 item.isCluster ? sharedClusterGeo.current : sharedAirportGeo.current,
                 new THREE.MeshBasicMaterial({
                     color: meshColor,
                     transparent: true,
-                    opacity: item.isCluster ? 0 : meshOpacity,
+                    opacity: 0, // Hitbox always invisible for raycasting
                     depthWrite: false,
                 })
             );
+
             mesh.position.copy(item.v3);
-            mesh.scale.setScalar(baseScale);
+            mesh.scale.setScalar(baseScale * hitboxMult);
             mesh.userData = { ...item }; // Plain object for userData
             mesh.renderOrder = isOriginDestStep ? 10 : (item.isSpecial ? 5 : 1);
             airportGroupRef.current.add(mesh);
+
+            // Add visual child so interaction box can be independent of visuals
+            if (!item.isCluster) {
+                const visual = new THREE.Mesh(sharedAirportGeo.current, new THREE.MeshBasicMaterial({
+                    color: meshColor,
+                    transparent: true,
+                    opacity: 0, // Start secondary invisible
+                    depthWrite: false,
+                }));
+                visual.userData.isVisual = true;
+                visual.scale.setScalar(1 / hitboxMult);
+                mesh.add(visual);
+                mesh.userData.visualMesh = visual;
+            }
 
             if (item.isCluster) {
                 const texture = getClusterTexture(item.airports.length);
@@ -1733,6 +2120,48 @@ export default function Globe({
                     labelGroupRef.current.add(sprite);
                     mesh.userData.labelMesh = sprite;
                 }
+
+                // Create "Stems" (hairlines) connecting the cluster indicator to the actual airport locations
+                const stemPoints: THREE.Vector3[] = [];
+                item.airports.forEach((a: any) => {
+                    const targetPos = latLonToVector3(a.lat, a.lon, 1.001); // Geographic position
+                    stemPoints.push(item.v3.clone().multiplyScalar(1.015)); // Visual cluster center
+                    stemPoints.push(targetPos);
+                });
+
+                if (stemPoints.length > 0) {
+                    const stemGeo = new THREE.BufferGeometry().setFromPoints(stemPoints);
+                    const stemMat = new THREE.LineBasicMaterial({
+                        color: meshColor,
+                        transparent: true,
+                        opacity: 0, // Sync with label visibility
+                        depthWrite: false,
+                        depthTest: false
+                    });
+                    const stems = new THREE.LineSegments(stemGeo, stemMat);
+                    stems.renderOrder = 18;
+                    stems.visible = false;
+                    labelGroupRef.current.add(stems);
+                    mesh.userData.stemMesh = stems;
+
+                    // Anchor points at the globe surface (geographic positions)
+                    const anchorGeo = new THREE.BufferGeometry().setFromPoints(stemPoints.filter((_, i) => i % 2 === 1));
+                    const anchorMat = new THREE.PointsMaterial({
+                        color: meshColor,
+                        size: 0.0015,
+                        sizeAttenuation: true,
+                        transparent: true,
+                        opacity: 0,
+                        depthWrite: false,
+                        depthTest: false
+                    });
+                    const anchors = new THREE.Points(anchorGeo, anchorMat);
+                    anchors.renderOrder = 19;
+                    anchors.visible = false;
+                    labelGroupRef.current.add(anchors);
+                    mesh.userData.anchorMesh = anchors;
+                }
+
                 item.airports.forEach((a: any) => {
                     if (a && a.iata) airportsMap.current[a.iata] = mesh;
                 });
@@ -2233,9 +2662,7 @@ export default function Globe({
         lastPropsRef.current = current;
 
         // Determine if we should trigger a camera movement based on what changed
-        let shouldMove = false;
-        let targetType: 'focus' | 'route' | 'single' | 'home' | null = null;
-        let targetIata: string | undefined = undefined;
+        let autoTarget: { type: 'focus' | 'route' | 'single' | 'home'; iata?: string } | null = null;
 
         const originsChanged = JSON.stringify(current.originsIata) !== JSON.stringify(prev.originsIata);
         const destsChanged = JSON.stringify(current.destinationsIata) !== JSON.stringify(prev.destinationsIata);
@@ -2247,38 +2674,30 @@ export default function Globe({
 
         // Default "itinerary" target based on current state.
         // Focus (inspection) takes priority over the route framing.
-        const getAutoTarget = () => {
-            if (current.focusIata) return { type: 'focus' as const, iata: current.focusIata };
-            if (allActiveIatas.length >= 2) return { type: 'route' as const };
-            if (allActiveIatas.length === 1) return { type: 'single' as const, iata: allActiveIatas[0] };
-            return { type: 'home' as const };
+        const getAutoTarget = (): { type: 'focus' | 'route' | 'single' | 'home'; iata?: string } => {
+            if (current.focusIata) return { type: 'focus', iata: current.focusIata };
+            if (allActiveIatas.length >= 2) return { type: 'route' };
+            if (allActiveIatas.length === 1) return { type: 'single', iata: allActiveIatas[0] };
+            return { type: 'home' };
         };
 
         if (originsChanged || destsChanged || selectedChanged || focusChanged) {
             // Route, selection or focus was modified
-            shouldMove = true;
-            const res = getAutoTarget();
-            targetType = res.type;
-            targetIata = (res as any).iata;
+            autoTarget = getAutoTarget();
         } else if (interactiveChanged && !current.interactive) {
             // Map mode deactivated -> View current route or home
-            shouldMove = true;
-            const res = getAutoTarget();
-            targetType = res.type;
-            targetIata = (res as any).iata;
-        } else {
-            shouldMove = false;
+            autoTarget = getAutoTarget();
         }
 
-        if (!shouldMove) return;
+        if (!autoTarget) return;
 
         const activeAirports = allActiveIatas
             .map(iata => airportsDataRef.current.find(a => a.iata === iata))
             .filter(Boolean) as AirportData[];
 
-        if (targetType === 'focus' || targetType === 'single') {
-            const iata = targetIata;
-            const airport = iata ? airportsDataRef.current.find(a => a.iata === iata) : null;
+        if ((autoTarget.type === 'focus' || autoTarget.type === 'single') && autoTarget.iata) {
+            const iata = autoTarget.iata;
+            const airport = airportsDataRef.current.find(a => a.iata === iata);
             if (airport) {
                 const mesh = airportsMap.current[iata];
                 const targetPoint = mesh ? mesh.position.clone() : latLonToVector3(Number(airport.lat), Number(airport.lon));
@@ -2286,10 +2705,13 @@ export default function Globe({
                 gsap.to(cameraRef.current.position, {
                     x: targetPos.x, y: targetPos.y, z: targetPos.z,
                     duration: 1.5, ease: "power2.inOut", overwrite: "auto",
-                    onUpdate: () => { cameraRef.current?.lookAt(0, 0, 0); }
+                    onUpdate: () => {
+                        cameraRef.current?.lookAt(0, 0, 0);
+                        if (cameraRef.current) targetZoomDistRef.current = cameraRef.current.position.length();
+                    }
                 });
             }
-        } else if (targetType === 'route' && activeAirports.length >= 2) {
+        } else if (autoTarget.type === 'route' && activeAirports.length >= 2) {
             // Find two furthest airports in the selection to define the span
             let maxD = -1;
             let pair = [activeAirports[0]!, activeAirports[1]!];
@@ -2345,13 +2767,19 @@ export default function Globe({
             gsap.to(cameraRef.current.position, {
                 x: targetPos.x, y: targetPos.y, z: targetPos.z,
                 duration: 1.8, ease: "power3.inOut", overwrite: "auto",
-                onUpdate: () => { cameraRef.current?.lookAt(0, 0, 0); }
+                onUpdate: () => {
+                    cameraRef.current?.lookAt(0, 0, 0);
+                    if (cameraRef.current) targetZoomDistRef.current = cameraRef.current.position.length();
+                }
             });
-        } else if (targetType === 'home' && geoReady) {
+        } else if (autoTarget.type === 'home' && geoReady) {
             gsap.to(cameraRef.current.position, {
                 x: homePositionRef.current.x, y: homePositionRef.current.y, z: homePositionRef.current.z,
                 duration: 1.5, ease: "power2.inOut", overwrite: "auto",
-                onUpdate: () => { cameraRef.current?.lookAt(0, 0, 0); }
+                onUpdate: () => {
+                    cameraRef.current?.lookAt(0, 0, 0);
+                    if (cameraRef.current) targetZoomDistRef.current = cameraRef.current.position.length();
+                }
             });
         }
     }, [isLoaded, originsIata, destinationsIata, focusIata, interactive, geoReady, selectedAirports, allStepsIata]);

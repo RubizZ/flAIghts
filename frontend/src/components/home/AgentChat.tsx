@@ -684,11 +684,11 @@ const AgentChat = forwardRef<any, AgentChatProps>(({
                     <div className="absolute inset-0 bg-brand/10 blur-xl rounded-full scale-110 opacity-50" />
                 </div>
                 <h2 className="text-xl font-black mb-2 text-content italic">Inteligencia Exclusiva</h2>
-                <p className="text-sm text-content-muted max-w-72 leading-relaxed mb-10 font-medium">
+                <div className="text-sm text-content-muted max-w-72 leading-relaxed mb-10 font-medium">
                     <ReactMarkdown>Nuestro asistente **flAIghts** utiliza IA para aprender de tus gustos y sugerirte destinos únicos.</ReactMarkdown>
                     <br />
                     Para interactuar con él y ver recomendaciones, necesitas estar identificado.
-                </p>
+                </div>
 
                 <div className="flex flex-col gap-3 w-full max-w-64">
                     <Link
@@ -752,9 +752,9 @@ const AgentChat = forwardRef<any, AgentChatProps>(({
                             <div className="absolute inset-0 bg-brand/10 blur-xl rounded-full scale-110 opacity-50" />
                         </div>
                         <h2 className="text-xl font-black mb-2 text-content italic">¡Hola, {isAuthenticated ? user?.username : 'explorador'}!</h2>
-                        <p className="text-sm text-content-muted max-w-64 leading-relaxed mb-8 font-medium prose-strong:text-brand">
+                        <div className="text-sm text-content-muted max-w-64 leading-relaxed mb-8 font-medium prose-strong:text-brand">
                             <ReactMarkdown>Soy fl**AI**ghts. No solo busco vuelos, aprendo de ti para sugerirte tu próximo destino.</ReactMarkdown>
-                        </p>
+                        </div>
 
                         <div className="grid grid-cols-1 gap-2 w-full max-w-72">
                             {suggestions.map((s, idx) => (
