@@ -6,7 +6,7 @@
     "ignore": [
         "src/tsoa"
     ],
-    "exec": "npx tsoa spec-and-routes && node --enable-source-maps --inspect=0.0.0.0:9229 --import tsx src/index.ts",
+    "exec": "npm run tsoa:generate && node --enable-source-maps --inspect=0.0.0.0:9229 --import tsx src/index.ts",
     "legacyWatch": true,
     "delay": 1000
 }

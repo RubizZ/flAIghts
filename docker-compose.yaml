@@ -61,6 +61,7 @@ services:
     command: sh -c "npm install && npm run dev"
     volumes:
       - ./backend:/usr/src/app
+      - ./frontend/src/api:/usr/src/frontend/src/api
       - backend_node_modules:/usr/src/app/node_modules
     environment:
       - NODE_ENV=development
@@ -85,6 +86,12 @@ services:
       - S3_SECRET_ACCESS_KEY=admin123
       - OPENAI_BASE_URL=http://ollama:11434/v1
       - OPENAI_API_KEY=ollama
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://localhost:3000/health').then(r => r.ok ? process.exit(0) : process.exit(1)).catch(() => process.exit(1))"]
+      interval: 5s
+      timeout: 10s
+      retries: 10
+      start_period: 20s
 
   website:
     build:
@@ -100,7 +107,8 @@ services:
       - ./frontend:/usr/src/app
       - frontend_node_modules:/usr/src/app/node_modules
     depends_on:
-      - server
+      server:
+        condition: service_healthy
 
 volumes:
   mongo_data:

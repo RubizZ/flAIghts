@@ -115,6 +115,11 @@ if (config.NODE_ENV !== 'production') {
     app.use('/docs', swaggerUi.serve, swaggerUi.setup(openApiSpec));
 }
 
+// Health check endpoint
+app.get('/health', (req, res) => {
+    res.status(200).send('OK');
+});
+
 // Register routes from tsoa
 RegisterRoutes(app)
 
