@@ -6,11 +6,16 @@ import { SearchService } from "./search.service.js";
 import type { AuthenticatedUser } from "../auth/auth.types.js";
 import type { SuccessResponse as SuccessResponseType, FailResponseFromError, PathPath, QueryPath, ValidationDetails, RequestValidationFailResponse } from "../../utils/responses.js";
 import { SearchNotFoundError, SearchNotAuthorizedError } from "./search.errors.js";
+import { AsyncAPIChannel, AsyncAPIController, AsyncAPIMessage } from "../../utils/asyncapi.decorators.js";
+import type { SearchProgressEvent } from "./search.types.js";
+
 
 @injectable()
 @Route("search")
 @Tags("Search")
+@AsyncAPIController("Search")
 export class SearchController extends Controller {
+
 
     constructor(
         @inject(SearchService) private readonly searchService: SearchService
@@ -40,39 +45,17 @@ export class SearchController extends Controller {
     /**
      * Canal de streaming para el progreso de la búsqueda (SSE).
      */
-    @Post("/stream")
-    @Security("jwt-optional")
-    public async searchRequestStream(
+    @AsyncAPIChannel("/stream", { method: 'POST', summary: "Canal de streaming de búsqueda de vuelos", security: "jwt-optional" })
+    public async *searchRequestStream(
         @Body() body: SearchRequest,
-        @RequestProp('user') user: AuthenticatedUser | null,
-        @Request() request: express.Request
-    ): Promise<void> {
+        @RequestProp('user') user: AuthenticatedUser | null
+    ): AsyncGenerator<SearchProgressEvent> {
         const requestData: SearchRequest & { user_id?: string } = { ...body };
         if (user) requestData.user_id = user._id;
 
-        const res = request.res!;
-
-        res.setHeader('Content-Type', 'text/event-stream');
-        res.setHeader('Cache-Control', 'no-cache');
-        res.setHeader('Connection', 'keep-alive');
-        res.flushHeaders();
-
-        try {
-            for await (const event of this.searchService.createSearchStream(requestData)) {
-                res.write(`data: ${JSON.stringify(event)}\n\n`);
-                if ((res as any).flush) {
-                    (res as any).flush();
-                }
-            }
-        } catch (error: any) {
-            res.write(`data: ${JSON.stringify({ type: 'failed', message: error.message })}\n\n`);
-            if ((res as any).flush) {
-                (res as any).flush();
-            }
-        } finally {
-            res.end();
-        }
+        yield* this.searchService.createSearchStream(requestData);
     }
+
 
     /**
      * Obtiene los resultados de una búsqueda por su ID.

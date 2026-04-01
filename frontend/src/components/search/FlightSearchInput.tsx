@@ -1,6 +1,6 @@
 import React from "react";
 import { MapPin, Search } from "lucide-react";
-import { AirportResponse } from "@/api/generated/model";
+import { AirportResponse } from "@/api/generated/openapi/model";
 import AirportAutocomplete from "../AirportAutocomplete";
 import PremiumInput from "../ui/PremiumInput";
 

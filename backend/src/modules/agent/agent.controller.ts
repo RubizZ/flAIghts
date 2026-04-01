@@ -7,10 +7,13 @@ import type { SuccessResponse as SuccessResponseType } from "../../utils/respons
 import type { AgentRequest, AgentResponse, AgentValidationFailResponse } from "./agent.types.js";
 import { AgentUnavailableError } from "./agent.errors.js";
 import type { FailResponseFromError } from "../../utils/responses.js";
+import { AsyncAPIChannel, AsyncAPIController } from "../../utils/asyncapi.decorators.js";
+import type { AgentStreamEvent } from "./agent.types.js";
 
 @injectable()
 @Route("agent")
 @Tags("Agent")
+@AsyncAPIController("Agent")
 export class AgentController extends Controller {
 
     constructor(
@@ -46,35 +49,13 @@ export class AgentController extends Controller {
     /**
      * Canal de streaming para el progreso del agente (SSE).
      */
-    @Post("/stream")
-    @Security("jwt")
-    public async agentChatStream(
+    @AsyncAPIChannel("/stream", { method: 'POST', summary: "Canal de streaming del agente", security: "jwt" })
+    public agentChatStream(
         @Body() body: AgentRequest,
-        @RequestProp('user') user: AuthenticatedUser,
-        @Request() request: express.Request
-    ): Promise<void> {
-        const { messages, location, manual_state, model, date } = body;
-        const res = request.res!;
-
-        res.setHeader('Content-Type', 'text/event-stream');
-        res.setHeader('Cache-Control', 'no-cache');
-        res.setHeader('Connection', 'keep-alive');
-        res.flushHeaders();
-
-        try {
-            for await (const event of this.agentService.chatStream(messages, user._id, location, manual_state, model, date)) {
-                res.write(`data: ${JSON.stringify(event)}\n\n`);
-                if ((res as any).flush) {
-                    (res as any).flush();
-                }
-            }
-        } catch (error: any) {
-            res.write(`data: ${JSON.stringify({ type: 'error', message: error.message })}\n\n`);
-            if ((res as any).flush) {
-                (res as any).flush();
-            }
-        } finally {
-            res.end();
-        }
+        @RequestProp('user') user: AuthenticatedUser
+    ): AsyncGenerator<AgentStreamEvent> {
+        return this.agentService.chatStream(body.messages, user._id, body.location, body.manual_state, body.model, body.date);
     }
 }
+
+

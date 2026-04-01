@@ -2,7 +2,7 @@ import 'reflect-metadata'
 import express from 'express';
 import cors from 'cors';
 import { connectDB } from './config/database.js';
-import { RegisterRoutes } from './tsoa/routes.js';
+import { RegisterRoutes } from './generated/tsoa/routes.js';
 import { ValidateError as TsoaValidateError } from 'tsoa';
 import { AppError, CorsError } from './utils/errors.js';
 import swaggerUi from 'swagger-ui-express';
@@ -16,6 +16,7 @@ import { container } from 'tsyringe';
 import { ServerConfig } from './config/server.config.js';
 import { contextStorage, type RequestContext } from './utils/context.js';
 import logger from './utils/logger.js';
+import { RegisterAsyncRoutes } from './generated/asyncapi/routes.js';
 
 
 logger.info(`
@@ -106,13 +107,19 @@ app.use((req, res, next) => {
     };
     next();
 });
-
-// Swagger UI documentation (only in development)
 if (config.NODE_ENV !== 'production') {
     const __filename = fileURLToPath(import.meta.url);
     const __dirname = path.dirname(__filename);
+
+    // AsyncAPI UI documentation (only in development)
+    const asyncApiDocsPath = path.join(__dirname, '../build/asyncapi-docs');
+    if (fs.existsSync(asyncApiDocsPath)) {
+        app.use('/docs/async', express.static(asyncApiDocsPath));
+    }
+
+    // Swagger UI documentation (only in development)
     const openApiSpec = JSON.parse(fs.readFileSync(path.join(__dirname, '../build/openapi.json'), 'utf8'));
-    app.use('/docs', swaggerUi.serve, swaggerUi.setup(openApiSpec));
+    app.use('/docs/api', swaggerUi.serve, swaggerUi.setup(openApiSpec));
 }
 
 // Health check endpoint
@@ -120,8 +127,9 @@ app.get('/health', (req, res) => {
     res.status(200).send('OK');
 });
 
-// Register routes from tsoa
+// Register routes from tsoa and asyncapi
 RegisterRoutes(app)
+RegisterAsyncRoutes(app)
 
 // Error handling middleware for validation request errors, business logic errors and unhandled errors
 app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction): express.Response | void => {

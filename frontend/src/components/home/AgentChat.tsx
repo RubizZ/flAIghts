@@ -9,14 +9,34 @@ import type {
     SearchResponseData,
     ItineraryResponse,
     AirportResponse
-} from "@/api/generated/model";
+} from "@/api/generated/openapi/model";
 import { useAuth } from "@/context/AuthContext";
-import { getAirportByIata } from "@/api/generated/airports/airports";
-import { useModels } from "@/api/generated/agent/agent";
+import { getAirportByIata } from "@/api/generated/openapi/airports";
+import { useModels } from "@/api/generated/openapi/agent";
+import { useAgentStreamMutation } from "@/api/generated/asyncapi/hooks";
+import * as AsyncAPIModels from "@/api/generated/asyncapi/models";
+
+/**
+ * Tipo para soportar mensajes de chat extendidos con streaming y razonamiento.
+ */
+export interface ExtendedChatMessage {
+    role: "user" | "assistant" | "system" | "reasoning";
+    content: string;
+    isStreaming?: boolean;
+    flights?: SearchResponseData[];
+    steps?: UIStep[];
+    isLimitReached?: boolean;
+}
+
+type UIStep = AsyncAPIModels.AgentStreamEvent & {
+    result?: unknown;
+    status?: string;
+    progress?: any;
+};
 
 interface AgentChatProps {
-    messages: ChatMessage[];
-    setMessages: (messages: ChatMessage[]) => void;
+    messages: ExtendedChatMessage[];
+    setMessages: (messages: ExtendedChatMessage[] | ((prev: ExtendedChatMessage[]) => ExtendedChatMessage[])) => void;
     location?: { latitude: number; longitude: number };
     origins?: AirportResponse[];
     destinations?: AirportResponse[];
@@ -125,7 +145,7 @@ const FlightCard = ({ search }: { search: SearchResponseData }) => {
     );
 };
 
-const getToolDescription = (step: any) => {
+const getToolDescription = (step: UIStep) => {
     if (step.type === 'step') return step.message;
     if (step.type === 'tool_call') {
         // Si hay progreso activo, lo priorizamos en la descripción
@@ -150,7 +170,7 @@ const getToolDescription = (step: any) => {
     }
     if (step.type === 'tool_result') {
         const name = step.name;
-        const args = step.args || {}; // Note: tool_result might not have args
+        const args = (step as any).args || {}; // Cast to any here is acceptable for union access of potentially shared fields
         switch (name) {
             case 'getUserInfo': return `Datos obtenidos de tu perfil`;
             case 'getUserSearchHistory': return `Datos obtenidos de tu historial`;
@@ -165,7 +185,7 @@ const getToolDescription = (step: any) => {
         return `Pensando...`;
     }
     if (step.type === 'tool_progress') {
-        const progressEvent = step.event;
+        const progressEvent = (step as any).event; // Use any to access event prop safely in union context
         if (progressEvent.type === 'progress') return progressEvent.message;
         if (progressEvent.type === 'completed') return 'Búsqueda completada';
         if (progressEvent.type === 'failed') return `Error: ${progressEvent.message}`;
@@ -368,6 +388,7 @@ const AgentChat = forwardRef<any, AgentChatProps>(({
     const availableModels = availableModelsData || [];
     const [selectedModel, setSelectedModel] = useState<string>("");
     const [isStreaming, setIsStreaming] = useState(false);
+    const { mutateAsync: connectStream } = useAgentStreamMutation();
 
     useEffect(() => {
         if (availableModels.length > 0 && !selectedModel) {
@@ -386,12 +407,12 @@ const AgentChat = forwardRef<any, AgentChatProps>(({
         setIsStreaming(false);
         setIsTyping(false);
 
-        (setMessages as any)((prev: ChatMessage[]) => {
-            const hasStreaming = prev.some(m => (m as any).isStreaming);
+        setMessages((prev: ExtendedChatMessage[]) => {
+            const hasStreaming = prev.some(m => m.isStreaming);
 
             if (hasStreaming) {
                 return prev.map(m => {
-                    if ((m as any).isStreaming) {
+                    if (m.isStreaming) {
                         let newContent = m.content;
                         if (reason === 'user') newContent += "\n\n *— Generación interrumpida por el usuario*";
                         if (reason === 'error') newContent += "\n\n *— Error en la generación, por favor, intenta de nuevo*";
@@ -404,10 +425,10 @@ const AgentChat = forwardRef<any, AgentChatProps>(({
                 const text = reason === 'user' ? "Generación interrumpida por el usuario" : "Error en la generación";
                 return [
                     ...prev,
-                    { role: 'assistant', content: `*— ${text}*` } as any
+                    { role: 'assistant', content: `*— ${text}*` } as ExtendedChatMessage
                 ];
             }
-            return prev.map(m => (m as any).isStreaming ? { ...m, isStreaming: false } : m);
+            return prev.map(m => m.isStreaming ? { ...m, isStreaming: false } : m);
         });
     };
 
@@ -425,190 +446,151 @@ const AgentChat = forwardRef<any, AgentChatProps>(({
     }));
 
 
-    const streamResponse = async (newMessages: ChatMessage[]) => {
-        const controller = new AbortController();
-        abortControllerRef.current = controller;
+    const streamResponse = async (newMessages: AsyncAPIModels.AssistantRequestMessage[]) => {
         setIsStreaming(true);
         let iterationCount = 0;
         let hasFinalResult = false;
         let capturedError = false;
+
         try {
-            const token = localStorage.getItem('token');
-            const response = await fetch(`${import.meta.env.VITE_BACKEND_API_BASE_URL}/agent/stream`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    ...(token ? { 'Authorization': `Bearer ${token}` } : {})
-                },
-                credentials: 'include',
-                signal: controller.signal,
-                body: JSON.stringify({
+            await connectStream({
+                body: {
                     messages: newMessages,
                     model: selectedModel,
-                    location,
+                    location: location,
                     manual_state: {
                         origins: origins?.map(o => o.iata_code),
                         destinations: destinations?.map(d => d.iata_code),
                         departure_date: departureDate,
                         return_date: returnDate
                     }
-                })
-            });
+                },
+                onEvent: (event) => {
+                    if (event.type === 'iteration') {
+                        iterationCount = event.count;
+                    }
 
-            if (!response.ok) {
-                // Si hay error (ej: 400 de validación), forzamos al catch para mostrar "Pensando..."
-                throw new Error(`HTTP Error: ${response.status}`);
-            }
-
-            const reader = response.body?.getReader();
-            const decoder = new TextDecoder();
-
-            if (!reader) throw new Error("No reader");
-
-            while (true) {
-                const { done, value } = await reader.read();
-                if (done) break;
-
-                const chunk = decoder.decode(value, { stream: true });
-                const lines = chunk.split('\n');
-
-                for (const line of lines) {
-                    if (line.startsWith('data: ')) {
-                        try {
-                            const event = JSON.parse(line.substring(6));
-
-                            if (event.type === 'iteration') {
-                                iterationCount = event.count;
+                    if (event.type === 'step') {
+                        setIsTyping(false);
+                        setMessages((prev: ExtendedChatMessage[]) => {
+                            const last = prev[prev.length - 1];
+                            if (last && last.role === 'assistant' && last.isStreaming) {
+                                return [
+                                    ...prev.slice(0, -1),
+                                    { ...last, content: (last.content || '') + event.message, isStreaming: true }
+                                ];
+                            } else {
+                                const cleaned = prev.map(m => m.isStreaming ? { ...m, isStreaming: false } : m);
+                                return [
+                                    ...cleaned,
+                                    { role: 'assistant', content: event.message, isStreaming: true } as ExtendedChatMessage
+                                ];
                             }
+                        });
+                    } else if (event.type === 'tool_call' || event.type === 'tool_result' || event.type === 'tool_progress' || event.type === 'iteration') {
+                        // Sync UI state for searches
+                        if (event.type === 'tool_call' && event.name === 'performSearch') {
+                            const args = event.args || {};
+                            if (args.origins && args.origins.length > 0 && setOrigins) {
+                                Promise.all(args.origins.map((iata: string) => getAirportByIata(iata)))
+                                    .then(res => {
+                                        const valid = res.filter(Boolean) as AirportResponse[];
+                                        if (valid.length > 0) setOrigins(valid);
+                                    }).catch(console.error);
+                            }
+                            if (args.destinations && args.destinations.length > 0 && setDestinations) {
+                                Promise.all(args.destinations.map((iata: string) => getAirportByIata(iata)))
+                                    .then(res => {
+                                        const valid = res.filter(Boolean) as AirportResponse[];
+                                        if (valid.length > 0) setDestinations(valid);
+                                    }).catch(console.error);
+                            }
+                            if (args.departure_date && setDepartureDate) setDepartureDate(args.departure_date);
+                            if (args.return_date && setReturnDate) setReturnDate(args.return_date);
+                        }
 
-                            if (event.type === 'step') {
-                                setIsTyping(false);
-                                (setMessages as any)((prev: ChatMessage[]) => {
-                                    const last = prev[prev.length - 1];
-                                    if (last && last.role === 'assistant' && (last as any).isStreaming) {
-                                        return [
-                                            ...prev.slice(0, -1),
-                                            { ...last, content: (last.content || '') + event.message, isStreaming: true }
-                                        ];
-                                    } else {
-                                        const cleaned = prev.map(m => (m as any).isStreaming ? { ...m, isStreaming: false } : m);
-                                        return [
-                                            ...cleaned,
-                                            { role: 'assistant', content: event.message, isStreaming: true } as any
-                                        ];
-                                    }
-                                });
-                            } else if (event.type === 'tool_call' || event.type === 'tool_result' || event.type === 'tool_progress' || event.type === 'iteration') {
-                                // Sync UI state for searches
-                                if (event.type === 'tool_call' && event.name === 'performSearch') {
-                                    const args = event.args || {};
-                                    if (args.origins && args.origins.length > 0 && setOrigins) {
-                                        Promise.all(args.origins.map((iata: string) => getAirportByIata(iata)))
-                                            .then(res => {
-                                                const valid = res.filter(Boolean) as AirportResponse[];
-                                                if (valid.length > 0) setOrigins(valid);
-                                            }).catch(console.error);
-                                    }
-                                    if (args.destinations && args.destinations.length > 0 && setDestinations) {
-                                        Promise.all(args.destinations.map((iata: string) => getAirportByIata(iata)))
-                                            .then(res => {
-                                                const valid = res.filter(Boolean) as AirportResponse[];
-                                                if (valid.length > 0) setDestinations(valid);
-                                            }).catch(console.error);
-                                    }
-                                    if (args.departure_date && setDepartureDate) setDepartureDate(args.departure_date);
-                                    if (args.return_date && setReturnDate) setReturnDate(args.return_date);
-                                }
+                        setMessages((prev: ExtendedChatMessage[]) => {
+                            const cleaned = prev.map(m => m.isStreaming ? { ...m, isStreaming: false } : m);
 
-                                (setMessages as any)((prev: ChatMessage[]) => {
-                                    const cleaned = prev.map(m => (m as any).isStreaming ? { ...m, isStreaming: false } : m);
-
-                                    // Handle tool_result and tool_progress by searching for their matching tool_call in any reasoning block
-                                    if (event.type === 'tool_result' || event.type === 'tool_progress') {
-                                        let found = false;
-                                        const newMessages = cleaned.map(m => {
-                                            if (!found && (m.role as any) === 'reasoning' && (m as any).steps) {
-                                                const steps = [...(m as any).steps];
-                                                const callIdx = steps.findLastIndex((s: any) => s.type === 'tool_call' && s.call_id === event.call_id);
-                                                if (callIdx !== -1) {
-                                                    if (event.type === 'tool_result') {
-                                                        steps[callIdx] = { ...steps[callIdx], result: event.result, status: 'completed' };
-                                                    } else {
-                                                        steps[callIdx] = { ...steps[callIdx], progress: event.event };
-                                                    }
-                                                    found = true;
-                                                    return { ...m, steps };
-                                                }
+                            if (event.type === 'tool_result' || event.type === 'tool_progress') {
+                                let found = false;
+                                const newMessages = cleaned.map(m => {
+                                    if (!found && m.role === 'reasoning' && m.steps) {
+                                        const steps = [...m.steps];
+                                        const callIdx = steps.findLastIndex((s) => s.type === 'tool_call' && s.call_id === event.call_id);
+                                        if (callIdx !== -1) {
+                                            if (event.type === 'tool_result') {
+                                                steps[callIdx] = { ...steps[callIdx], result: event.result, status: 'completed' } as UIStep;
+                                            } else {
+                                                steps[callIdx] = { ...steps[callIdx], progress: event.event } as UIStep;
                                             }
-                                            return m;
-                                        });
-                                        if (found) return newMessages;
-                                    }
-
-                                    // For tool_call: decide whether to append to last reasoning message or create new
-                                    const lastIdx = cleaned.length - 1;
-                                    const lastMsg = cleaned[lastIdx];
-
-                                    if (lastMsg && (lastMsg.role as any) === 'reasoning') {
-                                        const newMessages = [...cleaned];
-                                        newMessages[lastIdx] = {
-                                            ...lastMsg,
-                                            steps: [...((lastMsg as any).steps || []), event]
-                                        } as any;
-                                        return newMessages;
-                                    } else {
-                                        return [...cleaned, { role: 'reasoning' as any, steps: [event] } as any];
-                                    }
-                                });
-                            } else if (event.type === 'final_result') {
-                                hasFinalResult = true;
-                                (setMessages as any)((prev: ChatMessage[]) => {
-                                    const cleaned = prev.map(m => (m as any).isStreaming ? { ...m, isStreaming: false } : m);
-                                    if (event.data?.flights && event.data.flights.length > 0) {
-                                        const lastAssistantIdx = cleaned.findLastIndex(m => m.role === 'assistant');
-                                        if (lastAssistantIdx !== -1) {
-                                            const newMessages = [...cleaned];
-                                            newMessages[lastAssistantIdx] = {
-                                                ...newMessages[lastAssistantIdx],
-                                                flights: event.data.flights
-                                            } as any;
-                                            return newMessages;
+                                            found = true;
+                                            return { ...m, steps };
                                         }
                                     }
-                                    return cleaned;
+                                    return m;
                                 });
-                                setIsTyping(false);
-                            } else if (event.type === 'error') {
-                                toast.error(event.message);
-                                console.error(event.message);
+                                if (found) return newMessages;
                             }
-                        } catch (e) {
-                            // Partial JSON skip
-                        }
+
+                            const lastIdx = cleaned.length - 1;
+                            const lastMsg = cleaned[lastIdx];
+
+                            if (lastMsg && lastMsg.role === 'reasoning') {
+                                const newMessages = [...cleaned];
+                                newMessages[lastIdx] = {
+                                    ...lastMsg,
+                                    steps: [...(lastMsg.steps || []), event]
+                                };
+                                return newMessages;
+                            } else {
+                                return [...cleaned, { role: 'reasoning', content: '', steps: [event] }];
+                            }
+                        });
+                    } else if (event.type === 'final_result') {
+                        hasFinalResult = true;
+                        setMessages((prev: ExtendedChatMessage[]) => {
+                            const cleaned = prev.map(m => m.isStreaming ? { ...m, isStreaming: false } : m);
+                            if (event.data?.flights && event.data.flights.length > 0) {
+                                const lastAssistantIdx = cleaned.findLastIndex(m => m.role === 'assistant');
+                                if (lastAssistantIdx !== -1) {
+                                    const newMessages = [...cleaned];
+                                    newMessages[lastAssistantIdx] = {
+                                        ...newMessages[lastAssistantIdx],
+                                        flights: event.data.flights
+                                    } as ExtendedChatMessage;
+                                    return newMessages;
+                                }
+                            }
+                            return cleaned;
+                        });
+                        setIsTyping(false);
+                    } else if (event.type === 'error') {
+                        toast.error(event.message);
+                        console.error(event.message);
                     }
+                },
+                onError: (err) => {
+                    capturedError = true;
+                    stopStream('error');
+                    console.error("Stream Error:", err);
+                    toast.error("Error al conectar con el servidor");
                 }
-            }
-        } catch (error: any) {
-            if (error.name === 'AbortError') return;
-            capturedError = true;
-            stopStream('error');
-            console.error("Stream Error:", error);
-            toast.error("Error al conectar con el servidor");
+            });
         } finally {
             setIsStreaming(false);
-
-            // Aviso si se ha llegado al límite de iteraciones sin resultado final
-            if (!controller.signal.aborted && !hasFinalResult && iterationCount > 0 && !capturedError) {
-                (setMessages as any)((prev: ChatMessage[]) => [
-                    ...prev.map(m => ({ ...m, isStreaming: false })),
-                    {
-                        role: 'assistant',
-                        content: 'He alcanzado el límite de pasos para esta respuesta. ¿Quieres que continúe analizando?',
-                        isLimitReached: true
-                    }
-                ]);
-            }
         }
+
+        abortControllerRef.current = {
+            abort: () => {
+                // El hook useMutation no expone el cleanup directamente de esta forma,
+                // pero podemos confiar en que react-query gestiona la cancelación si fuera necesario.
+                // Sin embargo, para SSE manual, mantenemos la lógica de stopStream.
+                setIsStreaming(false);
+                setIsTyping(false);
+            },
+            signal: { aborted: false } as AbortSignal
+        };
     };
 
 
@@ -777,8 +759,8 @@ const AgentChat = forwardRef<any, AgentChatProps>(({
                 ) : (
                     messages.map((msg, i) => {
                         // No renderizar el contenedor si es reasoning y no tiene steps visibles
-                        if (msg.role === ('reasoning' as any)) {
-                            const visibleSteps = (msg as any).steps?.filter((s: any) => s.type !== 'iteration');
+                        if (msg.role === 'reasoning') {
+                            const visibleSteps = msg.steps?.filter((s) => s.type !== 'iteration');
                             if (!visibleSteps || visibleSteps.length === 0) return null;
                         }
 
@@ -794,9 +776,9 @@ const AgentChat = forwardRef<any, AgentChatProps>(({
                                         </span>
                                     )}
 
-                                    {msg.role === ('reasoning' as any) ? (
-                                        <StepProgress steps={(msg as any).steps} />
-                                    ) : msg.role === ('tool' as any) ? (
+                                    {msg.role === 'reasoning' ? (
+                                        <StepProgress steps={msg.steps || []} />
+                                    ) : (msg.role as string) === 'tool' ? (
                                         <div className="flex flex-col gap-2 p-5 bg-brand/3 border-l-4 border-brand/40 rounded-r-2xl w-full max-w-110 mb-4 shadow-xs overflow-hidden backdrop-blur-xs">
                                             <div className="flex items-center gap-4">
                                                 <div className="p-2.5 rounded-xl bg-brand/10 text-brand">
@@ -805,7 +787,7 @@ const AgentChat = forwardRef<any, AgentChatProps>(({
                                                 <div className="flex flex-col">
                                                     <span className="text-[9px] font-black uppercase text-brand/70 tracking-widest leading-tight">Ejecutando</span>
                                                     <span className="text-xs font-bold text-content italic leading-snug">
-                                                        {getToolDescription({ type: 'tool_call', name: (msg as any).toolName, args: (msg as any).args })}
+                                                        {getToolDescription({ type: 'tool_call', name: (msg as any).toolName, args: (msg as any).args, call_id: '' } as UIStep)}
                                                     </span>
                                                 </div>
                                                 {(msg as any).status === 'working' && (

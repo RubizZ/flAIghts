@@ -17,7 +17,7 @@ import {
     Menu,
     X
 } from "lucide-react";
-import { PopulatedUser } from "@/api/generated/model";
+import { PopulatedUser } from "@/api/generated/openapi/model";
 import UserAvatar from "@/components/ui/UserAvatar";
 import NavIconButton from "@/components/ui/NavIconButton";
 

@@ -7,13 +7,16 @@
   "type": "module",
   "main": "dist/index.js",
   "scripts": {
-    "dev": "npm run orval && vite",
-    "build": "npm run orval && vite build",
+    "dev": "concurrently \"npm run orval\" \"npm run asyncapi:client\" && vite",
+    "build": "concurrently \"npm run orval\" \"npm run asyncapi:client\" && vite build",
     "preview": "vite preview",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "orval": "orval"
+    "orval": "orval",
+    "asyncapi:client": "npx tsx scripts/generate-async-api-client.ts"
   },
   "devDependencies": {
+    "@asyncapi/generator": "^3.2.0",
+    "@asyncapi/modelina": "^5.10.1",
     "@tailwindcss/vite": "^4.1.18",
     "@types/node": "^24.10.1",
     "@types/nprogress": "^0.2.3",
@@ -34,6 +37,7 @@
     "@tailwindcss/typography": "^0.5.19",
     "@tanstack/react-query": "^5.90.20",
     "axios": "^1.13.3",
+    "concurrently": "^9.2.1",
     "gsap": "^3.14.2",
     "lucide-react": "^0.563.0",
     "nprogress": "^0.2.0",

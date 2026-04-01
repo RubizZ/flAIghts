@@ -1,8 +1,8 @@
 import { useState, useRef } from "react";
 import { Plus, Globe as GlobeIcon, Calendar as CalendarIcon, Sparkles, SlidersHorizontal, Trash2 } from "lucide-react";
-import { AirportResponse, AssistantRequestMessage as ChatMessage } from "@/api/generated/model";
+import { AirportResponse } from "@/api/generated/openapi/model";
 import ManualSearchForm from "../search/ManualSearchForm";
-import AgentChat from "./AgentChat";
+import AgentChat, { ExtendedChatMessage } from "./AgentChat";
 
 interface HomeCardProps {
     origins: AirportResponse[];
@@ -51,7 +51,7 @@ export default function HomeCard({
     onSearchModeChange,
     className = ""
 }: HomeCardProps) {
-    const [messages, setMessages] = useState<ChatMessage[]>([]);
+    const [messages, setMessages] = useState<ExtendedChatMessage[]>([]);
     const chatRef = useRef<any>(null);
 
     return (

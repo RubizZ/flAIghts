@@ -5,9 +5,9 @@ import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import airplaneModelUrl from "@/assets/plane.glb";
 import { gsap } from "gsap";
 import { PlaneTakeoff, PlaneLanding, X } from "lucide-react";
-import { useGetGlobeAirports } from "@/api/generated/airports/airports";
+import { useGetGlobeAirports } from "@/api/generated/openapi/airports";
 import { COUNTRY_NAMES } from "@/constants/countries";
-import type { AirportResponse } from "@/api/generated/model";
+import type { AirportResponse } from "@/api/generated/openapi/model";
 
 interface AirportData {
     iata: string;
@@ -1251,7 +1251,7 @@ export default function Globe({
 
             raycaster.setFromCamera(mouse, cameraRef.current);
             const intersects = raycaster.intersectObjects(airportGroupRef.current.children);
-            
+
             if (intersects.length > 0 && intersects[0]?.object?.userData) {
                 const item = intersects[0].object.userData;
                 const isSpecial = item.isSpecial;
@@ -1365,8 +1365,8 @@ export default function Globe({
 
                 const baseScale = 2.0 * scaleFactor;
                 const specialScale = 22 * scaleFactor;
-                const specialClusterScale = 6 * scaleFactor; 
-                const clusterHoverScale = 4.5 * scaleFactor;  
+                const specialClusterScale = 6 * scaleFactor;
+                const clusterHoverScale = 4.5 * scaleFactor;
                 const airportHoverScale = 18 * scaleFactor;
                 const labelRefScale = 0.026 * scaleFactor;
                 airportGroupRef.current.children.forEach(child => {
@@ -1442,7 +1442,7 @@ export default function Globe({
                     }
 
                     if (item.isCluster) {
-                        mat.opacity = (DEBUG_HITBOXES && interactiveRef.current) ? 0.3 : 0; 
+                        mat.opacity = (DEBUG_HITBOXES && interactiveRef.current) ? 0.3 : 0;
                         mat.wireframe = (DEBUG_HITBOXES && interactiveRef.current);
                     } else if (DEBUG_HITBOXES && interactiveRef.current) {
                         mat.opacity = Math.max(mat.opacity, 0.2);

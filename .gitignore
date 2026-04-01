@@ -27,6 +27,3 @@ npm-debug.log*
 # Environment
 .env
 .env.local
-
-# Generated Code (TSOA)
-backend/src/tsoa/

@@ -3,11 +3,11 @@ import { toast } from "sonner";
 import AuthLayout from "@/components/layout/AuthLayout";
 import AuthCard from "@/components/ui/AuthCard";
 import FloatingLabelInput from "@/components/ui/FloatingLabelInput";
-import { useInitiateRegistration, useCompleteRegistration } from "@/api/generated/users/users";
-import { useLogin } from "@/api/generated/auth/auth";
+import { useInitiateRegistration, useCompleteRegistration } from "@/api/generated/openapi/users";
+import { useLogin } from "@/api/generated/openapi/auth";
 import { useNavigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
-import { getGetSelfUserQueryKey } from "@/api/generated/users/users";
+import { getGetSelfUserQueryKey } from "@/api/generated/openapi/users";
 import { useAuth } from "@/context/AuthContext";
 import { Mail, ShieldCheck, User as UserIcon, Lock } from "lucide-react";
 

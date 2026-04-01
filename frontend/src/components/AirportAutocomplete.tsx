@@ -49,7 +49,7 @@ export default function AirportAutocomplete({ value, onChange, placeholder, clas
                 method: 'GET',
                 params: { q: debouncedQuery, page: pageParam, limit: 20 }
             });
-            return resp.data; // Retorna el objeto AirportSearchPaginatedResult
+            return resp; // customInstance ya devuelve resp.data.data
         },
         getNextPageParam: (lastPage) => lastPage.page < lastPage.totalPages ? lastPage.page + 1 : undefined,
         enabled: debouncedQuery.length >= 2,

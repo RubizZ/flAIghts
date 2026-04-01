@@ -6,8 +6,8 @@ import {
     useRemoveFriend,
     getGetUserByIdQueryKey,
     getGetSelfUserQueryKey
-} from "@/api/generated/users/users";
-import { getSearches } from "@/api/generated/search/search";
+} from "@/api/generated/openapi/users";
+import { getSearches } from "@/api/generated/openapi/search";
 import { UIEvent } from "react";
 import { useNavigate, useParams, Link } from "react-router-dom";
 import { toast } from "sonner";

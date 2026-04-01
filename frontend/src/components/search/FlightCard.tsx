@@ -1,6 +1,6 @@
 import { useState, Fragment, useMemo } from "react";
 import { ChevronDown, Clock, Info, PlaneLanding, PlaneTakeoff, Ticket, Calendar, Moon, AlertTriangle } from "lucide-react";
-import type { ItineraryResponse, GlobeAirportResponse, LegResponse } from "@/api/generated/model";
+import type { ItineraryResponse, GlobeAirportResponse, LegResponse } from "@/api/generated/openapi/model";
 import FlightRouteInfo from "./FlightRouteInfo";
 import { COUNTRY_NAMES } from "@/constants/countries";
 

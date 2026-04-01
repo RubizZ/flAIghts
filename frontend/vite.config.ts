@@ -17,6 +17,11 @@ export default defineConfig({
             run: ['npm', 'run', 'orval'],
             startup: false,
             condition: (file) => file.includes('openapi.json') || file.includes('orval.config.js'),
+        }),
+        run({
+            run: ['npm', 'run', 'asyncapi:client'],
+            startup: false,
+            condition: (file) => file.includes('asyncapi.json'),
         })
     ],
     assetsInclude: ['**/*.glb'],

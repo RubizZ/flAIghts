@@ -1,10 +1,10 @@
 import { useState, useEffect, useRef } from "react";
 import Globe from "../components/Globe.tsx"
 import { Plus, Globe as GlobeIcon, Maximize2, PlaneTakeoff, PlaneLanding, X, Plane, ChevronDown, ChevronRight, Search, Calendar as CalendarIcon } from "lucide-react";
-import { useSearchRequest } from "@/api/generated/search/search";
+import { useSearchRequest } from "@/api/generated/openapi/search";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
-import { AirportResponse } from "@/api/generated/model";
+import { AirportResponse } from "@/api/generated/openapi/model";
 import StarsBackground from "../components/ui/StarsBackground.tsx";
 import ManualSearchForm from "../components/search/ManualSearchForm.tsx";
 import NavIconButton from "../components/ui/NavIconButton.tsx";

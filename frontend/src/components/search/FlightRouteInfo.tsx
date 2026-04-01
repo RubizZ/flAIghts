@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { Plane } from "lucide-react";
-import type { ItineraryResponse } from "@/api/generated/model";
+import type { ItineraryResponse } from "@/api/generated/openapi/model";
 
 interface FlightRouteInfoProps {
     itinerary: ItineraryResponse;

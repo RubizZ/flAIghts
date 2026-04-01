@@ -5802,36 +5802,6 @@
         }
       }
     },
-    "/search/stream": {
-      "post": {
-        "operationId": "SearchRequestStream",
-        "responses": {
-          "204": {
-            "description": "No content"
-          }
-        },
-        "description": "Canal de streaming para el progreso de la búsqueda (SSE).",
-        "tags": [
-          "Search"
-        ],
-        "security": [
-          {
-            "jwt-optional": []
-          }
-        ],
-        "parameters": [],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/SearchRequest"
-              }
-            }
-          }
-        }
-      }
-    },
     "/search/{searchId}": {
       "get": {
         "operationId": "SearchResult",
@@ -6651,36 +6621,6 @@
           }
         },
         "description": "Chat con el asistente de flAIghts.",
-        "tags": [
-          "Agent"
-        ],
-        "security": [
-          {
-            "jwt": []
-          }
-        ],
-        "parameters": [],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/AgentRequest"
-              }
-            }
-          }
-        }
-      }
-    },
-    "/agent/stream": {
-      "post": {
-        "operationId": "AgentChatStream",
-        "responses": {
-          "204": {
-            "description": "No content"
-          }
-        },
-        "description": "Canal de streaming para el progreso del agente (SSE).",
         "tags": [
           "Agent"
         ],

@@ -1,6 +1,6 @@
 import React from "react";
 import { ArrowLeftRight, Search } from "lucide-react";
-import { AirportResponse } from "@/api/generated/model";
+import { AirportResponse } from "@/api/generated/openapi/model";
 import FlightSearchInput from "./FlightSearchInput";
 import DateSearchInput from "./DateSearchInput";
 

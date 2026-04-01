@@ -22,7 +22,7 @@
     },
     "routes": {
         "autoAlias": true,
-        "routesDir": "src/tsoa",
+        "routesDir": "src/generated/tsoa",
         "iocModule": "src/ioc.ts",
         "middleware": "express",
         "esm": true,

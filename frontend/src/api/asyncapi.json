@@ -1,0 +1,628 @@
+{
+  "asyncapi": "2.6.0",
+  "info": {
+    "title": "flAIghts Async API",
+    "version": "1.0.0",
+    "description": "API de eventos asíncronos generada automáticamente desde los controladores."
+  },
+  "channels": {
+    "/agent/stream": {
+      "x-protocol": "sse",
+      "publish": {
+        "message": {
+          "$ref": "#/components/messages/AgentRequest"
+        }
+      },
+      "subscribe": {
+        "message": {
+          "$ref": "#/components/messages/AgentStreamEvent"
+        }
+      }
+    },
+    "/search/stream": {
+      "x-protocol": "sse",
+      "publish": {
+        "message": {
+          "$ref": "#/components/messages/SearchRequest"
+        }
+      },
+      "subscribe": {
+        "message": {
+          "$ref": "#/components/messages/SearchProgressEvent"
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "AgentRequest": {
+        "type": "object",
+        "properties": {
+          "messages": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AssistantRequestMessage"
+            }
+          },
+          "model": {
+            "type": "string"
+          },
+          "location": {
+            "type": "object",
+            "properties": {
+              "latitude": {
+                "type": "number"
+              },
+              "longitude": {
+                "type": "number"
+              }
+            },
+            "additionalProperties": false,
+            "required": [
+              "latitude",
+              "longitude"
+            ]
+          },
+          "date": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "manual_state": {
+            "type": "object",
+            "properties": {
+              "origins": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "destinations": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "departure_date": {
+                "type": "string"
+              },
+              "return_date": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false,
+        "required": [
+          "messages"
+        ]
+      },
+      "AgentStreamEvent": {
+        "anyOf": [
+          {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "const": "step"
+              },
+              "message": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false,
+            "required": [
+              "message",
+              "type"
+            ]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "const": "iteration"
+              },
+              "count": {
+                "type": "number"
+              }
+            },
+            "additionalProperties": false,
+            "required": [
+              "count",
+              "type"
+            ]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "const": "tool_call"
+              },
+              "name": {
+                "type": "string"
+              },
+              "args": {},
+              "call_id": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false,
+            "required": [
+              "args",
+              "call_id",
+              "name",
+              "type"
+            ]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "const": "tool_progress"
+              },
+              "name": {
+                "type": "string"
+              },
+              "event": {
+                "$ref": "#/components/schemas/SearchProgressEvent"
+              },
+              "call_id": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false,
+            "required": [
+              "call_id",
+              "event",
+              "name",
+              "type"
+            ]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "const": "tool_result"
+              },
+              "name": {
+                "type": "string"
+              },
+              "result": {},
+              "call_id": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false,
+            "required": [
+              "call_id",
+              "name",
+              "result",
+              "type"
+            ]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "const": "final_result"
+              },
+              "data": {
+                "$ref": "#/components/schemas/AgentResponse"
+              }
+            },
+            "additionalProperties": false,
+            "required": [
+              "data",
+              "type"
+            ]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "const": "error"
+              },
+              "message": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false,
+            "required": [
+              "message",
+              "type"
+            ]
+          }
+        ]
+      },
+      "SearchRequest": {
+        "type": "object",
+        "properties": {
+          "origins": {
+            "minItems": 1,
+            "pattern": "^[A-Z]{3}$",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "destinations": {
+            "minItems": 1,
+            "pattern": "^[A-Z]{3}$",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "departure_date": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "return_date": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "criteria": {
+            "type": "object",
+            "properties": {
+              "priority": {
+                "enum": [
+                  "balanced",
+                  "cheap",
+                  "fast"
+                ],
+                "type": "string"
+              },
+              "max_price": {
+                "minimum": 0,
+                "type": "number"
+              }
+            },
+            "additionalProperties": false,
+            "required": [
+              "priority"
+            ]
+          },
+          "layover_days": {
+            "type": "array",
+            "items": {
+              "type": "number"
+            }
+          },
+          "source": {
+            "enum": [
+              "agent",
+              "manual"
+            ],
+            "type": "string"
+          }
+        },
+        "additionalProperties": false,
+        "required": [
+          "criteria",
+          "departure_date",
+          "destinations",
+          "origins"
+        ]
+      },
+      "SearchProgressEvent": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "enum": [
+              "completed",
+              "failed",
+              "progress"
+            ],
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          },
+          "step": {
+            "type": "number"
+          },
+          "total_steps": {
+            "type": "number"
+          },
+          "data": {
+            "$ref": "#/components/schemas/SearchResponseData"
+          }
+        },
+        "additionalProperties": false,
+        "required": [
+          "message",
+          "type"
+        ]
+      },
+      "AssistantRequestMessage": {
+        "description": "Mensaje enviado por el cliente al asistente. Solo permitimos 'user' y 'assistant'\npara evitar que se inyecten mensajes de 'system'.",
+        "type": "object",
+        "properties": {
+          "role": {
+            "enum": [
+              "assistant",
+              "user"
+            ],
+            "type": "string"
+          },
+          "content": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false,
+        "required": [
+          "content",
+          "role"
+        ]
+      },
+      "SearchResponseData": {
+        "type": "object",
+        "properties": {
+          "_id": {
+            "type": "string"
+          },
+          "user_id": {
+            "type": "string"
+          },
+          "origins": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "destinations": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "departure_date": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "return_date": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "criteria": {
+            "type": "object",
+            "properties": {
+              "priority": {
+                "enum": [
+                  "balanced",
+                  "cheap",
+                  "fast"
+                ],
+                "type": "string"
+              },
+              "max_price": {
+                "type": "number"
+              }
+            },
+            "additionalProperties": false,
+            "required": [
+              "priority"
+            ]
+          },
+          "status": {
+            "enum": [
+              "completed",
+              "failed",
+              "searching"
+            ],
+            "type": "string"
+          },
+          "source": {
+            "enum": [
+              "agent",
+              "manual"
+            ],
+            "type": "string"
+          },
+          "departure_itineraries": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ItineraryResponse"
+            }
+          },
+          "return_itineraries": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ItineraryResponse"
+            }
+          },
+          "created_at": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false,
+        "required": [
+          "_id",
+          "created_at",
+          "criteria",
+          "departure_date",
+          "destinations",
+          "origins",
+          "source",
+          "status"
+        ]
+      },
+      "ItineraryResponse": {
+        "type": "object",
+        "properties": {
+          "score": {
+            "type": "number"
+          },
+          "total_price": {
+            "type": "number"
+          },
+          "total_duration": {
+            "type": "number"
+          },
+          "city_order": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "legs": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LegResponse"
+            }
+          },
+          "created_at": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false,
+        "required": [
+          "city_order",
+          "created_at",
+          "legs",
+          "score",
+          "total_duration",
+          "total_price"
+        ]
+      },
+      "LegResponse": {
+        "type": "object",
+        "properties": {
+          "order": {
+            "type": "number"
+          },
+          "flight_id": {
+            "type": "string"
+          },
+          "origin": {
+            "type": "string"
+          },
+          "destination": {
+            "type": "string"
+          },
+          "price": {
+            "type": "number"
+          },
+          "duration": {
+            "type": "number"
+          },
+          "airline": {
+            "type": "string"
+          },
+          "airline_logo": {
+            "type": "string"
+          },
+          "departure_time": {
+            "type": "string"
+          },
+          "arrival_time": {
+            "type": "string"
+          },
+          "wait_time": {
+            "type": "number"
+          },
+          "airplane": {
+            "type": "string"
+          },
+          "flight_number": {
+            "type": "string"
+          },
+          "travel_class": {
+            "type": "string"
+          },
+          "extensions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "additionalProperties": false,
+        "required": [
+          "airline",
+          "airplane",
+          "arrival_time",
+          "departure_time",
+          "destination",
+          "duration",
+          "flight_id",
+          "flight_number",
+          "order",
+          "origin",
+          "price",
+          "travel_class"
+        ]
+      },
+      "AgentResponse": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "$ref": "#/components/schemas/AssistantResponseMessage"
+          },
+          "suggestions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "flights": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SearchResponseData"
+            }
+          }
+        },
+        "additionalProperties": false,
+        "required": [
+          "message"
+        ]
+      },
+      "AssistantResponseMessage": {
+        "description": "Mensaje devuelto por el asistente en la respuesta.",
+        "type": "object",
+        "properties": {
+          "role": {
+            "type": "string",
+            "const": "assistant"
+          },
+          "content": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false,
+        "required": [
+          "content",
+          "role"
+        ]
+      }
+    },
+    "messages": {
+      "AgentRequest": {
+        "payload": {
+          "$ref": "#/components/schemas/AgentRequest"
+        }
+      },
+      "AgentStreamEvent": {
+        "payload": {
+          "$ref": "#/components/schemas/AgentStreamEvent"
+        }
+      },
+      "SearchRequest": {
+        "payload": {
+          "$ref": "#/components/schemas/SearchRequest"
+        }
+      },
+      "SearchProgressEvent": {
+        "payload": {
+          "$ref": "#/components/schemas/SearchProgressEvent"
+        }
+      }
+    }
+  }
+}

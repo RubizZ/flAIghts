@@ -4,9 +4,9 @@ export default defineConfig({
     backendApi: {
         input: './src/api/openapi.json',
         output: {
-            mode: 'tags-split',
-            target: './src/api/generated/api.ts',
-            schemas: './src/api/generated/model',
+            mode: 'tags',
+            target: './src/api/generated/openapi/api.ts',
+            schemas: './src/api/generated/openapi/model',
             client: 'react-query',
             httpClient: 'axios',
             override: {

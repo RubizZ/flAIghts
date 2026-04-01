@@ -1,9 +1,9 @@
 import { useState, useMemo, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { useSearchResult } from "@/api/generated/search/search";
-import { useGetGlobeAirports } from "@/api/generated/airports/airports";
+import { useSearchResult } from "@/api/generated/openapi/search";
+import { useGetGlobeAirports } from "@/api/generated/openapi/airports";
 import { AlertCircle, Loader2, Plane, ArrowLeft, ArrowRight, DollarSign, Clock, Calendar } from "lucide-react";
-import type { ItineraryResponse, GlobeAirportResponse, AirportResponse } from "@/api/generated/model";
+import type { ItineraryResponse, GlobeAirportResponse, AirportResponse } from "@/api/generated/openapi/model";
 import StarsBackground from "@/components/ui/StarsBackground";
 import { toast } from "sonner";
 import Globe from "@/components/Globe";
