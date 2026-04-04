@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, UIEvent, Fragment } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import { ArrowLeft, Send, Loader2, CheckCheck, Plane } from "lucide-react";
 import { useGetUserById } from "@/api/generated/users/users";
 import UserAvatar from "@/components/ui/UserAvatar";
@@ -14,6 +14,7 @@ import { toast } from "sonner";
 export default function Chat() {
     const { userId } = useParams<{ userId: string }>();
     const { user: selfUser, isAuthenticated } = useAuth();
+    const navigate = useNavigate();
     const queryClient = useQueryClient();
     const [newMessage, setNewMessage] = useState("");
     const socketRef = useRef<Socket | null>(null);
@@ -242,9 +243,12 @@ export default function Chat() {
             <div className="flex flex-col w-full h-[calc(100vh-5.5rem)] sm:h-full max-w-4xl bg-main rounded-3xl border border-line shadow-lg overflow-hidden animate-in fade-in duration-300">
 
                 <header className="flex items-center gap-4 p-4 border-b border-line shrink-0">
-                    <Link to="/chats" className="p-2 rounded-full hover:bg-surface transition-colors">
+                    <button
+                        onClick={() => navigate(-1)}
+                        className="p-2 rounded-full hover:bg-surface transition-colors cursor-pointer"
+                    >
                         <ArrowLeft size={24} />
-                    </Link>
+                    </button>
                     <UserAvatar user={otherUser} size={40} />
                     <div className="flex flex-col gap-1">
                         <h1 className="text-lg font-bold text-content leading-none">{otherUser.username}</h1>
