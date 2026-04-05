@@ -959,6 +959,7 @@ export default function Globe({
         scene.add(sunLight);
 
         const loader = new THREE.TextureLoader();
+        loader.setCrossOrigin("Anonymous");
 
         // Starfield
         const starGroup = starGroupRef.current;
@@ -983,8 +984,11 @@ export default function Globe({
 
         const sunMesh = new THREE.Mesh(
             new THREE.SphereGeometry(15, 32, 32),
-            new THREE.MeshBasicMaterial({ color: 0xffff00 })
+            new THREE.MeshBasicMaterial({ 
+                map: loader.load("https://threejs.org/examples/textures/lava/lavatile.jpg"),
+            })
         );
+        sunMesh.name = "sunBody";
         sunGroup.add(sunMesh);
 
         // Sun Glow Effect
@@ -1814,6 +1818,10 @@ export default function Globe({
                 );
                 // Update sun light to follow the Sun
                 sunLight.position.copy(sunRef.current.position);
+
+                // Rotate the sun's surface independently
+                const sunBody = sunRef.current.getObjectByName("sunBody");
+                if (sunBody) sunBody.rotation.y += 0.001;
             }
 
             // Planets orbit the Earth directly (geocentric)
