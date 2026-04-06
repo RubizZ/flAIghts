@@ -1,12 +1,11 @@
 import type { Request } from "express";
 import type { AuthenticatedUser, JWTPayload } from "./auth.types.js";
 import jwt from "jsonwebtoken";
-import { User, type IUser } from "../users/models/user.model.js";
+import { User } from "../users/models/user.model.js";
 import { AuthenticationVersionMismatchError, InvalidTokenError, NoTokenProvidedError, TokenUserNotFoundError } from "./auth.errors.js";
-import type { FriendUser, PopulatedUser, PublicUser } from "../users/user.types.js";
-
 import { container } from "tsyringe"
 import { ServerConfig } from "../../config/server.config.js"
+import { contextStorage } from "../../utils/context.js"
 
 export async function expressAuthentication(
     request: Request,
@@ -48,6 +47,12 @@ export async function expressAuthentication(
 
         user.last_seen_at = new Date();
         await user.save();
+
+        // Update context with userId for auditing
+        const store = contextStorage.getStore();
+        if (store) {
+            store.userId = user._id.toString();
+        }
 
         const safeUser: AuthenticatedUser = {
             _id: user._id.toString(),

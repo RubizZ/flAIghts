@@ -31,6 +31,7 @@ import {
 import { MailService } from "@/services/mail.service.js";
 import { MailTemplates } from "@/services/mail.templates.js";
 import { S3Service, S3FileTooLargeError } from "@/services/s3.service.js";
+import { AuditService } from "../audit/audit.service.js";
 
 export class EmailVerificationService {
     public static generateCode() {
@@ -47,7 +48,8 @@ export class UserService {
 
     constructor(
         @inject(MailService) private mailService: MailService,
-        @inject(S3Service) private s3Service: S3Service
+        @inject(S3Service) private s3Service: S3Service,
+        @inject(AuditService) private auditService: AuditService
     ) { }
 
     public async initiateRegistration(data: InitiateRegistrationData): Promise<void> {
@@ -70,6 +72,14 @@ export class UserService {
 
         const template = MailTemplates.emailVerification(verificationCode);
         this.mailService.sendMail(data.email, template.subject, template.html);
+
+        this.auditService.register({
+            resource: "USER",
+            action: "INITIATE_REGISTRATION",
+            details: {
+                email: data.email
+            }
+        });
     }
 
     public async completeRegistration(data: CompleteRegistrationData): Promise<IUserUnpopulated> {
@@ -91,6 +101,16 @@ export class UserService {
 
             // Clean up pre-registration
             await PreRegistration.deleteOne({ email: data.email.toLowerCase() });
+
+            this.auditService.register({
+                resource: "USER",
+                action: "COMPLETE_REGISTRATION",
+                details: {
+                    email: user.email,
+                    username: user.username,
+                    preferences: user.preferences
+                }
+            });
 
             return this.sanitizeUser(user);
         } catch (error) {
@@ -132,6 +152,14 @@ export class UserService {
 
         this.mailService.sendMail(user.email, oldTemplate.subject, oldTemplate.html);
         this.mailService.sendMail(newEmail, newTemplate.subject, newTemplate.html);
+
+        this.auditService.register({
+            resource: "USER",
+            action: "INITIATE_EMAIL_CHANGE",
+            details: {
+                newEmail: newEmail
+            }
+        });
     }
 
     public async cancelEmailChange(userId: string): Promise<void> {
@@ -139,6 +167,14 @@ export class UserService {
         if (!user) throw new UserNotFoundError(userId);
         user.email_change_request = undefined;
         await user.save();
+
+        this.auditService.register({
+            resource: "USER",
+            action: "CANCEL_EMAIL_CHANGE",
+            details: {
+                stayingEmail: user.email
+            }
+        });
     }
 
     public async completeEmailChange(userId: string, data: CompleteEmailChangeData): Promise<IUserUnpopulated> {
@@ -160,10 +196,22 @@ export class UserService {
             throw new EmailVerificationCodeInvalidOrExpiredError();
         }
 
-        user.email = user.email_change_request.new_email;
+        const oldEmail = user.email;
+        const newEmail = user.email_change_request.new_email;
+
+        user.email = newEmail;
         user.email_change_request = undefined;
         user.auth_version++;
         await user.save();
+
+        this.auditService.register({
+            resource: "USER",
+            action: "COMPLETE_EMAIL_CHANGE",
+            details: {
+                oldEmail,
+                newEmail
+            }
+        });
 
         return this.sanitizeUser(user);
     }
@@ -175,6 +223,17 @@ export class UserService {
         }
         const user = await User.findByIdAndUpdate(userId, data, { new: true });
         if (!user) throw new UserNotFoundError(userId);
+
+        this.auditService.register({
+            resource: "USER",
+            action: "UPDATE",
+            details: {
+                username: data.username,
+                public: data.public,
+                preferences: data.preferences
+            }
+        });
+
         return this.sanitizeUser(user);
     }
 
@@ -232,6 +291,14 @@ export class UserService {
             if (requester.sent_friend_requests.some(id => (typeof id === 'string' ? id : id._id) === targetId)) throw new FriendRequestAlreadySentError();
             if (target.sent_friend_requests.some(id => (typeof id === 'string' ? id : id._id) === requesterId) || requester.received_friend_requests.some(id => (typeof id === 'string' ? id : id._id) === targetId)) throw new FriendRequestAlreadyReceivedError();
         }
+
+        this.auditService.register({
+            resource: "USER",
+            action: "SEND_FRIEND_REQUEST",
+            details: {
+                userId: targetId
+            }
+        });
     }
 
     public async cancelFriendRequest(requesterId: string, targetId: string): Promise<void> {
@@ -259,6 +326,14 @@ export class UserService {
 
             if (!requester.sent_friend_requests.some(id => id.toString() === targetId)) throw new NoPendingFriendRequestError();
         }
+
+        this.auditService.register({
+            resource: "USER",
+            action: "CANCEL_FRIEND_REQUEST",
+            details: {
+                userId: targetId
+            }
+        });
     }
 
     public async acceptFriendRequest(requesterId: string, targetId: string): Promise<void> {
@@ -286,6 +361,14 @@ export class UserService {
 
             if (!requester.received_friend_requests.some(id => id.toString() === targetId)) throw new NoReceivedFriendRequestError();
         }
+
+        this.auditService.register({
+            resource: "USER",
+            action: "ACCEPT_FRIEND_REQUEST",
+            details: {
+                userId: targetId
+            }
+        });
     }
 
     public async rejectFriendRequest(requesterId: string, targetId: string): Promise<void> {
@@ -313,6 +396,14 @@ export class UserService {
 
             if (!requester.received_friend_requests.some(id => id.toString() === targetId)) throw new NoReceivedFriendRequestError();
         }
+
+        this.auditService.register({
+            resource: "USER",
+            action: "REJECT_FRIEND_REQUEST",
+            details: {
+                userId: targetId
+            }
+        });
     }
 
     public async removeFriend(requesterId: string, targetId: string): Promise<void> {
@@ -340,6 +431,14 @@ export class UserService {
 
             if (!requester.friends.some(f => (typeof f.user === 'string' ? f.user : f.user._id) === targetId)) throw new NotFriendsError();
         }
+
+        this.auditService.register({
+            resource: "USER",
+            action: "REMOVE_FRIEND",
+            details: {
+                userId: targetId
+            }
+        });
     }
 
     public async getProfilePictureUrl(userId: string): Promise<string> {
@@ -381,6 +480,15 @@ export class UserService {
 
             user.profile_picture = key;
             await user.save();
+
+            this.auditService.register({
+                resource: "USER",
+                action: "UPDATE_PROFILE_PICTURE",
+                details: {
+                    url: key
+                }
+            });
+
             return user;
         } catch (error: any) {
             // Transformamos solo errores de negocio (AppError) a dominio

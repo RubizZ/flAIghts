@@ -30,13 +30,15 @@ export class ResetTokenService {
 }
 
 import { ServerConfig } from "../../config/server.config.js";
+import { AuditService } from "../audit/audit.service.js";
 
 @singleton()
 export class AuthService {
 
     constructor(
         @inject(MailService) private mailService: MailService,
-        @inject(ServerConfig) private config: ServerConfig
+        @inject(ServerConfig) private config: ServerConfig,
+        @inject(AuditService) private auditService: AuditService
     ) { }
 
     public async login(identifier: string, password: string): Promise<LoginResponseData> {
@@ -45,13 +47,31 @@ export class AuthService {
             .select('+password');
 
         if (!user) {
-            throw new LoginUserNotFoundError(identifier);
+            const error = new LoginUserNotFoundError(identifier);
+            this.auditService.register({
+                resource: "AUTH",
+                action: "FAILED_LOGIN",
+                details: {
+                    identifier,
+                    reason: error.code
+                }
+            });
+            throw error;
         }
 
         const passwordMatch = PasswordService.comparePassword(password, user.password!);
 
         if (!passwordMatch) {
-            throw new InvalidPasswordError(identifier);
+            const error = new InvalidPasswordError(identifier);
+            this.auditService.register({
+                resource: "AUTH",
+                action: "FAILED_LOGIN",
+                details: {
+                    identifier,
+                    reason: error.code
+                }
+            });
+            throw error;
         }
 
         const token = jwt.sign(
@@ -63,6 +83,17 @@ export class AuthService {
             { expiresIn: this.config.JWT_EXPIRATION }
         );
 
+        this.auditService.register({
+            resource: "AUTH",
+            action: "LOGIN",
+            details: {
+                identifier
+            },
+            user: {
+                id: user._id.toString()
+            }
+        });
+
         return {
             userId: user._id,
             token,
@@ -71,7 +102,25 @@ export class AuthService {
     }
 
     public async logoutAll(userId: string) {
-        await User.updateOne({ _id: userId }, { $inc: { auth_version: 1 } });
+        const user = await User.findOneAndUpdate({ _id: userId }, { $inc: { auth_version: 1 } });
+        if (!user) {
+            const error = new LoginUserNotFoundError(userId);
+            this.auditService.register({
+                resource: "AUTH",
+                action: "FAILED_LOGOUT_ALL",
+                details: {
+                    reason: error.code
+                }
+            });
+            throw error;
+        }
+        this.auditService.register({
+            resource: "AUTH",
+            action: "LOGOUT_ALL",
+            details: {
+                auth_version: user.auth_version
+            }
+        });
     }
 
     public async changePassword(userId: string, oldPassword: string, newPassword: string) {
@@ -79,15 +128,41 @@ export class AuthService {
         if (!user) throw new LoginUserNotFoundError(userId);
 
         const passwordMatch = PasswordService.comparePassword(oldPassword, user.password!);
-        if (!passwordMatch) throw new InvalidPasswordError(userId);
+        if (!passwordMatch) {
+            const error = new InvalidPasswordError(userId);
+            this.auditService.register({
+                resource: "AUTH",
+                action: "FAILED_CHANGE_PASSWORD",
+                details: {
+                    reason: error.code
+                }
+            });
+            throw error;
+        }
 
         if (PasswordService.comparePassword(newPassword, user.password!)) {
-            throw new NewPasswordSameAsOldError();
+            const error = new NewPasswordSameAsOldError();
+            this.auditService.register({
+                resource: "AUTH",
+                action: "FAILED_CHANGE_PASSWORD",
+                details: {
+                    reason: error.code
+                }
+            });
+            throw error;
         }
 
         user.password = PasswordService.hashPassword(newPassword);
         user.auth_version += 1;
         await user.save();
+
+        this.auditService.register({
+            resource: "AUTH",
+            action: "CHANGE_PASSWORD",
+            details: {
+                auth_version: user.auth_version
+            }
+        });
 
         return true;
     }
@@ -107,12 +182,30 @@ export class AuthService {
             { new: true }
         );
 
-        if (!user) return false;
+        if (!user) {
+            const error = new LoginUserNotFoundError(email);
+            this.auditService.register({
+                resource: "AUTH",
+                action: "FAILED_FORGOT_PASSWORD",
+                details: {
+                    reason: error.code
+                }
+            });
+            throw error;
+        }
 
         const resetUrl = `${this.config.FRONTEND_URL}/reset-password?token=${resetToken}`;
         const template = MailTemplates.passwordReset(resetUrl);
 
         this.mailService.sendMail(user.email, template.subject, template.html);
+
+        this.auditService.register({
+            resource: "AUTH",
+            action: "FORGOT_PASSWORD_REQUEST",
+            details: {
+                email
+            }
+        });
 
         return true;
     }
@@ -134,8 +227,24 @@ export class AuthService {
         );
 
         if (!user) {
-            throw new ResetTokenInvalidOrExpiredError();
+            const error = new ResetTokenInvalidOrExpiredError();
+            this.auditService.register({
+                resource: "AUTH",
+                action: "FAILED_RESET_PASSWORD",
+                details: {
+                    reason: error.code
+                }
+            });
+            throw error;
         }
+
+        this.auditService.register({
+            resource: "AUTH",
+            action: "RESET_PASSWORD",
+            details: {
+                email: user.email
+            }
+        });
 
         return true;
     }

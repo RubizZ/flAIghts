@@ -1,9 +1,10 @@
 import "reflect-metadata";
 import { writeFile } from "fs/promises";
 import { SerpApiClient } from "./serpapi.client.js";
+import { ServerConfig } from "../../config/server.config.js";
 
 async function test() {
-    const client = new SerpApiClient();
+    const client = new SerpApiClient(new ServerConfig());
 
     const result = await client.search({
     departure_id: "MAD",

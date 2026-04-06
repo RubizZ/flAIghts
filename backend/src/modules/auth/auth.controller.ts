@@ -9,6 +9,8 @@ import { InvalidCredentialsError, LoginUserNotFoundError, InvalidPasswordError, 
 
 import { ServerConfig } from "../../config/server.config.js";
 
+import logger from "../../utils/logger.js";
+
 @injectable()
 @Route("auth")
 @Tags("Auth")
@@ -34,7 +36,7 @@ export class AuthController extends Controller {
 
             switch (responseType) {
                 case 'cookie':
-                    console.log('Setting cookie for user:', result.userId);
+                    logger.info(`Setting auth cookie for user: ${result.userId}`);
                     const isProduction = this.config.NODE_ENV === 'production';
                     request.res!.cookie('token', result.token, {
                         httpOnly: true,
@@ -119,7 +121,11 @@ export class AuthController extends Controller {
     @Response<ForgotPasswordValidationFailResponse>(422, "Error de validación")
     public async forgotPassword(@Body() body: ForgotPasswordRequest): Promise<SuccessResponse<MessageResponseData>> {
         const { email } = body;
-        await this.authService.forgotPassword(email);
+        try {
+            await this.authService.forgotPassword(email);
+        } catch {
+            // Por seguridad, no se debe hacer nada si el usuario no existe.
+        }
         return {
             message: "Si existe un usuario asociado a esa cuenta, se ha enviado un email de recuperación."
         } satisfies MessageResponseData as any;

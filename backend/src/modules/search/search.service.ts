@@ -12,6 +12,8 @@ import type { ApiRequestParameters, SerpApiResponse, FlightRoute } from "@/servi
 import { AirportService } from "../airport/airport.service.js";
 import { UserService } from "../users/user.service.js";
 import type { IFriendUnpopulated } from "../users/models/user.model.js";
+import { AuditService } from "../audit/audit.service.js";
+import logger from "@/utils/logger.js";
 
 
 
@@ -22,13 +24,27 @@ export class SearchService {
         @inject(AirportService) private readonly airportService: AirportService,
         @inject(SerpApiClient) private readonly serpApiClient: SerpApiClient,
         @inject(Dijkstra) private readonly dijkstra: Dijkstra,
-        @inject(UserService) private readonly userService: UserService
+        @inject(UserService) private readonly userService: UserService,
+        @inject(AuditService) private readonly auditService: AuditService
     ) { }
     public async createSearch(data: SearchRequest & { user_id?: string }): Promise<SearchResponseData> {
         const createdData: Partial<ISearch> = { ...data };
         createdData.shared = !data.user_id;
         const search = await Search.create(createdData);
         this.runExploration(search._id, data);
+        this.auditService.register({
+            resource: "SEARCH",
+            action: "CREATE",
+            details: {
+                id: search._id.toString(),
+                origins: data.origins,
+                destinations: data.destinations,
+                departure_date: data.departure_date,
+                return_date: data.return_date,
+                layover_days: data.layover_days,
+                criteria: data.criteria
+            }
+        });
         return this.formatSearchResponse(search.toJSON());
     }
 
@@ -62,6 +78,15 @@ export class SearchService {
 
         search.shared = true;
         await search.save();
+
+        this.auditService.register({
+            resource: "SEARCH",
+            action: "SHARE",
+            details: {
+                id: searchId
+            }
+        });
+
         return this.formatSearchResponse(search.toJSON());
     }
 
@@ -78,6 +103,15 @@ export class SearchService {
 
         search.shared = false;
         await search.save();
+
+        this.auditService.register({
+            resource: "SEARCH",
+            action: "PRIVATIZE",
+            details: {
+                id: searchId
+            }
+        });
+
         return this.formatSearchResponse(search.toJSON());
     }
 
@@ -121,8 +155,15 @@ export class SearchService {
                 const tramo = this.dijkstra.findPath(puntoA, puntoB, edges, criteria.criteria.priority);
 
                 if (!tramo) {
-                    console.warn(`Tramo inalcanzable: ${puntoA} -> ${puntoB}`);
+                    logger.warn(`Tramo inalcanzable: ${puntoA} -> ${puntoB} para búsqueda ${searchId}`);
                     await Search.updateOne({ _id: searchId }, { status: "failed" });
+                    this.auditService.register({
+                        resource: "SEARCH",
+                        action: "FAIL",
+                        details: {
+                            id: searchId
+                        }
+                    });
                     return;
                 }
                 currentDate = tramo[tramo.length - 1]!.date;
@@ -190,13 +231,21 @@ export class SearchService {
                     }
                 );
 
-                console.log(`Exploración finalizada para ${searchId}: ${fullPath.length} vuelos encontrados.`);
+                this.auditService.register({
+                    resource: "SEARCH",
+                    action: "COMPLETE",
+                    details: {
+                        id: searchId,
+                        itinerary_id: itinerary._id.toString()
+                    }
+                });
+
             } else {
                 await Search.updateOne({ _id: searchId }, { status: "failed" });
             }
 
         } catch (error) {
-            console.error(`Error en exploración ${searchId}:`, error);
+            logger.error({ error, searchId }, `Error en exploración ${searchId}`);
             await Search.updateOne({ _id: searchId }, { status: "failed" });
         }
     }
