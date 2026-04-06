@@ -1,7 +1,7 @@
 import { singleton } from "tsyringe";
 import fuzzysort from "fuzzysort";
 import { Airport, type IAirport } from "./airport.model.js";
-import type { AirportResponse, PaginatedAirportResponse, ScoredAirport, GlobeAirportResponse } from "./airport.types.js";
+import type { AirportResponse, AirportSearchPaginatedResult, ScoredAirport, GlobeAirportResponse } from "./airport.types.js";
 import logger from "../../utils/logger.js";
 
 // Radios base (km) para búsqueda de rutas
@@ -58,10 +58,7 @@ export class AirportService {
             .toLowerCase();
     }
 
-    /**
-     * Búsqueda con detección de errores (typos) usando fuzzysort y normalización
-     */
-    public async searchAirports(query: string, userLat?: number, userLon?: number, page: number = 1, limit: number = 10): Promise<PaginatedAirportResponse> {
+    public async searchAirports(query: string, userLat?: number, userLon?: number, page: number = 1, limit: number = 10): Promise<AirportSearchPaginatedResult> {
         if (!this.isInitialized) {
             return await this.searchDatabase(query, page, limit);
         }
@@ -98,8 +95,8 @@ export class AirportService {
                 finalScore += 500000;
             }
 
-            return { 
-                ...airport, 
+            return {
+                ...airport,
                 combined_score: finalScore,
                 distance_km: distance_km ? Math.round(distance_km) : undefined
             };
@@ -109,12 +106,12 @@ export class AirportService {
         const totalPages = Math.ceil(total / limit);
         const start = (page - 1) * limit;
         const items = sortedResults.slice(start, start + limit)
-             .map(({ _normIata, _normCity, _normName, _normCountry, _normCountryNames, ...airport }) => airport as any);
+            .map(({ _normIata, _normCity, _normName, _normCountry, _normCountryNames, ...airport }) => airport as any);
 
         return { items, total, page, totalPages };
     }
 
-    private async searchDatabase(query: string, page: number = 1, limit: number = 10): Promise<PaginatedAirportResponse> {
+    private async searchDatabase(query: string, page: number = 1, limit: number = 10): Promise<AirportSearchPaginatedResult> {
         // Fallback básico si la caché falla
         const regex = new RegExp(query, 'i');
         const findQuery = {
@@ -169,6 +166,41 @@ export class AirportService {
             return found || null;
         }
         return await Airport.findOne({ iata_code: iata.toUpperCase() }).lean();
+    }
+
+    /**
+     * Obtiene los aeropuertos más cercanos a una ubicación (lat, lon) 
+     * utilizando una consulta geoespacial nativa de MongoDB ($near).
+     * @param lat Latitud
+     * @param lon Longitud
+     * @param limit Cantidad máxima de resultados
+     * @param maxDistanceKm Radio máximo en kilómetros
+     */
+    public async getNearAirports(lat: number, lon: number, limit: number = 5, maxDistanceKm: number = 500): Promise<AirportResponse[]> {
+        const airports = await Airport.aggregate([
+            {
+                $geoNear: {
+                    near: { type: "Point", coordinates: [lon, lat] },
+                    distanceField: "distance_meters", // MongoDB devuelve el cálculo en metros directamente
+                    maxDistance: maxDistanceKm * 1000,
+                    spherical: true
+                }
+            },
+            { $limit: limit }
+        ]);
+
+        return airports.map(a => {
+            return {
+                iata_code: a.iata_code,
+                name: a.name,
+                city: a.city,
+                country: a.country,
+                type: a.type,
+                importance_score: a.importance_score,
+                location: a.location,
+                distance_km: Math.round(a.distance_meters / 1000)
+            } as AirportResponse;
+        });
     }
 
     public async getCandidateLayovers(

@@ -48,7 +48,22 @@ export class AirportController extends Controller {
           }
         }
         const results = await this.airportService.searchAirports(q, userLat, userLon, page, limit);
-        return results satisfies AirportSearchPaginatedResult as any;
+        return { status: "success", data: results };
+    }
+
+    @Get("/near")
+    @Response<SuccessResponseType<AirportResponse[]>>(200, "Aeropuertos cercanos encontrados")
+    public async getNearAirports(
+        @Query() lat: number,
+        @Query() lon: number,
+        @Query() limit?: number,
+        @Query() maxDistanceKm?: number
+    ): Promise<SuccessResponseType<AirportResponse[]>> {
+        const results = await this.airportService.getNearAirports(lat, lon, limit, maxDistanceKm);
+        return {
+            status: "success",
+            data: results
+        };
     }
 
     @Get("/globe")

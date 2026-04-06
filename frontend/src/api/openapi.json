@@ -4219,6 +4219,30 @@
         "type": "object",
         "additionalProperties": false
       },
+      "SuccessResponseType_AirportResponse-Array_": {
+        "description": "Wrapper de éxito JSend (aplicado por el middleware global).",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "success"
+            ],
+            "nullable": false
+          },
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/AirportResponse"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "status",
+          "data"
+        ],
+        "type": "object",
+        "additionalProperties": false
+      },
       "GlobeAirportResponse": {
         "description": "Compact format for globe visualization",
         "properties": {
@@ -6439,6 +6463,65 @@
           {
             "in": "query",
             "name": "lon",
+            "required": false,
+            "schema": {
+              "format": "double",
+              "type": "number"
+            }
+          }
+        ]
+      }
+    },
+    "/airports/near": {
+      "get": {
+        "operationId": "GetNearAirports",
+        "responses": {
+          "200": {
+            "description": "Ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponseType_AirportResponse-Array_"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Airports"
+        ],
+        "security": [],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "lat",
+            "required": true,
+            "schema": {
+              "format": "double",
+              "type": "number"
+            }
+          },
+          {
+            "in": "query",
+            "name": "lon",
+            "required": true,
+            "schema": {
+              "format": "double",
+              "type": "number"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "format": "double",
+              "type": "number"
+            }
+          },
+          {
+            "in": "query",
+            "name": "maxDistanceKm",
             "required": false,
             "schema": {
               "format": "double",
