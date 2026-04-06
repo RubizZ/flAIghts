@@ -20,7 +20,6 @@ const getPaginatedOperations = () => {
                                 lastPage?.page < lastPage?.totalPages
                                     ? lastPage.page + 1
                                     : undefined,
-                            initialPageParam: 1
                         }
                     }
                 };
@@ -44,6 +43,9 @@ export default defineConfig({
                 mutator: {
                     path: './src/api/axios-instance.ts',
                     name: 'customInstance',
+                },
+                query: {
+                    version: 5,
                 },
                 operations: getPaginatedOperations()
             },
