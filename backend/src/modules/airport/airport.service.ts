@@ -1,7 +1,7 @@
 import { singleton } from "tsyringe";
 import fuzzysort from "fuzzysort";
 import { Airport, type IAirport } from "./airport.model.js";
-import type { AirportResponse, ScoredAirport, GlobeAirportResponse } from "./airport.types.js";
+import type { AirportResponse, PaginatedAirportResponse, ScoredAirport, GlobeAirportResponse } from "./airport.types.js";
 import logger from "../../utils/logger.js";
 
 // Radios base (km) para búsqueda de rutas
@@ -61,15 +61,17 @@ export class AirportService {
     /**
      * Búsqueda con detección de errores (typos) usando fuzzysort y normalización
      */
-    public async searchAirports(query: string): Promise<AirportResponse[]> {
+    public async searchAirports(query: string, page: number = 1, limit: number = 10): Promise<PaginatedAirportResponse> {
         if (!this.isInitialized) {
             // Fallback si por alguna razón no está listo (aunque es poco probable)
-            const results = await this.searchDatabase(query);
+            const results = await this.searchDatabase(query, page, limit);
             return results;
         }
 
         const cleanQuery = query?.trim();
-        if (!cleanQuery || cleanQuery.length < 2) return [];
+        if (!cleanQuery || cleanQuery.length < 2) {
+            return { items: [], total: 0, page, totalPages: 0 };
+        }
 
         // Normalizamos la query para que coincida con nuestros campos normalizados
         const normalizedQuery = this.normalize(cleanQuery);
@@ -77,11 +79,10 @@ export class AirportService {
         // Fuzzysort en los campos normalizados
         const results = fuzzysort.go(normalizedQuery, this.airportsCache, {
             keys: ['_normIata', '_normCity', '_normName', '_normCountry', '_normCountryNames'],
-            limit: 15,
             threshold: -10000, // Ajustable según sensibilidad deseada
         });
 
-        return results.map(result => {
+        const sortedResults = results.map((result: any) => {
             const airport = result.obj;
             // Calculamos un bonus basado en importancia y precisión de fuzzysort
             // result.score es negativo (0 es match perfecto)
@@ -93,17 +94,44 @@ export class AirportService {
             }
 
             return { ...airport, _sortScore: finalScore };
-        }).sort((a, b) => b._sortScore - a._sortScore)
-            .slice(0, 10)
+        }).sort((a, b) => b._sortScore - a._sortScore);
+
+        const total = sortedResults.length;
+        const paginatedItems = sortedResults
+            .slice((page - 1) * limit, page * limit)
             .map(({ _sortScore, searchKey, ...airport }) => airport as any);
+
+        return {
+            items: paginatedItems,
+            total,
+            page,
+            totalPages: Math.ceil(total / limit)
+        };
     }
 
-    private async searchDatabase(query: string) {
+    private async searchDatabase(query: string, page: number = 1, limit: number = 10): Promise<PaginatedAirportResponse> {
         // Fallback básico si la caché falla
         const regex = new RegExp(query, 'i');
-        return await Airport.find({
+        const findQuery = {
             $or: [{ iata_code: regex }, { city: regex }, { name: regex }]
-        }).limit(10).lean() as any;
+        };
+
+        const skip = (page - 1) * limit;
+
+        const [airports, total] = await Promise.all([
+            Airport.find(findQuery)
+                .skip(skip)
+                .limit(limit)
+                .lean(),
+            Airport.countDocuments(findQuery)
+        ]);
+
+        return {
+            items: airports as AirportResponse[],
+            total,
+            page,
+            totalPages: Math.ceil(total / limit)
+        };
     }
 
     /**
@@ -127,6 +155,15 @@ export class AirportService {
             s: a.importance_score,
             c: a.country
         }));
+    }
+
+    public async getAirportByIata(iata: string): Promise<IAirport | null> {
+        if (!iata || iata.length !== 3) return null;
+        if (this.isInitialized) {
+            const found = this.airportsCache.find(a => a.iata_code === iata.toUpperCase());
+            return found || null;
+        }
+        return await Airport.findOne({ iata_code: iata.toUpperCase() }).lean();
     }
 
     public async getCandidateLayovers(

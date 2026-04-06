@@ -1,15 +1,14 @@
 import React from "react";
 import { ArrowLeftRight, Search } from "lucide-react";
+import { AirportResponse } from "@/api/generated/model";
 import FlightSearchInput from "./FlightSearchInput";
 import DateSearchInput from "./DateSearchInput";
 
 interface ManualSearchFormProps {
-    origin: string;
-    originDisplay: string;
-    setOrigin: (val: string, display?: string) => void;
-    destination: string;
-    destinationDisplay: string;
-    setDestination: (val: string, display?: string) => void;
+    origin: AirportResponse | null;
+    setOrigin: (airport: AirportResponse | null) => void;
+    destination: AirportResponse | null;
+    setDestination: (airport: AirportResponse | null) => void;
     departureDate: string;
     setDepartureDate: (date: string) => void;
     returnDate: string;
@@ -29,10 +28,8 @@ interface ManualSearchFormProps {
 
 const ManualSearchForm: React.FC<ManualSearchFormProps> = ({
     origin,
-    originDisplay,
     setOrigin,
     destination,
-    destinationDisplay,
     setDestination,
     departureDate,
     setDepartureDate,
@@ -52,9 +49,8 @@ const ManualSearchForm: React.FC<ManualSearchFormProps> = ({
 }) => {
     const handleSwitch = () => {
         const tempOrigin = origin;
-        const tempOriginDisplay = originDisplay;
-        setOrigin(destination, destinationDisplay);
-        setDestination(tempOrigin, tempOriginDisplay);
+        setOrigin(destination);
+        setDestination(tempOrigin);
     };
 
     return (
@@ -65,10 +61,9 @@ const ManualSearchForm: React.FC<ManualSearchFormProps> = ({
                 <FlightSearchInput
                     type="origin"
                     value={origin}
-                    displayValue={originDisplay}
-                    onChange={(val, display) => {
-                        if (val === destination && val !== "") return false;
-                        setOrigin(val, display);
+                    onChange={(airport) => {
+                        if (airport && destination && airport.iata_code === destination.iata_code) return false;
+                        setOrigin(airport);
                         return true;
                     }}
                     onMapClick={() => startMapSelection('origin')}
@@ -93,10 +88,9 @@ const ManualSearchForm: React.FC<ManualSearchFormProps> = ({
                 <FlightSearchInput
                     type="destination"
                     value={destination}
-                    displayValue={destinationDisplay}
-                    onChange={(val, display) => {
-                        if (val === origin && val !== "") return false;
-                        setDestination(val, display);
+                    onChange={(airport) => {
+                        if (airport && origin && airport.iata_code === origin.iata_code) return false;
+                        setDestination(airport);
                         return true;
                     }}
                     onMapClick={() => startMapSelection('destination')}

@@ -1,7 +1,6 @@
 import { RouteObject } from "react-router-dom";
 import RootLayout from "@/components/layout/RootLayout";
 import AppLayout from "@/components/layout/AppLayout";
-import RouteErrorBoundary from "@/components/common/RouteErrorBoundary";
 
 import NotFound from "@/pages/NotFound.tsx";
 import Login from "@/pages/Login.tsx";
@@ -18,7 +17,6 @@ import Settings from "@/pages/Settings.tsx";
 export const routes: RouteObject[] = [
     {
         element: <RootLayout />,
-        errorElement: <RouteErrorBoundary />,
         children: [
             {
                 /* Auth routes */

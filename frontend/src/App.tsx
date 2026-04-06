@@ -14,16 +14,10 @@ export default function App() {
     return (
         <QueryClientProvider client={queryClient}>
             <ThemeProvider>
-                <QueryErrorResetBoundary>
-                    {({ reset }) => (
-                        <ErrorBoundary onReset={reset}>
-                            <AuthProvider>
-                                <RouterProvider router={router} />
-                                <Toaster richColors position="top-center" />
-                            </AuthProvider>
-                        </ErrorBoundary>
-                    )}
-                </QueryErrorResetBoundary>
+                <AuthProvider>
+                    <RouterProvider router={router} />
+                    <Toaster richColors position="top-center" />
+                </AuthProvider>
             </ThemeProvider>
         </QueryClientProvider>
     );

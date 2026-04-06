@@ -87,7 +87,7 @@
       },
       "FailResponseFromError_EmailAlreadyInUseError_": {
         "$ref": "#/components/schemas/FailResponse_EMAIL_ALREADY_IN_USE._field-email--value-string__",
-        "description": "Extrae automáticamente code y details de una clase AppError.\n\nEjemplo:\n- FailResponseFromError<UserAlreadyExistsError> → { status: 'fail', data: { code: 'CONFLICT', message: string, details: { field, value } } }\n- FailResponseFromError<UserNotFoundError> → { status: 'fail', data: { code: 'NOT_FOUND', message: string, details: { userId } } }"
+        "description": "Extrae automáticamente code y details de una clase AppError.\r\n\r\nEjemplo:\r\n- FailResponseFromError<UserAlreadyExistsError> → { status: 'fail', data: { code: 'CONFLICT', message: string, details: { field, value } } }\r\n- FailResponseFromError<UserNotFoundError> → { status: 'fail', data: { code: 'NOT_FOUND', message: string, details: { userId } } }"
       },
       "ValidationDetails_BodyPath_InitiateRegistrationData__": {
         "properties": {
@@ -127,7 +127,7 @@
           }
         },
         "type": "object",
-        "description": "Generador de estructura de detalles.\nTransforma una unión de llaves ('body' | 'body.id') en el objeto que TSOA espera."
+        "description": "Generador de estructura de detalles.\r\nTransforma una unión de llaves ('body' | 'body.id') en el objeto que TSOA espera."
       },
       "RequestValidationFailResponse_ValidationDetails_BodyPath_InitiateRegistrationData___": {
         "properties": {
@@ -372,7 +372,7 @@
       },
       "FailResponseFromError_UsernameAlreadyInUseError_": {
         "$ref": "#/components/schemas/FailResponse_USERNAME_ALREADY_IN_USE._field-username--value-string__",
-        "description": "Extrae automáticamente code y details de una clase AppError.\n\nEjemplo:\n- FailResponseFromError<UserAlreadyExistsError> → { status: 'fail', data: { code: 'CONFLICT', message: string, details: { field, value } } }\n- FailResponseFromError<UserNotFoundError> → { status: 'fail', data: { code: 'NOT_FOUND', message: string, details: { userId } } }"
+        "description": "Extrae automáticamente code y details de una clase AppError.\r\n\r\nEjemplo:\r\n- FailResponseFromError<UserAlreadyExistsError> → { status: 'fail', data: { code: 'CONFLICT', message: string, details: { field, value } } }\r\n- FailResponseFromError<UserNotFoundError> → { status: 'fail', data: { code: 'NOT_FOUND', message: string, details: { userId } } }"
       },
       "FailResponse_EMAIL_VERIFICATION_CODE_INVALID_OR_EXPIRED.undefined_": {
         "properties": {
@@ -413,7 +413,7 @@
       },
       "FailResponseFromError_EmailVerificationCodeInvalidOrExpiredError_": {
         "$ref": "#/components/schemas/FailResponse_EMAIL_VERIFICATION_CODE_INVALID_OR_EXPIRED.undefined_",
-        "description": "Extrae automáticamente code y details de una clase AppError.\n\nEjemplo:\n- FailResponseFromError<UserAlreadyExistsError> → { status: 'fail', data: { code: 'CONFLICT', message: string, details: { field, value } } }\n- FailResponseFromError<UserNotFoundError> → { status: 'fail', data: { code: 'NOT_FOUND', message: string, details: { userId } } }"
+        "description": "Extrae automáticamente code y details de una clase AppError.\r\n\r\nEjemplo:\r\n- FailResponseFromError<UserAlreadyExistsError> → { status: 'fail', data: { code: 'CONFLICT', message: string, details: { field, value } } }\r\n- FailResponseFromError<UserNotFoundError> → { status: 'fail', data: { code: 'NOT_FOUND', message: string, details: { userId } } }"
       },
       "ValidationDetails_BodyPath_CompleteRegistrationData__": {
         "properties": {
@@ -566,7 +566,7 @@
           }
         },
         "type": "object",
-        "description": "Generador de estructura de detalles.\nTransforma una unión de llaves ('body' | 'body.id') en el objeto que TSOA espera."
+        "description": "Generador de estructura de detalles.\r\nTransforma una unión de llaves ('body' | 'body.id') en el objeto que TSOA espera."
       },
       "RequestValidationFailResponse_ValidationDetails_BodyPath_CompleteRegistrationData___": {
         "properties": {
@@ -1063,7 +1063,7 @@
       },
       "FailResponseFromError_NoTokenProvidedError_": {
         "$ref": "#/components/schemas/FailResponse_NO_TOKEN_PROVIDED._reason-string__",
-        "description": "Extrae automáticamente code y details de una clase AppError.\n\nEjemplo:\n- FailResponseFromError<UserAlreadyExistsError> → { status: 'fail', data: { code: 'CONFLICT', message: string, details: { field, value } } }\n- FailResponseFromError<UserNotFoundError> → { status: 'fail', data: { code: 'NOT_FOUND', message: string, details: { userId } } }"
+        "description": "Extrae automáticamente code y details de una clase AppError.\r\n\r\nEjemplo:\r\n- FailResponseFromError<UserAlreadyExistsError> → { status: 'fail', data: { code: 'CONFLICT', message: string, details: { field, value } } }\r\n- FailResponseFromError<UserNotFoundError> → { status: 'fail', data: { code: 'NOT_FOUND', message: string, details: { userId } } }"
       },
       "FailResponse_INVALID_TOKEN.undefined_": {
         "properties": {
@@ -1104,7 +1104,7 @@
       },
       "FailResponseFromError_InvalidTokenError_": {
         "$ref": "#/components/schemas/FailResponse_INVALID_TOKEN.undefined_",
-        "description": "Extrae automáticamente code y details de una clase AppError.\n\nEjemplo:\n- FailResponseFromError<UserAlreadyExistsError> → { status: 'fail', data: { code: 'CONFLICT', message: string, details: { field, value } } }\n- FailResponseFromError<UserNotFoundError> → { status: 'fail', data: { code: 'NOT_FOUND', message: string, details: { userId } } }"
+        "description": "Extrae automáticamente code y details de una clase AppError.\r\n\r\nEjemplo:\r\n- FailResponseFromError<UserAlreadyExistsError> → { status: 'fail', data: { code: 'CONFLICT', message: string, details: { field, value } } }\r\n- FailResponseFromError<UserNotFoundError> → { status: 'fail', data: { code: 'NOT_FOUND', message: string, details: { userId } } }"
       },
       "FailResponse_TOKEN_USER_NOT_FOUND._userId-string__": {
         "properties": {
@@ -1156,7 +1156,7 @@
       },
       "FailResponseFromError_TokenUserNotFoundError_": {
         "$ref": "#/components/schemas/FailResponse_TOKEN_USER_NOT_FOUND._userId-string__",
-        "description": "Extrae automáticamente code y details de una clase AppError.\n\nEjemplo:\n- FailResponseFromError<UserAlreadyExistsError> → { status: 'fail', data: { code: 'CONFLICT', message: string, details: { field, value } } }\n- FailResponseFromError<UserNotFoundError> → { status: 'fail', data: { code: 'NOT_FOUND', message: string, details: { userId } } }"
+        "description": "Extrae automáticamente code y details de una clase AppError.\r\n\r\nEjemplo:\r\n- FailResponseFromError<UserAlreadyExistsError> → { status: 'fail', data: { code: 'CONFLICT', message: string, details: { field, value } } }\r\n- FailResponseFromError<UserNotFoundError> → { status: 'fail', data: { code: 'NOT_FOUND', message: string, details: { userId } } }"
       },
       "FailResponse_AUTH_VERSION_MISMATCH._userId-string--currentVersion-number--tokenVersion-number__": {
         "properties": {
@@ -1218,7 +1218,7 @@
       },
       "FailResponseFromError_AuthenticationVersionMismatchError_": {
         "$ref": "#/components/schemas/FailResponse_AUTH_VERSION_MISMATCH._userId-string--currentVersion-number--tokenVersion-number__",
-        "description": "Extrae automáticamente code y details de una clase AppError.\n\nEjemplo:\n- FailResponseFromError<UserAlreadyExistsError> → { status: 'fail', data: { code: 'CONFLICT', message: string, details: { field, value } } }\n- FailResponseFromError<UserNotFoundError> → { status: 'fail', data: { code: 'NOT_FOUND', message: string, details: { userId } } }"
+        "description": "Extrae automáticamente code y details de una clase AppError.\r\n\r\nEjemplo:\r\n- FailResponseFromError<UserAlreadyExistsError> → { status: 'fail', data: { code: 'CONFLICT', message: string, details: { field, value } } }\r\n- FailResponseFromError<UserNotFoundError> → { status: 'fail', data: { code: 'NOT_FOUND', message: string, details: { userId } } }"
       },
       "AuthFailResponse": {
         "anyOf": [
@@ -1235,7 +1235,7 @@
             "$ref": "#/components/schemas/FailResponseFromError_AuthenticationVersionMismatchError_"
           }
         ],
-        "description": "Tipo de respuesta para errores de autenticación JWT (401).\nCubre todos los errores lanzados por expressAuthentication:\n- NO_TOKEN_PROVIDED: No se proporcionó token (con reason en details)\n- INVALID_TOKEN: Token inválido o expirado\n- TOKEN_USER_NOT_FOUND: Usuario del token ya no existe (con userId en details)\n- AUTH_VERSION_MISMATCH: Sesión invalidada (con userId, currentVersion, tokenVersion en details)"
+        "description": "Tipo de respuesta para errores de autenticación JWT (401).\r\nCubre todos los errores lanzados por expressAuthentication:\r\n- NO_TOKEN_PROVIDED: No se proporcionó token (con reason en details)\r\n- INVALID_TOKEN: Token inválido o expirado\r\n- TOKEN_USER_NOT_FOUND: Usuario del token ya no existe (con userId en details)\r\n- AUTH_VERSION_MISMATCH: Sesión invalidada (con userId, currentVersion, tokenVersion en details)"
       },
       "AuthenticatedUser": {
         "properties": {
@@ -1349,7 +1349,7 @@
       },
       "FailResponseFromError_UserNotFoundError_": {
         "$ref": "#/components/schemas/FailResponse_NOT_FOUND._userId-string__",
-        "description": "Extrae automáticamente code y details de una clase AppError.\n\nEjemplo:\n- FailResponseFromError<UserAlreadyExistsError> → { status: 'fail', data: { code: 'CONFLICT', message: string, details: { field, value } } }\n- FailResponseFromError<UserNotFoundError> → { status: 'fail', data: { code: 'NOT_FOUND', message: string, details: { userId } } }"
+        "description": "Extrae automáticamente code y details de una clase AppError.\r\n\r\nEjemplo:\r\n- FailResponseFromError<UserAlreadyExistsError> → { status: 'fail', data: { code: 'CONFLICT', message: string, details: { field, value } } }\r\n- FailResponseFromError<UserNotFoundError> → { status: 'fail', data: { code: 'NOT_FOUND', message: string, details: { userId } } }"
       },
       "ValidationDetails_BodyPath_UpdateUserData__": {
         "properties": {
@@ -1459,7 +1459,7 @@
           }
         },
         "type": "object",
-        "description": "Generador de estructura de detalles.\nTransforma una unión de llaves ('body' | 'body.id') en el objeto que TSOA espera."
+        "description": "Generador de estructura de detalles.\r\nTransforma una unión de llaves ('body' | 'body.id') en el objeto que TSOA espera."
       },
       "RequestValidationFailResponse_ValidationDetails_BodyPath_UpdateUserData___": {
         "properties": {
@@ -1651,7 +1651,7 @@
           }
         },
         "type": "object",
-        "description": "Generador de estructura de detalles.\nTransforma una unión de llaves ('body' | 'body.id') en el objeto que TSOA espera."
+        "description": "Generador de estructura de detalles.\r\nTransforma una unión de llaves ('body' | 'body.id') en el objeto que TSOA espera."
       },
       "RequestValidationFailResponse_ValidationDetails_BodyPath_InitiateEmailChangeData___": {
         "properties": {
@@ -1765,7 +1765,7 @@
           }
         },
         "type": "object",
-        "description": "Generador de estructura de detalles.\nTransforma una unión de llaves ('body' | 'body.id') en el objeto que TSOA espera."
+        "description": "Generador de estructura de detalles.\r\nTransforma una unión de llaves ('body' | 'body.id') en el objeto que TSOA espera."
       },
       "RequestValidationFailResponse_ValidationDetails_BodyPath_CompleteEmailChangeData___": {
         "properties": {
@@ -1881,7 +1881,7 @@
           }
         },
         "type": "object",
-        "description": "Generador de estructura de detalles.\nTransforma una unión de llaves ('body' | 'body.id') en el objeto que TSOA espera."
+        "description": "Generador de estructura de detalles.\r\nTransforma una unión de llaves ('body' | 'body.id') en el objeto que TSOA espera."
       },
       "RequestValidationFailResponse_ValidationDetails_QueryPath__q-string____": {
         "properties": {
@@ -1988,7 +1988,7 @@
           }
         },
         "type": "object",
-        "description": "Generador de estructura de detalles.\nTransforma una unión de llaves ('body' | 'body.id') en el objeto que TSOA espera."
+        "description": "Generador de estructura de detalles.\r\nTransforma una unión de llaves ('body' | 'body.id') en el objeto que TSOA espera."
       },
       "RequestValidationFailResponse_ValidationDetails_PathPath__id-string____": {
         "properties": {
@@ -2068,7 +2068,7 @@
       },
       "FailResponseFromError_SelfFriendRequestError_": {
         "$ref": "#/components/schemas/FailResponse_SELF_FRIEND_REQUEST.undefined_",
-        "description": "Extrae automáticamente code y details de una clase AppError.\n\nEjemplo:\n- FailResponseFromError<UserAlreadyExistsError> → { status: 'fail', data: { code: 'CONFLICT', message: string, details: { field, value } } }\n- FailResponseFromError<UserNotFoundError> → { status: 'fail', data: { code: 'NOT_FOUND', message: string, details: { userId } } }"
+        "description": "Extrae automáticamente code y details de una clase AppError.\r\n\r\nEjemplo:\r\n- FailResponseFromError<UserAlreadyExistsError> → { status: 'fail', data: { code: 'CONFLICT', message: string, details: { field, value } } }\r\n- FailResponseFromError<UserNotFoundError> → { status: 'fail', data: { code: 'NOT_FOUND', message: string, details: { userId } } }"
       },
       "FailResponse_ALREADY_FRIENDS.undefined_": {
         "properties": {
@@ -2109,7 +2109,7 @@
       },
       "FailResponseFromError_AlreadyFriendsError_": {
         "$ref": "#/components/schemas/FailResponse_ALREADY_FRIENDS.undefined_",
-        "description": "Extrae automáticamente code y details de una clase AppError.\n\nEjemplo:\n- FailResponseFromError<UserAlreadyExistsError> → { status: 'fail', data: { code: 'CONFLICT', message: string, details: { field, value } } }\n- FailResponseFromError<UserNotFoundError> → { status: 'fail', data: { code: 'NOT_FOUND', message: string, details: { userId } } }"
+        "description": "Extrae automáticamente code y details de una clase AppError.\r\n\r\nEjemplo:\r\n- FailResponseFromError<UserAlreadyExistsError> → { status: 'fail', data: { code: 'CONFLICT', message: string, details: { field, value } } }\r\n- FailResponseFromError<UserNotFoundError> → { status: 'fail', data: { code: 'NOT_FOUND', message: string, details: { userId } } }"
       },
       "FailResponse_FRIEND_REQUEST_ALREADY_SENT.undefined_": {
         "properties": {
@@ -2150,7 +2150,7 @@
       },
       "FailResponseFromError_FriendRequestAlreadySentError_": {
         "$ref": "#/components/schemas/FailResponse_FRIEND_REQUEST_ALREADY_SENT.undefined_",
-        "description": "Extrae automáticamente code y details de una clase AppError.\n\nEjemplo:\n- FailResponseFromError<UserAlreadyExistsError> → { status: 'fail', data: { code: 'CONFLICT', message: string, details: { field, value } } }\n- FailResponseFromError<UserNotFoundError> → { status: 'fail', data: { code: 'NOT_FOUND', message: string, details: { userId } } }"
+        "description": "Extrae automáticamente code y details de una clase AppError.\r\n\r\nEjemplo:\r\n- FailResponseFromError<UserAlreadyExistsError> → { status: 'fail', data: { code: 'CONFLICT', message: string, details: { field, value } } }\r\n- FailResponseFromError<UserNotFoundError> → { status: 'fail', data: { code: 'NOT_FOUND', message: string, details: { userId } } }"
       },
       "FailResponse_FRIEND_REQUEST_ALREADY_RECEIVED.undefined_": {
         "properties": {
@@ -2191,7 +2191,7 @@
       },
       "FailResponseFromError_FriendRequestAlreadyReceivedError_": {
         "$ref": "#/components/schemas/FailResponse_FRIEND_REQUEST_ALREADY_RECEIVED.undefined_",
-        "description": "Extrae automáticamente code y details de una clase AppError.\n\nEjemplo:\n- FailResponseFromError<UserAlreadyExistsError> → { status: 'fail', data: { code: 'CONFLICT', message: string, details: { field, value } } }\n- FailResponseFromError<UserNotFoundError> → { status: 'fail', data: { code: 'NOT_FOUND', message: string, details: { userId } } }"
+        "description": "Extrae automáticamente code y details de una clase AppError.\r\n\r\nEjemplo:\r\n- FailResponseFromError<UserAlreadyExistsError> → { status: 'fail', data: { code: 'CONFLICT', message: string, details: { field, value } } }\r\n- FailResponseFromError<UserNotFoundError> → { status: 'fail', data: { code: 'NOT_FOUND', message: string, details: { userId } } }"
       },
       "FailResponse_NO_PENDING_FRIEND_REQUEST.undefined_": {
         "properties": {
@@ -2232,7 +2232,7 @@
       },
       "FailResponseFromError_NoPendingFriendRequestError_": {
         "$ref": "#/components/schemas/FailResponse_NO_PENDING_FRIEND_REQUEST.undefined_",
-        "description": "Extrae automáticamente code y details de una clase AppError.\n\nEjemplo:\n- FailResponseFromError<UserAlreadyExistsError> → { status: 'fail', data: { code: 'CONFLICT', message: string, details: { field, value } } }\n- FailResponseFromError<UserNotFoundError> → { status: 'fail', data: { code: 'NOT_FOUND', message: string, details: { userId } } }"
+        "description": "Extrae automáticamente code y details de una clase AppError.\r\n\r\nEjemplo:\r\n- FailResponseFromError<UserAlreadyExistsError> → { status: 'fail', data: { code: 'CONFLICT', message: string, details: { field, value } } }\r\n- FailResponseFromError<UserNotFoundError> → { status: 'fail', data: { code: 'NOT_FOUND', message: string, details: { userId } } }"
       },
       "FailResponse_NO_RECEIVED_FRIEND_REQUEST.undefined_": {
         "properties": {
@@ -2273,7 +2273,7 @@
       },
       "FailResponseFromError_NoReceivedFriendRequestError_": {
         "$ref": "#/components/schemas/FailResponse_NO_RECEIVED_FRIEND_REQUEST.undefined_",
-        "description": "Extrae automáticamente code y details de una clase AppError.\n\nEjemplo:\n- FailResponseFromError<UserAlreadyExistsError> → { status: 'fail', data: { code: 'CONFLICT', message: string, details: { field, value } } }\n- FailResponseFromError<UserNotFoundError> → { status: 'fail', data: { code: 'NOT_FOUND', message: string, details: { userId } } }"
+        "description": "Extrae automáticamente code y details de una clase AppError.\r\n\r\nEjemplo:\r\n- FailResponseFromError<UserAlreadyExistsError> → { status: 'fail', data: { code: 'CONFLICT', message: string, details: { field, value } } }\r\n- FailResponseFromError<UserNotFoundError> → { status: 'fail', data: { code: 'NOT_FOUND', message: string, details: { userId } } }"
       },
       "FailResponse_NOT_FRIENDS.undefined_": {
         "properties": {
@@ -2314,7 +2314,7 @@
       },
       "FailResponseFromError_NotFriendsError_": {
         "$ref": "#/components/schemas/FailResponse_NOT_FRIENDS.undefined_",
-        "description": "Extrae automáticamente code y details de una clase AppError.\n\nEjemplo:\n- FailResponseFromError<UserAlreadyExistsError> → { status: 'fail', data: { code: 'CONFLICT', message: string, details: { field, value } } }\n- FailResponseFromError<UserNotFoundError> → { status: 'fail', data: { code: 'NOT_FOUND', message: string, details: { userId } } }"
+        "description": "Extrae automáticamente code y details de una clase AppError.\r\n\r\nEjemplo:\r\n- FailResponseFromError<UserAlreadyExistsError> → { status: 'fail', data: { code: 'CONFLICT', message: string, details: { field, value } } }\r\n- FailResponseFromError<UserNotFoundError> → { status: 'fail', data: { code: 'NOT_FOUND', message: string, details: { userId } } }"
       },
       "FailResponse_INVALID_PROFILE_PICTURE.undefined_": {
         "properties": {
@@ -2355,7 +2355,7 @@
       },
       "FailResponseFromError_InvalidProfilePictureError_": {
         "$ref": "#/components/schemas/FailResponse_INVALID_PROFILE_PICTURE.undefined_",
-        "description": "Extrae automáticamente code y details de una clase AppError.\n\nEjemplo:\n- FailResponseFromError<UserAlreadyExistsError> → { status: 'fail', data: { code: 'CONFLICT', message: string, details: { field, value } } }\n- FailResponseFromError<UserNotFoundError> → { status: 'fail', data: { code: 'NOT_FOUND', message: string, details: { userId } } }"
+        "description": "Extrae automáticamente code y details de una clase AppError.\r\n\r\nEjemplo:\r\n- FailResponseFromError<UserAlreadyExistsError> → { status: 'fail', data: { code: 'CONFLICT', message: string, details: { field, value } } }\r\n- FailResponseFromError<UserNotFoundError> → { status: 'fail', data: { code: 'NOT_FOUND', message: string, details: { userId } } }"
       },
       "FailResponse_PROFILE_PICTURE_TOO_LARGE._size-number--maxSize-number__": {
         "properties": {
@@ -2413,7 +2413,7 @@
       },
       "FailResponseFromError_ProfilePictureTooLargeError_": {
         "$ref": "#/components/schemas/FailResponse_PROFILE_PICTURE_TOO_LARGE._size-number--maxSize-number__",
-        "description": "Extrae automáticamente code y details de una clase AppError.\n\nEjemplo:\n- FailResponseFromError<UserAlreadyExistsError> → { status: 'fail', data: { code: 'CONFLICT', message: string, details: { field, value } } }\n- FailResponseFromError<UserNotFoundError> → { status: 'fail', data: { code: 'NOT_FOUND', message: string, details: { userId } } }"
+        "description": "Extrae automáticamente code y details de una clase AppError.\r\n\r\nEjemplo:\r\n- FailResponseFromError<UserAlreadyExistsError> → { status: 'fail', data: { code: 'CONFLICT', message: string, details: { field, value } } }\r\n- FailResponseFromError<UserNotFoundError> → { status: 'fail', data: { code: 'NOT_FOUND', message: string, details: { userId } } }"
       },
       "RateLimitFailResponse": {
         "properties": {
@@ -2449,7 +2449,7 @@
           "status"
         ],
         "type": "object",
-        "description": "Respuesta específica para el límite de tasa (rate limit).\nNo incluye el campo 'details' ya que no es relevante para este error."
+        "description": "Respuesta específica para el límite de tasa (rate limit).\r\nNo incluye el campo 'details' ya que no es relevante para este error."
       },
       "SetProfilePictureRequest": {
         "type": "string",
@@ -2493,6 +2493,21 @@
           "wait_time": {
             "type": "number",
             "format": "double"
+          },
+          "airplane": {
+            "type": "string"
+          },
+          "flight_number": {
+            "type": "string"
+          },
+          "travel_class": {
+            "type": "string"
+          },
+          "extensions": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
           }
         },
         "required": [
@@ -2504,7 +2519,10 @@
           "duration",
           "airline",
           "departure_time",
-          "arrival_time"
+          "arrival_time",
+          "airplane",
+          "flight_number",
+          "travel_class"
         ],
         "type": "object",
         "additionalProperties": false
@@ -2793,7 +2811,7 @@
           }
         },
         "type": "object",
-        "description": "Generador de estructura de detalles.\nTransforma una unión de llaves ('body' | 'body.id') en el objeto que TSOA espera."
+        "description": "Generador de estructura de detalles.\r\nTransforma una unión de llaves ('body' | 'body.id') en el objeto que TSOA espera."
       },
       "RequestValidationFailResponse_ValidationDetails_BodyPath_SearchRequest___": {
         "properties": {
@@ -2965,7 +2983,7 @@
       },
       "FailResponseFromError_SearchNotFoundError_": {
         "$ref": "#/components/schemas/FailResponse_NOT_FOUND._searchId-string--requesterId-string__",
-        "description": "Extrae automáticamente code y details de una clase AppError.\n\nEjemplo:\n- FailResponseFromError<UserAlreadyExistsError> → { status: 'fail', data: { code: 'CONFLICT', message: string, details: { field, value } } }\n- FailResponseFromError<UserNotFoundError> → { status: 'fail', data: { code: 'NOT_FOUND', message: string, details: { userId } } }"
+        "description": "Extrae automáticamente code y details de una clase AppError.\r\n\r\nEjemplo:\r\n- FailResponseFromError<UserAlreadyExistsError> → { status: 'fail', data: { code: 'CONFLICT', message: string, details: { field, value } } }\r\n- FailResponseFromError<UserNotFoundError> → { status: 'fail', data: { code: 'NOT_FOUND', message: string, details: { userId } } }"
       },
       "FailResponse_NOT_AUTHORIZED._searchId-string--requesterId-string__": {
         "properties": {
@@ -3021,7 +3039,7 @@
       },
       "FailResponseFromError_SearchNotAuthorizedError_": {
         "$ref": "#/components/schemas/FailResponse_NOT_AUTHORIZED._searchId-string--requesterId-string__",
-        "description": "Extrae automáticamente code y details de una clase AppError.\n\nEjemplo:\n- FailResponseFromError<UserAlreadyExistsError> → { status: 'fail', data: { code: 'CONFLICT', message: string, details: { field, value } } }\n- FailResponseFromError<UserNotFoundError> → { status: 'fail', data: { code: 'NOT_FOUND', message: string, details: { userId } } }"
+        "description": "Extrae automáticamente code y details de una clase AppError.\r\n\r\nEjemplo:\r\n- FailResponseFromError<UserAlreadyExistsError> → { status: 'fail', data: { code: 'CONFLICT', message: string, details: { field, value } } }\r\n- FailResponseFromError<UserNotFoundError> → { status: 'fail', data: { code: 'NOT_FOUND', message: string, details: { userId } } }"
       },
       "ValidationDetails_PathPath__searchId-string___": {
         "properties": {
@@ -3051,7 +3069,7 @@
           }
         },
         "type": "object",
-        "description": "Generador de estructura de detalles.\nTransforma una unión de llaves ('body' | 'body.id') en el objeto que TSOA espera."
+        "description": "Generador de estructura de detalles.\r\nTransforma una unión de llaves ('body' | 'body.id') en el objeto que TSOA espera."
       },
       "RequestValidationFailResponse_ValidationDetails_PathPath__searchId-string____": {
         "properties": {
@@ -3203,7 +3221,7 @@
           }
         },
         "type": "object",
-        "description": "Generador de estructura de detalles.\nTransforma una unión de llaves ('body' | 'body.id') en el objeto que TSOA espera."
+        "description": "Generador de estructura de detalles.\r\nTransforma una unión de llaves ('body' | 'body.id') en el objeto que TSOA espera."
       },
       "RequestValidationFailResponse_ValidationDetails_PathPath__userId-string__-or-QueryPath__page-number--limit-number____": {
         "properties": {
@@ -3353,7 +3371,7 @@
           }
         },
         "type": "object",
-        "description": "Generador de estructura de detalles.\nTransforma una unión de llaves ('body' | 'body.id') en el objeto que TSOA espera."
+        "description": "Generador de estructura de detalles.\r\nTransforma una unión de llaves ('body' | 'body.id') en el objeto que TSOA espera."
       },
       "RequestValidationFailResponse_ValidationDetails_BodyPath_LoginRequest___": {
         "properties": {
@@ -3450,7 +3468,7 @@
       },
       "FailResponseFromError_InvalidCredentialsError_": {
         "$ref": "#/components/schemas/FailResponse_INVALID_CREDENTIALS._identifier-string__",
-        "description": "Extrae automáticamente code y details de una clase AppError.\n\nEjemplo:\n- FailResponseFromError<UserAlreadyExistsError> → { status: 'fail', data: { code: 'CONFLICT', message: string, details: { field, value } } }\n- FailResponseFromError<UserNotFoundError> → { status: 'fail', data: { code: 'NOT_FOUND', message: string, details: { userId } } }"
+        "description": "Extrae automáticamente code y details de una clase AppError.\r\n\r\nEjemplo:\r\n- FailResponseFromError<UserAlreadyExistsError> → { status: 'fail', data: { code: 'CONFLICT', message: string, details: { field, value } } }\r\n- FailResponseFromError<UserNotFoundError> → { status: 'fail', data: { code: 'NOT_FOUND', message: string, details: { userId } } }"
       },
       "LoginRequest": {
         "properties": {
@@ -3480,7 +3498,7 @@
         "additionalProperties": false
       },
       "MessageResponseData": {
-        "description": "Respuesta de éxito solo con mensaje (sin datos).\nEl wrapper global lo convertirá en: { status: 'success', data: { message: string } }",
+        "description": "Respuesta de éxito solo con mensaje (sin datos).\r\nEl wrapper global lo convertirá en: { status: 'success', data: { message: string } }",
         "properties": {
           "message": {
             "type": "string"
@@ -3567,7 +3585,7 @@
           }
         },
         "type": "object",
-        "description": "Generador de estructura de detalles.\nTransforma una unión de llaves ('body' | 'body.id') en el objeto que TSOA espera."
+        "description": "Generador de estructura de detalles.\r\nTransforma una unión de llaves ('body' | 'body.id') en el objeto que TSOA espera."
       },
       "RequestValidationFailResponse_ValidationDetails_BodyPath_ChangePasswordRequest___": {
         "properties": {
@@ -3671,7 +3689,7 @@
       },
       "FailResponseFromError_InvalidPasswordError_": {
         "$ref": "#/components/schemas/FailResponse_INVALID_PASSWORD._identifier-string__",
-        "description": "Extrae automáticamente code y details de una clase AppError.\n\nEjemplo:\n- FailResponseFromError<UserAlreadyExistsError> → { status: 'fail', data: { code: 'CONFLICT', message: string, details: { field, value } } }\n- FailResponseFromError<UserNotFoundError> → { status: 'fail', data: { code: 'NOT_FOUND', message: string, details: { userId } } }"
+        "description": "Extrae automáticamente code y details de una clase AppError.\r\n\r\nEjemplo:\r\n- FailResponseFromError<UserAlreadyExistsError> → { status: 'fail', data: { code: 'CONFLICT', message: string, details: { field, value } } }\r\n- FailResponseFromError<UserNotFoundError> → { status: 'fail', data: { code: 'NOT_FOUND', message: string, details: { userId } } }"
       },
       "ChangePasswordErrorResponse": {
         "anyOf": [
@@ -3722,7 +3740,7 @@
       },
       "FailResponseFromError_NewPasswordSameAsOldError_": {
         "$ref": "#/components/schemas/FailResponse_NEW_PASSWORD_SAME_AS_OLD.undefined_",
-        "description": "Extrae automáticamente code y details de una clase AppError.\n\nEjemplo:\n- FailResponseFromError<UserAlreadyExistsError> → { status: 'fail', data: { code: 'CONFLICT', message: string, details: { field, value } } }\n- FailResponseFromError<UserNotFoundError> → { status: 'fail', data: { code: 'NOT_FOUND', message: string, details: { userId } } }"
+        "description": "Extrae automáticamente code y details de una clase AppError.\r\n\r\nEjemplo:\r\n- FailResponseFromError<UserAlreadyExistsError> → { status: 'fail', data: { code: 'CONFLICT', message: string, details: { field, value } } }\r\n- FailResponseFromError<UserNotFoundError> → { status: 'fail', data: { code: 'NOT_FOUND', message: string, details: { userId } } }"
       },
       "FailResponse_USER_NOT_FOUND._identifier-string__": {
         "properties": {
@@ -3774,7 +3792,7 @@
       },
       "FailResponseFromError_LoginUserNotFoundError_": {
         "$ref": "#/components/schemas/FailResponse_USER_NOT_FOUND._identifier-string__",
-        "description": "Extrae automáticamente code y details de una clase AppError.\n\nEjemplo:\n- FailResponseFromError<UserAlreadyExistsError> → { status: 'fail', data: { code: 'CONFLICT', message: string, details: { field, value } } }\n- FailResponseFromError<UserNotFoundError> → { status: 'fail', data: { code: 'NOT_FOUND', message: string, details: { userId } } }"
+        "description": "Extrae automáticamente code y details de una clase AppError.\r\n\r\nEjemplo:\r\n- FailResponseFromError<UserAlreadyExistsError> → { status: 'fail', data: { code: 'CONFLICT', message: string, details: { field, value } } }\r\n- FailResponseFromError<UserNotFoundError> → { status: 'fail', data: { code: 'NOT_FOUND', message: string, details: { userId } } }"
       },
       "ChangePasswordRequest": {
         "properties": {
@@ -3832,7 +3850,7 @@
           }
         },
         "type": "object",
-        "description": "Generador de estructura de detalles.\nTransforma una unión de llaves ('body' | 'body.id') en el objeto que TSOA espera."
+        "description": "Generador de estructura de detalles.\r\nTransforma una unión de llaves ('body' | 'body.id') en el objeto que TSOA espera."
       },
       "RequestValidationFailResponse_ValidationDetails_BodyPath_ForgotPasswordRequest___": {
         "properties": {
@@ -3946,7 +3964,7 @@
           }
         },
         "type": "object",
-        "description": "Generador de estructura de detalles.\nTransforma una unión de llaves ('body' | 'body.id') en el objeto que TSOA espera."
+        "description": "Generador de estructura de detalles.\r\nTransforma una unión de llaves ('body' | 'body.id') en el objeto que TSOA espera."
       },
       "RequestValidationFailResponse_ValidationDetails_BodyPath_ResetPasswordRequest___": {
         "properties": {
@@ -4039,7 +4057,7 @@
       },
       "FailResponseFromError_ResetTokenInvalidOrExpiredError_": {
         "$ref": "#/components/schemas/FailResponse_RESET_TOKEN_INVALID_OR_EXPIRED.undefined_",
-        "description": "Extrae automáticamente code y details de una clase AppError.\n\nEjemplo:\n- FailResponseFromError<UserAlreadyExistsError> → { status: 'fail', data: { code: 'CONFLICT', message: string, details: { field, value } } }\n- FailResponseFromError<UserNotFoundError> → { status: 'fail', data: { code: 'NOT_FOUND', message: string, details: { userId } } }"
+        "description": "Extrae automáticamente code y details de una clase AppError.\r\n\r\nEjemplo:\r\n- FailResponseFromError<UserAlreadyExistsError> → { status: 'fail', data: { code: 'CONFLICT', message: string, details: { field, value } } }\r\n- FailResponseFromError<UserNotFoundError> → { status: 'fail', data: { code: 'NOT_FOUND', message: string, details: { userId } } }"
       },
       "ResetPasswordRequest": {
         "properties": {
@@ -4115,7 +4133,37 @@
         "type": "object",
         "additionalProperties": false
       },
-      "SuccessResponse_AirportResponse-Array_": {
+      "PaginatedAirportResponse": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/AirportResponse"
+            },
+            "type": "array"
+          },
+          "total": {
+            "type": "number",
+            "format": "double"
+          },
+          "page": {
+            "type": "number",
+            "format": "double"
+          },
+          "totalPages": {
+            "type": "number",
+            "format": "double"
+          }
+        },
+        "required": [
+          "items",
+          "total",
+          "page",
+          "totalPages"
+        ],
+        "type": "object",
+        "additionalProperties": false
+      },
+      "SuccessResponseType_PaginatedAirportResponse_": {
         "description": "Wrapper de éxito JSend (aplicado por el middleware global).",
         "properties": {
           "status": {
@@ -4126,10 +4174,7 @@
             "nullable": false
           },
           "data": {
-            "items": {
-              "$ref": "#/components/schemas/AirportResponse"
-            },
-            "type": "array"
+            "$ref": "#/components/schemas/PaginatedAirportResponse"
           }
         },
         "required": [
@@ -4179,6 +4224,51 @@
         "type": "object",
         "additionalProperties": false
       },
+      "SuccessResponseType_GlobeAirportResponse-Array_": {
+        "description": "Wrapper de éxito JSend (aplicado por el middleware global).",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "success"
+            ],
+            "nullable": false
+          },
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/GlobeAirportResponse"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "status",
+          "data"
+        ],
+        "type": "object",
+        "additionalProperties": false
+      },
+      "SuccessResponseType_AirportResponse_": {
+        "description": "Wrapper de éxito JSend (aplicado por el middleware global).",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "success"
+            ],
+            "nullable": false
+          },
+          "data": {
+            "$ref": "#/components/schemas/AirportResponse"
+          }
+        },
+        "required": [
+          "status",
+          "data"
+        ],
+        "type": "object",
+        "additionalProperties": false
+      },
       "AirlineResponse": {
         "properties": {
           "code": {
@@ -4204,7 +4294,37 @@
         "type": "object",
         "additionalProperties": false
       },
-      "SuccessResponse_AirlineResponse-Array_": {
+      "PaginatedAirlineResponse": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/AirlineResponse"
+            },
+            "type": "array"
+          },
+          "total": {
+            "type": "number",
+            "format": "double"
+          },
+          "page": {
+            "type": "number",
+            "format": "double"
+          },
+          "totalPages": {
+            "type": "number",
+            "format": "double"
+          }
+        },
+        "required": [
+          "items",
+          "total",
+          "page",
+          "totalPages"
+        ],
+        "type": "object",
+        "additionalProperties": false
+      },
+      "SuccessResponseType_PaginatedAirlineResponse_": {
         "description": "Wrapper de éxito JSend (aplicado por el middleware global).",
         "properties": {
           "status": {
@@ -4215,10 +4335,7 @@
             "nullable": false
           },
           "data": {
-            "items": {
-              "$ref": "#/components/schemas/AirlineResponse"
-            },
-            "type": "array"
+            "$ref": "#/components/schemas/PaginatedAirlineResponse"
           }
         },
         "required": [
@@ -5917,11 +6034,11 @@
         "operationId": "SearchAirports",
         "responses": {
           "200": {
-            "description": "Ok",
+            "description": "Aeropuertos encontrados",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/SuccessResponse_AirportResponse-Array_"
+                  "$ref": "#/components/schemas/SuccessResponseType_PaginatedAirportResponse_"
                 }
               }
             }
@@ -5949,6 +6066,26 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "in": "query",
+            "name": "page",
+            "required": false,
+            "schema": {
+              "default": 1,
+              "format": "double",
+              "type": "number"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 10,
+              "format": "double",
+              "type": "number"
+            }
           }
         ]
       }
@@ -5958,14 +6095,11 @@
         "operationId": "GetGlobeAirports",
         "responses": {
           "200": {
-            "description": "Ok",
+            "description": "Aeropuertos para el globo",
             "content": {
               "application/json": {
                 "schema": {
-                  "items": {
-                    "$ref": "#/components/schemas/GlobeAirportResponse"
-                  },
-                  "type": "array"
+                  "$ref": "#/components/schemas/SuccessResponseType_GlobeAirportResponse-Array_"
                 }
               }
             }
@@ -5978,16 +6112,47 @@
         "parameters": []
       }
     },
+    "/airports/{iata}": {
+      "get": {
+        "operationId": "GetAirportByIata",
+        "responses": {
+          "200": {
+            "description": "Aeropuerto encontrado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponseType_AirportResponse_"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Airports"
+        ],
+        "security": [],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "iata",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
     "/airlines": {
       "get": {
         "operationId": "SearchAirlines",
         "responses": {
           "200": {
-            "description": "Ok",
+            "description": "Aerolineas encontradas",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/SuccessResponse_AirlineResponse-Array_"
+                  "$ref": "#/components/schemas/SuccessResponseType_PaginatedAirlineResponse_"
                 }
               }
             }
@@ -6014,6 +6179,26 @@
             "required": true,
             "schema": {
               "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "page",
+            "required": false,
+            "schema": {
+              "default": 1,
+              "format": "double",
+              "type": "number"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 10,
+              "format": "double",
+              "type": "number"
             }
           }
         ]

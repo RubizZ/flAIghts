@@ -65,7 +65,10 @@ const DateSearchInput: React.FC<DateSearchInputProps> = ({
                         setIsOpen(nextState);
                         if (nextState) {
                             setTimeout(() => {
-                                containerRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                                const vv = window.visualViewport;
+                                if (vv && vv.height < window.innerHeight) {
+                                    containerRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                                }
                             }, 100);
                         }
                     }

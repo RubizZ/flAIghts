@@ -1,5 +1,5 @@
 import { singleton, inject } from "tsyringe";
-import type { SearchRequest, SearchResponseData, LegResponse } from "./search.types.js";
+import type { SearchRequest, SearchResponseData, LegResponse, EnrichedFlightEdge } from "./search.types.js";
 import { Itinerary } from "./models/itinerary.model.js";
 import { SerpApiClient } from "@/services/serpapi/serpapi.client.js";
 import { Search, type ISearch } from "./models/search.model.js";
@@ -120,12 +120,12 @@ export class SearchService {
             const sequence = [criteria.origins[0], ...criteria.destinations].filter((node): node is string => !!node);
             let currentDate = criteria.departure_date.toISOString().split("T")[0]!;
             const layoverDays = criteria.layover_days ?? [];
-            const fullPath: DijkstraFlightEdge[] = [];
+            const fullPath: EnrichedFlightEdge[] = [];
 
             for (let i = 0; i < sequence.length - 1; i++) {
                 const puntoA = sequence[i];
                 const puntoB = sequence[i + 1];
-                const edges: DijkstraFlightEdge[] = [];
+                const edges: EnrichedFlightEdge[] = [];
 
                 if (!puntoA || !puntoB) continue;
 
@@ -169,7 +169,7 @@ export class SearchService {
                 currentDate = tramo[tramo.length - 1]!.date;
 
 
-                fullPath.push(...tramo);
+                fullPath.push(...(tramo as EnrichedFlightEdge[]));
             }
 
 
@@ -204,7 +204,11 @@ export class SearchService {
                         airline_logo: edge!.airline_logo ?? "",
                         departure_time: edge!.departure_time,
                         arrival_time: edge!.arrival_time,
-                        wait_time: wait
+                        wait_time: wait,
+                        airplane: edge!.airplane,
+                        flight_number: edge!.flight_number,
+                        travel_class: edge!.travel_class,
+                        extensions: edge!.extensions,
                     });
 
                     previousArrival = arrive;
@@ -296,7 +300,7 @@ export class SearchService {
         };
     }
 
-    private async getFlightsFromSerpApi(origin: string[], destination: string[], date: string): Promise<DijkstraFlightEdge[]> {
+    private async getFlightsFromSerpApi(origin: string[], destination: string[], date: string): Promise<EnrichedFlightEdge[]> {
 
         const response = await this.serpApiClient.search(this.createApiParams(origin, destination, date));
 
@@ -333,12 +337,12 @@ export class SearchService {
         return params;
     }
 
-    private mapResponseToEdges(response: SerpApiResponse): DijkstraFlightEdge[] {
+    private mapResponseToEdges(response: SerpApiResponse): EnrichedFlightEdge[] {
         const allFlights: FlightRoute[] = [
             ...(response.best_flights || []),
             ...(response.other_flights || [])
         ];
-        return allFlights.map((flight): DijkstraFlightEdge => {
+        return allFlights.map((flight): EnrichedFlightEdge => {
             const firstSegment = flight.flights[0];
             const lastSegment = flight.flights[flight.flights.length - 1];
 
@@ -353,7 +357,11 @@ export class SearchService {
                 airline: firstSegment!.airline,
                 airline_logo: firstSegment!.airline_logo ?? "",
                 departure_time: firstSegment!.departure_airport.time,
-                arrival_time: lastSegment!.arrival_airport.time
+                arrival_time: lastSegment!.arrival_airport.time,
+                airplane: firstSegment!.airplane,
+                flight_number: firstSegment!.flight_number,
+                travel_class: firstSegment!.travel_class,
+                extensions: firstSegment!.extensions,
             };
         });
     }
