@@ -1,6 +1,5 @@
-import { Controller, Get, Route, Query, Tags, Response, SuccessResponse, Request } from "tsoa";
+import { Controller, Get, Route, Query, Tags, Response, SuccessResponse } from "tsoa";
 import { injectable, inject } from "tsyringe";
-import axios from "axios";
 import { AirportService } from "./airport.service.js";
 import type { AirportResponse, AirportSearchPaginatedResult, GlobeAirportResponse } from "./airport.types.js";
 import type { SuccessResponse as SuccessResponseType, RequestValidationFailResponse, ValidationDetails, QueryPath } from "../../utils/responses.js";
@@ -22,32 +21,9 @@ export class AirportController extends Controller {
         @Query() page: number = 1,
         @Query() limit: number = 10,
         @Query() lat?: number,
-        @Query() lon?: number,
-        @Request() request?: any
+        @Query() lon?: number
     ): Promise<SuccessResponseType<AirportSearchPaginatedResult>> {
-        let userLat = lat;
-        let userLon = lon;
-
-        if (userLat === undefined || userLon === undefined) {
-          try {
-            const ip = request?.ip || request?.headers?.["x-forwarded-for"] || request?.socket?.remoteAddress;
-            const geoUrl = ip && ip !== "::1" && ip !== "127.0.0.1"
-              ? `https://get.geojs.io/v1/ip/geo/${ip}.json`
-              : "https://get.geojs.io/v1/ip/geo.json";
-            
-            const response = await axios.get(geoUrl);
-            if (response.status === 200 && response.data) {
-              const data = response.data;
-              if (data.latitude && data.longitude) {
-                userLat = parseFloat(data.latitude);
-                userLon = parseFloat(data.longitude);
-              }
-            }
-          } catch (e) {
-            console.error("Geo detect failed:", e);
-          }
-        }
-        const results = await this.airportService.searchAirports(q, userLat, userLon, page, limit);
+        const results = await this.airportService.searchAirports(q, lat, lon, page, limit);
         return { status: "success", data: results };
     }
 

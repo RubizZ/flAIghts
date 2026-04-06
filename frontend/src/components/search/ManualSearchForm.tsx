@@ -24,6 +24,7 @@ interface ManualSearchFormProps {
     isHorizontal: boolean;
     isMapMode: boolean;
     today: string;
+    onHoverChange?: (airport: AirportResponse | null) => void;
 }
 
 const ManualSearchForm: React.FC<ManualSearchFormProps> = ({
@@ -46,6 +47,7 @@ const ManualSearchForm: React.FC<ManualSearchFormProps> = ({
     isHorizontal,
     isMapMode,
     today,
+    onHoverChange,
 }) => {
     const handleSwitch = () => {
         const tempOrigins = [...origins];
@@ -69,6 +71,7 @@ const ManualSearchForm: React.FC<ManualSearchFormProps> = ({
                     isMapSelecting={selectingType === 'origin'}
                     className={'flex-1 min-w-0 h-full'}
                     otherSelected={destinations}
+                    onHoverChange={onHoverChange}
                 />
 
                 {/* Switch Button */}
@@ -96,6 +99,7 @@ const ManualSearchForm: React.FC<ManualSearchFormProps> = ({
                     isMapSelecting={selectingType === 'destination'}
                     className={'flex-1 min-w-0 h-full'}
                     otherSelected={origins}
+                    onHoverChange={onHoverChange}
                 />
             </div>
 

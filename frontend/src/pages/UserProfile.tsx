@@ -7,11 +7,11 @@ import {
     getGetUserByIdQueryKey,
     getGetSelfUserQueryKey
 } from "@/api/generated/openapi/users";
-import { getSearches } from "@/api/generated/openapi/search";
+import { useGetSearchesInfinite } from "@/api/generated/openapi/search";
 import { UIEvent } from "react";
 import { useNavigate, useParams, Link } from "react-router-dom";
 import { toast } from "sonner";
-import { useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/context/AuthContext";
 import { Lock, MessageCircle, UserMinus } from "lucide-react";
 import UserAvatar from "@/components/ui/UserAvatar";
@@ -83,18 +83,15 @@ export default function UserProfile() {
         hasNextPage,
         isFetchingNextPage,
         isLoading: isSearchesLoading
-    } = useInfiniteQuery({
-        queryKey: ["user-searches", id],
-        queryFn: ({ pageParam = 1 }) => getSearches(id, { page: pageParam, limit: 10 }),
-        getNextPageParam: (lastPage) => {
-            if (lastPage.page < lastPage.totalPages) {
-                return lastPage.page + 1;
+    } = useGetSearchesInfinite(
+        id, { limit: 10 },
+        {
+            query: {
+                enabled: !!id && !!user && (user.type !== "public" || user.public === true),
+                refetchOnWindowFocus: false,
             }
-            return undefined;
-        },
-        enabled: !!id && !!user && (user.type !== "public" || user.public === true),
-        initialPageParam: 1,
-    });
+        }
+    );
 
     const handleScroll = (e: UIEvent<HTMLDivElement>) => {
         const { scrollTop, scrollHeight, clientHeight } = e.currentTarget;

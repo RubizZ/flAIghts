@@ -4118,7 +4118,11 @@
             "type": "string"
           },
           "type": {
-            "type": "string"
+            "type": "string",
+            "enum": [
+              "airport"
+            ],
+            "nullable": false
           },
           "importance_score": {
             "type": "number",
@@ -4151,9 +4155,27 @@
             "type": "number",
             "format": "double"
           },
-          "distance_km": {
+          "distance_km_to_user": {
             "type": "number",
             "format": "double"
+          },
+          "distance_km_to_city": {
+            "type": "number",
+            "format": "double"
+          },
+          "highlight": {
+            "properties": {
+              "city": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "iata_code": {
+                "type": "string"
+              }
+            },
+            "type": "object"
           }
         },
         "required": [
@@ -4168,11 +4190,88 @@
         "type": "object",
         "additionalProperties": false
       },
+      "CityResponse": {
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "country": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "city"
+            ],
+            "nullable": false
+          },
+          "location": {
+            "properties": {
+              "coordinates": {
+                "items": {
+                  "type": "number",
+                  "format": "double"
+                },
+                "type": "array"
+              },
+              "type": {
+                "type": "string",
+                "enum": [
+                  "Point"
+                ],
+                "nullable": false
+              }
+            },
+            "required": [
+              "coordinates",
+              "type"
+            ],
+            "type": "object"
+          },
+          "airports": {
+            "items": {
+              "$ref": "#/components/schemas/AirportResponse"
+            },
+            "type": "array"
+          },
+          "combined_score": {
+            "type": "number",
+            "format": "double"
+          },
+          "highlight": {
+            "properties": {
+              "name": {
+                "type": "string"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "required": [
+          "name",
+          "country",
+          "type",
+          "location",
+          "airports"
+        ],
+        "type": "object",
+        "additionalProperties": false
+      },
+      "SearchResult": {
+        "anyOf": [
+          {
+            "$ref": "#/components/schemas/AirportResponse"
+          },
+          {
+            "$ref": "#/components/schemas/CityResponse"
+          }
+        ]
+      },
       "AirportSearchPaginatedResult": {
         "properties": {
           "items": {
             "items": {
-              "$ref": "#/components/schemas/AirportResponse"
+              "$ref": "#/components/schemas/SearchResult"
             },
             "type": "array"
           },

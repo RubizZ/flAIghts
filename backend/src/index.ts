@@ -1,6 +1,8 @@
 import 'reflect-metadata'
 import express from 'express';
 import cors from 'cors';
+import { container } from 'tsyringe';
+import { ServerConfig } from './config/server.config.js';
 import { connectDB } from './config/database.js';
 import { RegisterRoutes } from './generated/tsoa/routes.js';
 import { ValidateError as TsoaValidateError } from 'tsoa';
@@ -12,8 +14,6 @@ import { fileURLToPath } from 'node:url';
 import cookieParser from 'cookie-parser';
 import compression from 'compression';
 import { Error as MongooseError } from 'mongoose';
-import { container } from 'tsyringe';
-import { ServerConfig } from './config/server.config.js';
 import { contextStorage, type RequestContext } from './utils/context.js';
 import logger from './utils/logger.js';
 import { RegisterAsyncRoutes } from './generated/asyncapi/routes.js';

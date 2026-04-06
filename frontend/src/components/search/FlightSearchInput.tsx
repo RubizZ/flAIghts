@@ -13,6 +13,7 @@ interface FlightSearchInputProps {
     placeholder?: string;
     className?: string;
     otherSelected?: AirportResponse[];
+    onHoverChange?: (airport: AirportResponse | null) => void;
 }
 
 const FlightSearchInput: React.FC<FlightSearchInputProps> = ({
@@ -24,6 +25,7 @@ const FlightSearchInput: React.FC<FlightSearchInputProps> = ({
     placeholder,
     className = "",
     otherSelected = [],
+    onHoverChange,
 }) => {
     const isOrigin = type === 'origin';
     const label = isOrigin ? "Origen" : "Destino";
@@ -61,6 +63,7 @@ const FlightSearchInput: React.FC<FlightSearchInputProps> = ({
                 value={value}
                 onChange={onChange}
                 otherSelected={otherSelected}
+                onHoverChange={onHoverChange}
             />
         </PremiumInput>
     );

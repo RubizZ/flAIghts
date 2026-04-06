@@ -8,6 +8,7 @@ import { PlaneTakeoff, PlaneLanding, X } from "lucide-react";
 import { useGetGlobeAirports } from "@/api/generated/openapi/airports";
 import { COUNTRY_NAMES } from "@/constants/countries";
 import type { AirportResponse } from "@/api/generated/openapi/model";
+import { useUserLocation } from "@/context/UserLocationContext";
 
 interface AirportData {
     iata: string;
@@ -30,6 +31,7 @@ interface GlobeProps {
     onAirportClick?: (airport: AirportResponse | null) => void;
     onMovementChange?: (isMoving: boolean, isUserInteracting: boolean) => void;
     focusIata?: string;
+    hoveredAirport?: AirportResponse;
     steps?: AirportResponse[][];
 }
 
@@ -46,9 +48,21 @@ export default function Globe({
     onAirportClick,
     onMovementChange,
     focusIata,
+    hoveredAirport,
     steps = []
 }: GlobeProps) {
+    const { location, isLoading: isLocLoading } = useUserLocation();
     const DEBUG_HITBOXES = false;
+
+    // Use a debounced IATA for camera specifically, so rapid hovers don't jitter the globe
+    const [debouncedHoveredIata, setDebouncedHoveredIata] = useState<string | null>(null);
+
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setDebouncedHoveredIata(hoveredAirport?.iata_code || null);
+        }, 500); // 500ms debounce for camera movement ONLY
+        return () => clearTimeout(timer);
+    }, [hoveredAirport?.iata_code]);
 
     const originsIata = useMemo(() => origins.map(o => o.iata_code).filter(Boolean) as string[], [origins]);
     const destinationsIata = useMemo(() => destinations.map(d => d.iata_code).filter(Boolean) as string[], [destinations]);
@@ -68,6 +82,7 @@ export default function Globe({
     const popupRef = useRef<HTMLDivElement | null>(null);
     const originLabelRefs = useRef<(HTMLDivElement | null)[]>([]);
     const destLabelRefs = useRef<(HTMLDivElement | null)[]>([]);
+    const hoverLabelRef = useRef<HTMLDivElement | null>(null);
     const contextMenuContainerRef = useRef<HTMLDivElement | null>(null);
     const labelGroupRef = useRef<THREE.Group>(new THREE.Group());
     const clusterTextureCache = useRef<Record<number, THREE.CanvasTexture>>({});
@@ -152,15 +167,16 @@ export default function Globe({
     const onAirportClickRef = useRef(onAirportClick);
     const onMovementChangeRef = useRef(onMovementChange);
     useEffect(() => { onMovementChangeRef.current = onMovementChange; }, [onMovementChange]);
+    const hoveredAirportRef = useRef(hoveredAirport);
     const lastCamPosRef = useRef(new THREE.Vector3());
 
     // Stable key for airports that must NOT be clustered (sorted to ignore order in swaps)
     const forcedAirportsKey = useMemo(() => {
-        return [...originsIata, ...destinationsIata, ...allStepsIata, ...selectedAirports]
+        return [...originsIata, ...destinationsIata, ...allStepsIata, ...selectedAirports, hoveredAirport?.iata_code]
             .filter(Boolean)
             .sort()
             .join(',');
-    }, [originsIata, destinationsIata, allStepsIata, selectedAirports]);
+    }, [originsIata, destinationsIata, allStepsIata, selectedAirports, hoveredAirport?.iata_code]);
     const lastCamQuatRef = useRef<THREE.Quaternion>(new THREE.Quaternion());
     const lastMoveTimeRef = useRef(0);
     const isUserInteractingRef = useRef(false);
@@ -513,8 +529,11 @@ export default function Globe({
         onSelectRef.current = onAirportSelect;
         onAirportClickRef.current = onAirportClick;
         selectedAirportsRef.current = selectedAirports;
-        selectedAirportsSetRef.current = new Set(selectedAirports);
-    }, [originsIata, destinationsIata, onAirportSelect, onAirportClick, selectedAirports]);
+        hoveredAirportRef.current = hoveredAirport;
+        const set = new Set(selectedAirports);
+        if (hoveredAirport?.iata_code) set.add(hoveredAirport.iata_code);
+        selectedAirportsSetRef.current = set;
+    }, [originsIata, destinationsIata, onAirportSelect, onAirportClick, selectedAirports, hoveredAirport]);
 
     useEffect(() => {
         interactiveRef.current = interactive;
@@ -807,29 +826,12 @@ export default function Globe({
         sceneRef.current = scene;
 
         const camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 5000);
-        // Default: Greenwich meridian. IP geo will override this asynchronously if available.
         const idealDist = calculateDistance(width, height);
         const defaultPos = latLonToVector3(0, 0, idealDist);
         camera.position.copy(defaultPos);
         camera.lookAt(0, 0, 0);
         cameraRef.current = camera;
         homePositionRef.current.copy(defaultPos);
-
-        // Fire IP geolocation fetch — camera positioned before globe renders
-        fetch("https://get.geojs.io/v1/ip/geo.json")
-            .then(r => r.json())
-            .then(data => {
-                if (data?.latitude && data?.longitude && cameraRef.current) {
-                    const dist = calculateDistance(mountRef.current?.clientWidth || width, mountRef.current?.clientHeight || height);
-                    const pos = latLonToVector3(Number(data.latitude), Number(data.longitude), dist);
-                    cameraRef.current.position.copy(pos);
-                    cameraRef.current.lookAt(0, 0, 0);
-                    if (controlsRef.current) controlsRef.current.update();
-                    homePositionRef.current.copy(pos);
-                }
-            })
-            .catch(() => { /* silent fail, camera stays at Greenwich default */ })
-            .finally(() => { setGeoReady(true); });
 
         const renderer = new THREE.WebGLRenderer({
             antialias: true,
@@ -984,7 +986,7 @@ export default function Globe({
 
         const sunMesh = new THREE.Mesh(
             new THREE.SphereGeometry(15, 32, 32),
-            new THREE.MeshBasicMaterial({ 
+            new THREE.MeshBasicMaterial({
                 map: loader.load("https://threejs.org/examples/textures/lava/lavatile.jpg"),
             })
         );
@@ -1752,6 +1754,7 @@ export default function Globe({
             activeDestsRef.current.forEach((iata, idx) => {
                 updateLabel(iata, destLabelRefs.current[idx] || null);
             });
+            updateLabel(hoveredAirportRef.current?.iata_code, hoverLabelRef.current);
 
             // Integrated Cluster labels into the airport group loop above for performance
 
@@ -2084,7 +2087,7 @@ export default function Globe({
         if (!isAirportsLoaded || !globeAirports) return;
 
         const hM = isMobileRef.current ? 1.4 : 1.0;
-        const forcedSet = new Set([...selectedAirports, ...originsIata, ...allStepsIata, ...destinationsIata].filter(Boolean) as string[]);
+        const forcedSet = new Set([...selectedAirports, ...originsIata, ...allStepsIata, ...destinationsIata, hoveredAirport?.iata_code].filter(Boolean) as string[]);
 
         // 1. Calculate items first for differential update logic
         const cacheKey = `${clusterThreshold.toFixed(4)}_${forcedAirportsKey}`;
@@ -2134,7 +2137,7 @@ export default function Globe({
             const isDest = destinationsIata.includes(item.iata);
             const stepIdx = stepsIata.findIndex(step => step.includes(item.iata));
             const isStep = stepIdx !== -1;
-            const isSelected = selectedAirportsSetRef.current.has(item.iata);
+            const isSelected = selectedAirports.includes(item.iata) || hoveredAirport?.iata_code === item.iata;
             const isSpecial = isOrigin || isDest || isStep || isSelected;
 
             let meshColor = getThemeColorHex('--color-brand', 0x4f46e5);
@@ -2147,7 +2150,7 @@ export default function Globe({
                     const t = (stepIdx + 1) / (stepsIata.length + 1);
                     meshColor = new THREE.Color(originColor).lerp(new THREE.Color(destColor), t).getHex();
                 }
-            } else if (isSpecial) meshColor = 0x00ff00;
+            } else if (isSpecial) meshColor = 0x34d399; // Emerald 400 (Premium selection color)
 
             let mesh = existingMeshes.get(item.id);
 
@@ -2301,11 +2304,13 @@ export default function Globe({
         const destColor = getThemeColorHex('--color-destination', 0xc026d3);
 
         const selSet = new Set(selectedAirports);
+        if (hoveredAirport?.iata_code) selSet.add(hoveredAirport.iata_code);
 
         airportGroupRef.current.children.forEach(child => {
             const mesh = child as THREE.Mesh;
             const item = mesh.userData;
-            const mat = mesh.material as THREE.MeshBasicMaterial;
+            const visual = mesh.userData.visualMesh as THREE.Mesh;
+            const mat = (visual ? visual.material : mesh.material) as THREE.MeshBasicMaterial;
 
             if (!item.isCluster) {
                 const isOrigin = originsIata.includes(item.iata);
@@ -2321,7 +2326,7 @@ export default function Globe({
                     }
                     mat.color.setHex(meshColor);
                 } else if (selSet.has(item.iata)) {
-                    mat.color.setHex(0x00ff00);
+                    mat.color.setHex(0x34d399); // Emerald 400
                 } else {
                     mat.color.setHex(brandColor);
                 }
@@ -2345,7 +2350,7 @@ export default function Globe({
                 mat.wireframe = DEBUG_HITBOXES;
             }
         });
-    }, [isLoaded, originsIata, destinationsIata, selectedAirports.join(','), stepsIata]);
+    }, [isLoaded, originsIata, destinationsIata, selectedAirports.join(','), stepsIata, hoveredAirport?.iata_code]);
     // 3. Update Interactive State
     useEffect(() => {
         if (controlsRef.current) controlsRef.current.enabled = interactive;
@@ -2739,13 +2744,13 @@ export default function Globe({
     }, [isLoaded, modelLoaded]);
 
     // 7. Handle camera positioning (Direct Action Driven)
-    const lastPropsRef = useRef({ originsIata, destinationsIata, focusIata, interactive, selectedAirports: [] as string[] });
+    const lastPropsRef = useRef({ originsIata, destinationsIata, focusIata, interactive, selectedAirports: [] as string[], debouncedHoveredIata: null as string | null });
 
     useEffect(() => {
         if (!isLoaded || !cameraRef.current) return;
 
         const prev = lastPropsRef.current;
-        const current = { originsIata, destinationsIata, focusIata, interactive, selectedAirports };
+        const current = { originsIata, destinationsIata, focusIata, interactive, selectedAirports, debouncedHoveredIata };
         lastPropsRef.current = current;
 
         // Determine if we should trigger a camera movement based on what changed
@@ -2756,8 +2761,15 @@ export default function Globe({
         const focusChanged = current.focusIata !== prev.focusIata;
         const selectedChanged = JSON.stringify(current.selectedAirports) !== JSON.stringify(prev.selectedAirports);
         const interactiveChanged = current.interactive !== prev.interactive;
+        const hoveredChanged = debouncedHoveredIata !== prev.debouncedHoveredIata;
 
-        const allActiveIatas = [...new Set([...current.originsIata, ...allStepsIata, ...current.destinationsIata, ...current.selectedAirports])].filter(Boolean);
+        const allActiveIatas = [...new Set([
+            ...current.originsIata,
+            ...allStepsIata,
+            ...current.destinationsIata,
+            ...current.selectedAirports,
+            debouncedHoveredIata
+        ])].filter(Boolean) as string[];
 
         // Default "itinerary" target based on current state.
         // Focus (inspection) takes priority over the route framing.
@@ -2768,8 +2780,8 @@ export default function Globe({
             return { type: 'home' };
         };
 
-        if (originsChanged || destsChanged || selectedChanged || focusChanged) {
-            // Route, selection or focus was modified
+        if (originsChanged || destsChanged || selectedChanged || focusChanged || hoveredChanged) {
+            // Route, selection, focus, or debounced hover was modified
             autoTarget = getAutoTarget();
         } else if (interactiveChanged && !current.interactive) {
             // Map mode deactivated -> View current route or home
@@ -2869,10 +2881,25 @@ export default function Globe({
                 }
             });
         }
-    }, [isLoaded, originsIata, destinationsIata, focusIata, interactive, geoReady, selectedAirports, allStepsIata]);
+    }, [isLoaded, originsIata, destinationsIata, focusIata, interactive, geoReady, selectedAirports, allStepsIata, debouncedHoveredIata]);
+    // Effect to update camera home position when user location context yields data
+    useEffect(() => {
+        if (location && cameraRef.current && mountRef.current) {
+            const width = mountRef.current.clientWidth;
+            const height = mountRef.current.clientHeight;
+            const dist = calculateDistance(width, height);
+            const pos = latLonToVector3(location.latitude, location.longitude, dist);
 
-
-
+            cameraRef.current.position.copy(pos);
+            cameraRef.current.lookAt(0, 0, 0);
+            if (controlsRef.current) controlsRef.current.update();
+            homePositionRef.current.copy(pos);
+            setGeoReady(true);
+        } else if (!isLocLoading && cameraRef.current) {
+            // Fallback: if loc failed but loading is over, show globe at default
+            setGeoReady(true);
+        }
+    }, [location, isLocLoading]);
 
     return (
         <div className='w-full h-full relative overflow-hidden bg-black flex items-center justify-center'>
@@ -2913,6 +2940,22 @@ export default function Globe({
                     <div className="w-px h-6 bg-linear-to-b from-destination/40 to-transparent" />
                 </div>
             ))}
+
+            {/* Hover Tag */}
+            {hoveredAirport && 
+             !originsIata.includes(hoveredAirport.iata_code) && 
+             !destinationsIata.includes(hoveredAirport.iata_code) &&
+             !allStepsIata.includes(hoveredAirport.iata_code) && (
+                <div
+                    ref={hoverLabelRef}
+                    className="pointer-events-none absolute z-40 hidden -translate-x-1/2 -translate-y-[calc(100%+12px)] flex-col items-center transition-opacity duration-300"
+                >
+                    <div className="bg-emerald-500/10 backdrop-blur-md border border-emerald-500/40 px-3 py-1 rounded-full text-[10px] font-bold text-emerald-400 shadow-[0_4px_12px_rgba(0,0,0,0.5)] whitespace-nowrap">
+                        {hoveredAirport.city || hoveredAirport.name || hoveredAirport.iata_code}
+                    </div>
+                    <div className="w-px h-6 bg-linear-to-b from-emerald-500/40 to-transparent" />
+                </div>
+            )}
 
             {!isLoaded && (
                 <div className="z-10 text-white animate-pulse font-medium">

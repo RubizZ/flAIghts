@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import Globe from "../components/Globe.tsx"
 import { Plus, Globe as GlobeIcon, Maximize2, PlaneTakeoff, PlaneLanding, X, Plane, ChevronDown, ChevronRight, Search, Calendar as CalendarIcon } from "lucide-react";
 import { useSearchRequest } from "@/api/generated/openapi/search";
@@ -34,6 +34,7 @@ export default function Home() {
         const saved = localStorage.getItem('searchMode');
         return (saved === 'manual' || saved === 'ai') ? saved : 'manual';
     });
+    const [hoveredAirport, setHoveredAirport] = useState<AirportResponse | null>(null);
 
     useEffect(() => {
         localStorage.setItem('searchMode', searchMode);
@@ -302,19 +303,26 @@ export default function Home() {
                 isHorizontal={isMapMode && isLargeScreen}
                 isMapMode={isMapMode}
                 today={today}
+                onHoverChange={setHoveredAirport}
             />
         );
     }
+
+    const selectedAirports = useMemo(() => [
+        ...origins.map(o => o.iata_code),
+        ...destinations.map(d => d.iata_code),
+        inspectedAirport?.iata_code,
+    ].filter(Boolean) as string[], [origins, destinations, inspectedAirport]);
 
     return (
         <div className={`absolute inset-0 overflow-hidden transition-colors duration-700 ${!isLargeScreen && !isSelectingOnMap ? 'bg-main' : 'bg-black'}`}>
             <StarsBackground className={`transition-opacity duration-1000 ${!isLargeScreen && !isSelectingOnMap ? 'opacity-30' : 'opacity-0'}`} />
 
-            {/* Mobile Explore Button at the very bottom */}
+            {/* Globe Layer */}
             <div className={`absolute inset-0 z-0 transition-opacity duration-700 ${!isLargeScreen && !isSelectingOnMap ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
                 <Globe
                     onAirportSelect={selectingType ? handleMapSelect : undefined}
-                    selectedAirports={[...origins.map(o => o.iata_code), ...destinations.map(d => d.iata_code), inspectedAirport?.iata_code].filter(Boolean) as string[]}
+                    selectedAirports={selectedAirports}
                     origins={origins}
                     destinations={destinations}
                     interactive={isSelectingOnMap && !(inspectedAirport && !isLargeScreen)}
@@ -328,10 +336,11 @@ export default function Home() {
                         setIsUserInteracting(interacting);
                     }}
                     focusIata={inspectedAirport?.iata_code}
+                    hoveredAirport={hoveredAirport || undefined}
                 />
             </div>
 
-            {/* Background Interaction Overlay - Restricted to a centered square over the globe */}
+            {/* Background Interaction Overlay */}
             {!isSelectingOnMap && !isInteractionSuppressed && isLargeScreen && (
                 <div
                     onClick={() => setIsSelectingOnMap(true)}
@@ -350,6 +359,7 @@ export default function Home() {
                 </div>
             )}
 
+            {/* Loading Screen */}
             <div className={`absolute inset-0 z-50 bg-main flex flex-col items-center justify-center gap-6 transition-opacity duration-700 pointer-events-none ${globeReady ? 'opacity-0' : 'opacity-100'}`}>
                 <div className="relative flex items-center justify-center">
                     <div className="absolute w-20 h-20 rounded-full border border-brand/40 animate-radar" style={{ animationDelay: '0s' }} />
@@ -364,6 +374,7 @@ export default function Home() {
                 </div>
             </div>
 
+            {/* Floating Selection Controls */}
             <div
                 className={`absolute bottom-8 left-1/2 -translate-x-1/2 z-20 flex flex-col items-center gap-4 w-[min(90vw,fit-content)] transition-all duration-500 ease-out
                     ${isSelectingOnMap
@@ -450,6 +461,7 @@ export default function Home() {
                         }}
                         searchMode={searchMode}
                         onSearchModeChange={setSearchMode}
+                        onHoverChange={setHoveredAirport}
                     />
                 </div>
             </div>
@@ -541,7 +553,7 @@ export default function Home() {
                     )}
                 </div>
 
-                {/* Floating validation bubble attached to the card summary (detalles) ONLY ON MOBILE */}
+                {/* Floating validation bubble attached to the card summary ONLY ON MOBILE */}
                 {origins.length > 0 && destinations.length > 0 && !departureDate && !isMobileCardExpanded && !isLargeScreen && (
                     <div className="absolute top-full mt-3 left-1/2 -translate-x-1/2 bg-red-500/90 backdrop-blur-md text-white text-[9px] font-black uppercase tracking-widest px-3 py-1.5 rounded-lg shadow-2xl border border-white/20 animate-bounce flex items-center gap-1.5 whitespace-nowrap z-50">
                         <CalendarIcon size={10} />
@@ -623,7 +635,7 @@ export default function Home() {
                         </div>
                     </div>
                 </div>
-            </div >
-        </div >
-    )
+            </div>
+        </div>
+    );
 }

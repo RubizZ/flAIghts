@@ -26,6 +26,7 @@ interface HomeCardProps {
     searchMode?: 'manual' | 'ai';
     onSearchModeChange?: (mode: 'manual' | 'ai') => void;
     className?: string;
+    onHoverChange?: (airport: AirportResponse | null) => void;
 }
 
 export default function HomeCard({
@@ -49,7 +50,8 @@ export default function HomeCard({
     onExploreGlobe,
     searchMode = 'manual',
     onSearchModeChange,
-    className = ""
+    className = "",
+    onHoverChange
 }: HomeCardProps) {
     const [messages, setMessages] = useState<ExtendedChatMessage[]>([]);
     const chatRef = useRef<any>(null);
@@ -141,6 +143,7 @@ export default function HomeCard({
                             isHorizontal={false}
                             isMapMode={false}
                             today={today}
+                            onHoverChange={onHoverChange}
                         />
                         <div className="flex items-center justify-center gap-4 text-xs text-content-muted">
                             <div className="flex items-center gap-1">

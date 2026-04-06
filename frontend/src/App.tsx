@@ -1,6 +1,7 @@
 import { createBrowserRouter, RouterProvider } from "react-router-dom"
 import { ThemeProvider } from "@/context/ThemeContext"
 import { AuthProvider } from "@/context/AuthContext"
+import { UserLocationProvider } from "@/context/UserLocationContext";
 import { routes } from "@/routes";
 import { QueryClientProvider, QueryErrorResetBoundary } from "@tanstack/react-query";
 import { Toaster } from 'sonner';
@@ -15,8 +16,10 @@ export default function App() {
         <QueryClientProvider client={queryClient}>
             <ThemeProvider>
                 <AuthProvider>
-                    <RouterProvider router={router} />
-                    <Toaster richColors position="top-center" />
+                    <UserLocationProvider>
+                        <RouterProvider router={router} />
+                        <Toaster richColors position="top-center" />
+                    </UserLocationProvider>
                 </AuthProvider>
             </ThemeProvider>
         </QueryClientProvider>

@@ -1,21 +1,26 @@
-import { singleton } from "tsyringe";
+import { singleton, inject } from "tsyringe";
 import fuzzysort from "fuzzysort";
+import axios from "axios";
+import ms from "ms";
+import { ServerConfig } from "../../config/server.config.js";
 import { Airport, type IAirport } from "./airport.model.js";
-import type { AirportResponse, AirportSearchPaginatedResult, ScoredAirport, GlobeAirportResponse } from "./airport.types.js";
 import logger from "../../utils/logger.js";
+import { GeocodeCache } from "./geocode-cache.model.js";
+import type { AirportResponse, AirportSearchPaginatedResult, ScoredAirport, GlobeAirportResponse, CachedAirport, SearchResult, CityResponse } from "./airport.types.js";
+import { COUNTRY_NAMES } from "./countries.js";
 
 // Radios base (km) para búsqueda de rutas
 const MIN_RADIUS_KM = 150;
 const MAX_RADIUS_KM = 800;
 const MAX_LAYOVERS = 6;
-import { COUNTRY_NAMES } from "./countries.js";
 
 @singleton()
 export class AirportService {
-    private airportsCache: any[] = [];
+    private airportsCache: CachedAirport[] = [];
+    private citiesCache = new Map<string, { lat: number, lon: number, display_name: string, country: string }>();
     private isInitialized = false;
 
-    constructor() {
+    constructor(@inject(ServerConfig) private config: ServerConfig) {
         this.initializeCache();
     }
 
@@ -37,7 +42,29 @@ export class AirportService {
                     _normCountry: this.normalize(a.country),
                     // Añadimos nombres de países en múltiples idiomas para mejorar la búsqueda
                     _normCountryNames: names.map(n => this.normalize(n)).join(" ")
-                };
+                } as CachedAirport;
+            });
+
+            // Precomputamos las ciudades más importantes (O(1) lookup para geocodificación gratuita)
+            const tempCityImportance = new Map<string, { airport: CachedAirport, importance: number }>();
+            this.airportsCache.forEach(a => {
+                const cityKey = a._normCity;
+                const existing = tempCityImportance.get(cityKey);
+                if (!existing || a.importance_score > existing.importance) {
+                    tempCityImportance.set(cityKey, { airport: a, importance: a.importance_score });
+                }
+            });
+
+            tempCityImportance.forEach((val, cityKey) => {
+                const a = val.airport;
+                const countryInfo = COUNTRY_NAMES[a.country];
+                const countryName = (countryInfo && countryInfo[1]) || a.country;
+                this.citiesCache.set(cityKey, {
+                    lat: a.location.coordinates[1],
+                    lon: a.location.coordinates[0],
+                    display_name: `${a.city}, ${countryName}`,
+                    country: countryName
+                });
             });
 
             this.isInitialized = true;
@@ -52,102 +79,222 @@ export class AirportService {
      */
     private normalize(str: string): string {
         if (!str) return "";
-        return str
-            .normalize("NFD")
-            .replace(/[\u0300-\u036f]/g, "") // Elimina diacríticos (acentos)
-            .toLowerCase();
+        return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
     }
 
     public async searchAirports(query: string, userLat?: number, userLon?: number, page: number = 1, limit: number = 10): Promise<AirportSearchPaginatedResult> {
-        if (!this.isInitialized) {
-            return await this.searchDatabase(query, page, limit);
-        }
-
-        const cleanQuery = query?.trim();
-        if (!cleanQuery || cleanQuery.length < 2) {
-            return { items: [], total: 0, page, totalPages: 0 };
-        }
-
-        const normalizedQuery = this.normalize(cleanQuery);
-
-        const results = fuzzysort.go(normalizedQuery, this.airportsCache, {
-            keys: ['_normIata', '_normCity', '_normName', '_normCountry', '_normCountryNames'],
-            threshold: -10000,
+        let airports = this.isInitialized ? this.airportsCache : (await Airport.find({}).lean()).map(a => {
+            const names = COUNTRY_NAMES[a.country] || [];
+            return {
+                ...a,
+                _normIata: this.normalize(a.iata_code),
+                _normCity: this.normalize(a.city),
+                _normName: this.normalize(a.name),
+                _normCountry: this.normalize(a.country),
+                _normCountryNames: names.map(n => this.normalize(n)).join(" ")
+            };
         });
 
-        const sortedResults = results.map((result: any) => {
-            const airport = result.obj;
-            let finalScore = (result.score * 1000) + (airport.importance_score || 0);
+        const cleanQuery = query?.trim();
+        if (!cleanQuery || cleanQuery.length < 2) return { items: [], total: 0, page, totalPages: 0 };
 
+        const normalizedQuery = this.normalize(cleanQuery);
+        const results = fuzzysort.go<CachedAirport>(normalizedQuery, airports, {
+            keys: ['iata_code', 'city', 'name', '_normIata', '_normCity', '_normName', '_normCountry', '_normCountryNames'],
+            threshold: -2500,
+        });
+
+        const fuzzyItems = results.map((result) => {
+            const airport = result.obj;
+            const textScore = Math.max(0, (1000 + result.score) / 1000);
+            const importanceScore = (airport.importance_score || 0) / 100;
+            let distanceScore = 0;
             let distance_km: number | undefined = undefined;
+
             if (userLat !== undefined && userLon !== undefined) {
                 const [lon, lat] = airport.location.coordinates;
                 distance_km = this.haversine(userLat, userLon, lat, lon);
-                const distanceBonus = Math.max(0, 100000 * (1 - distance_km / 5000));
-                finalScore += distanceBonus;
+                distanceScore = Math.max(0, 1 - (distance_km / 5000));
             }
 
-            if (airport.iata_code?.toUpperCase() === cleanQuery.toUpperCase()) {
-                finalScore += 1000000;
-            }
+            let weightedScore = (textScore * 70) + (importanceScore * 15) + (distanceScore * 15);
 
-            if (airport.city?.toLowerCase() === cleanQuery.toLowerCase()) {
-                finalScore += 500000;
-            }
+            if (airport.iata_code?.toUpperCase() === cleanQuery.toUpperCase()) weightedScore += 1000;
+            if (airport.city?.toLowerCase() === normalizedQuery) weightedScore += 500;
+            if (airport._normCity.startsWith(normalizedQuery)) weightedScore += 200;
+
+            const highlight = {
+                iata_code: result[0]?.highlight('<b>', '</b>'),
+                city: result[1]?.highlight('<b>', '</b>'),
+                name: result[2]?.highlight('<b>', '</b>'),
+            };
+
+            const cityScore = result[1]?.score ?? 0;
 
             return {
-                ...airport,
-                combined_score: finalScore,
-                distance_km: distance_km ? Math.round(distance_km) : undefined
+                ...this.toAirportResponse(airport),
+                combined_score: weightedScore,
+                distance_km_to_user: distance_km ? Math.round(distance_km) : undefined,
+                highlight,
+                cityScore
             };
-        }).sort((a, b) => (b.combined_score || 0) - (a.combined_score || 0));
+        });
 
+        // Intelligent city search trigger
+        const topFuzzyScore = fuzzyItems.length > 0 ? (fuzzyItems[0] as any).combined_score : 0;
+        const bestCityMatch = fuzzyItems.find(i => i.cityScore > 0.9);
+        const isIataQuery = cleanQuery.length === 3 && /^[A-Za-z]{3}$/.test(cleanQuery);
+
+        let finalItems: SearchResult[] = [];
+        let cityToGeocode: string | null = null;
+
+        if (!isIataQuery) {
+            if (bestCityMatch) {
+                // We have a high-confidence city match in our DB, use its canonical name
+                cityToGeocode = bestCityMatch.city;
+            } else if (topFuzzyScore < 200) {
+                // Weak overall results, try geocoding the raw query as a fallback
+                cityToGeocode = cleanQuery;
+            }
+        }
+
+        if (cityToGeocode) {
+            try {
+                const coordsResult = await this.geocodeCity(cityToGeocode);
+                if (coordsResult) {
+                    const countryName = coordsResult.country;
+                    const countryCode = Object.entries(COUNTRY_NAMES).find(([_, names]) => names.includes(countryName))?.[0] || "";
+                    const near = await this.getNearAirports(coordsResult.lat, coordsResult.lon, 8, 200);
+                    const nearIatas = new Set(near.map(n => n.iata_code));
+
+                    // Build the final subAirports list using data from fuzzyItems (for highlights) where possible
+                    const subAirports = near.map(n => {
+                        const fuzzyMatch = fuzzyItems.find(f => f.iata_code === n.iata_code);
+                        if (fuzzyMatch) {
+                            return { ...this.toAirportResponse(fuzzyMatch), distance_km_to_city: n.distance_km_to_city, highlight: fuzzyMatch.highlight };
+                        }
+                        return n;
+                    });
+
+                    // Create City Item
+                    const cityItem: CityResponse = {
+                        name: coordsResult.display_name,
+                        country: countryCode,
+                        type: "city" as const,
+                        location: { type: "Point", coordinates: [coordsResult.lon, coordsResult.lat] },
+                        airports: subAirports,
+                        combined_score: (fuzzyItems[0]?.combined_score || 350) + 50,
+                        highlight: {
+                            name: coordsResult.display_name.replace(new RegExp(cityToGeocode, 'gi'), '<b>$&</b>')
+                        }
+                    };
+
+                    // Remaining independent airports (those NOT in the near group)
+                    const otherAirports = fuzzyItems.filter(f => !nearIatas.has(f.iata_code));
+
+                    finalItems = [cityItem, ...otherAirports];;
+                } else {
+                    finalItems = fuzzyItems;
+                }
+            } catch (e) {
+                console.error("City geocoding failed", e);
+                finalItems = fuzzyItems;
+            }
+        } else {
+            finalItems = fuzzyItems;
+        }
+
+        const sortedResults = finalItems.sort((a, b) => (b.combined_score || 0) - (a.combined_score || 0));
+
+        // Final cleaning and pagination
         const total = sortedResults.length;
         const totalPages = Math.ceil(total / limit);
         const start = (page - 1) * limit;
-        const items = sortedResults.slice(start, start + limit)
-            .map(({ _normIata, _normCity, _normName, _normCountry, _normCountryNames, ...airport }) => airport as any);
+        const items = sortedResults.slice(start, start + limit).map(item => {
+            if (item.type === 'city') {
+                return this.toCityResponse(item);
+            }
+            return this.toAirportResponse(item);
+        });
 
         return { items, total, page, totalPages };
     }
 
-    private async searchDatabase(query: string, page: number = 1, limit: number = 10): Promise<AirportSearchPaginatedResult> {
-        // Fallback básico si la caché falla
-        const regex = new RegExp(query, 'i');
-        const findQuery = {
-            $or: [{ iata_code: regex }, { city: regex }, { name: regex }]
-        };
+    private async geocodeCity(query: string): Promise<{ lat: number, lon: number, display_name: string, country: string } | null> {
+        const cacheKey = query.toLowerCase().trim();
+        const normalizedQuery = this.normalize(cacheKey);
 
-        const skip = (page - 1) * limit;
+        // 1. O(1) Memory Lookup for known cities with airports (Zero cost/latency)
+        const staticMatch = this.citiesCache.get(normalizedQuery);
+        if (staticMatch) return staticMatch;
 
-        const [airports, total] = await Promise.all([
-            Airport.find(findQuery)
-                .skip(skip)
-                .limit(limit)
-                .lean(),
-            Airport.countDocuments(findQuery)
-        ]);
+        // 2. MongoDB persistent cache (Low cost/latency)
+        const cached = await GeocodeCache.findOne({ query: cacheKey });
+        const now = Date.now();
+        const expiresAt = new Date(now + ms(this.config.GEOCODE_CACHE_TTL));
 
-        return {
-            items: airports as AirportResponse[],
-            total,
-            page,
-            totalPages: Math.ceil(total / limit)
-        };
-    }
-
-    /**
-     * Devuelve todos los aeropuertos en formato ultra-compacto para el globo
-     */
-    public async getGlobeAirports(): Promise<GlobeAirportResponse[]> {
-        if (!this.isInitialized) {
-            const airports = await Airport.find({}).lean();
-            return this.formatForGlobe(airports);
+        if (cached) {
+            // refresh TTL
+            cached.expiresAt = expiresAt;
+            await cached.save();
+            return {
+                lat: cached.lat,
+                lon: cached.lon,
+                display_name: cached.display_name,
+                country: cached.country
+            };
         }
-        return this.formatForGlobe(this.airportsCache);
+
+        // 3. External geocoding fallback (Rare, requires geocoding small towns or new cities)
+        const provider = this.config.GEOCODING_PROVIDER;
+        const apiKey = this.config.GEOCODING_API_KEY;
+
+        try {
+            let result: { lat: number, lon: number, display_name: string, country: string } | null = null;
+
+            if (provider === "google" && apiKey) {
+                const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(query)}&key=${apiKey}`;
+                const resp = await axios.get(url, { timeout: 2000 });
+                if (resp.data?.results?.[0]) {
+                    const first = resp.data.results[0];
+                    const countryComp = first.address_components?.find((c: any) => c.types.includes("country"));
+                    result = {
+                        lat: first.geometry.location.lat,
+                        lon: first.geometry.location.lng,
+                        display_name: first.formatted_address,
+                        country: countryComp?.long_name || ""
+                    };
+                }
+            } else {
+                // Nominatim Public as fallback (rate-limited but works for occasional misses)
+                const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=1&addressdetails=1`;
+                const resp = await axios.get(url, { headers: { 'User-Agent': 'flAIghts-Backend' }, timeout: 2000 });
+                if (resp.data?.[0]) {
+                    result = {
+                        lat: parseFloat(resp.data[0].lat),
+                        lon: parseFloat(resp.data[0].lon),
+                        display_name: resp.data[0].display_name,
+                        country: resp.data[0].address?.country || ""
+                    };
+                }
+            }
+
+            if (result) {
+                await GeocodeCache.create({ query: cacheKey, ...result, expiresAt });
+                return result;
+            }
+        } catch (e: any) {
+            if (e.response?.status === 429) {
+                console.warn("Geocoding rate limited (429). Pure DB fallback failed.");
+            } else {
+                console.error("Geocoding failed", e.message);
+            }
+        }
+        return null;
     }
 
-    private formatForGlobe(airports: IAirport[]): GlobeAirportResponse[] {
+    public async getGlobeAirports(): Promise<GlobeAirportResponse[]> {
+        const airports = this.isInitialized ? this.airportsCache : await Airport.find({}).lean() as IAirport[];
         return airports.map(a => ({
             i: a.iata_code,
             n: a.name,
@@ -161,10 +308,7 @@ export class AirportService {
 
     public async getAirportByIata(iata: string): Promise<IAirport | null> {
         if (!iata || iata.length !== 3) return null;
-        if (this.isInitialized) {
-            const found = this.airportsCache.find(a => a.iata_code === iata.toUpperCase());
-            return found || null;
-        }
+        if (this.isInitialized) return this.airportsCache.find(a => a.iata_code === iata.toUpperCase()) || null;
         return await Airport.findOne({ iata_code: iata.toUpperCase() }).lean();
     }
 
@@ -181,7 +325,7 @@ export class AirportService {
             {
                 $geoNear: {
                     near: { type: "Point", coordinates: [lon, lat] },
-                    distanceField: "distance_meters", // MongoDB devuelve el cálculo en metros directamente
+                    distanceField: "distance_meters",
                     maxDistance: maxDistanceKm * 1000,
                     spherical: true
                 }
@@ -191,16 +335,38 @@ export class AirportService {
 
         return airports.map(a => {
             return {
-                iata_code: a.iata_code,
-                name: a.name,
-                city: a.city,
-                country: a.country,
-                type: a.type,
-                importance_score: a.importance_score,
-                location: a.location,
-                distance_km: Math.round(a.distance_meters / 1000)
-            } as AirportResponse;
+                ...this.toAirportResponse(a),
+                distance_km_to_city: Math.round(a.distance_meters / 1000)
+            };
         });
+    }
+
+    private toAirportResponse(a: any): AirportResponse {
+        return {
+            iata_code: a.iata_code,
+            name: a.name,
+            city: a.city,
+            country: a.country,
+            type: "airport",
+            importance_score: a.importance_score,
+            location: a.location,
+            combined_score: a.combined_score,
+            distance_km_to_user: a.distance_km_to_user,
+            distance_km_to_city: a.distance_km_to_city,
+            highlight: a.highlight
+        };
+    }
+
+    private toCityResponse(c: any): CityResponse {
+        return {
+            name: c.name,
+            country: c.country,
+            type: "city",
+            location: c.location,
+            airports: (c.airports || []).map((a: any) => this.toAirportResponse(a)),
+            combined_score: c.combined_score,
+            highlight: c.highlight
+        };
     }
 
     public async getCandidateLayovers(
