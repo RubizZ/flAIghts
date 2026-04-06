@@ -1,10 +1,9 @@
 import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import Globe from "../components/Globe.tsx"
-import { ArrowLeftRight, Plus, Calendar as CalendarIcon, MapPin, Search, Bot, SlidersHorizontal, Globe as GlobeIcon, Maximize2, Info, PlaneTakeoff, PlaneLanding, AlertTriangle, X, Plane, Zap } from "lucide-react";
+import { ArrowLeftRight, Plus, Calendar as CalendarIcon, MapPin, Search, Bot, SlidersHorizontal, Globe as GlobeIcon, Maximize2, Info, PlaneTakeoff, PlaneLanding, AlertTriangle, X, Plane } from "lucide-react";
 import AirportAutocomplete from "../components/AirportAutocomplete.tsx";
-import { useSearchRequest, useGeneticTrip } from "@/api/generated/search/search";
-import GeneticTripModal from "../components/GeneticTripModal";
+import { useSearchRequest } from "@/api/generated/search/search";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import Calendar from "../components/ui/Calendar.tsx";
@@ -37,7 +36,6 @@ function SearchFlight() {
 
     const navigate = useNavigate();
 
-    const [isGeneticModalOpen, setIsGeneticModalOpen] = useState(false);
 
     const { mutate: searchRequest, isPending: isSearchPending } = useSearchRequest({
         mutation: {
@@ -52,20 +50,7 @@ function SearchFlight() {
         }
     });
 
-    const { mutate: geneticRequest, isPending: isGeneticPending } = useGeneticTrip({
-        mutation: {
-            onSuccess: (data) => {
-                toast.success(t("searchFlight.geneticTrip.toast.success"));
-                navigate(`/search/${data._id}`);
-            },
-            onError: (error: any) => {
-                console.error(error);
-                toast.error(error?.message || t("searchFlight.geneticTrip.toast.error"));
-            }
-        }
-    });
-
-    const isPending = isSearchPending || isGeneticPending;
+    const isPending = isSearchPending;
 
     const handleSwitch = () => {
         const temp = origin;
@@ -522,27 +507,7 @@ function SearchFlight() {
                         )}
                     </button>
 
-                    {!isHorizontal && (
-                        <>
-                            <button
-                                onClick={() => setIsGeneticModalOpen(true)}
-                                disabled={isPending}
-                                className="w-full bg-surface hover:bg-surface-hover text-content border border-line py-4 rounded-2xl font-bold transition-all active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 cursor-pointer group"
-                                title={t("searchFlight.geneticTrip.tooltip")}
-                            >
-                                <Zap className="text-brand group-hover:scale-110 transition-transform" size={20} fill="currentColor" />
-                                <span className="text-lg">{t("searchFlight.geneticTrip.actionTitle")}</span>
-                            </button>
 
-                            <GeneticTripModal
-                                isOpen={isGeneticModalOpen}
-                                onClose={() => setIsGeneticModalOpen(false)}
-                                onSubmit={(data) => {
-                                    geneticRequest({ data });
-                                }}
-                            />
-                        </>
-                    )}
                 </div>
             </div>
         );

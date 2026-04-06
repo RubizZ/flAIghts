@@ -115,126 +115,160 @@ export class SearchService {
                 }
             }
 
-            const sequence = [criteria.origins[0], ...criteria.destinations].filter((node): node is string => !!node);
-            let currentDate = criteria.departure_date.toISOString().split("T")[0]!;
-            const dates = criteria.dates ?? [];
-            const fullPath: DijkstraFlightEdge[] = [];
-            let previousArrival: Date | undefined = undefined;
+            // OUTBOUND ITINERARY
+            const sequenceOutbound = [criteria.origins[0], ...criteria.destinations].filter((node): node is string => !!node);
+            const currentDateOutbound = criteria.departure_date.toISOString().split("T")[0]!;
+            
+            const outboundItinerary = await this.calculateAndSaveItinerary(sequenceOutbound, criteria.dates ?? [], currentDateOutbound, userPreferences);
 
-            for (let i = 0; i < sequence.length - 1; i++) {
-                const puntoA = sequence[i];
-                const puntoB = sequence[i + 1];
-                const edges: DijkstraFlightEdge[] = [];
-
-                if (!puntoA || !puntoB) continue;
-
-                // Dates array corresponds to departures from layovers: i=0 is departure_date, i=1 is dates[0], etc.
-                const searchDate = (i === 0 ? currentDate : dates[i - 1]) ?? currentDate;
-
-                const candidatos = await this.airportService.getCandidateLayovers(puntoA, puntoB);
-
-                const layoverOrigins = candidatos.length > 0 ? candidatos : [puntoA];
-                const fetchLayoverConnections = userPreferences.stops_weight <= 0.4 && candidatos.length > 1;
-
-                const fetchPromises = [
-                    // 1. Origin -> Layovers
-                    this.getFlightsFromSerpApi([puntoA], candidatos.length > 0 ? candidatos : [puntoB], searchDate),
-                    // 2. Layovers -> Destination (today and tomorrow)
-                    this.getFlightsFromSerpApi(layoverOrigins, [puntoB], searchDate),
-                    this.getFlightsFromSerpApi(layoverOrigins, [puntoB], addDays(searchDate, 1)),
-                    // 3. Always fetch direct flight: Origin -> Destination
-                    this.getFlightsFromSerpApi([puntoA], [puntoB], searchDate)
-                ];
-
-                if (fetchLayoverConnections) {
-                    // 4. Layover-to-layover connections (only when stops are not heavily penalised)
-                    fetchPromises.push(
-                        this.getFlightsFromSerpApi(candidatos, candidatos, searchDate),
-                        this.getFlightsFromSerpApi(candidatos, candidatos, addDays(searchDate, 1))
-                    );
-                }
-
-                const results = await Promise.all(fetchPromises);
-
-                for (const resultEdges of results) {
-                    edges.push(...resultEdges.filter(edge => isValidNextFlight(edge.date, searchDate)));
-                }
-
-                const tramo = this.dijkstra.findPath(puntoA, puntoB, edges, userPreferences, previousArrival);
-
-                if (!tramo) {
-                    await Search.updateOne({ _id: searchId }, { status: "failed" });
-                    return;
-                }
-                const lastEdge = tramo[tramo.length - 1]!;
-                currentDate = lastEdge.date;
-                previousArrival = parseEdgeDateTime(lastEdge.arrival_time);
-
-                fullPath.push(...tramo);
+            if (!outboundItinerary) {
+                await Search.updateOne({ _id: searchId }, { status: "failed" });
+                return; // Stop if outbound fails
             }
 
-
-            if (fullPath.length > 0) {
-                let totalPrice = 0;
-                let totalDuration = 0;
-                const legs: LegResponse[] = [];
-                let previousArrival: Date | null = null;
-
-                for (let i = 0; i < fullPath.length; i++) {
-                    const edge = fullPath[i];
-                    totalPrice += edge!.price;
-
-                    const depart = parseEdgeDateTime(edge!.departure_time);
-                    const arrive = parseEdgeDateTime(edge!.arrival_time);
-
-                    let wait = 0;
-                    if (previousArrival) {
-                        wait = Math.max(0, (depart.getTime() - previousArrival.getTime()) / 60000);
-                    }
-
-                    totalDuration += edge!.duration + wait;
-
-                    legs.push({
-                        order: i + 1,
-                        flight_id: edge!.id,
-                        origin: edge!.from,
-                        destination: edge!.to,
-                        price: edge!.price,
-                        duration: edge!.duration,
-                        airline: edge!.airline,
-                        airline_logo: edge!.airline_logo ?? "",
-                        departure_time: edge!.departure_time,
-                        arrival_time: edge!.arrival_time,
-                        wait_time: wait
-                    });
-
-                    previousArrival = arrive;
+            await Search.updateOne(
+                { _id: searchId },
+                {
+                    status: criteria.return_date ? "searching" : "completed",
+                    $push: { departure_itineraries: outboundItinerary._id }
                 }
+            );
 
-                const itinerary = await Itinerary.create({
-                    total_price: totalPrice,
-                    total_duration: totalDuration,
-                    legs: legs,
-                    city_order: sequence,
-                    score: 10,
-                    created_at: new Date()
-                });
+            // RETURN ITINERARY
+            if (criteria.return_date) {
+                const origin = criteria.origins[0];
+                const destination = criteria.destinations[criteria.destinations.length - 1];
 
-                await Search.updateOne(
-                    { _id: searchId },
-                    {
-                        status: "completed",
-                        $push: { departure_itineraries: itinerary._id }
+                if (origin && destination) {
+                    const sequenceReturn = [destination, origin];
+                    const currentDateReturn = criteria.return_date instanceof Date 
+                        ? criteria.return_date.toISOString().split("T")[0]! 
+                        : new Date(criteria.return_date).toISOString().split("T")[0]!;
+
+                    const returnItinerary = await this.calculateAndSaveItinerary(sequenceReturn, [], currentDateReturn, userPreferences);
+
+                    if (returnItinerary) {
+                        await Search.updateOne(
+                            { _id: searchId },
+                            {
+                                status: "completed",
+                                $push: { return_itineraries: returnItinerary._id }
+                            }
+                        );
+                    } else {
+                        // Even if return fails, we keep the outbound and mark completing 
+                        // or we could mark as failed. Standard is just completed with no return.
+                        await Search.updateOne({ _id: searchId }, { status: "completed" });
                     }
-                );
-
-            } else {
-                await Search.updateOne({ _id: searchId }, { status: "failed" });
+                } else {
+                    await Search.updateOne({ _id: searchId }, { status: "completed" });
+                }
             }
 
         } catch (error) {
             await Search.updateOne({ _id: searchId }, { status: "failed" });
         }
+    }
+
+    private async calculateAndSaveItinerary(sequence: string[], dates: string[], startDate: string, userPreferences: RoutePreferences) {
+        const fullPath: DijkstraFlightEdge[] = [];
+        let previousArrival: Date | undefined = undefined;
+        let currentDate = startDate;
+
+        for (let i = 0; i < sequence.length - 1; i++) {
+            const puntoA = sequence[i];
+            const puntoB = sequence[i + 1];
+            const edges: DijkstraFlightEdge[] = [];
+
+            if (!puntoA || !puntoB) continue;
+
+            const searchDate = (i === 0 ? currentDate : dates[i - 1]) ?? currentDate;
+
+            const candidatos = await this.airportService.getCandidateLayovers(puntoA, puntoB);
+
+            const layoverOrigins = candidatos.length > 0 ? candidatos : [puntoA];
+            const fetchLayoverConnections = userPreferences.stops_weight <= 0.4 && candidatos.length > 1;
+
+            const fetchPromises = [
+                this.getFlightsFromSerpApi([puntoA], candidatos.length > 0 ? candidatos : [puntoB], searchDate),
+                this.getFlightsFromSerpApi(layoverOrigins, [puntoB], searchDate),
+                this.getFlightsFromSerpApi(layoverOrigins, [puntoB], addDays(searchDate, 1)),
+                this.getFlightsFromSerpApi([puntoA], [puntoB], searchDate)
+            ];
+
+            if (fetchLayoverConnections) {
+                fetchPromises.push(
+                    this.getFlightsFromSerpApi(candidatos, candidatos, searchDate),
+                    this.getFlightsFromSerpApi(candidatos, candidatos, addDays(searchDate, 1))
+                );
+            }
+
+            const results = await Promise.all(fetchPromises);
+
+            for (const resultEdges of results) {
+                edges.push(...resultEdges.filter(edge => isValidNextFlight(edge.date, searchDate)));
+            }
+
+            const tramo = this.dijkstra.findPath(puntoA, puntoB, edges, userPreferences, previousArrival);
+
+            if (!tramo) {
+                return null;
+            }
+            const lastEdge = tramo[tramo.length - 1]!;
+            currentDate = lastEdge.date;
+            previousArrival = parseEdgeDateTime(lastEdge.arrival_time);
+
+            fullPath.push(...tramo);
+        }
+
+        if (fullPath.length > 0) {
+            let totalPrice = 0;
+            let totalDuration = 0;
+            const legs: LegResponse[] = [];
+            let previousArrivalLeg: Date | null = null;
+
+            for (let i = 0; i < fullPath.length; i++) {
+                const edge = fullPath[i];
+                totalPrice += edge!.price;
+
+                const depart = parseEdgeDateTime(edge!.departure_time);
+                const arrive = parseEdgeDateTime(edge!.arrival_time);
+
+                let wait = 0;
+                if (previousArrivalLeg) {
+                    wait = Math.max(0, (depart.getTime() - previousArrivalLeg.getTime()) / 60000);
+                }
+
+                totalDuration += edge!.duration + wait;
+
+                legs.push({
+                    order: i + 1,
+                    flight_id: edge!.id,
+                    origin: edge!.from,
+                    destination: edge!.to,
+                    price: edge!.price,
+                    duration: edge!.duration,
+                    airline: edge!.airline,
+                    airline_logo: edge!.airline_logo ?? "",
+                    departure_time: edge!.departure_time,
+                    arrival_time: edge!.arrival_time,
+                    wait_time: wait
+                });
+
+                previousArrivalLeg = arrive;
+            }
+
+            return await Itinerary.create({
+                total_price: totalPrice,
+                total_duration: totalDuration,
+                legs: legs,
+                city_order: sequence,
+                score: 10,
+                created_at: new Date()
+            });
+        }
+
+        return null;
     }
 
     private async runGeneticTrip(searchId: string, data: { origin: string, cities: string[], startDate: Date, daysPerCity: number }) {
