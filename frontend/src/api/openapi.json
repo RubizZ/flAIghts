@@ -2928,6 +2928,39 @@
         "type": "object",
         "additionalProperties": false
       },
+      "GeneticTripRequest": {
+        "properties": {
+          "origin": {
+            "type": "string",
+            "pattern": "^[A-Z]{3}$"
+          },
+          "cities": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "minItems": 1,
+            "pattern": "^[A-Z]{3}$"
+          },
+          "startDate": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "daysPerCity": {
+            "type": "number",
+            "format": "double",
+            "minimum": 1
+          }
+        },
+        "required": [
+          "origin",
+          "cities",
+          "startDate",
+          "daysPerCity"
+        ],
+        "type": "object",
+        "additionalProperties": false
+      },
       "FailResponse_NOT_FOUND._searchId-string--requesterId-string__": {
         "properties": {
           "data": {
@@ -5455,6 +5488,53 @@
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/SearchRequest"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/search/genetic": {
+      "post": {
+        "operationId": "GeneticTrip",
+        "responses": {
+          "201": {
+            "description": "Búsqueda genética creada",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponseType_SearchResponseData_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Error de validación",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SearchValidationFailResponse"
+                }
+              }
+            }
+          }
+        },
+        "description": "Crea una nueva búsqueda de viaje optimizada mediante algoritmos genéticos.",
+        "tags": [
+          "Search"
+        ],
+        "security": [
+          {
+            "jwt-optional": []
+          }
+        ],
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GeneticTripRequest"
               }
             }
           }

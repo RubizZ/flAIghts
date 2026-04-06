@@ -149,11 +149,82 @@ export class SearchService {
                 }
             }
 
-            const sequence = [criteria.origins[0], ...criteria.destinations].filter((node): node is string => !!node);
-            let currentDate = criteria.departure_date.toISOString().split("T")[0]!;
-            const dates = criteria.dates ?? [];
+            // OUTBOUND ITINERARY
+            const sequenceOutbound = [criteria.origins[0], ...criteria.destinations].filter((node): node is string => !!node);
+            const currentDateOutbound = criteria.departure_date instanceof Date
+                ? criteria.departure_date.toISOString().split("T")[0]!
+                : new Date(criteria.departure_date).toISOString().split("T")[0]!;
+
+            const outboundItinerary = await this.calculateAndSaveItinerary(sequenceOutbound, criteria.dates ?? [], currentDateOutbound, userPreferences);
+
+            if (!outboundItinerary) {
+                logger.warn(`Tramo outbound inalcanzable para búsqueda ${searchId}`);
+                await Search.updateOne({ _id: searchId }, { status: "failed" });
+                this.auditService.register({
+                    resource: "SEARCH",
+                    action: "FAIL",
+                    details: { id: searchId }
+                });
+                return;
+            }
+
+            await Search.updateOne(
+                { _id: searchId },
+                {
+                    status: criteria.return_date ? "searching" : "completed",
+                    $push: { departure_itineraries: outboundItinerary._id }
+                }
+            );
+
+            // RETURN ITINERARY
+            if (criteria.return_date) {
+                const origin = criteria.origins[0];
+                const destination = criteria.destinations[criteria.destinations.length - 1];
+
+                if (origin && destination) {
+                    const sequenceReturn = [destination, origin];
+                    const currentDateReturn = criteria.return_date instanceof Date
+                        ? criteria.return_date.toISOString().split("T")[0]!
+                        : new Date(criteria.return_date).toISOString().split("T")[0]!;
+
+                    const returnItinerary = await this.calculateAndSaveItinerary(sequenceReturn, [], currentDateReturn, userPreferences);
+
+                    if (returnItinerary) {
+                        await Search.updateOne(
+                            { _id: searchId },
+                            {
+                                status: "completed",
+                                $push: { return_itineraries: returnItinerary._id }
+                            }
+                        );
+                    } else {
+                        await Search.updateOne({ _id: searchId }, { status: "completed" });
+                    }
+                } else {
+                    await Search.updateOne({ _id: searchId }, { status: "completed" });
+                }
+            }
+
+            this.auditService.register({
+                resource: "SEARCH",
+                action: "COMPLETE",
+                details: {
+                    id: searchId,
+                    itinerary_id: outboundItinerary._id.toString()
+                }
+            });
+
+        } catch (error) {
+            logger.error({ error, searchId }, `Error en exploración ${searchId}`);
+            await Search.updateOne({ _id: searchId }, { status: "failed" });
+        }
+    }
+
+    private async calculateAndSaveItinerary(sequence: string[], dates: string[], startDate: string, userPreferences: RoutePreferences) {
+        try {
             const fullPath: DijkstraFlightEdge[] = [];
             let previousArrival: Date | undefined = undefined;
+            let currentDate = startDate;
 
             for (let i = 0; i < sequence.length - 1; i++) {
                 const puntoA = sequence[i];
@@ -162,7 +233,6 @@ export class SearchService {
 
                 if (!puntoA || !puntoB) continue;
 
-                // Dates array corresponds to departures from layovers: i=0 is departure_date, i=1 is dates[0], etc.
                 const searchDate = (i === 0 ? currentDate : dates[i - 1]) ?? currentDate;
 
                 const candidatos = await this.airportService.getCandidateLayovers(puntoA, puntoB);
@@ -171,17 +241,13 @@ export class SearchService {
                 const fetchLayoverConnections = userPreferences.stops_weight <= 0.4 && candidatos.length > 1;
 
                 const fetchPromises = [
-                    // 1. Origin -> Layovers
                     this.getFlightsFromSerpApi([puntoA], candidatos.length > 0 ? candidatos : [puntoB], searchDate),
-                    // 2. Layovers -> Destination (today and tomorrow)
                     this.getFlightsFromSerpApi(layoverOrigins, [puntoB], searchDate),
                     this.getFlightsFromSerpApi(layoverOrigins, [puntoB], addDays(searchDate, 1)),
-                    // 3. Always fetch direct flight: Origin -> Destination
                     this.getFlightsFromSerpApi([puntoA], [puntoB], searchDate)
                 ];
 
                 if (fetchLayoverConnections) {
-                    // 4. Layover-to-layover connections (only when stops are not heavily penalised)
                     fetchPromises.push(
                         this.getFlightsFromSerpApi(candidatos, candidatos, searchDate),
                         this.getFlightsFromSerpApi(candidatos, candidatos, addDays(searchDate, 1))
@@ -197,16 +263,7 @@ export class SearchService {
                 const tramo = this.dijkstra.findPath(puntoA, puntoB, edges, userPreferences, previousArrival);
 
                 if (!tramo) {
-                    logger.warn(`Tramo inalcanzable: ${puntoA} -> ${puntoB} para búsqueda ${searchId}`);
-                    await Search.updateOne({ _id: searchId }, { status: "failed" });
-                    this.auditService.register({
-                        resource: "SEARCH",
-                        action: "FAIL",
-                        details: {
-                            id: searchId
-                        }
-                    });
-                    return;
+                    return null;
                 }
                 const lastEdge = tramo[tramo.length - 1]!;
                 currentDate = lastEdge.date;
@@ -215,12 +272,11 @@ export class SearchService {
                 fullPath.push(...tramo);
             }
 
-
             if (fullPath.length > 0) {
                 let totalPrice = 0;
                 let totalDuration = 0;
                 const legs: LegResponse[] = [];
-                let previousArrival: Date | null = null;
+                let previousArrivalLeg: Date | null = null;
 
                 for (let i = 0; i < fullPath.length; i++) {
                     const edge = fullPath[i];
@@ -230,8 +286,8 @@ export class SearchService {
                     const arrive = parseEdgeDateTime(edge!.arrival_time);
 
                     let wait = 0;
-                    if (previousArrival) {
-                        wait = Math.max(0, (depart.getTime() - previousArrival.getTime()) / 60000);
+                    if (previousArrivalLeg) {
+                        wait = Math.max(0, (depart.getTime() - previousArrivalLeg.getTime()) / 60000);
                     }
 
                     totalDuration += edge!.duration + wait;
@@ -254,10 +310,10 @@ export class SearchService {
                         extensions: edge!.extensions,
                     });
 
-                    previousArrival = arrive;
+                    previousArrivalLeg = arrive;
                 }
 
-                const itinerary = await Itinerary.create({
+                return await Itinerary.create({
                     total_price: totalPrice,
                     total_duration: totalDuration,
                     legs: legs,
@@ -265,31 +321,11 @@ export class SearchService {
                     score: 10,
                     created_at: new Date()
                 });
-
-                await Search.updateOne(
-                    { _id: searchId },
-                    {
-                        status: "completed",
-                        $push: { departure_itineraries: itinerary._id }
-                    }
-                );
-
-                this.auditService.register({
-                    resource: "SEARCH",
-                    action: "COMPLETE",
-                    details: {
-                        id: searchId,
-                        itinerary_id: itinerary._id.toString()
-                    }
-                });
-
-            } else {
-                await Search.updateOne({ _id: searchId }, { status: "failed" });
             }
-
+            return null;
         } catch (error) {
-            logger.error({ error, searchId }, `Error en exploración ${searchId}`);
-            await Search.updateOne({ _id: searchId }, { status: "failed" });
+            logger.error({ error }, `Error en cálculo de itinerario`);
+            return null;
         }
     }
 

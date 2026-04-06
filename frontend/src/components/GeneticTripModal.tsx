@@ -3,6 +3,7 @@ import { X, MapPin, Calendar as CalendarIcon, Plus, Trash2, Zap } from "lucide-r
 import { useTranslation } from "react-i18next";
 import AirportAutocomplete from "./AirportAutocomplete";
 import Calendar from "./ui/Calendar";
+import { AirportResponse } from "@/api/generated/model";
 import { toast } from "sonner";
 
 interface GeneticTripModalProps {
@@ -13,11 +14,9 @@ interface GeneticTripModalProps {
 
 export default function GeneticTripModal({ isOpen, onClose, onSubmit }: GeneticTripModalProps) {
     const { t } = useTranslation();
-    const [origin, setOrigin] = useState("");
-    const [originDisplay, setOriginDisplay] = useState("");
-    const [cities, setCities] = useState<{ iata: string; display: string }[]>([]);
-    const [newCity, setNewCity] = useState("");
-    const [newCityDisplay, setNewCityDisplay] = useState("");
+    const [origin, setOrigin] = useState<AirportResponse | null>(null);
+    const [cities, setCities] = useState<AirportResponse[]>([]);
+    const [newCity, setNewCity] = useState<AirportResponse | null>(null);
     const [startDate, setStartDate] = useState("");
     const [isStartDateOpen, setIsStartDateOpen] = useState(false);
     const [daysPerCity, setDaysPerCity] = useState(2);
@@ -26,15 +25,15 @@ export default function GeneticTripModal({ isOpen, onClose, onSubmit }: GeneticT
 
     if (!isOpen) return null;
 
-    const handleAddCity = (iata: string, display?: string) => {
-        if (!iata) return;
-        if (iata === origin || cities.some(c => c.iata === iata)) {
+    const handleAddCity = (airport: AirportResponse | null) => {
+        if (!airport) return;
+        const iata = airport.iata_code;
+        if (iata === origin?.iata_code || cities.some(c => c.iata_code === iata)) {
             toast.error(t("searchFlight.validation.sameOriginDestination"));
             return false;
         }
-        setCities([...cities, { iata, display: display || iata }]);
-        setNewCity("");
-        setNewCityDisplay("");
+        setCities([...cities, airport]);
+        setNewCity(null);
         return true;
     };
 
@@ -48,8 +47,8 @@ export default function GeneticTripModal({ isOpen, onClose, onSubmit }: GeneticT
             return;
         }
         onSubmit({
-            origin,
-            cities: cities.map(c => c.iata),
+            origin: origin.iata_code,
+            cities: cities.map(c => c.iata_code),
             startDate,
             daysPerCity
         });
@@ -84,14 +83,12 @@ export default function GeneticTripModal({ isOpen, onClose, onSubmit }: GeneticT
                             <MapPin className="text-brand shrink-0" size={18} />
                             <AirportAutocomplete
                                 value={origin}
-                                displayValue={originDisplay}
-                                onChange={(val, display) => {
-                                    if (cities.some(c => c.iata === val)) {
+                                onChange={(airport) => {
+                                    if (airport && cities.some(c => c.iata_code === airport.iata_code)) {
                                         toast.error(t("searchFlight.validation.sameOriginDestination"));
                                         return false;
                                     }
-                                    setOrigin(val);
-                                    setOriginDisplay(display || val);
+                                    setOrigin(airport);
                                     return true;
                                 }}
                                 placeholder={t("searchFlight.geneticTrip.originPlaceholder")}
@@ -148,10 +145,10 @@ export default function GeneticTripModal({ isOpen, onClose, onSubmit }: GeneticT
                         
                         <div className="flex flex-col gap-2">
                             {cities.map((city, index) => (
-                                <div key={city.iata} className="flex items-center justify-between bg-surface/40 border border-line/60 rounded-xl px-4 py-2 animate-fade-in-up">
+                                <div key={city.iata_code} className="flex items-center justify-between bg-surface/40 border border-line/60 rounded-xl px-4 py-2 animate-fade-in-up">
                                     <div className="flex items-center gap-3 overflow-hidden">
                                         <MapPin className="text-content-muted shrink-0" size={14} />
-                                        <span className="text-sm font-medium truncate">{city.display}</span>
+                                        <span className="text-sm font-medium truncate">{city.name} ({city.iata_code})</span>
                                     </div>
                                     <button onClick={() => handleRemoveCity(index)} className="p-1.5 hover:bg-red-500/10 text-red-500 rounded-lg transition-colors cursor-pointer">
                                         <Trash2 size={14} />
@@ -164,12 +161,10 @@ export default function GeneticTripModal({ isOpen, onClose, onSubmit }: GeneticT
                             <Plus className="text-brand shrink-0" size={18} />
                             <AirportAutocomplete
                                 value={newCity}
-                                displayValue={newCityDisplay}
-                                onChange={(val, display) => {
-                                    if (val) handleAddCity(val, display);
+                                onChange={(airport) => {
+                                    if (airport) handleAddCity(airport);
                                     else {
-                                        setNewCity("");
-                                        setNewCityDisplay(display || "");
+                                        setNewCity(null);
                                     }
                                     return true;
                                 }}
