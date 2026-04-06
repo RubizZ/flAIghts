@@ -1,9 +1,21 @@
 import { useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
-import { Compass, Menu, Users, X } from "lucide-react";
+import { Compass, Menu, Users, X, Zap } from "lucide-react";
 import NavIconButton from "../ui/NavIconButton";
 import { useTranslation } from "react-i18next";
+import GeneticTripModal from "../GeneticTripModal";
+import { useGeneticTrip } from "@/api/generated/search/search";
+import { toast } from "sonner";
+
+interface NavItem {
+    label: string;
+    icon: React.ReactNode;
+    show: boolean;
+    /** Navigation items use `path`; action items use `onClick`. */
+    path?: string;
+    onClick?: () => void;
+}
 
 interface SidebarProps {
     isOpen: boolean;
@@ -24,12 +36,35 @@ export default function Sidebar({ isOpen, onClose, onToggle, variant = 'classic'
     const { isAuthenticated, isLoading } = useAuth();
     const [clickedItem, setClickedItem] = useState<string | null>(null);
     const location = useLocation();
-    const navItems = [
+    const navigate = useNavigate();
+
+    const [isGeneticModalOpen, setIsGeneticModalOpen] = useState(false);
+
+    const { mutate: geneticRequest } = useGeneticTrip({
+        mutation: {
+            onSuccess: (data) => {
+                toast.success(t("searchFlight.geneticTrip.toast.success"));
+                navigate(`/search/${data._id}`);
+            },
+            onError: (error: any) => {
+                console.error(error);
+                toast.error(error?.message || t("searchFlight.geneticTrip.toast.error"));
+            }
+        }
+    });
+
+    const navItems: NavItem[] = [
         {
             label: t("sidebar.searchFlights"),
             path: "/",
             icon: <Compass size={20} />,
             show: true,
+        },
+        {
+            label: t("sidebar.geneticTrip"),
+            icon: <Zap size={20} />,
+            show: true,
+            onClick: () => setIsGeneticModalOpen(true),
         },
         {
             label: t("sidebar.friends"),
@@ -114,28 +149,24 @@ export default function Sidebar({ isOpen, onClose, onToggle, variant = 'classic'
                             </div>
                         ))
                     ) : (
-                        navItems.filter(item => item.show).map((item, idx) => {
-                            const isActive = location.pathname === item.path;
-                            return (
-                                <Link
-                                    key={item.path}
-                                    to={item.path}
-                                    onMouseEnter={() => !isFloating && setClickedItem(null)}
-                                    onClick={() => { onClose?.(); setClickedItem(item.path); }}
-                                    {...(isFloating ? {
-                                        style: { transitionDelay: isOpen ? `${idx * 40 + 80}ms` : '0ms' }
-                                    } : {})}
-                                    className={`flex items-center rounded-2xl transition-all duration-200 px-3 py-3 font-bold text-sm relative group
+                        navItems.filter(item => item.show).map((item, idx: number) => {
+                            const isAction = !item.path;
+                            const isActive = !isAction && location.pathname === item.path;
+                            const itemKey = item.path || item.label;
+
+                            const className = `flex items-center rounded-2xl transition-all duration-200 px-3 py-3 font-bold text-sm relative group
                                         ${isFloating
-                                            ? `gap-3 ${isOpen ? 'translate-x-0 opacity-100' : '-translate-x-4 opacity-0'}`
-                                            : 'gap-0 justify-start'
-                                        }
+                                    ? `gap-3 ${isOpen ? 'translate-x-0 opacity-100' : '-translate-x-4 opacity-0'}`
+                                    : 'gap-0 justify-start'
+                                }
                                         ${isActive
-                                            ? 'bg-brand text-content-on-brand shadow-md'
-                                            : `text-content-muted hover:text-content ${isFloating ? 'hover:bg-white/10 hover:backdrop-blur-md' : 'hover:bg-surface/70'}`
-                                        }
-                                    `}
-                                >
+                                    ? 'bg-brand text-content-on-brand shadow-md'
+                                    : `text-content-muted hover:text-content ${isFloating ? 'hover:bg-white/10 hover:backdrop-blur-md' : 'hover:bg-surface/70'}`
+                                }
+                                    `;
+
+                            const content = (
+                                <>
                                     {/* Icon */}
                                     <div className={`shrink-0 transition-colors duration-300 ${isActive ? 'text-content-on-brand' : 'group-hover:text-brand'}`}>
                                         {item.icon}
@@ -144,7 +175,7 @@ export default function Sidebar({ isOpen, onClose, onToggle, variant = 'classic'
                                     {/* Label */}
                                     <span className={`font-bold whitespace-nowrap overflow-hidden transition-all duration-300
                                         ${isFloating
-                                            ? 'ml-3'  /* always shown in floating (panel visibility handles it) */
+                                            ? 'ml-3'
                                             : isOpen
                                                 ? 'opacity-100 translate-x-0 w-auto ml-4'
                                                 : 'opacity-0 -translate-x-2 w-0 ml-0 pointer-events-none'
@@ -154,7 +185,7 @@ export default function Sidebar({ isOpen, onClose, onToggle, variant = 'classic'
                                     </span>
 
                                     {/* Tooltip for classic collapsed state */}
-                                    {!isFloating && !isOpen && clickedItem !== item.path && (
+                                    {!isFloating && !isOpen && clickedItem !== itemKey && (
                                         <div className={`absolute left-full ml-3 px-3 py-1.5 backdrop-blur-md border rounded-xl text-xs font-bold shadow-2xl
                                             pointer-events-none z-50 whitespace-nowrap opacity-0
                                             group-hover:opacity-100 group-hover:animate-expand-vertically group-hover:animate-duration-200 group-hover:animate-delay-400
@@ -166,6 +197,37 @@ export default function Sidebar({ isOpen, onClose, onToggle, variant = 'classic'
                                             `} />
                                         </div>
                                     )}
+                                </>
+                            );
+
+                            if (isAction) {
+                                return (
+                                    <button
+                                        key={itemKey}
+                                        onMouseEnter={() => !isFloating && setClickedItem(null)}
+                                        onClick={() => { onClose?.(); setClickedItem(itemKey); item.onClick?.(); }}
+                                        {...(isFloating ? {
+                                            style: { transitionDelay: isOpen ? `${idx * 40 + 80}ms` : '0ms' }
+                                        } : {})}
+                                        className={className + ' cursor-pointer'}
+                                    >
+                                        {content}
+                                    </button>
+                                );
+                            }
+
+                            return (
+                                <Link
+                                    key={itemKey}
+                                    to={item.path!}
+                                    onMouseEnter={() => !isFloating && setClickedItem(null)}
+                                    onClick={() => { onClose?.(); setClickedItem(itemKey); }}
+                                    {...(isFloating ? {
+                                        style: { transitionDelay: isOpen ? `${idx * 40 + 80}ms` : '0ms' }
+                                    } : {})}
+                                    className={className}
+                                >
+                                    {content}
                                 </Link>
                             );
                         })
@@ -192,6 +254,14 @@ export default function Sidebar({ isOpen, onClose, onToggle, variant = 'classic'
                     </Link>
                 </div>
             </aside>
+
+            <GeneticTripModal
+                isOpen={isGeneticModalOpen}
+                onClose={() => setIsGeneticModalOpen(false)}
+                onSubmit={(data) => {
+                    geneticRequest({ data });
+                }}
+            />
         </>
     );
 }
