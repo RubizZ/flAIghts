@@ -13,7 +13,6 @@ interface AirportAutocompleteProps {
     placeholder?: string;
     className?: string;
     side?: 'top' | 'bottom';
-    side?: 'top' | 'bottom';
 }
 
 export default function AirportAutocomplete({ value, onChange, placeholder, className, side = 'bottom' }: AirportAutocompleteProps) {

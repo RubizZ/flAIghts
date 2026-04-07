@@ -11,7 +11,6 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import cookieParser from 'cookie-parser';
 import compression from 'compression';
-import compression from 'compression';
 import { Error as MongooseError } from 'mongoose';
 import { container } from 'tsyringe';
 import { ServerConfig } from './config/server.config.js';
