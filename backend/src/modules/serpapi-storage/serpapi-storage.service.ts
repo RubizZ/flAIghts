@@ -11,6 +11,7 @@ import { ServerConfig } from "../../config/server.config.js";
 export class SerpapiStorageService {
     private minPriceCache = new Map<string, number>();
 
+
     constructor(
         @inject(SerpApiClient) private readonly serpApiClient: SerpApiClient,
         @inject(ServerConfig) private config: ServerConfig

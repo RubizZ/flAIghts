@@ -26,6 +26,13 @@ export interface RoutePreferences {
     airline_quality_weight: number;
 }
 
+export interface RoutePreferences {
+    price_weight: number;
+    duration_weight: number;
+    stops_weight: number;
+    airline_quality_weight: number;
+}
+
 @singleton()
 export class Dijkstra {
     public findPath(

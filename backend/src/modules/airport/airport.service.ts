@@ -3,12 +3,12 @@ import fuzzysort from "fuzzysort";
 import { Airport, type IAirport } from "./airport.model.js";
 import type { AirportResponse, PaginatedAirportResponse, ScoredAirport, GlobeAirportResponse } from "./airport.types.js";
 import logger from "../../utils/logger.js";
+import { COUNTRY_NAMES } from "./countries.js";
 
 // Radios base (km) para búsqueda de rutas
 const MIN_RADIUS_KM = 150;
 const MAX_RADIUS_KM = 800;
 const MAX_LAYOVERS = 4;
-import { COUNTRY_NAMES } from "./countries.js";
 
 @singleton()
 export class AirportService {
@@ -166,10 +166,7 @@ export class AirportService {
         return await Airport.findOne({ iata_code: iata.toUpperCase() }).lean();
     }
 
-    public async getCandidateLayovers(
-        originIata: string,
-        destinationIata: string
-    ): Promise<string[]> {
+    public async getCandidateLayovers(originIata: string, destinationIata: string): Promise<string[]> {
         try {
             if (!originIata || !destinationIata) return [];
 
@@ -240,12 +237,7 @@ export class AirportService {
         return MIN_RADIUS_KM + factor * (MAX_RADIUS_KM - MIN_RADIUS_KM);
     }
 
-    private haversine(
-        lat1: number,
-        lon1: number,
-        lat2: number,
-        lon2: number
-    ): number {
+    private haversine(lat1: number, lon1: number, lat2: number, lon2: number): number {
         const R = 6371; // km
         const toRad = (d: number) => (d * Math.PI) / 180;
         const dLat = toRad(lat2 - lat1);

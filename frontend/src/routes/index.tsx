@@ -16,6 +16,7 @@ import Settings from "@/pages/Settings.tsx";
 import TermsOfService from "@/pages/TermsOfService.tsx";
 import PrivacyPolicy from "@/pages/PrivacyPolicy.tsx";
 
+
 export const routes: RouteObject[] = [
     {
         element: <RootLayout />,

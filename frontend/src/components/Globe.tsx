@@ -1384,7 +1384,7 @@ export default function Globe({
             for (let i = 0; i < routeAirports.length - 1; i++) {
                 const startIata = routeAirports[i];
                 const endIata = routeAirports[i + 1];
-                
+
                 const startAirport = airportsDataRef.current.find(a => a.iata === startIata);
                 const endAirport = airportsDataRef.current.find(a => a.iata === endIata);
 
@@ -1407,7 +1407,7 @@ export default function Globe({
 
                     const curve = new THREE.CatmullRomCurve3(points);
                     const spacedPoints = curve.getSpacedPoints(samples);
-                    
+
                     // Create arc line
                     const trailGeometry = new THREE.BufferGeometry().setFromPoints(spacedPoints);
                     const positionAttr = trailGeometry.getAttribute('position') as THREE.BufferAttribute;

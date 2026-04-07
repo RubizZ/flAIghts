@@ -421,197 +421,197 @@ function SearchFlight() {
                 </div>
             </div>
 
-            <div className={`absolute transition-all duration-700 cubic-bezier(0.16, 1, 0.3, 1) z-10 ${!isSelectingOnMap? 'left-1/2 lg:left-8 top-1/2 -translate-y-1/2 -translate-x-1/2 lg:translate-x-0 scale-100' : 'left-1/2 lg:-left-150 top-0 lg:top-1/2 -translate-y-[150%] lg:-translate-y-1/2 -translate-x-1/2 lg:translate-x-0 scale-95 pointer-events-none'}`}>
-                    <div className="premium-glass relative p-7 rounded-4xl flex flex-col gap-6 transition-all hover:scale-[1.01] w-[min(96vw,540px)] overflow-visible">
-                        {!isLargeScreen && searchMode === 'manual' && !isSelectingOnMap && (
-                            <button
-                                onClick={() => {
-                                    setIsSelectingOnMap(true);
-                                    setIsMobileCardExpanded(false);
-                                }}
-                                className="absolute -top-4 left-1/2 -translate-x-1/2 bg-surface/90 backdrop-blur-2xl border border-line px-5 py-2.5 rounded-full shadow-xl flex items-center gap-2.5 group hover:bg-surface transition-all active:scale-95 cursor-pointer z-30 whitespace-nowrap"
-                            >
-                                <GlobeIcon size={14} className="text-brand" />
-                                <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-content/90">{t("searchFlight.mapButtons.viewMap3D")}</span>
-                            </button>
-                        )}
+            <div className={`absolute transition-all duration-700 cubic-bezier(0.16, 1, 0.3, 1) z-10 ${!isSelectingOnMap ? 'left-1/2 lg:left-8 top-1/2 -translate-y-1/2 -translate-x-1/2 lg:translate-x-0 scale-100' : 'left-1/2 lg:-left-150 top-0 lg:top-1/2 -translate-y-[150%] lg:-translate-y-1/2 -translate-x-1/2 lg:translate-x-0 scale-95 pointer-events-none'}`}>
+                <div className="premium-glass relative p-7 rounded-4xl flex flex-col gap-6 transition-all hover:scale-[1.01] w-[min(96vw,540px)] overflow-visible">
+                    {!isLargeScreen && searchMode === 'manual' && !isSelectingOnMap && (
+                        <button
+                            onClick={() => {
+                                setIsSelectingOnMap(true);
+                                setIsMobileCardExpanded(false);
+                            }}
+                            className="absolute -top-4 left-1/2 -translate-x-1/2 bg-surface/90 backdrop-blur-2xl border border-line px-5 py-2.5 rounded-full shadow-xl flex items-center gap-2.5 group hover:bg-surface transition-all active:scale-95 cursor-pointer z-30 whitespace-nowrap"
+                        >
+                            <GlobeIcon size={14} className="text-brand" />
+                            <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-content/90">{t("searchFlight.mapButtons.viewMap3D")}</span>
+                        </button>
+                    )}
 
-                        {isLargeScreen && searchMode === 'manual' && (
-                            <button
-                                onClick={() => setIsSelectingOnMap(true)}
-                                className="absolute -right-5 top-1/2 -translate-y-1/2 w-10 h-24 bg-main/90 backdrop-blur-xl border border-line rounded-2xl shadow-xl flex items-center justify-center group hover:bg-brand hover:border-brand/40 transition-all active:scale-95 cursor-pointer z-30"
-                                title={t("searchFlight.tooltips.expandMap")}
-                            >
-                                <Maximize2 size={18} className="text-content-muted group-hover:text-content-on-brand transition-colors rotate-90" />
-                                <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-10 transition-opacity">
-                                    <GlobeIcon size={40} className="text-white" />
-                                </div>
-                            </button>
-                        )}
-
-                        <div className="flex items-start justify-between gap-4">
-                            <div className="flex flex-col gap-0.5">
-                                <h1 className="text-3xl font-bold text-content tracking-tight">{t("searchFlight.title")}</h1>
-                                <p className="text-content-muted text-sm">{t("searchFlight.subtitle")}</p>
+                    {isLargeScreen && searchMode === 'manual' && (
+                        <button
+                            onClick={() => setIsSelectingOnMap(true)}
+                            className="absolute -right-5 top-1/2 -translate-y-1/2 w-10 h-24 bg-main/90 backdrop-blur-xl border border-line rounded-2xl shadow-xl flex items-center justify-center group hover:bg-brand hover:border-brand/40 transition-all active:scale-95 cursor-pointer z-30"
+                            title={t("searchFlight.tooltips.expandMap")}
+                        >
+                            <Maximize2 size={18} className="text-content-muted group-hover:text-content-on-brand transition-colors rotate-90" />
+                            <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-10 transition-opacity">
+                                <GlobeIcon size={40} className="text-white" />
                             </div>
+                        </button>
+                    )}
 
-                            <div className="flex shrink-0 items-center bg-main/50 dark:bg-surface rounded-xl p-1 gap-0.5 border border-line mt-1">
-                                <button
-                                    onClick={() => setSearchMode('manual')}
-                                    title={t("searchFlight.tooltips.selectMapTitle")}
-                                    className={`p-2 rounded-lg transition-all ${searchMode === 'manual'
-                                        ? 'bg-brand text-content-on-brand shadow-sm'
-                                        : 'text-content-muted hover:text-content cursor-pointer'
-                                        }`}
-                                >
-                                    <SlidersHorizontal size={16} />
-                                </button>
-                                <button
-                                    onClick={() => setSearchMode('chatbot')}
-                                    title={t("searchFlight.tooltips.selectAssistant")}
-                                    className={`p-2 rounded-lg transition-all ${searchMode === 'chatbot'
-                                        ? 'bg-brand text-content-on-brand shadow-sm'
-                                        : 'text-content-muted hover:text-content cursor-pointer'
-                                        }`}
-                                >
-                                    <Bot size={16} />
-                                </button>
-                            </div>
+                    <div className="flex items-start justify-between gap-4">
+                        <div className="flex flex-col gap-0.5">
+                            <h1 className="text-3xl font-bold text-content tracking-tight">{t("searchFlight.title")}</h1>
+                            <p className="text-content-muted text-sm">{t("searchFlight.subtitle")}</p>
                         </div>
 
-                        {searchMode === 'manual' ? (
-                            <>
-                                {renderManualSearch('main')}
-                                <div className="flex items-center justify-center gap-4 text-xs text-content-muted">
-                                    <button
-                                        onClick={handleAddStop}
-                                        disabled={layovers.length >= 5}
-                                        className="flex items-center gap-1 hover:text-brand transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-                                    >
-                                        <Plus size={12} className="text-brand disabled:text-content-muted" />
-                                        <span>{t("searchFlight.additionalOptions.addStop")}</span>
-                                    </button>
-                                    <div className="w-1 h-1 bg-line rounded-full" />
-                                </div>
-                            </>
-                        ) : (
-                            <div className="flex flex-col gap-4">
-                                <div className="flex flex-col items-center justify-center gap-3 py-8 text-center">
-                                    <div className="w-14 h-14 rounded-2xl bg-brand/10 border border-brand/20 flex items-center justify-center">
-                                        <Bot size={28} className="text-brand" />
-                                    </div>
-                                    <div className="flex flex-col gap-1">
-                                        <span className="text-content font-semibold">{t("searchFlight.chatbot.title")}</span>
-                                        <span className="text-content-muted text-sm">{t("searchFlight.chatbot.comingSoon")}</span>
-
-                                    </div>
-                                </div>
-                                <div className="flex items-center gap-3 bg-surface/60 border border-line rounded-2xl px-4 py-3 opacity-50 pointer-events-none">
-                                    <Bot size={18} className="text-content-muted shrink-0" />
-                                    <span className="text-content-muted text-sm">{t("searchFlight.chatbot.placeholder")}</span>
-                                </div>
-                                <button disabled className="flex items-center justify-center gap-3 bg-brand/50 text-content-on-brand py-4 rounded-2xl font-bold text-base opacity-50 cursor-not-allowed">
-                                    <Bot size={18} />
-                                    <span>{t("searchFlight.chatbot.askAssistant")}</span>
-                                </button>
-                            </div>
-                        )}
-                    </div>
-                </div>
-
-                <div className={`absolute left-1/2 -translate-x-1/2 z-10 transition-all duration-700 cubic-bezier(0.16, 1, 0.3, 1) ${isSelectingOnMap && !selectingType
-                    ? (isXXLScreen
-                        ? 'top-6 w-[min(calc(100%-400px),1200px)] scale-100'
-                        : isLargeScreen
-                            ? 'top-6 w-[min(calc(100%-300px),1200px)] scale-100'
-                            : isMobileCardExpanded
-                                ? 'top-20 w-[calc(100%-20px)] scale-100'
-                                : isSMScreen
-                                    ? 'top-4 w-[calc(100%-180px)] scale-100'
-                                    : 'top-4 w-[calc(100%-140px)] scale-100')
-                    : 'top-0 -translate-y-[200%] scale-95 pointer-events-none'
-                    }`}>
-                    <div className={`relative bg-main/85 backdrop-blur-3xl p-3 md:p-2 lg:p-3 md:pr-3 lg:pr-4 rounded-3xl lg:rounded-4xl border border-line shadow-[0_32px_64px_-16px_rgba(0,0,0,0.4)] flex flex-col md:flex-row items-center gap-2 lg:gap-4 transition-all duration-500 ${isGlobeMoving ? 'opacity-20 scale-95 pointer-events-none lg:opacity-100 lg:scale-100 lg:pointer-events-auto' : 'opacity-100 scale-100'}`}>
-                        <div className="hidden lg:flex items-center gap-2 px-4 border-r border-line/10 h-10">
-                            <Plane size={18} className="text-brand fill-brand rotate-45" />
-                            <h1 className="text-xl font-black text-brand tracking-tighter italic uppercase">flAIghts</h1>
+                        <div className="flex shrink-0 items-center bg-main/50 dark:bg-surface rounded-xl p-1 gap-0.5 border border-line mt-1">
+                            <button
+                                onClick={() => setSearchMode('manual')}
+                                title={t("searchFlight.tooltips.selectMapTitle")}
+                                className={`p-2 rounded-lg transition-all ${searchMode === 'manual'
+                                    ? 'bg-brand text-content-on-brand shadow-sm'
+                                    : 'text-content-muted hover:text-content cursor-pointer'
+                                    }`}
+                            >
+                                <SlidersHorizontal size={16} />
+                            </button>
+                            <button
+                                onClick={() => setSearchMode('chatbot')}
+                                title={t("searchFlight.tooltips.selectAssistant")}
+                                className={`p-2 rounded-lg transition-all ${searchMode === 'chatbot'
+                                    ? 'bg-brand text-content-on-brand shadow-sm'
+                                    : 'text-content-muted hover:text-content cursor-pointer'
+                                    }`}
+                            >
+                                <Bot size={16} />
+                            </button>
                         </div>
                     </div>
-                </div>
 
-                {/* Airport Info Card (Right Side) */}
-                <div className={`absolute right-6 lg:right-12 top-1/2 -translate-y-1/2 z-10 w-[min(90vw,320px)] transition-all duration-500 cubic-bezier(0.23, 1, 0.32, 1) ${isCardVisible
-                    ? 'opacity-100 translate-x-0 scale-100'
-                    : 'opacity-0 translate-x-12 scale-95 pointer-events-none'
-                    }`}>
-                    <div className="premium-glass p-6 rounded-3xl shadow-2xl overflow-hidden group">
-                        <div className={`flex flex-col gap-5 transition-opacity duration-300 ${isContentVisible ? 'opacity-100' : 'opacity-0'}`}>
-                            <div className="flex items-start justify-between">
+                    {searchMode === 'manual' ? (
+                        <>
+                            {renderManualSearch('main')}
+                            <div className="flex items-center justify-center gap-4 text-xs text-content-muted">
+                                <button
+                                    onClick={handleAddStop}
+                                    disabled={layovers.length >= 5}
+                                    className="flex items-center gap-1 hover:text-brand transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
+                                    <Plus size={12} className="text-brand disabled:text-content-muted" />
+                                    <span>{t("searchFlight.additionalOptions.addStop")}</span>
+                                </button>
+                                <div className="w-1 h-1 bg-line rounded-full" />
+                            </div>
+                        </>
+                    ) : (
+                        <div className="flex flex-col gap-4">
+                            <div className="flex flex-col items-center justify-center gap-3 py-8 text-center">
+                                <div className="w-14 h-14 rounded-2xl bg-brand/10 border border-brand/20 flex items-center justify-center">
+                                    <Bot size={28} className="text-brand" />
+                                </div>
                                 <div className="flex flex-col gap-1">
-                                    <span className="text-[10px] text-brand uppercase font-bold tracking-[0.2em]">{t("searchFlight.labels2.airport")}</span>
-                                    <h2 className="text-2xl font-bold text-content tracking-tight">{renderedAirport?.iata_code}</h2>
-                                </div>
-                                <button
-                                    onClick={() => setInspectedAirport(null)}
-                                    className="p-2 hover:bg-surface rounded-xl text-content-muted transition-colors cursor-pointer"
-                                >
-                                    <Plus size={18} className="rotate-45" />
-                                </button>
-                            </div>
+                                    <span className="text-content font-semibold">{t("searchFlight.chatbot.title")}</span>
+                                    <span className="text-content-muted text-sm">{t("searchFlight.chatbot.comingSoon")}</span>
 
-                            <div className="flex flex-col gap-4">
-                                <div className="flex flex-col">
-                                    <span className="text-[10px] text-content-muted uppercase font-bold tracking-wider">{t("searchFlight.labels2.name")}</span>
-                                    <span className="text-content font-medium">{renderedAirport?.name}</span>
-                                </div>
-                                <div className="flex flex-col">
-                                    <span className="text-[10px] text-content-muted uppercase font-bold tracking-wider">{t("searchFlight.labels2.city")}</span>
-                                    <span className="text-content font-medium">{renderedAirport?.city}</span>
-                                </div>
-                                <div className="grid grid-cols-2 gap-4 pt-2 border-t border-line/50">
-                                    <div className="flex flex-col">
-                                        <span className="text-[10px] text-content-muted uppercase font-bold tracking-wider">{t("searchFlight.labels2.latitude")}</span>
-                                        <span className="text-content text-xs font-mono">{renderedAirport?.location?.coordinates[1]?.toFixed(4)}°</span>
-                                    </div>
-                                    <div className="flex flex-col">
-                                        <span className="text-[10px] text-content-muted uppercase font-bold tracking-wider">{t("searchFlight.labels2.longitude")}</span>
-                                        <span className="text-content text-xs font-mono">{renderedAirport?.location?.coordinates[0]?.toFixed(4)}°</span>
-                                    </div>
                                 </div>
                             </div>
+                            <div className="flex items-center gap-3 bg-surface/60 border border-line rounded-2xl px-4 py-3 opacity-50 pointer-events-none">
+                                <Bot size={18} className="text-content-muted shrink-0" />
+                                <span className="text-content-muted text-sm">{t("searchFlight.chatbot.placeholder")}</span>
+                            </div>
+                            <button disabled className="flex items-center justify-center gap-3 bg-brand/50 text-content-on-brand py-4 rounded-2xl font-bold text-base opacity-50 cursor-not-allowed">
+                                <Bot size={18} />
+                                <span>{t("searchFlight.chatbot.askAssistant")}</span>
+                            </button>
+                        </div>
+                    )}
+                </div>
+            </div>
 
-                            <div className="mt-2 flex flex-col gap-2">
-                                <button
-                                    onClick={() => renderedAirport && handleSetOrigin(renderedAirport)}
-                                    className="flex items-center justify-center gap-2 w-full py-3 bg-origin/10 hover:bg-origin/20 border border-origin/20 rounded-2xl text-origin text-xs font-bold transition-all group/btn cursor-pointer"
-                                >
-                                    <PlaneTakeoff size={14} className="group-hover/btn:-translate-y-0.5 transition-transform" />
-                                    {t("searchFlight.mapButtons.defineAsOrigin")}
-                                </button>
-                                <button
-                                    onClick={() => renderedAirport && handleSetDestination(renderedAirport)}
-                                    className="flex items-center justify-center gap-2 w-full py-3 bg-destination/10 hover:bg-destination/20 border border-destination/20 rounded-2xl text-destination text-xs font-bold transition-all group/btn cursor-pointer"
-                                >
-                                    <PlaneLanding size={14} className="group-hover/btn:translate-y-0.5 transition-transform" />
-                                    {t("searchFlight.mapButtons.defineAsDestination")}
-                                </button>
-                                <button
-                                    onClick={() => { }}
-                                    className="flex items-center justify-center gap-1.5 self-center mt-3 text-[9px] font-bold text-red-500/60 hover:text-red-500 transition-all cursor-pointer group/report"
-                                >
-                                    <AlertTriangle size={10} className="group-hover/report:animate-pulse" />
-                                    <span className="italic underline-offset-2 hover:underline">{t("searchFlight.mapButtons.reportError")}</span>
-                                </button>
+            <div className={`absolute left-1/2 -translate-x-1/2 z-10 transition-all duration-700 cubic-bezier(0.16, 1, 0.3, 1) ${isSelectingOnMap && !selectingType
+                ? (isXXLScreen
+                    ? 'top-6 w-[min(calc(100%-400px),1200px)] scale-100'
+                    : isLargeScreen
+                        ? 'top-6 w-[min(calc(100%-300px),1200px)] scale-100'
+                        : isMobileCardExpanded
+                            ? 'top-20 w-[calc(100%-20px)] scale-100'
+                            : isSMScreen
+                                ? 'top-4 w-[calc(100%-180px)] scale-100'
+                                : 'top-4 w-[calc(100%-140px)] scale-100')
+                : 'top-0 -translate-y-[200%] scale-95 pointer-events-none'
+                }`}>
+                <div className={`relative bg-main/85 backdrop-blur-3xl p-3 md:p-2 lg:p-3 md:pr-3 lg:pr-4 rounded-3xl lg:rounded-4xl border border-line shadow-[0_32px_64px_-16px_rgba(0,0,0,0.4)] flex flex-col md:flex-row items-center gap-2 lg:gap-4 transition-all duration-500 ${isGlobeMoving ? 'opacity-20 scale-95 pointer-events-none lg:opacity-100 lg:scale-100 lg:pointer-events-auto' : 'opacity-100 scale-100'}`}>
+                    <div className="hidden lg:flex items-center gap-2 px-4 border-r border-line/10 h-10">
+                        <Plane size={18} className="text-brand fill-brand rotate-45" />
+                        <h1 className="text-xl font-black text-brand tracking-tighter italic uppercase">flAIghts</h1>
+                    </div>
+                </div>
+            </div>
+
+            {/* Airport Info Card (Right Side) */}
+            <div className={`absolute right-6 lg:right-12 top-1/2 -translate-y-1/2 z-10 w-[min(90vw,320px)] transition-all duration-500 cubic-bezier(0.23, 1, 0.32, 1) ${isCardVisible
+                ? 'opacity-100 translate-x-0 scale-100'
+                : 'opacity-0 translate-x-12 scale-95 pointer-events-none'
+                }`}>
+                <div className="premium-glass p-6 rounded-3xl shadow-2xl overflow-hidden group">
+                    <div className={`flex flex-col gap-5 transition-opacity duration-300 ${isContentVisible ? 'opacity-100' : 'opacity-0'}`}>
+                        <div className="flex items-start justify-between">
+                            <div className="flex flex-col gap-1">
+                                <span className="text-[10px] text-brand uppercase font-bold tracking-[0.2em]">{t("searchFlight.labels2.airport")}</span>
+                                <h2 className="text-2xl font-bold text-content tracking-tight">{renderedAirport?.iata_code}</h2>
                             </div>
+                            <button
+                                onClick={() => setInspectedAirport(null)}
+                                className="p-2 hover:bg-surface rounded-xl text-content-muted transition-colors cursor-pointer"
+                            >
+                                <Plus size={18} className="rotate-45" />
+                            </button>
+                        </div>
+
+                        <div className="flex flex-col gap-4">
+                            <div className="flex flex-col">
+                                <span className="text-[10px] text-content-muted uppercase font-bold tracking-wider">{t("searchFlight.labels2.name")}</span>
+                                <span className="text-content font-medium">{renderedAirport?.name}</span>
+                            </div>
+                            <div className="flex flex-col">
+                                <span className="text-[10px] text-content-muted uppercase font-bold tracking-wider">{t("searchFlight.labels2.city")}</span>
+                                <span className="text-content font-medium">{renderedAirport?.city}</span>
+                            </div>
+                            <div className="grid grid-cols-2 gap-4 pt-2 border-t border-line/50">
+                                <div className="flex flex-col">
+                                    <span className="text-[10px] text-content-muted uppercase font-bold tracking-wider">{t("searchFlight.labels2.latitude")}</span>
+                                    <span className="text-content text-xs font-mono">{renderedAirport?.location?.coordinates[1]?.toFixed(4)}°</span>
+                                </div>
+                                <div className="flex flex-col">
+                                    <span className="text-[10px] text-content-muted uppercase font-bold tracking-wider">{t("searchFlight.labels2.longitude")}</span>
+                                    <span className="text-content text-xs font-mono">{renderedAirport?.location?.coordinates[0]?.toFixed(4)}°</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="mt-2 flex flex-col gap-2">
+                            <button
+                                onClick={() => renderedAirport && handleSetOrigin(renderedAirport)}
+                                className="flex items-center justify-center gap-2 w-full py-3 bg-origin/10 hover:bg-origin/20 border border-origin/20 rounded-2xl text-origin text-xs font-bold transition-all group/btn cursor-pointer"
+                            >
+                                <PlaneTakeoff size={14} className="group-hover/btn:-translate-y-0.5 transition-transform" />
+                                {t("searchFlight.mapButtons.defineAsOrigin")}
+                            </button>
+                            <button
+                                onClick={() => renderedAirport && handleSetDestination(renderedAirport)}
+                                className="flex items-center justify-center gap-2 w-full py-3 bg-destination/10 hover:bg-destination/20 border border-destination/20 rounded-2xl text-destination text-xs font-bold transition-all group/btn cursor-pointer"
+                            >
+                                <PlaneLanding size={14} className="group-hover/btn:translate-y-0.5 transition-transform" />
+                                {t("searchFlight.mapButtons.defineAsDestination")}
+                            </button>
+                            <button
+                                onClick={() => { }}
+                                className="flex items-center justify-center gap-1.5 self-center mt-3 text-[9px] font-bold text-red-500/60 hover:text-red-500 transition-all cursor-pointer group/report"
+                            >
+                                <AlertTriangle size={10} className="group-hover/report:animate-pulse" />
+                                <span className="italic underline-offset-2 hover:underline">{t("searchFlight.mapButtons.reportError")}</span>
+                            </button>
                         </div>
                     </div>
                 </div>
-                {!isLargeScreen && isCardVisible && (
-                    <div
-                        className="absolute inset-0 z-25 cursor-default bg-black/5 backdrop-blur-[1px] animate-fade-in"
-                        onClick={() => setInspectedAirport(null)}
-                    />
-                )}
+            </div>
+            {!isLargeScreen && isCardVisible && (
+                <div
+                    className="absolute inset-0 z-25 cursor-default bg-black/5 backdrop-blur-[1px] animate-fade-in"
+                    onClick={() => setInspectedAirport(null)}
+                />
+            )}
         </div>
     );
 }

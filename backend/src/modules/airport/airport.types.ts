@@ -9,6 +9,16 @@ export interface AirportResponse {
     type: "Point";
     coordinates: number[];
   }
+  iata_code: string;
+  name: string;
+  city: string;
+  country: string;
+  type: string;
+  importance_score: number;
+  location: {
+    type: "Point";
+    coordinates: number[];
+  }
 }
 
 export interface ScoredAirport {
@@ -17,10 +27,10 @@ export interface ScoredAirport {
 }
 
 export interface PaginatedAirportResponse {
-    items: AirportResponse[];
-    total: number;
-    page: number;
-    totalPages: number;
+  items: AirportResponse[];
+  total: number;
+  page: number;
+  totalPages: number;
 }
 
 /**

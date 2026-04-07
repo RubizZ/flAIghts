@@ -398,6 +398,13 @@ export class SearchService {
                     $push: { departure_itineraries: itinerary._id }
                 }
             );
+            await Search.updateOne(
+                { _id: searchId },
+                {
+                    status: "completed",
+                    $push: { departure_itineraries: itinerary._id }
+                }
+            );
 
         } catch (error) {
             await Search.updateOne({ _id: searchId }, { status: "failed" });
@@ -455,6 +462,7 @@ export class SearchService {
     }
 
     private async getFlightsFromSerpApi(origin: string[], destination: string[], date: string): Promise<DijkstraFlightEdge[]> {
+        return this.storageService.getFlightEdges(origin, destination, date);
         return this.storageService.getFlightEdges(origin, destination, date);
     }
 }

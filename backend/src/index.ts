@@ -11,6 +11,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import cookieParser from 'cookie-parser';
 import compression from 'compression';
+import compression from 'compression';
 import { Error as MongooseError } from 'mongoose';
 import { container } from 'tsyringe';
 import { ServerConfig } from './config/server.config.js';
@@ -120,6 +121,22 @@ if (config.NODE_ENV !== 'production') {
     const openApiSpec = JSON.parse(fs.readFileSync(path.join(__dirname, '../build/openapi.json'), 'utf8'));
     app.use('/docs', swaggerUi.serve, swaggerUi.setup(openApiSpec));
 }
+
+
+// Authentication endpoints rate limiter (5 req/min)
+app.post('/auth/login', authLimiter);
+app.post('/auth/forgot-password', authLimiter);
+app.post('/auth/reset-password', authLimiter);
+
+// Registration endpoints rate limiter (3 req/min)
+app.post('/users/register/initiate', registrationLimiter);
+app.post('/users/register/complete', registrationLimiter);
+
+// Search endpoint rate limiter (20 req/min)
+app.post('/search', searchLimiter);
+
+// Global API rate limiter (100 req/min)
+app.use(globalApiLimiter);
 
 
 // Authentication endpoints rate limiter (5 req/min)

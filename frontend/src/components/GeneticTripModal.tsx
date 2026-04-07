@@ -142,7 +142,7 @@ export default function GeneticTripModal({ isOpen, onClose, onSubmit }: GeneticT
                     {/* Cities List Section */}
                     <div className="flex flex-col gap-3">
                         <label className="text-xs font-bold text-content-muted uppercase tracking-wider px-1">{t("searchFlight.geneticTrip.visitCitiesLabel")} ({cities.length})</label>
-                        
+
                         <div className="flex flex-col gap-2">
                             {cities.map((city, index) => (
                                 <div key={city.iata_code} className="flex items-center justify-between bg-surface/40 border border-line/60 rounded-xl px-4 py-2 animate-fade-in-up">
