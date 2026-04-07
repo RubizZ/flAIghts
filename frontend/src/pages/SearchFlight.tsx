@@ -419,11 +419,9 @@ function SearchFlight() {
                         </button>
                     </div>
                 </div>
+            </div>
 
-                <div className={`absolute transition-all duration-700 cubic-bezier(0.16, 1, 0.3, 1) z-10 ${!isSelectingOnMap
-                    ? 'left-1/2 lg:left-8 top-1/2 -translate-y-1/2 -translate-x-1/2 lg:translate-x-0 scale-100'
-                    : 'left-1/2 lg:-left-150 top-0 lg:top-1/2 -translate-y-[150%] lg:-translate-y-1/2 -translate-x-1/2 lg:translate-x-0 scale-95 pointer-events-none'
-                    }`}>
+            <div className={`absolute transition-all duration-700 cubic-bezier(0.16, 1, 0.3, 1) z-10 ${!isSelectingOnMap? 'left-1/2 lg:left-8 top-1/2 -translate-y-1/2 -translate-x-1/2 lg:translate-x-0 scale-100' : 'left-1/2 lg:-left-150 top-0 lg:top-1/2 -translate-y-[150%] lg:-translate-y-1/2 -translate-x-1/2 lg:translate-x-0 scale-95 pointer-events-none'}`}>
                     <div className="premium-glass relative p-7 rounded-4xl flex flex-col gap-6 transition-all hover:scale-[1.01] w-[min(96vw,540px)] overflow-visible">
                         {!isLargeScreen && searchMode === 'manual' && !isSelectingOnMap && (
                             <button
@@ -614,7 +612,6 @@ function SearchFlight() {
                         onClick={() => setInspectedAirport(null)}
                     />
                 )}
-            </div>
         </div>
     );
 }
