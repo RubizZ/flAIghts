@@ -11,6 +11,8 @@ import type {
     AgentResponse,
     AgentStreamEvent,
 } from "./agent.types.js";
+import { AuditService } from "../audit/audit.service.js";
+import logger from "@/utils/logger.js";
 
 @singleton()
 export class AgentService {
@@ -21,7 +23,8 @@ export class AgentService {
         @inject(UserService) private userService: UserService,
         @inject(SearchService) private searchService: SearchService,
         @inject(AirportService) private airportService: AirportService,
-        @inject(AirlineService) private airlineService: AirlineService
+        @inject(AirlineService) private airlineService: AirlineService,
+        @inject(AuditService) private auditService: AuditService
     ) {
         this.openai = new OpenAI({
             apiKey: this.config.OPENAI_API_KEY,
@@ -85,7 +88,14 @@ export class AgentService {
         model?: string,
         date?: Date
     ): AsyncGenerator<AgentStreamEvent> {
-        console.log(`[Agent] New Chat Request | User: ${userId || 'Anonymous'} | Messages: ${messages.length}`);
+        this.auditService.register({
+            resource: 'AGENT',
+            action: 'CHAT',
+            details: {
+                messages_count: messages.length,
+                model: model || "gpt-4o-mini"
+            }
+        });
         try {
             const history: OpenAI.Chat.ChatCompletionMessageParam[] = [
                 {
@@ -139,7 +149,7 @@ export class AgentService {
 
             while (continueLoop && iterations < MAX_ITERATIONS) {
                 iterations++;
-                console.log(`[Agent] Iteration ${iterations}/${MAX_ITERATIONS} starting...`);
+                logger.info(`[Agent] Iteration ${iterations}/${MAX_ITERATIONS} starting...`);
                 yield { type: 'iteration', count: iterations };
 
                 const stream = await this.openai.chat.completions.create({
@@ -163,10 +173,10 @@ export class AgentService {
                     if (!delta) continue;
 
                     if (delta.content) {
-                        // console.log(`[Agent] Delta Content: ${delta.content}`);
+                        logger.info(`[Agent] Delta Content: ${delta.content}`);
                     }
                     if (delta.tool_calls) {
-                        console.log(`[Agent] Delta Tool Calls: ${JSON.stringify(delta.tool_calls)}`);
+                        logger.info(`[Agent] Delta Tool Calls: ${JSON.stringify(delta.tool_calls)}`);
                     }
 
                     // Manejo de contenido (texto) con protección contra fugas de JSON
@@ -215,7 +225,7 @@ export class AgentService {
                 if (isBufferingPostentialJSON && !hasToolCalls) {
                     const manualTools = this.extractManualToolCalls(tokenBuffer);
                     if (manualTools.length > 0) {
-                        console.log(`[Agent] Detected ${manualTools.length} manual tool calls in buffered content`);
+                        logger.info(`[Agent] Detected ${manualTools.length} manual tool calls in buffered content`);
                         hasToolCalls = true;
                         toolCalls.push(...manualTools);
                     } else {
@@ -225,21 +235,21 @@ export class AgentService {
                 }
 
                 if (fullContent) {
-                    console.log(`[Agent] Assistant Content: "${fullContent.substring(0, 50)}${fullContent.length > 50 ? '...' : ''}"`);
+                    logger.info(`[Agent] Assistant Content: "${fullContent.substring(0, 50)}${fullContent.length > 50 ? '...' : ''}"`);
                 }
 
                 // Fallback: Si el modelo puso JSON en el contenido en vez de tool_calls
                 if (!hasToolCalls && fullContent.includes('"name":') && fullContent.includes('"arguments":')) {
                     const manualTools = this.extractManualToolCalls(fullContent);
                     if (manualTools.length > 0) {
-                        console.log(`[Agent] Detected ${manualTools.length} manual tool calls in content`);
+                        logger.info(`[Agent] Detected ${manualTools.length} manual tool calls in content`);
                         hasToolCalls = true;
                         toolCalls.push(...manualTools);
                     }
                 }
 
                 if (hasToolCalls) {
-                    console.log(`[Agent] Tool calls detected: ${toolCalls.map(tc => tc.function.name).join(', ')}`);
+                    logger.info(`[Agent] Tool calls detected: ${toolCalls.map(tc => tc.function.name).join(', ')}`);
                     const assistantMessage = {
                         role: "assistant" as const,
                         content: fullContent || null,
@@ -257,19 +267,19 @@ export class AgentService {
                         const rawArgs = tc?.function?.arguments;
 
                         if (!name) {
-                            console.error(`[Agent] Tool call missing name:`, tc);
+                            logger.error(`[Agent] Tool call missing name:`, tc);
                             continue;
                         }
 
-                        console.log(`[Agent] Executing Tool: ${name} | Raw Args: ${rawArgs}`);
+                        logger.info(`[Agent] Executing Tool: ${name} | Raw Args: ${rawArgs}`);
                         const args = this.safeParseArgs(rawArgs);
 
-                        console.log(`[Agent] Executing Tool: ${name} | Parsed Args: ${JSON.stringify(args)}`);
+                        logger.info(`[Agent] Executing Tool: ${name} | Parsed Args: ${JSON.stringify(args)}`);
                         yield { type: 'tool_call', name, args, call_id: tc.id };
 
                         try {
                             const result = yield* this.executeTool(name, args, tc.id, userId);
-                            console.log(`[Agent] Tool Result [${name}]: Success`);
+                            logger.info(`[Agent] Tool Result [${name}]: Success`);
                             yield { type: 'tool_result', name, result, call_id: tc.id };
                             toolOutputs.push({
                                 role: "tool",
@@ -288,7 +298,7 @@ export class AgentService {
                     }
                     history.push(...toolOutputs);
                 } else {
-                    console.log(`[Agent] Turn finished. Sending final result.`);
+                    logger.info(`[Agent] Turn finished. Sending final result.`);
                     continueLoop = false;
                     const agentResponse: AgentResponse = {
                         message: { role: "assistant", content: fullContent }
@@ -318,7 +328,7 @@ export class AgentService {
             }
 
             if (continueLoop && iterations >= MAX_ITERATIONS) {
-                console.warn(`[Agent] MAX_ITERATIONS (${MAX_ITERATIONS}) reached. Stopping search loop and requesting continuation.`);
+                logger.warn(`[Agent] MAX_ITERATIONS (${MAX_ITERATIONS}) reached. Stopping search loop and requesting continuation.`);
                 // No yield final_result here because the frontend will detect !hasFinalResult 
                 // and show the continue button to let the user decide.
             }
@@ -426,6 +436,14 @@ export class AgentService {
     }
 
     private async *executeTool(name: string, args: any, call_id: string, userId?: string): AsyncGenerator<AgentStreamEvent, any> {
+        this.auditService.register({
+            resource: 'AGENT',
+            action: 'TOOL_CALL',
+            details: {
+                tool: name,
+                args: args
+            }
+        });
         switch (name) {
             case "getUserInfo":
                 if (!userId) throw new Error("No autenticado");
