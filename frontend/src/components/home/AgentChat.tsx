@@ -452,6 +452,9 @@ const AgentChat = forwardRef<any, AgentChatProps>(({
         let hasFinalResult = false;
         let capturedError = false;
 
+        const ctrl = new AbortController();
+        abortControllerRef.current = ctrl;
+
         try {
             await connectStream({
                 body: {
@@ -465,6 +468,7 @@ const AgentChat = forwardRef<any, AgentChatProps>(({
                         return_date: returnDate
                     }
                 },
+                signal: ctrl.signal,
                 onEvent: (event) => {
                     if (event.type === 'iteration') {
                         iterationCount = event.count;
@@ -579,18 +583,10 @@ const AgentChat = forwardRef<any, AgentChatProps>(({
             });
         } finally {
             setIsStreaming(false);
+            if (abortControllerRef.current === ctrl) {
+                abortControllerRef.current = null;
+            }
         }
-
-        abortControllerRef.current = {
-            abort: () => {
-                // El hook useMutation no expone el cleanup directamente de esta forma,
-                // pero podemos confiar en que react-query gestiona la cancelación si fuera necesario.
-                // Sin embargo, para SSE manual, mantenemos la lógica de stopStream.
-                setIsStreaming(false);
-                setIsTyping(false);
-            },
-            signal: { aborted: false } as AbortSignal
-        };
     };
 
 

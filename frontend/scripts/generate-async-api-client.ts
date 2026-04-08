@@ -133,12 +133,12 @@ export const get${baseName}MutationKey = () => ['${mutationName}'];
 export const use${baseName}Mutation = () => {
     return useMutation({
         mutationKey: get${baseName}MutationKey(),
-        mutationFn: async ({ body, onEvent, onError }: { 
+        mutationFn: async ({ body, onEvent, onError, signal }: { 
             body: Models.${bodyType}, 
             onEvent: (event: Models.${eventType}) => void, 
-            onError?: (error: Error) => void 
+            onError?: (error: Error) => void,
+            signal?: AbortSignal
         }) => {
-            const ctrl = new AbortController();
             let lastProcessedLength = 0;
             
             try {
@@ -149,7 +149,7 @@ export const use${baseName}Mutation = () => {
                     headers: {
                         'Accept': 'text/event-stream',
                     },
-                    signal: ctrl.signal,
+                    signal: signal,
                     onDownloadProgress: (progressEvent: AxiosProgressEvent) => {
                         const xhr = progressEvent.event.target as XMLHttpRequest;
                         const fullText = xhr.responseText;

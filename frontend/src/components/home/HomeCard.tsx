@@ -173,6 +173,7 @@ export default function HomeCard({
                             origins={origins}
                             destinations={destinations}
                             departureDate={departureDate}
+                            returnDate={returnDate}
                             setReturnDate={setReturnDate}
                             setOrigins={setOrigins}
                             setDestinations={setDestinations}
