@@ -14,12 +14,12 @@ import {
     Palette,
     ShieldCheck,
     Bell,
-    Menu,
-    X
+    Trophy
 } from "lucide-react";
 import { PopulatedUser } from "@/api/generated/openapi/model";
 import UserAvatar from "@/components/ui/UserAvatar";
 import NavIconButton from "@/components/ui/NavIconButton";
+import { useMissions } from "@/context/MissionContext";
 
 export default function Navbar({ variant = 'floating' }: { variant?: 'floating' | 'flat' }) {
     const navigate = useNavigate();
@@ -281,12 +281,32 @@ export default function Navbar({ variant = 'floating' }: { variant?: 'floating' 
         )
     };
 
+    const { isEvaluationMode, hasConsented, setShowRoadmap, missions, isMissionRated, allCompleted } = useMissions();
+    const pendingSurveysCount = missions.filter(m => m.isCompleted && !isMissionRated(m.id)).length;
+
     return (
         <nav className={variant === 'floating' ? "contents" : "contents"}>
             <div className={variant === 'floating'
                 ? "fixed top-4 right-4 flex items-center justify-end gap-2 sm:gap-4 z-10 pointer-events-auto"
                 : "flex items-center gap-2 sm:gap-4 pointer-events-auto"
             }>
+                {/* Mission Indicator Button (Evaluation Mode) */}
+                {isEvaluationMode && hasConsented && (
+                    <NavIconButton
+                        id="nav-missions-button"
+                        variant={variant}
+                        onClick={() => setShowRoadmap(true)}
+                        showBadge={pendingSurveysCount > 0}
+                        title="Misiones de Evaluación"
+                        className={pendingSurveysCount > 0 ? "animate-pulse" : ""}
+                    >
+                        <Trophy
+                            size={20}
+                            className={pendingSurveysCount > 0 ? "text-amber-500" : allCompleted ? "text-green-500" : "text-content group-hover:text-brand transition-colors"}
+                        />
+                    </NavIconButton>
+                )}
+
                 {isLoading ? (
                     <div className="flex items-center gap-2">
                         <div className="hidden sm:block w-16 h-8 bg-surface rounded-full animate-pulse opacity-50" />
@@ -294,7 +314,7 @@ export default function Navbar({ variant = 'floating' }: { variant?: 'floating' 
                         <div className="w-10 h-10 bg-surface rounded-2xl sm:rounded-full animate-pulse opacity-50" />
                     </div>
                 ) : isAuthenticated ? (
-                    <div className="flex items-center gap-2">
+                    <>
                         <Dropdown
                             isOpen={isNotificationsMenuOpen}
                             onOpenChange={(open) => {
@@ -373,7 +393,7 @@ export default function Navbar({ variant = 'floating' }: { variant?: 'floating' 
                                 )
                             }}
                         />
-                    </div>
+                    </>
                 ) : (
                     <div className="hidden lg:flex gap-2">
                         <NavIconButton to="/login" variant={variant} isPill>

@@ -56,6 +56,8 @@ import { customInstance } from '../../axios-instance';
             .map(part => part.charAt(0).toUpperCase() + part.slice(1))
             .join('');
 
+        const mutationName = baseName.charAt(0).toLowerCase() + baseName.slice(1);
+
         if (protocol === 'ws') {
             const subMessageRef = channelObj.subscribe?.message?.$ref || channelObj.subscribe?.message?.oneOf?.[0]?.$ref;
             const pubMessageRef = channelObj.publish?.message?.$ref || channelObj.publish?.message?.oneOf?.[0]?.$ref;
@@ -121,6 +123,8 @@ export const use${baseName}WS = (onMessage?: (data: Models.${typeOut}) => void) 
             const bodyType = pubMessageRef ? pubMessageRef.split('/').pop() : 'never';
 
             hooksOutput += `
+export const get${baseName}MutationKey = () => ['${mutationName}'];
+
 /**
  * Hook Mutation para el canal SSE ${channelPath}
  * Cuerpo (body): Models.${bodyType}
@@ -128,6 +132,7 @@ export const use${baseName}WS = (onMessage?: (data: Models.${typeOut}) => void) 
  */
 export const use${baseName}Mutation = () => {
     return useMutation({
+        mutationKey: get${baseName}MutationKey(),
         mutationFn: async ({ body, onEvent, onError }: { 
             body: Models.${bodyType}, 
             onEvent: (event: Models.${eventType}) => void, 

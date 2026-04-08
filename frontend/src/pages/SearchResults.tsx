@@ -213,6 +213,7 @@ export default function SearchResults() {
 
     const handleSelectItinerary = (itinerary: ItineraryResponse, type: 'departure' | 'return') => {
         setExpandedItinerary(null);
+        window.dispatchEvent(new CustomEvent('app:select-flight'));
         if (type === 'departure') {
             setSelectedDeparture(itinerary);
             if (isOneWay) {
@@ -399,7 +400,10 @@ export default function SearchResults() {
                                                 </p>
                                             </div>
                                             <button
-                                                onClick={() => toast.info("Función no implementada", { description: "Esta acción te redirigirá a la web del vendedor." })}
+                                                onClick={() => {
+                                                    window.dispatchEvent(new CustomEvent('app:buy-flight'));
+                                                    toast.info("Función no implementada", { description: "Esta acción te redirigirá a la web del vendedor." });
+                                                }}
                                                 className="w-full sm:w-auto px-8 py-4 bg-brand hover:bg-brand-hover text-white text-base font-bold rounded-2xl shadow-lg shadow-brand/20 transition-all hover:scale-105 active:scale-95 cursor-pointer"
                                             >
                                                 Reservar Vuelos
@@ -450,7 +454,7 @@ export default function SearchResults() {
                                         <div className="space-y-4 animate-in slide-in-from-bottom-8 fade-in duration-700 delay-200">
                                             <h2 className="text-xl font-bold text-content flex items-center gap-3 ml-2">
                                                 <div className="p-2 bg-destination/20 rounded-lg">
-                                                    <Plane className="w-5 h-5 text-destination rotate-[135deg]" />
+                                                    <Plane className="w-5 h-5 text-destination rotate-135" />
                                                 </div>
                                                 Vuelos de Vuelta
                                             </h2>

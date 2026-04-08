@@ -54,6 +54,9 @@ export default function FlightCard({ itinerary, formatTime, formatDuration, airp
                 onClick={() => {
                     const next = !isExpanded;
                     setIsExpanded(next);
+                    if (next) {
+                        window.dispatchEvent(new CustomEvent('app:view-flight-details'));
+                    }
                     onExpandChange?.(next ? itinerary : null);
                 }}
             >

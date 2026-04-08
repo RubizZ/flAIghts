@@ -3289,6 +3289,102 @@
         ],
         "type": "object"
       },
+      "MissionStepResult": {
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "completedAt": {
+            "type": "string"
+          },
+          "userAgent": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "completedAt",
+          "userAgent"
+        ],
+        "type": "object",
+        "additionalProperties": false
+      },
+      "SurveyResult": {
+        "properties": {
+          "missionId": {
+            "type": "string"
+          },
+          "completedBy": {
+            "type": "string"
+          },
+          "completedAt": {
+            "type": "string"
+          },
+          "userAgent": {
+            "type": "string"
+          },
+          "steps": {
+            "items": {
+              "$ref": "#/components/schemas/MissionStepResult"
+            },
+            "type": "array"
+          },
+          "answer": {
+            "properties": {
+              "comment": {
+                "type": "string"
+              },
+              "rating": {
+                "type": "number",
+                "format": "double"
+              }
+            },
+            "required": [
+              "comment",
+              "rating"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "missionId",
+          "completedAt",
+          "userAgent",
+          "steps",
+          "answer"
+        ],
+        "type": "object",
+        "additionalProperties": false
+      },
+      "EvaluationPayload": {
+        "properties": {
+          "results": {
+            "items": {
+              "$ref": "#/components/schemas/SurveyResult"
+            },
+            "type": "array"
+          },
+          "timestamp": {
+            "type": "string"
+          },
+          "userId": {
+            "type": "string"
+          },
+          "fullName": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "results",
+          "timestamp"
+        ],
+        "type": "object",
+        "additionalProperties": false
+      },
       "LoginResponseData": {
         "description": "Respuesta del endpoint POST /auth/login",
         "properties": {
@@ -6204,6 +6300,50 @@
             }
           }
         ]
+      }
+    },
+    "/evaluation/results": {
+      "post": {
+        "operationId": "SubmitResults",
+        "responses": {
+          "200": {
+            "description": "Ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "status": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "status"
+                  ],
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Evaluation"
+        ],
+        "security": [
+          {
+            "jwt-optional": []
+          }
+        ],
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EvaluationPayload"
+              }
+            }
+          }
+        }
       }
     },
     "/auth/login": {
