@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, forwardRef, useImperativeHandle } from "react";
-import { Send, Sparkles, User, Trash2, ExternalLink, Plane, MapPin, Calendar, Clock, DollarSign, ArrowRight, Check, Square, ChevronRight, ChevronDown, Lock } from "lucide-react";
+import { Send, Sparkles, User, ExternalLink, Plane, MapPin, Calendar, Clock, ArrowRight, Check, Square, ChevronRight, ChevronDown, Lock } from "lucide-react";
 
 import ReactMarkdown from 'react-markdown';
 import { toast } from "sonner";
@@ -904,21 +904,10 @@ const AgentChat = forwardRef<any, AgentChatProps>(({
                         )}
                     </div>
                 </div>
-                <div className="mt-3 items-center justify-center gap-4 hidden lg:flex">
-                    <div className="flex items-center gap-1.5 text-[9px] font-black uppercase tracking-widest text-content-muted/40">
-                        <DollarSign size={10} />
-                        <span>Mejor Precio</span>
-                    </div>
-                    <div className="w-1 h-1 bg-line/50 rounded-full" />
-                    <div className="flex items-center gap-1.5 text-[9px] font-black uppercase tracking-widest text-content-muted/40">
-                        <Clock size={10} />
-                        <span>Vuelo Rápido</span>
-                    </div>
-                    <div className="w-1 h-1 bg-line/50 rounded-full" />
-                    <div className="flex items-center gap-1.5 text-[9px] font-black uppercase tracking-widest text-content-muted/40">
-                        <Calendar size={10} />
-                        <span>Gestión de Fechas</span>
-                    </div>
+                <div className="mt-3 flex items-center justify-center gap-2">
+                    <span className="text-[9px] font-bold uppercase tracking-widest text-content-muted/40 text-center">
+                        El agente flAIghts es experimental y puede cometer errores. Verifica la información importante.
+                    </span>
                 </div>
             </div>
         </div>

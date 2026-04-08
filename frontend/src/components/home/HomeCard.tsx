@@ -87,7 +87,7 @@ export default function HomeCard({
 
                                 <button
                                     onClick={() => onSearchModeChange?.('ai')}
-                                    className={`relative z-10 w-[130px] flex items-center justify-center gap-2 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-colors duration-300 flex-none ${searchMode === 'ai' ? 'text-content-on-brand' : 'text-content-muted hover:text-content cursor-pointer'
+                                    className={`relative z-10 w-32.5 flex items-center justify-center gap-2 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-colors duration-300 flex-none ${searchMode === 'ai' ? 'text-content-on-brand' : 'text-content-muted hover:text-content cursor-pointer'
                                         }`}
                                 >
                                     <Sparkles size={14} className={searchMode === 'ai' ? 'animate-pulse' : 'opacity-70'} />
@@ -96,7 +96,7 @@ export default function HomeCard({
 
                                 <button
                                     onClick={() => onSearchModeChange?.('manual')}
-                                    className={`relative z-10 w-[130px] flex items-center justify-center gap-2 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-colors duration-300 flex-none ${searchMode === 'manual' ? 'text-content-on-brand' : 'text-content-muted hover:text-content cursor-pointer'
+                                    className={`relative z-10 w-32.5 flex items-center justify-center gap-2 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-colors duration-300 flex-none ${searchMode === 'manual' ? 'text-content-on-brand' : 'text-content-muted hover:text-content cursor-pointer'
                                         }`}
                                 >
                                     <SlidersHorizontal size={14} className={searchMode === 'manual' ? '' : 'opacity-70'} />
