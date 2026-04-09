@@ -39,8 +39,15 @@ export default defineConfig({
             protocol: 'ws',
         },
         middlewareMode: false,
+        proxy: {
+            '/api': {
+                target: 'http://server:3000',
+                changeOrigin: true,
+                rewrite: (path) => path.replace(/^\/api/, ''),
+            }
+        }
     },
     build: {
         sourcemap: false,
     },
-})
+}) 

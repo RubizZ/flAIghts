@@ -41,7 +41,7 @@ export class AuthController extends Controller {
                     request.res!.cookie('token', result.token, {
                         httpOnly: true,
                         secure: isProduction,
-                        sameSite: isProduction ? 'none' : 'strict',
+                        sameSite: 'lax',
                         maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
                     });
                     return result satisfies LoginResponseData as any;

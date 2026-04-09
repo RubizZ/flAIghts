@@ -85,7 +85,7 @@ const serverConfigSchema = z.object({
     }, z.boolean().default(false)),
     SERPAPI_API_KEY: z.preprocess(emptyToUndefined, z.string()),
     OPENAI_API_KEY: z.preprocess(emptyToUndefined, z.string()),
-    OPENAI_BASE_URL: z.preprocess(emptyToUndefined, z.url().default("https://api.openai.com/v1")),
+    OPENAI_BASE_URL: z.preprocess(emptyToUndefined, z.url().optional()),
     AVAILABLE_MODELS: z.preprocess(emptyToUndefined, z.string().optional().transform((val) =>
         val ? val.split(",").map((o) => o.trim()) : []
     )),
