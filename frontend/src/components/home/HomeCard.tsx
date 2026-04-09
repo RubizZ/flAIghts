@@ -21,7 +21,6 @@ interface HomeCardProps {
     setActiveDeparturePopover: (popover: 'main' | 'map' | null) => void;
     activeReturnPopover: 'main' | 'map' | null;
     setActiveReturnPopover: (popover: 'main' | 'map' | null) => void;
-    userLocation?: { latitude: number; longitude: number };
     onExploreGlobe?: () => void;
     searchMode?: 'manual' | 'ai';
     onSearchModeChange?: (mode: 'manual' | 'ai') => void;
@@ -46,7 +45,6 @@ export default function HomeCard({
     setActiveDeparturePopover,
     activeReturnPopover,
     setActiveReturnPopover,
-    userLocation,
     onExploreGlobe,
     searchMode = 'manual',
     onSearchModeChange,
@@ -169,7 +167,6 @@ export default function HomeCard({
                             ref={chatRef}
                             messages={messages}
                             setMessages={setMessages}
-                            location={userLocation}
                             origins={origins}
                             destinations={destinations}
                             departureDate={departureDate}

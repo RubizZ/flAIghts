@@ -11,6 +11,7 @@ import type {
     AirportResponse
 } from "@/api/generated/openapi/model";
 import { useAuth } from "@/context/AuthContext";
+import { useUserLocation } from "@/context/UserLocationContext";
 import { getAirportByIata } from "@/api/generated/openapi/airports";
 import { useModels } from "@/api/generated/openapi/agent";
 import { useAgentStreamMutation } from "@/api/generated/asyncapi/hooks";
@@ -37,7 +38,6 @@ type UIStep = AsyncAPIModels.AgentStreamEvent & {
 interface AgentChatProps {
     messages: ExtendedChatMessage[];
     setMessages: (messages: ExtendedChatMessage[] | ((prev: ExtendedChatMessage[]) => ExtendedChatMessage[])) => void;
-    location?: { latitude: number; longitude: number };
     origins?: AirportResponse[];
     destinations?: AirportResponse[];
     departureDate?: string;
@@ -366,7 +366,6 @@ const StepProgress = ({ steps }: { steps: any[] }) => {
 const AgentChat = forwardRef<any, AgentChatProps>(({
     messages,
     setMessages,
-    location,
     origins,
     destinations,
     departureDate,
@@ -377,6 +376,7 @@ const AgentChat = forwardRef<any, AgentChatProps>(({
     setReturnDate
 }, ref) => {
     const { isAuthenticated, user, isLoading } = useAuth()
+    const { location } = useUserLocation();
 
 
     const [input, setInput] = useState("");
@@ -460,7 +460,7 @@ const AgentChat = forwardRef<any, AgentChatProps>(({
                 body: {
                     messages: newMessages,
                     model: selectedModel,
-                    location: location,
+                    location: location ? location : undefined,
                     manual_state: {
                         origins: origins?.map(o => o.iata_code),
                         destinations: destinations?.map(d => d.iata_code),

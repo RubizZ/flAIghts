@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useMemo } from "react";
 import Globe from "../components/Globe.tsx"
-import { Plus, Globe as GlobeIcon, Maximize2, PlaneTakeoff, PlaneLanding, X, Plane, ChevronDown, ChevronRight, Search, Calendar as CalendarIcon } from "lucide-react";
+import { Plus, Maximize2, PlaneTakeoff, PlaneLanding, X, Plane, ChevronDown, ChevronRight, Search, Calendar as CalendarIcon } from "lucide-react";
 import { useSearchRequest } from "@/api/generated/openapi/search";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
@@ -27,7 +27,6 @@ export default function Home() {
     const [isXXLScreen, setIsXXLScreen] = useState(window.innerWidth >= 1536);
     const [isMobileCardExpanded, setIsMobileCardExpanded] = useState(false);
     const [isUserInteracting, setIsUserInteracting] = useState(false);
-    const [userLocation, setUserLocation] = useState<{ latitude: number; longitude: number } | undefined>(undefined);
     const [isInteractionSuppressed, setIsInteractionSuppressed] = useState(false);
     const [initialMousePos, setInitialMousePos] = useState<{ x: number, y: number } | null>(null);
     const [searchMode, setSearchMode] = useState<'manual' | 'ai'>(() => {
@@ -40,21 +39,7 @@ export default function Home() {
         localStorage.setItem('searchMode', searchMode);
     }, [searchMode]);
 
-    useEffect(() => {
-        if ("geolocation" in navigator) {
-            navigator.geolocation.getCurrentPosition(
-                (position) => {
-                    setUserLocation({
-                        latitude: position.coords.latitude,
-                        longitude: position.coords.longitude
-                    });
-                },
-                (error) => {
-                    console.warn("Geolocation Error:", error.message);
-                }
-            );
-        }
-    }, []);
+
 
     useEffect(() => {
         const handleResize = () => {
@@ -454,7 +439,6 @@ export default function Home() {
                         setActiveDeparturePopover={setActiveDeparturePopover}
                         activeReturnPopover={activeReturnPopover}
                         setActiveReturnPopover={setActiveReturnPopover}
-                        userLocation={userLocation}
                         onExploreGlobe={() => {
                             setIsSelectingOnMap(true);
                             setIsMobileCardExpanded(false);
