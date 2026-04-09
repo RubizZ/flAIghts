@@ -112,6 +112,8 @@ function sanitize<K extends keyof ServerConfigType>(val: ServerConfigType[K], fi
         case "SMTP_USER":
         case "SERPAPI_API_KEY":
         case "MONGODB_URI":
+        case "OPENAI_API_KEY":
+        case "GEOCODING_API_KEY":
             return "[REDACTED] (please check .env file)";
         // Other non-sensitive values
         default:

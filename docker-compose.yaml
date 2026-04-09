@@ -24,7 +24,7 @@ services:
           devices:
             - driver: nvidia
               count: all
-              capabilities: [gpu]
+              capabilities: [ gpu ]
 
   mailpit:
     image: axllent/mailpit
@@ -87,7 +87,7 @@ services:
       - OPENAI_BASE_URL=http://ollama:11434/v1
       - OPENAI_API_KEY=ollama
     healthcheck:
-      test: ["CMD", "node", "-e", "fetch('http://localhost:3000/health').then(r => r.ok ? process.exit(0) : process.exit(1)).catch(() => process.exit(1))"]
+      test: [ "CMD", "node", "-e", "fetch('http://localhost:3000/health').then(r => r.ok ? process.exit(0) : process.exit(1)).catch(() => process.exit(1))" ]
       interval: 5s
       timeout: 10s
       retries: 10
@@ -100,6 +100,7 @@ services:
     environment:
       CHOKIDAR_USEPOLLING: "true"
       VITE_BACKEND_API_BASE_URL: "${VITE_BACKEND_API_BASE_URL:-http://localhost:3000}"
+      VITE_EVALUATION_MODE: "${VITE_EVALUATION_MODE:-true}"
     ports:
       - 5173:5173
     command: sh -c "npm install && npm run dev"

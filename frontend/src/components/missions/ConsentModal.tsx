@@ -25,7 +25,7 @@ const ConsentModal: React.FC<ConsentModalProps> = ({ onAccept }) => {
 
     return (
         <div className={`fixed inset-0 z-100 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-duration-500 ${isClosing ? 'animate-fade-out' : 'animate-fade-in'}`}>
-            <div className={`relative w-full max-w-lg overflow-hidden rounded-3xl border border-white/20 bg-linear-to-b from-gray-900 to-black p-8 shadow-2xl animate-duration-300 ${isClosing ? 'animate-zoom-out' : 'animate-zoom-in'}`}>
+            <div className={`relative w-full max-w-lg max-h-[calc(100svh-2rem)] overflow-y-auto custom-scrollbar rounded-3xl border border-white/20 bg-linear-to-b from-gray-900 to-black p-8 shadow-2xl animate-duration-300 ${isClosing ? 'animate-zoom-out' : 'animate-zoom-in'}`}>
                 {/* Background decorative elements */}
                 <div className="absolute -top-24 -right-24 h-48 w-48 rounded-full bg-blue-500/20 blur-3xl" />
                 <div className="absolute -bottom-24 -left-24 h-48 w-48 rounded-full bg-indigo-500/20 blur-3xl" />

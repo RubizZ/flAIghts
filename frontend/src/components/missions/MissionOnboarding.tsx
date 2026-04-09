@@ -5,11 +5,11 @@ import { Trophy, ChevronRight, Sparkles, Target, LayoutGrid, ListChecks, Map, Lo
 type TooltipPosition = 'top' | 'bottom' | 'left' | 'right';
 
 const MissionOnboarding: React.FC = () => {
-    const { 
-        isEvaluationMode, hasConsented, onboardingStep, nextOnboardingStep, 
+    const {
+        isEvaluationMode, hasConsented, onboardingStep, nextOnboardingStep,
         surveyOnboardingStep, nextSurveyOnboardingStep, showRoadmap, skipOnboarding
     } = useMissions();
-    
+
     const [spotlightRect, setSpotlightRect] = useState<DOMRect | null>(null);
     const [isVisible, setIsVisible] = useState(false);
     const [isTransitioning, setIsTransitioning] = useState(false);
@@ -34,7 +34,7 @@ const MissionOnboarding: React.FC = () => {
     useEffect(() => {
         if (isEvaluationMode && hasConsented && activeTourStep > 0) {
             let targetId = '';
-            
+
             if (isSurveyTour) {
                 switch (surveyOnboardingStep) {
                     case 1: targetId = 'nav-missions-button'; break;
@@ -52,7 +52,7 @@ const MissionOnboarding: React.FC = () => {
                     case 7: targetId = 'roadmap-close-button'; break;
                 }
             }
-            
+
             const findTarget = () => {
                 const element = document.getElementById(targetId);
                 if (element) {
@@ -70,18 +70,18 @@ const MissionOnboarding: React.FC = () => {
             };
 
             findTarget();
-            
+
             // Listen to scroll in both containers
             const scrollContainer = document.getElementById('roadmap-scroll-container');
             const dashboardContainer = document.querySelector('.custom-scrollbar');
             const handleUpdate = () => findTarget();
-            
+
             if (scrollContainer) scrollContainer.addEventListener('scroll', handleUpdate);
             if (dashboardContainer) dashboardContainer.addEventListener('scroll', handleUpdate);
 
             // Frequent check for dynamic transitions
             const timer = setTimeout(findTarget, 400);
-            const interval = setInterval(findTarget, 800); 
+            const interval = setInterval(findTarget, 800);
 
             return () => {
                 clearTimeout(timer);
@@ -97,7 +97,7 @@ const MissionOnboarding: React.FC = () => {
     useEffect(() => {
         const handleGlobalClick = (e: MouseEvent) => {
             if (activeTourStep === 0 || !spotlightRect) return;
-            
+
             // Definir qué pasos avanzan por clic directo
             let isDirectAction = false;
             if (isSurveyTour) {
@@ -109,11 +109,11 @@ const MissionOnboarding: React.FC = () => {
             if (!isDirectAction) return;
 
             const margin = 10;
-            const isInside = e.clientX >= spotlightRect.left - margin && 
-                           e.clientX <= spotlightRect.right + margin && 
-                           e.clientY >= spotlightRect.top - margin && 
-                           e.clientY <= spotlightRect.bottom + margin;
-            
+            const isInside = e.clientX >= spotlightRect.left - margin &&
+                e.clientX <= spotlightRect.right + margin &&
+                e.clientY >= spotlightRect.top - margin &&
+                e.clientY <= spotlightRect.bottom + margin;
+
             if (isInside) {
                 // El clic fue en el objetivo, avanzamos de paso.
                 if (isSurveyTour) setTimeout(nextSurveyOnboardingStep, 50);
@@ -138,7 +138,7 @@ const MissionOnboarding: React.FC = () => {
         const rh = spotlightRect.height / 2;
 
         let bestPos: TooltipPosition = 'bottom';
-        
+
         const canFitBottom = cy + rh + Gap + TH < viewport.h;
         const canFitTop = cy - rh - Gap - TH > 0;
         const canFitRight = cx + rw + Gap + TW < viewport.w;
@@ -211,16 +211,17 @@ const MissionOnboarding: React.FC = () => {
 
     return (
         <div className={`fixed inset-0 z-210 animate-fade-in animate-duration-500 overflow-hidden ${isTransitioning ? 'pointer-events-auto' : 'pointer-events-none'}`}>
-            <style dangerouslySetInnerHTML={{ __html: `
+            <style dangerouslySetInnerHTML={{
+                __html: `
                 @keyframes float-vertical { 0%, 100% { transform: translate(-50%, 0px); } 50% { transform: translate(-50%, -10px); } }
                 @keyframes float-vertical-rev { 0%, 100% { transform: translate(-50%, 0px); } 50% { transform: translate(-50%, 10px); } }
                 @keyframes float-horizontal { 0%, 100% { transform: translate(0px, -50%); } 50% { transform: translate(10px, -50%); } }
                 @keyframes float-horizontal-rev { 0%, 100% { transform: translate(0px, -50%); } 50% { transform: translate(-10px, -50%); } }
             `}} />
-            
+
             <div className={`transition-opacity duration-300 ${isTransitioning ? 'opacity-0' : 'opacity-100 pointer-events-none'}`}>
                 <svg className="absolute inset-0 w-full h-full">
-                    <path 
+                    <path
                         d={fullPath}
                         fill="rgba(0,0,0,0.7)"
                         fillRule="evenodd"
@@ -228,12 +229,12 @@ const MissionOnboarding: React.FC = () => {
                     />
                 </svg>
 
-                <div 
+                <div
                     className="absolute z-220 flex flex-col pointer-events-none transition-all duration-500"
                     style={tooltipStyle}
                 >
                     <div className={`absolute w-4 h-4 bg-gray-950 border-white/10 z-10 ${arrowClasses}`} />
-                    
+
                     <div className="w-full bg-gray-950 border border-white/10 rounded-4xl p-6 shadow-[0_32px_64px_-16px_rgba(0,0,0,0.6)] pointer-events-auto backdrop-blur-2xl">
                         <div className="flex flex-col gap-5">
                             <div className="flex items-center gap-3">
@@ -263,7 +264,7 @@ const MissionOnboarding: React.FC = () => {
                                     </p>
                                 </div>
                             </div>
-                            
+
                             <div className="space-y-1.5">
                                 <p className="text-white text-base font-bold leading-tight flex items-center gap-2">
                                     {isSurveyTour ? (
@@ -308,7 +309,7 @@ const MissionOnboarding: React.FC = () => {
 
                             {isNextButtonStep && (
                                 <div className="pt-1">
-                                    <button 
+                                    <button
                                         onClick={nextOnboardingStep}
                                         className="w-full group flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-500 text-white text-[9px] font-black uppercase tracking-[0.2em] py-3 rounded-xl transition-all active:scale-95 cursor-pointer shadow-lg shadow-blue-900/40"
                                     >
@@ -316,13 +317,13 @@ const MissionOnboarding: React.FC = () => {
                                     </button>
                                 </div>
                             )}
-                            
+
                             {!isNextButtonStep && (
                                 <div className="mt-0.5 flex flex-col items-center gap-3">
                                     <div className="flex items-center justify-center gap-2 text-[8px] font-black uppercase tracking-widest text-white/20 animate-pulse">
                                         <Target size={10} /> Requiere acción directa
                                     </div>
-                                    <button 
+                                    <button
                                         onClick={skipOnboarding}
                                         className="text-[9px] font-black uppercase tracking-widest text-white/40 hover:text-white/80 transition-colors cursor-pointer"
                                     >
@@ -333,7 +334,7 @@ const MissionOnboarding: React.FC = () => {
 
                             {isNextButtonStep && (
                                 <div className="mt-2 flex justify-center">
-                                    <button 
+                                    <button
                                         onClick={skipOnboarding}
                                         className="text-[9px] font-black uppercase tracking-widest text-white/40 hover:text-white/80 transition-colors cursor-pointer"
                                     >

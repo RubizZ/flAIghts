@@ -51,7 +51,7 @@ const SurveyModal: React.FC = () => {
                 backdropMouseDown.current = false;
             }}
         >
-            <div className={`relative w-full max-w-lg overflow-hidden rounded-[2.5rem] border border-white/10 bg-gray-950 shadow-[0_32px_64px_-16px_rgba(0,0,0,0.6)] animate-duration-300 flex flex-col ${isClosing ? 'animate-zoom-out' : 'animate-zoom-in'}`}>
+            <div className={`relative w-full max-w-lg max-h-[calc(100svh-2rem)] overflow-y-auto custom-scrollbar rounded-[2.5rem] border border-white/10 bg-gray-950 shadow-[0_32px_64px_-16px_rgba(0,0,0,0.6)] animate-duration-300 flex flex-col ${isClosing ? 'animate-zoom-out' : 'animate-zoom-in'}`}>
 
                 {/* Decorative Elements */}
                 <div className="absolute top-0 left-1/2 -translate-x-1/2 w-64 h-24 bg-blue-500/10 blur-[80px] pointer-events-none" />
