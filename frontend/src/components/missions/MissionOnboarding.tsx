@@ -15,6 +15,8 @@ const MissionOnboarding: React.FC = () => {
     const [isTransitioning, setIsTransitioning] = useState(false);
     const [viewport, setViewport] = useState({ w: window.innerWidth, h: window.innerHeight });
 
+    const [subStep, setSubStep] = useState(0);
+
     // Determinar qué tour está activo
     const activeTourStep = onboardingStep > 0 ? onboardingStep : surveyOnboardingStep;
     const isSurveyTour = onboardingStep === 0 && surveyOnboardingStep > 0;
@@ -26,41 +28,67 @@ const MissionOnboarding: React.FC = () => {
     }, [activeTourStep]);
 
     useEffect(() => {
+        setSubStep(0);
+    }, [onboardingStep, surveyOnboardingStep]);
+
+    useEffect(() => {
         const handleResize = () => setViewport({ w: window.innerWidth, h: window.innerHeight });
         window.addEventListener('resize', handleResize);
         return () => window.removeEventListener('resize', handleResize);
     }, []);
 
+    const isMobileTarget = useMemo(() => {
+        const isStep1 = (isSurveyTour && surveyOnboardingStep === 1) || (!isSurveyTour && onboardingStep === 1);
+        if (!isStep1) return false;
+
+        const desktopBtn = document.getElementById('nav-missions-button');
+        // Si no existe o no tiene ancho (está oculto por media query)
+        return !desktopBtn || desktopBtn.offsetWidth === 0;
+    }, [onboardingStep, surveyOnboardingStep, isSurveyTour, viewport]);
+
     useEffect(() => {
         if (isEvaluationMode && hasConsented && activeTourStep > 0) {
-            let targetId = '';
-
-            if (isSurveyTour) {
-                switch (surveyOnboardingStep) {
-                    case 1: targetId = 'nav-missions-button'; break;
-                    case 2: targetId = 'onboarding-survey-mission'; break;
-                    case 3: targetId = 'dashboard-survey-button'; break;
-                }
-            } else {
-                switch (onboardingStep) {
-                    case 1: targetId = 'nav-missions-button'; break;
-                    case 2: targetId = 'onboarding-active-mission'; break;
-                    case 3: targetId = 'dashboard-left-summary'; break;
-                    case 4: targetId = 'dashboard-right-checklist'; break;
-                    case 5: targetId = 'dashboard-back-button'; break;
-                    case 6: targetId = 'roadmap-locked-mission'; break;
-                    case 7: targetId = 'roadmap-close-button'; break;
-                }
-            }
-
             const findTarget = () => {
-                const element = document.getElementById(targetId);
+                let currentId = '';
+
+                if (isSurveyTour) {
+                    switch (surveyOnboardingStep) {
+                        case 1: 
+                            if (isMobileTarget) {
+                                currentId = subStep === 0 ? (document.getElementById('nav-user-menu-trigger') ? 'nav-user-menu-trigger' : 'nav-options-menu-trigger') : (document.getElementById('nav-missions-button-mobile') ? 'nav-missions-button-mobile' : 'nav-missions-button-mobile-alt');
+                            } else {
+                                currentId = 'nav-missions-button';
+                            }
+                            break;
+                        case 2: currentId = 'onboarding-survey-mission'; break;
+                        case 3: currentId = 'dashboard-survey-button'; break;
+                    }
+                } else {
+                    switch (onboardingStep) {
+                        case 1: 
+                            if (isMobileTarget) {
+                                currentId = subStep === 0 ? (document.getElementById('nav-user-menu-trigger') ? 'nav-user-menu-trigger' : 'nav-options-menu-trigger') : (document.getElementById('nav-missions-button-mobile') ? 'nav-missions-button-mobile' : 'nav-missions-button-mobile-alt');
+                            } else {
+                                currentId = 'nav-missions-button';
+                            }
+                            break;
+                        case 2: currentId = 'onboarding-active-mission'; break;
+                        case 3: currentId = 'dashboard-left-summary'; break;
+                        case 4: currentId = 'dashboard-right-checklist'; break;
+                        case 5: currentId = 'dashboard-back-button'; break;
+                        case 6: currentId = 'roadmap-locked-mission'; break;
+                        case 7: currentId = 'roadmap-close-button'; break;
+                    }
+                }
+
+                const element = currentId ? document.getElementById(currentId) : null;
+                
                 if (element) {
                     setSpotlightRect(element.getBoundingClientRect());
                     setIsVisible(true);
                 } else {
                     // Si es el paso de misión bloqueada y no hay ninguna, saltamos
-                    if (targetId === 'roadmap-locked-mission') {
+                    if (currentId === 'roadmap-locked-mission') {
                         nextOnboardingStep();
                         return;
                     }
@@ -92,7 +120,7 @@ const MissionOnboarding: React.FC = () => {
         } else {
             setIsVisible(false);
         }
-    }, [isEvaluationMode, hasConsented, onboardingStep, surveyOnboardingStep, showRoadmap, isSurveyTour]);
+    }, [isEvaluationMode, hasConsented, onboardingStep, surveyOnboardingStep, showRoadmap, isSurveyTour, isMobileTarget, subStep, nextOnboardingStep]);
 
     useEffect(() => {
         const handleGlobalClick = (e: MouseEvent) => {
@@ -115,6 +143,12 @@ const MissionOnboarding: React.FC = () => {
                 e.clientY <= spotlightRect.bottom + margin;
 
             if (isInside) {
+                // Si estamos en el paso 1 móvil y en el sub-paso 0 (abriendo menú)
+                if (isMobileTarget && subStep === 0) {
+                    setTimeout(() => setSubStep(1), 50);
+                    return;
+                }
+
                 // El clic fue en el objetivo, avanzamos de paso.
                 if (isSurveyTour) setTimeout(nextSurveyOnboardingStep, 50);
                 else setTimeout(nextOnboardingStep, 50);
@@ -123,15 +157,16 @@ const MissionOnboarding: React.FC = () => {
 
         window.addEventListener('click', handleGlobalClick, true);
         return () => window.removeEventListener('click', handleGlobalClick, true);
-    }, [onboardingStep, surveyOnboardingStep, spotlightRect, nextOnboardingStep, nextSurveyOnboardingStep, isSurveyTour, activeTourStep]);
+    }, [onboardingStep, surveyOnboardingStep, spotlightRect, nextOnboardingStep, nextSurveyOnboardingStep, isSurveyTour, activeTourStep, isMobileTarget, subStep]);
 
     // Lógica de posicionamiento inteligente
-    const { tooltipStyle, arrowClasses } = useMemo(() => {
-        if (!spotlightRect) return { tooltipStyle: {}, arrowClasses: '' };
+    const { tooltipStyle, arrowClasses, arrowStyle } = useMemo(() => {
+        if (!spotlightRect) return { tooltipStyle: {}, arrowClasses: '', arrowStyle: {} };
 
-        const TW = 360;
-        const TH = 240;
+        const TW = 360; // Max default width
+        const TH = 240; // Approx height for fit calculation
         const Gap = 24;
+        const Padding = 16;
         const cx = spotlightRect.left + spotlightRect.width / 2;
         const cy = spotlightRect.top + spotlightRect.height / 2;
         const rw = spotlightRect.width / 2;
@@ -149,41 +184,53 @@ const MissionOnboarding: React.FC = () => {
         else if (canFitRight) bestPos = 'right';
         else if (canFitLeft) bestPos = 'left';
 
-        const style: React.CSSProperties = { width: `min(90vw, ${TW}px)` };
+        const actualWidth = Math.min(viewport.w - (Padding * 2), TW);
+        const style: React.CSSProperties = { width: actualWidth };
         let arrows = '';
+        const arrowPosStyle: React.CSSProperties = {};
 
         switch (bestPos) {
             case 'bottom':
                 style.top = cy + rh + Gap;
-                style.left = cx;
+                // Clamp horizontal position
+                const leftPos = Math.max(actualWidth / 2 + Padding, Math.min(viewport.w - actualWidth / 2 - Padding, cx));
+                style.left = leftPos;
                 style.transform = 'translateX(-50%)';
                 style.animation = 'float-vertical 3s ease-in-out infinite';
-                arrows = "top-[-8px] left-1/2 -translate-x-1/2 border-t border-l rotate-45";
+
+                // Adjust arrow to point to cx
+                const arrowLeftDist = cx - (leftPos - actualWidth / 2);
+                arrowPosStyle.left = `${(arrowLeftDist / actualWidth) * 100}%`;
+                arrows = "top-[-8px] -translate-x-1/2 border-t border-l rotate-45";
                 break;
             case 'top':
                 style.bottom = (viewport.h - (cy - rh)) + Gap;
-                style.left = cx;
+                const leftPosTop = Math.max(actualWidth / 2 + Padding, Math.min(viewport.w - actualWidth / 2 - Padding, cx));
+                style.left = leftPosTop;
                 style.transform = 'translateX(-50%)';
                 style.animation = 'float-vertical-rev 3s ease-in-out infinite';
-                arrows = "bottom-[-8px] left-1/2 -translate-x-1/2 border-b border-r rotate-45";
+
+                const arrowLeftDistTop = cx - (leftPosTop - actualWidth / 2);
+                arrowPosStyle.left = `${(arrowLeftDistTop / actualWidth) * 100}%`;
+                arrows = "bottom-[-8px] -translate-x-1/2 border-b border-r rotate-45";
                 break;
             case 'right':
                 style.left = cx + rw + Gap;
-                style.top = cy;
+                style.top = Math.max(TH / 2 + Padding, Math.min(viewport.h - TH / 2 - Padding, cy));
                 style.transform = 'translateY(-50%)';
                 style.animation = 'float-horizontal 3s ease-in-out infinite';
                 arrows = "left-[-8px] top-1/2 -translate-y-1/2 border-b border-l rotate-45";
                 break;
             case 'left':
                 style.right = (viewport.w - (cx - rw)) + Gap;
-                style.top = cy;
+                style.top = Math.max(TH / 2 + Padding, Math.min(viewport.h - TH / 2 - Padding, cy));
                 style.transform = 'translateY(-50%)';
                 style.animation = 'float-horizontal-rev 3s ease-in-out infinite';
                 arrows = "right-[-8px] top-1/2 -translate-y-1/2 border-t border-r rotate-45";
                 break;
         }
 
-        return { tooltipStyle: style, arrowClasses: arrows };
+        return { tooltipStyle: style, arrowClasses: arrows, arrowStyle: arrowPosStyle };
     }, [spotlightRect, viewport]);
 
     if (!isVisible || !spotlightRect || activeTourStep === 0) return null;
@@ -194,7 +241,7 @@ const MissionOnboarding: React.FC = () => {
     const rwSpot = spotlightRect.width / 2 + 8;
 
     let holePath = '';
-    const needsCircle = (isSurveyTour && surveyOnboardingStep === 1) || (!isSurveyTour && [1, 7].includes(onboardingStep));
+    const needsCircle = ((isSurveyTour && surveyOnboardingStep === 1) || (!isSurveyTour && [1, 7].includes(onboardingStep))) && !(isMobileTarget && subStep === 1);
     const r = 24;
 
     if (needsCircle) {
@@ -210,7 +257,7 @@ const MissionOnboarding: React.FC = () => {
     const fullPath = `M 0,0 H ${viewport.w} V ${viewport.h} H 0 Z ${holePath}`;
 
     return (
-        <div className={`fixed inset-0 z-210 animate-fade-in animate-duration-500 overflow-hidden ${isTransitioning ? 'pointer-events-auto' : 'pointer-events-none'}`}>
+        <div className={`absolute inset-0 z-[10000] animate-fade-in animate-duration-500 overflow-hidden ${isTransitioning ? 'pointer-events-auto' : 'pointer-events-none'}`}>
             <style dangerouslySetInnerHTML={{
                 __html: `
                 @keyframes float-vertical { 0%, 100% { transform: translate(-50%, 0px); } 50% { transform: translate(-50%, -10px); } }
@@ -230,10 +277,13 @@ const MissionOnboarding: React.FC = () => {
                 </svg>
 
                 <div
-                    className="absolute z-220 flex flex-col pointer-events-none transition-all duration-500"
+                    className="absolute z-[10010] flex flex-col pointer-events-none transition-all duration-500"
                     style={tooltipStyle}
                 >
-                    <div className={`absolute w-4 h-4 bg-gray-950 border-white/10 z-10 ${arrowClasses}`} />
+                    <div
+                        className={`absolute w-4 h-4 bg-gray-950 border-white/10 z-10 ${arrowClasses}`}
+                        style={arrowStyle}
+                    />
 
                     <div className="w-full bg-gray-950 border border-white/10 rounded-4xl p-6 shadow-[0_32px_64px_-16px_rgba(0,0,0,0.6)] pointer-events-auto backdrop-blur-2xl">
                         <div className="flex flex-col gap-5">
@@ -269,13 +319,13 @@ const MissionOnboarding: React.FC = () => {
                                 <p className="text-white text-base font-bold leading-tight flex items-center gap-2">
                                     {isSurveyTour ? (
                                         <>
-                                            {surveyOnboardingStep === 1 && "¡Misión Cumplida!"}
+                                            {surveyOnboardingStep === 1 && (isMobileTarget && subStep === 0 ? "Abre el Menú" : "¡Misión Cumplida!")}
                                             {surveyOnboardingStep === 2 && "Listo para evaluar"}
                                             {surveyOnboardingStep === 3 && "Tu Opinión Importa"}
                                         </>
                                     ) : (
                                         <>
-                                            {onboardingStep === 1 && "Abre las Misiones"}
+                                            {onboardingStep === 1 && (isMobileTarget && subStep === 0 ? "Abre el Menú" : "Abre las Misiones")}
                                             {onboardingStep === 2 && "Selecciona un Reto"}
                                             {onboardingStep === 3 && "Resumen de Misión"}
                                             {onboardingStep === 4 && "Checklist de Tareas"}
@@ -289,16 +339,16 @@ const MissionOnboarding: React.FC = () => {
                                 <p className="text-gray-400 text-[11px] leading-relaxed font-medium italic">
                                     {isSurveyTour ? (
                                         <>
-                                            {surveyOnboardingStep === 1 && "Has completado un reto. Pulsa el trofeo para reclamar tu insignia y darnos feedback."}
+                                            {surveyOnboardingStep === 1 && (isMobileTarget && subStep === 0 ? "Pulsa en tu avatar para abrir las opciones de cuenta." : "Has completado un reto. Pulsa el trofeo para reclamar tu insignia y darnos feedback.")}
                                             {surveyOnboardingStep === 2 && "Esta misión brilla con un nuevo color. Pulsa en ella para completar la evaluación."}
                                             {surveyOnboardingStep === 3 && "¡Casi has terminado! Pulsa el botón de feedback para compartir tu experiencia."}
                                         </>
                                     ) : (
                                         <>
-                                            {onboardingStep === 1 && "Haz clic en el trofeo para ver el Roadmap de evaluación."}
+                                            {onboardingStep === 1 && (isMobileTarget && subStep === 0 ? "En dispositivos pequeños el trofeo está guardado. Pulsa primero en tu menú de usuario." : "Haz clic en el trofeo para ver el Roadmap de evaluación.")}
                                             {onboardingStep === 2 && "Esta es tu misión actual. Pulsa en la tarjeta para abrir los detalles."}
-                                            {onboardingStep === 3 && "En la parte izquierda encontrarás el objetivo principal y tu progreso actual."}
-                                            {onboardingStep === 4 && "A la derecha tienes los pasos específicos. flAIghts los detectará automáticamente."}
+                                            {onboardingStep === 3 && (viewport.w < 1024 ? "En la parte superior encontrarás el objetivo principal y tu progreso actual." : "En la parte izquierda encontrarás el objetivo principal y tu progreso actual.")}
+                                            {onboardingStep === 4 && (viewport.w < 1024 ? "En la parte inferior tienes los pasos específicos. flAIghts los detectará automáticamente." : "A la derecha tienes los pasos específicos. flAIghts los detectará automáticamente.")}
                                             {onboardingStep === 5 && "Pulsa aquí para volver a la vista general de todas las misiones."}
                                             {onboardingStep === 6 && "Algunas misiones están bloqueadas. Deberás completar sus dependencias primero."}
                                             {onboardingStep === 7 && "Finalmente, usa la X para cerrar el Roadmap y empezar a navegar libremente."}
