@@ -30,6 +30,8 @@ export type ExtendedChatMessage =
         role: "reasoning";
         content: string;
         steps: UIStep[];
+        isStreaming?: boolean;
+        isLimitReached?: boolean;
     };
 
 type UIStep = AsyncAPIModels.AgentStreamEvent & {
@@ -403,11 +405,11 @@ const AgentChat = forwardRef<any, AgentChatProps>(({
         setIsTyping(false);
 
         setMessages((prev: ExtendedChatMessage[]) => {
-            const hasStreaming = prev.some(m => m.role !== 'reasoning' && m.isStreaming);
+            const hasStreaming = prev.some(m => m.isStreaming);
 
             if (hasStreaming) {
                 return prev.map(m => {
-                    if (m.role !== 'reasoning' && m.isStreaming) {
+                    if (m.isStreaming) {
                         let newContent = m.content;
                         if (reason === 'user') newContent += "\n\n *— Generación interrumpida por el usuario*";
                         if (reason === 'error') newContent += "\n\n *— Error en la generación, por favor, intenta de nuevo*";
@@ -423,7 +425,7 @@ const AgentChat = forwardRef<any, AgentChatProps>(({
                     { role: 'assistant', content: `*— ${text}*` } as ExtendedChatMessage
                 ];
             }
-            return prev.map(m => m.role !== 'reasoning' && m.isStreaming ? { ...m, isStreaming: false } : m);
+            return prev.map(m => m.isStreaming ? { ...m, isStreaming: false } : m);
         });
     };
 
@@ -479,7 +481,7 @@ const AgentChat = forwardRef<any, AgentChatProps>(({
                                     { ...last, content: (last.content || '') + event.message, isStreaming: true }
                                 ];
                             } else {
-                                const cleaned = prev.map(m => m.role !== 'reasoning' && m.isStreaming ? { ...m, isStreaming: false } : m);
+                                const cleaned = prev.map(m => m.isStreaming ? { ...m, isStreaming: false } : m);
                                 return [
                                     ...cleaned,
                                     { role: 'assistant', content: event.message, isStreaming: true } as ExtendedChatMessage
@@ -509,7 +511,7 @@ const AgentChat = forwardRef<any, AgentChatProps>(({
                         }
 
                         setMessages((prev: ExtendedChatMessage[]) => {
-                            const cleaned = prev.map(m => m.role !== 'reasoning' && m.isStreaming ? { ...m, isStreaming: false } : m);
+                            const cleaned = prev.map(m => m.isStreaming ? { ...m, isStreaming: false } : m);
 
                             if (event.type === 'tool_result' || event.type === 'tool_progress') {
                                 let found = false;
@@ -537,7 +539,7 @@ const AgentChat = forwardRef<any, AgentChatProps>(({
                     } else if (event.type === 'final_result') {
                         hasFinalResult = true;
                         setMessages((prev: ExtendedChatMessage[]) => {
-                            const cleaned = prev.map(m => m.role !== 'reasoning' && m.isStreaming ? { ...m, isStreaming: false } : m);
+                            const cleaned = prev.map(m => m.isStreaming ? { ...m, isStreaming: false } : m);
                             if (event.data?.flights && event.data.flights.length > 0) {
                                 const lastAssistantIdx = cleaned.findLastIndex(m => m.role === 'assistant');
                                 if (lastAssistantIdx !== -1) {
@@ -610,7 +612,7 @@ const AgentChat = forwardRef<any, AgentChatProps>(({
 
         const userMsg: AsyncAPIModels.AssistantRequestMessage = { role: "user", content: trimmed };
         const updatedMessages: ExtendedChatMessage[] = [
-            ...messages.map(m => m.role !== 'reasoning' && m.isLimitReached ? { ...m, isLimitReached: false } : m),
+            ...messages.map(m => m.isLimitReached ? { ...m, isLimitReached: false } : m),
             userMsg
         ];
         setMessages(updatedMessages);
