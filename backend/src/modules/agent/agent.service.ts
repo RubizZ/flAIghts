@@ -96,7 +96,14 @@ export class AgentService {
                 model: model || "gpt-4o-mini"
             }
         });
+
         try {
+            // Validar que el modelo solicitado esté disponible
+            const availableModels = await this.listModels();
+            if (model && !availableModels.includes(model)) {
+                yield { type: 'error', message: `El modelo '${model}' no está disponible.` };
+                return;
+            }
             const history: OpenAI.Chat.ChatCompletionMessageParam[] = [
                 {
                     role: "system",
