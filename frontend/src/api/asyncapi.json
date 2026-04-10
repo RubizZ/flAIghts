@@ -104,6 +104,363 @@
             "properties": {
               "type": {
                 "type": "string",
+                "const": "tool_call"
+              },
+              "name": {
+                "type": "string",
+                "const": "getUserInfo"
+              },
+              "args": {
+                "type": "object",
+                "properties": {}
+              },
+              "call_id": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false,
+            "required": [
+              "args",
+              "call_id",
+              "name",
+              "type"
+            ]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "const": "tool_call"
+              },
+              "name": {
+                "type": "string",
+                "const": "getUserSearchHistory"
+              },
+              "args": {
+                "type": "object",
+                "properties": {
+                  "limit": {
+                    "type": "number"
+                  }
+                },
+                "additionalProperties": false
+              },
+              "call_id": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false,
+            "required": [
+              "args",
+              "call_id",
+              "name",
+              "type"
+            ]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "const": "tool_call"
+              },
+              "name": {
+                "type": "string",
+                "const": "searchAirports"
+              },
+              "args": {
+                "type": "object",
+                "properties": {
+                  "query": {
+                    "type": "string"
+                  }
+                },
+                "additionalProperties": false,
+                "required": [
+                  "query"
+                ]
+              },
+              "call_id": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false,
+            "required": [
+              "args",
+              "call_id",
+              "name",
+              "type"
+            ]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "const": "tool_call"
+              },
+              "name": {
+                "type": "string",
+                "const": "searchAirlines"
+              },
+              "args": {
+                "type": "object",
+                "properties": {
+                  "query": {
+                    "type": "string"
+                  }
+                },
+                "additionalProperties": false,
+                "required": [
+                  "query"
+                ]
+              },
+              "call_id": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false,
+            "required": [
+              "args",
+              "call_id",
+              "name",
+              "type"
+            ]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "const": "tool_call"
+              },
+              "name": {
+                "type": "string",
+                "const": "performSearch"
+              },
+              "args": {
+                "type": "object",
+                "properties": {
+                  "origins": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "destinations": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "departure_date": {
+                    "type": "string"
+                  },
+                  "return_date": {
+                    "type": "string"
+                  },
+                  "priority": {
+                    "enum": [
+                      "balanced",
+                      "cheap",
+                      "fast"
+                    ],
+                    "type": "string"
+                  }
+                },
+                "additionalProperties": false,
+                "required": [
+                  "departure_date",
+                  "destinations",
+                  "origins",
+                  "priority"
+                ]
+              },
+              "call_id": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false,
+            "required": [
+              "args",
+              "call_id",
+              "name",
+              "type"
+            ]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "const": "tool_result"
+              },
+              "name": {
+                "type": "string",
+                "const": "getUserInfo"
+              },
+              "result": {
+                "type": "object",
+                "properties": {
+                  "username": {
+                    "type": "string"
+                  },
+                  "preferences": {
+                    "type": "object",
+                    "properties": {
+                      "price_weight": {
+                        "type": "number"
+                      },
+                      "duration_weight": {
+                        "type": "number"
+                      },
+                      "stops_weight": {
+                        "type": "number"
+                      },
+                      "airline_quality_weight": {
+                        "type": "number"
+                      }
+                    },
+                    "additionalProperties": false,
+                    "required": [
+                      "airline_quality_weight",
+                      "duration_weight",
+                      "price_weight",
+                      "stops_weight"
+                    ]
+                  }
+                },
+                "additionalProperties": false,
+                "required": [
+                  "preferences",
+                  "username"
+                ]
+              },
+              "call_id": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false,
+            "required": [
+              "call_id",
+              "name",
+              "result",
+              "type"
+            ]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "const": "tool_result"
+              },
+              "name": {
+                "type": "string",
+                "const": "getUserSearchHistory"
+              },
+              "result": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/SearchResponseData"
+                }
+              },
+              "call_id": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false,
+            "required": [
+              "call_id",
+              "name",
+              "result",
+              "type"
+            ]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "const": "tool_result"
+              },
+              "name": {
+                "type": "string",
+                "const": "searchAirports"
+              },
+              "result": {
+                "$ref": "#/components/schemas/AirportSearchPaginatedResult"
+              },
+              "call_id": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false,
+            "required": [
+              "call_id",
+              "name",
+              "result",
+              "type"
+            ]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "const": "tool_result"
+              },
+              "name": {
+                "type": "string",
+                "const": "searchAirlines"
+              },
+              "result": {
+                "$ref": "#/components/schemas/PaginatedAirlineResponse"
+              },
+              "call_id": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false,
+            "required": [
+              "call_id",
+              "name",
+              "result",
+              "type"
+            ]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "const": "tool_result"
+              },
+              "name": {
+                "type": "string",
+                "const": "performSearch"
+              },
+              "result": {
+                "$ref": "#/components/schemas/SearchResponseData"
+              },
+              "call_id": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false,
+            "required": [
+              "call_id",
+              "name",
+              "result",
+              "type"
+            ]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
                 "const": "step"
               },
               "message": {
@@ -138,29 +495,6 @@
             "properties": {
               "type": {
                 "type": "string",
-                "const": "tool_call"
-              },
-              "name": {
-                "type": "string"
-              },
-              "args": {},
-              "call_id": {
-                "type": "string"
-              }
-            },
-            "additionalProperties": false,
-            "required": [
-              "args",
-              "call_id",
-              "name",
-              "type"
-            ]
-          },
-          {
-            "type": "object",
-            "properties": {
-              "type": {
-                "type": "string",
                 "const": "tool_progress"
               },
               "name": {
@@ -178,29 +512,6 @@
               "call_id",
               "event",
               "name",
-              "type"
-            ]
-          },
-          {
-            "type": "object",
-            "properties": {
-              "type": {
-                "type": "string",
-                "const": "tool_result"
-              },
-              "name": {
-                "type": "string"
-              },
-              "result": {},
-              "call_id": {
-                "type": "string"
-              }
-            },
-            "additionalProperties": false,
-            "required": [
-              "call_id",
-              "name",
-              "result",
               "type"
             ]
           },
@@ -557,6 +868,233 @@
           "origin",
           "price",
           "travel_class"
+        ]
+      },
+      "AirportSearchPaginatedResult": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SearchResult"
+            }
+          },
+          "total": {
+            "type": "number"
+          },
+          "page": {
+            "type": "number"
+          },
+          "totalPages": {
+            "type": "number"
+          }
+        },
+        "additionalProperties": false,
+        "required": [
+          "items",
+          "page",
+          "total",
+          "totalPages"
+        ]
+      },
+      "SearchResult": {
+        "anyOf": [
+          {
+            "$ref": "#/components/schemas/AirportResponse"
+          },
+          {
+            "$ref": "#/components/schemas/CityResponse"
+          }
+        ]
+      },
+      "AirportResponse": {
+        "type": "object",
+        "properties": {
+          "iata_code": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "city": {
+            "type": "string"
+          },
+          "country": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "const": "airport"
+          },
+          "importance_score": {
+            "type": "number"
+          },
+          "location": {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "const": "Point"
+              },
+              "coordinates": {
+                "type": "array",
+                "items": {
+                  "type": "number"
+                }
+              }
+            },
+            "additionalProperties": false,
+            "required": [
+              "coordinates",
+              "type"
+            ]
+          },
+          "combined_score": {
+            "type": "number"
+          },
+          "distance_km_to_user": {
+            "type": "number"
+          },
+          "distance_km_to_city": {
+            "type": "number"
+          },
+          "highlight": {
+            "type": "object",
+            "properties": {
+              "iata_code": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "city": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false,
+        "required": [
+          "city",
+          "country",
+          "iata_code",
+          "importance_score",
+          "location",
+          "name",
+          "type"
+        ]
+      },
+      "CityResponse": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "country": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "const": "city"
+          },
+          "location": {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "const": "Point"
+              },
+              "coordinates": {
+                "type": "array",
+                "items": {
+                  "type": "number"
+                }
+              }
+            },
+            "additionalProperties": false,
+            "required": [
+              "coordinates",
+              "type"
+            ]
+          },
+          "airports": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AirportResponse"
+            }
+          },
+          "combined_score": {
+            "type": "number"
+          },
+          "highlight": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false,
+        "required": [
+          "airports",
+          "country",
+          "location",
+          "name",
+          "type"
+        ]
+      },
+      "PaginatedAirlineResponse": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AirlineResponse"
+            }
+          },
+          "total": {
+            "type": "number"
+          },
+          "page": {
+            "type": "number"
+          },
+          "totalPages": {
+            "type": "number"
+          }
+        },
+        "additionalProperties": false,
+        "required": [
+          "items",
+          "page",
+          "total",
+          "totalPages"
+        ]
+      },
+      "AirlineResponse": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "country": {
+            "type": "string"
+          },
+          "quality_score": {
+            "type": "number"
+          }
+        },
+        "additionalProperties": false,
+        "required": [
+          "code",
+          "country",
+          "name",
+          "quality_score"
         ]
       },
       "AgentResponse": {

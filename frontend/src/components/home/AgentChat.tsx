@@ -5,11 +5,10 @@ import ReactMarkdown from 'react-markdown';
 import { toast } from "sonner";
 import { Link } from "react-router-dom";
 import type {
-    AssistantRequestMessage as ChatMessage,
     SearchResponseData,
     ItineraryResponse,
     AirportResponse
-} from "@/api/generated/openapi/model";
+} from "@/api/generated/asyncapi/models";
 import { useAuth } from "@/context/AuthContext";
 import { useUserLocation } from "@/context/UserLocationContext";
 import { getAirportByIata } from "@/api/generated/openapi/airports";
@@ -20,14 +19,18 @@ import * as AsyncAPIModels from "@/api/generated/asyncapi/models";
 /**
  * Tipo para soportar mensajes de chat extendidos con streaming y razonamiento.
  */
-export interface ExtendedChatMessage {
-    role: "user" | "assistant" | "system" | "reasoning";
-    content: string;
-    isStreaming?: boolean;
-    flights?: SearchResponseData[];
-    steps?: UIStep[];
-    isLimitReached?: boolean;
-}
+export type ExtendedChatMessage =
+    | (AsyncAPIModels.AssistantRequestMessage & {
+        isStreaming?: boolean;
+        flights?: AsyncAPIModels.SearchResponseData[];
+        steps?: UIStep[];
+        isLimitReached?: boolean;
+    })
+    | {
+        role: "reasoning";
+        content: string;
+        steps: UIStep[];
+    };
 
 type UIStep = AsyncAPIModels.AgentStreamEvent & {
     result?: unknown;
@@ -156,36 +159,28 @@ const getToolDescription = (step: UIStep) => {
             if (pe.type === 'failed') return `Error: ${pe.message}`;
         }
 
-        const name = step.name;
-        const args = step.args || {};
-        switch (name) {
+        switch (step.name) {
             case 'getUserInfo': return 'Accediendo a tu perfil...';
             case 'getUserSearchHistory': return 'Consultando tu historial...';
-            case 'searchAirports': return `Localizando aeropuertos para "${args.query || '...'}"...`;
-            case 'searchAirlines': return `Buscando aerolíneas para "${args.query || '...'}"...`;
-            case 'performSearch': return `Rastreando vuelos desde ${args.origins?.[0] || '...'} a ${args.destinations?.[0] || '...'}...`;
-            case 'getFlightSearchResults': return `Obteniendo resultados...`;
-            default: return `Ejecutando ${name}...`;
+            case 'searchAirports': return `Localizando aeropuertos para "${step.args.query}"...`;
+            case 'searchAirlines': return `Buscando aerolíneas para "${step.args.query}"...`;
+            case 'performSearch': return `Rastreando vuelos desde ${step.args.origins.map(o => o).join(', ')} a ${step.args.destinations.map(d => d).join(', ')}...`;
         }
     }
     if (step.type === 'tool_result') {
-        const name = step.name;
-        const args = (step as any).args || {}; // Cast to any here is acceptable for union access of potentially shared fields
-        switch (name) {
+        switch (step.name) {
             case 'getUserInfo': return `Datos obtenidos de tu perfil`;
             case 'getUserSearchHistory': return `Datos obtenidos de tu historial`;
-            case 'searchAirports': return args.query ? `Aeropuertos de "${args.query}" obtenidos` : `Aeropuertos localizados con éxito`;
-            case 'searchAirlines': return args.query ? `Aerolíneas de "${args.query}" obtenidas` : `Aerolíneas localizadas con éxito`;
+            case 'searchAirports': return `Aeropuertos localizados con éxito`;
+            case 'searchAirlines': return `Aerolíneas localizadas con éxito`;
             case 'performSearch': return `Búsqueda creada con éxito`;
-            case 'getFlightSearchResults': return `Resultados obtenidos de la búsqueda`;
-            default: return `Datos obtenidos de ${name}`;
         }
     }
     if (step.type === 'iteration') {
         return `Pensando...`;
     }
     if (step.type === 'tool_progress') {
-        const progressEvent = (step as any).event; // Use any to access event prop safely in union context
+        const progressEvent = step.event;
         if (progressEvent.type === 'progress') return progressEvent.message;
         if (progressEvent.type === 'completed') return 'Búsqueda completada';
         if (progressEvent.type === 'failed') return `Error: ${progressEvent.message}`;
@@ -408,11 +403,11 @@ const AgentChat = forwardRef<any, AgentChatProps>(({
         setIsTyping(false);
 
         setMessages((prev: ExtendedChatMessage[]) => {
-            const hasStreaming = prev.some(m => m.isStreaming);
+            const hasStreaming = prev.some(m => m.role !== 'reasoning' && m.isStreaming);
 
             if (hasStreaming) {
                 return prev.map(m => {
-                    if (m.isStreaming) {
+                    if (m.role !== 'reasoning' && m.isStreaming) {
                         let newContent = m.content;
                         if (reason === 'user') newContent += "\n\n *— Generación interrumpida por el usuario*";
                         if (reason === 'error') newContent += "\n\n *— Error en la generación, por favor, intenta de nuevo*";
@@ -428,7 +423,7 @@ const AgentChat = forwardRef<any, AgentChatProps>(({
                     { role: 'assistant', content: `*— ${text}*` } as ExtendedChatMessage
                 ];
             }
-            return prev.map(m => m.isStreaming ? { ...m, isStreaming: false } : m);
+            return prev.map(m => m.role !== 'reasoning' && m.isStreaming ? { ...m, isStreaming: false } : m);
         });
     };
 
@@ -484,7 +479,7 @@ const AgentChat = forwardRef<any, AgentChatProps>(({
                                     { ...last, content: (last.content || '') + event.message, isStreaming: true }
                                 ];
                             } else {
-                                const cleaned = prev.map(m => m.isStreaming ? { ...m, isStreaming: false } : m);
+                                const cleaned = prev.map(m => m.role !== 'reasoning' && m.isStreaming ? { ...m, isStreaming: false } : m);
                                 return [
                                     ...cleaned,
                                     { role: 'assistant', content: event.message, isStreaming: true } as ExtendedChatMessage
@@ -514,7 +509,7 @@ const AgentChat = forwardRef<any, AgentChatProps>(({
                         }
 
                         setMessages((prev: ExtendedChatMessage[]) => {
-                            const cleaned = prev.map(m => m.isStreaming ? { ...m, isStreaming: false } : m);
+                            const cleaned = prev.map(m => m.role !== 'reasoning' && m.isStreaming ? { ...m, isStreaming: false } : m);
 
                             if (event.type === 'tool_result' || event.type === 'tool_progress') {
                                 let found = false;
@@ -537,24 +532,12 @@ const AgentChat = forwardRef<any, AgentChatProps>(({
                                 if (found) return newMessages;
                             }
 
-                            const lastIdx = cleaned.length - 1;
-                            const lastMsg = cleaned[lastIdx];
-
-                            if (lastMsg && lastMsg.role === 'reasoning') {
-                                const newMessages = [...cleaned];
-                                newMessages[lastIdx] = {
-                                    ...lastMsg,
-                                    steps: [...(lastMsg.steps || []), event]
-                                };
-                                return newMessages;
-                            } else {
-                                return [...cleaned, { role: 'reasoning', content: '', steps: [event] }];
-                            }
+                            return [...cleaned, { role: 'reasoning', content: '', steps: [event] }];
                         });
                     } else if (event.type === 'final_result') {
                         hasFinalResult = true;
                         setMessages((prev: ExtendedChatMessage[]) => {
-                            const cleaned = prev.map(m => m.isStreaming ? { ...m, isStreaming: false } : m);
+                            const cleaned = prev.map(m => m.role !== 'reasoning' && m.isStreaming ? { ...m, isStreaming: false } : m);
                             if (event.data?.flights && event.data.flights.length > 0) {
                                 const lastAssistantIdx = cleaned.findLastIndex(m => m.role === 'assistant');
                                 if (lastAssistantIdx !== -1) {
@@ -625,9 +608,9 @@ const AgentChat = forwardRef<any, AgentChatProps>(({
         const trimmed = text.trim();
         if (!trimmed || isStreaming) return;
 
-        const userMsg: ChatMessage = { role: "user", content: trimmed };
-        const updatedMessages = [
-            ...messages.map(m => (m as any).isLimitReached ? { ...m, isLimitReached: false } : m),
+        const userMsg: AsyncAPIModels.AssistantRequestMessage = { role: "user", content: trimmed };
+        const updatedMessages: ExtendedChatMessage[] = [
+            ...messages.map(m => m.role !== 'reasoning' && m.isLimitReached ? { ...m, isLimitReached: false } : m),
             userMsg
         ];
         setMessages(updatedMessages);
@@ -641,7 +624,7 @@ const AgentChat = forwardRef<any, AgentChatProps>(({
                 content: m.content
             }));
 
-        streamResponse(cleanMessages as ChatMessage[]);
+        streamResponse(cleanMessages as AsyncAPIModels.AssistantRequestMessage[]);
         setIsTyping(true);
     };
 
@@ -811,11 +794,11 @@ const AgentChat = forwardRef<any, AgentChatProps>(({
                                                 prose-strong:text-brand prose-strong:font-black prose-headings:text-content prose-code:text-brand 
                                                 prose-code:bg-brand/10 prose-code:px-1 prose-code:rounded
                                                 ${msg.role === 'user' ? 'prose-p:text-white!' : ''}
-                                                ${(msg as any).isStreaming ? 'streaming-cursor' : ''}`}
+                                                ${msg.isStreaming ? 'streaming-cursor' : ''}`}
                                                 >
                                                     {msg.content?.trim() ? (
                                                         <ReactMarkdown>{msg.content}</ReactMarkdown>
-                                                    ) : (msg as any).isStreaming ? (
+                                                    ) : msg.isStreaming ? (
                                                         <p>&nbsp;</p>
                                                     ) : null}
                                                 </div>

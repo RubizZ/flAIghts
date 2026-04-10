@@ -5,7 +5,7 @@ import type { ValidationDetails, RequestValidationFailResponse } from "../../uti
  * Estructura genérica de mensaje para el historial del chat.
  */
 export interface AssistantChatMessage {
-    role: "user" | "assistant" | "system";
+    role: "user" | "assistant";
     content: string;
 }
 
@@ -50,11 +50,31 @@ export interface AgentResponse {
 
 export type AgentValidationFailResponse = RequestValidationFailResponse<ValidationDetails<"body" | "body.messages" | "body.location">>;
 
+import { type ToolArgsMap, type ToolResultsMap } from "./agent.toolregistry.js";
+
+export type ToolCallEvent = {
+    [K in keyof ToolArgsMap]: {
+        type: 'tool_call';
+        name: K;
+        args: ToolArgsMap[K];
+        call_id: string;
+    }
+}[keyof ToolArgsMap];
+
+export type ToolResultEvent = {
+    [K in keyof ToolResultsMap]: {
+        type: 'tool_result';
+        name: K;
+        result: ToolResultsMap[K];
+        call_id: string;
+    }
+}[keyof ToolResultsMap];
+
 export type AgentStreamEvent =
     | { type: 'step', message: string }
     | { type: 'iteration', count: number }
-    | { type: 'tool_call', name: string, args: any, call_id: string }
+    | ToolCallEvent
     | { type: 'tool_progress', name: string, event: SearchProgressEvent, call_id: string }
-    | { type: 'tool_result', name: string, result: any, call_id: string }
+    | ToolResultEvent
     | { type: 'final_result', data: AgentResponse }
     | { type: 'error', message: string };

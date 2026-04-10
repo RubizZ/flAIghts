@@ -1,18 +1,21 @@
 import { inject, singleton } from "tsyringe";
 import OpenAI from "openai";
 import { ServerConfig } from "../../config/server.config.js";
-import { UserService } from "../users/user.service.js";
-import { SearchService } from "../search/search.service.js";
-import { AirportService } from "../airport/airport.service.js";
-import { AirlineService } from "../airline/airline.service.js";
-import type { SearchRequest } from "../search/search.types.js";
 import type {
     AssistantRequestMessage,
     AgentResponse,
-    AgentStreamEvent,
+    AgentStreamEvent
 } from "./agent.types.js";
 import { AuditService } from "../audit/audit.service.js";
 import logger from "@/utils/logger.js";
+import {
+    ToolRegistry,
+    type ToolSummariesMap,
+    type ToolArgsMap,
+    type ToolResultsMap,
+    type ToolName
+} from "./agent.toolregistry.js";
+import type { ChatCompletionTool } from "openai/resources/chat/completions.js";
 
 @singleton()
 export class AgentService {
@@ -20,10 +23,7 @@ export class AgentService {
 
     constructor(
         @inject(ServerConfig) private config: ServerConfig,
-        @inject(UserService) private userService: UserService,
-        @inject(SearchService) private searchService: SearchService,
-        @inject(AirportService) private airportService: AirportService,
-        @inject(AirlineService) private airlineService: AirlineService,
+        @inject(ToolRegistry) private toolRegistry: ToolRegistry,
         @inject(AuditService) private auditService: AuditService
     ) {
         this.openai = new OpenAI({
@@ -146,6 +146,7 @@ export class AgentService {
             let continueLoop = true;
             let iterations = 0;
             const MAX_ITERATIONS = 10;
+            let fullSearchResults: any[] = [];
 
             while (continueLoop && iterations < MAX_ITERATIONS) {
                 iterations++;
@@ -163,99 +164,48 @@ export class AgentService {
                 });
 
                 let fullContent = "";
-                let toolCalls: any[] = [];
+                // Usamos un tipo interno para la fase de construcción para evitar errores de unión de tipos
+                type InProgressToolCall = { id: string; type: 'function'; function: { name: string; arguments: string } };
+                let toolCalls: InProgressToolCall[] = [];
                 let hasToolCalls = false;
-                let tokenBuffer = "";
-                let isBufferingPostentialJSON = false;
 
                 for await (const chunk of stream) {
                     const delta = chunk.choices[0]?.delta;
                     if (!delta) continue;
 
-                    if (delta.content) {
-                        logger.info(`[Agent] Delta Content: ${delta.content}`);
-                    }
-                    if (delta.tool_calls) {
-                        logger.info(`[Agent] Delta Tool Calls: ${JSON.stringify(delta.tool_calls)}`);
-                    }
-
-                    // Manejo de contenido (texto) con protección contra fugas de JSON
+                    // Manejo de contenido (texto)
                     if (delta.content) {
                         const contentChunk = delta.content;
                         fullContent += contentChunk;
-                        tokenBuffer += contentChunk;
-
-                        // Detectar patrones de fuga: código JSON, bloques ``` o líneas que empiezan con {
-                        if (
-                            tokenBuffer.includes('{"') ||
-                            tokenBuffer.includes('```json') ||
-                            tokenBuffer.includes('```') ||
-                            (tokenBuffer.startsWith('{') && tokenBuffer.length > 5)
-                        ) {
-                            isBufferingPostentialJSON = true;
-                        }
-
-                        // Si no estamos buffereando por sospecha, o el buffer es muy largo, vaciamos al stream
-                        if (!isBufferingPostentialJSON || tokenBuffer.length > 50) {
-                            yield { type: 'step', message: tokenBuffer };
-                            tokenBuffer = "";
-                        }
+                        yield { type: 'step', message: contentChunk };
                     }
 
-                    // Manejo de tool calls en streaming
                     if (delta.tool_calls) {
                         hasToolCalls = true;
                         for (const toolCallChunk of delta.tool_calls) {
                             const idx = toolCallChunk.index;
                             if (!toolCalls[idx]) {
                                 toolCalls[idx] = {
-                                    id: toolCallChunk.id,
+                                    id: toolCallChunk.id || '',
                                     type: 'function',
                                     function: { name: '', arguments: '' }
                                 };
                             }
-                            if (toolCallChunk.id) toolCalls[idx].id = toolCallChunk.id;
-                            if (toolCallChunk.function?.name) toolCalls[idx].function.name += toolCallChunk.function.name;
-                            if (toolCallChunk.function?.arguments) toolCalls[idx].function.arguments += toolCallChunk.function.arguments;
+                            const tc = toolCalls[idx]!;
+                            if (toolCallChunk.id) tc.id = toolCallChunk.id;
+                            if (toolCallChunk.function?.name) tc.function.name += toolCallChunk.function.name;
+                            if (toolCallChunk.function?.arguments) tc.function.arguments += toolCallChunk.function.arguments;
                         }
                     }
                 }
 
-                // Final del stream: Si teníamos algo en el buffer que resultó NO ser una herramienta manual, lo soltamos
-                if (isBufferingPostentialJSON && !hasToolCalls) {
-                    const manualTools = this.extractManualToolCalls(tokenBuffer);
-                    if (manualTools.length > 0) {
-                        logger.info(`[Agent] Detected ${manualTools.length} manual tool calls in buffered content`);
-                        hasToolCalls = true;
-                        toolCalls.push(...manualTools);
-                    } else {
-                        // Si no era herramienta, soltamos el texto acumulado
-                        yield { type: 'step', message: tokenBuffer };
-                    }
-                }
-
-                if (fullContent) {
-                    logger.info(`[Agent] Assistant Content: "${fullContent.substring(0, 50)}${fullContent.length > 50 ? '...' : ''}"`);
-                }
-
-                // Fallback: Si el modelo puso JSON en el contenido en vez de tool_calls
-                if (!hasToolCalls && fullContent.includes('"name":') && fullContent.includes('"arguments":')) {
-                    const manualTools = this.extractManualToolCalls(fullContent);
-                    if (manualTools.length > 0) {
-                        logger.info(`[Agent] Detected ${manualTools.length} manual tool calls in content`);
-                        hasToolCalls = true;
-                        toolCalls.push(...manualTools);
-                    }
-                }
-
                 if (hasToolCalls) {
-                    logger.info(`[Agent] Tool calls detected: ${toolCalls.map(tc => tc.function.name).join(', ')}`);
-                    const assistantMessage = {
-                        role: "assistant" as const,
+                    const assistantMessage: OpenAI.Chat.ChatCompletionAssistantMessageParam = {
+                        role: "assistant",
                         content: fullContent || null,
                         tool_calls: toolCalls.map(tc => ({
                             id: tc.id,
-                            type: 'function' as const,
+                            type: 'function',
                             function: tc.function
                         }))
                     };
@@ -263,28 +213,34 @@ export class AgentService {
 
                     const toolOutputs: OpenAI.Chat.ChatCompletionMessageParam[] = [];
                     for (const tc of toolCalls) {
-                        const name = tc?.function?.name;
-                        const rawArgs = tc?.function?.arguments;
+                        const name = tc.function.name;
+                        const rawArgs = tc.function.arguments;
 
-                        if (!name) {
-                            logger.error(`[Agent] Tool call missing name:`, tc);
+                        if (!name || !this.isValidTool(name)) {
+                            logger.warn(`[Agent] Tool not found: ${name}`);
                             continue;
                         }
 
-                        logger.info(`[Agent] Executing Tool: ${name} | Raw Args: ${rawArgs}`);
                         const args = this.safeParseArgs(rawArgs);
-
-                        logger.info(`[Agent] Executing Tool: ${name} | Parsed Args: ${JSON.stringify(args)}`);
                         yield { type: 'tool_call', name, args, call_id: tc.id };
 
                         try {
                             const result = yield* this.executeTool(name, args, tc.id, userId);
-                            logger.info(`[Agent] Tool Result [${name}]: Success`);
-                            yield { type: 'tool_result', name, result, call_id: tc.id };
+                            yield { type: 'tool_result', name, result, call_id: tc.id } as AgentStreamEvent;
+
+                            if (name === 'performSearch') {
+                                const searchResult = result as ToolResultsMap['performSearch'];
+                                if (searchResult?.status === 'completed') {
+                                    fullSearchResults.push(searchResult);
+                                }
+                            }
+
+                            const summarizedResult = this.summarizeToolResult(name, result);
+
                             toolOutputs.push({
                                 role: "tool",
                                 tool_call_id: tc.id,
-                                content: JSON.stringify(result)
+                                content: JSON.stringify(summarizedResult)
                             });
                         } catch (error: any) {
                             console.error(`[Agent] Error executing tool [${name}]:`, error);
@@ -292,7 +248,7 @@ export class AgentService {
                             toolOutputs.push({
                                 role: "tool",
                                 tool_call_id: tc.id,
-                                content: JSON.stringify({ error: error.message, details: error.stack })
+                                content: JSON.stringify({ error: error.message })
                             });
                         }
                     }
@@ -304,23 +260,8 @@ export class AgentService {
                         message: { role: "assistant", content: fullContent }
                     };
 
-                    // Extraer vuelos del último resultado si existen
-                    const lastTool = history.filter(h => h.role === 'tool').pop();
-                    if (lastTool && typeof lastTool.content === 'string') {
-                        try {
-                            const parsed = JSON.parse(lastTool.content);
-                            if (parsed.status === 'completed') {
-                                agentResponse.flights = [parsed];
-                            } else if (parsed.best_flights) { // fallback
-                                agentResponse.flights = [{
-                                    _id: 'dynamic-' + Date.now(),
-                                    status: 'completed',
-                                    departure_itineraries: parsed.best_flights,
-                                    departure_date: new Date(),
-                                    origins: [], destinations: [], criteria: { priority: 'balanced' }, source: 'agent'
-                                } as any];
-                            }
-                        } catch (e) { }
+                    if (fullSearchResults.length > 0) {
+                        agentResponse.flights = fullSearchResults;
                     }
 
                     yield { type: 'final_result', data: agentResponse };
@@ -338,19 +279,8 @@ export class AgentService {
         }
     }
 
-    private extractManualToolCalls(content: string) {
-        const toolCalls: any[] = [];
-        const regex = /\{\s*"name"\s*:\s*"([^"]*)"\s*,\s*"arguments"\s*:\s*(\{.*?\}|"[^"]*")\s*\}/gs;
-
-        let match;
-        while ((match = regex.exec(content)) !== null) {
-            toolCalls.push({
-                id: `manual_${Math.random().toString(36).substring(2, 11)}`,
-                type: 'function',
-                function: { name: match[1], arguments: match[2] }
-            });
-        }
-        return toolCalls;
+    private summarizeToolResult<T extends ToolName>(name: T, result: ToolResultsMap[T]): ToolSummariesMap[T] {
+        return this.toolRegistry.getRegistry()[name].summarize(result);
     }
 
     private safeParseArgs(args: string) {
@@ -363,79 +293,26 @@ export class AgentService {
         }
     }
 
-    private getTools(): OpenAI.Chat.ChatCompletionTool[] {
-        return [
-            {
-                type: "function",
-                function: {
-                    name: "getUserInfo",
-                    description: "Obtiene información detalla del perfil del usuario, incluyendo sus preferencias de viaje (clase, presupuesto, aerolíneas favoritas) y datos de su cuenta. Úsala al inicio para personalizar tus recomendaciones.",
-                    parameters: { type: "object", properties: {} }
-                }
-            },
-            {
-                type: "function",
-                function: {
-                    name: "getUserSearchHistory",
-                    description: "Recupera las últimas búsquedas de vuelos del usuario. Úsala para recordar destinos anteriores, entender sus patrones de viaje o si el usuario pide ver sus búsquedas recientes.",
-                    parameters: {
-                        type: "object",
-                        properties: {
-                            limit: { type: "number", description: "Número de búsquedas a recuperar (por defecto 5)." }
-                        }
-                    }
-                }
-            },
-            {
-                type: "function",
-                function: {
-                    name: "searchAirports",
-                    description: "Busca aeropuertos en el mundo. Úsala OBLIGATORIAMENTE siempre que el usuario mencione un lugar para obtener códigos IATA y resolver la ubicación. Es TU responsabilidad usar esta herramienta en vez de preguntar por datos técnicos al usuario.",
-                    parameters: {
-                        type: "object",
-                        properties: {
-                            query: { type: "string", description: "Término de búsqueda (ej: 'Madrid', 'España', 'JFK')." }
-                        },
-                        required: ["query"]
-                    }
-                }
-            },
-            {
-                type: "function",
-                function: {
-                    name: "searchAirlines",
-                    description: "Busca aerolíneas por nombre o código. Úsala si el usuario pregunta por una aerolínea específica o si necesitas verificar qué compañías operan. Llama a esta función UNA VEZ POR CADA aerolínea que necesites resolver.",
-                    parameters: {
-                        type: "object",
-                        properties: {
-                            query: { type: "string", description: "Nombre o código de la aerolínea (ej: 'Iberia', 'Lufthansa')." }
-                        },
-                        required: ["query"]
-                    }
-                }
-            },
-            {
-                type: "function",
-                function: {
-                    name: "performSearch",
-                    description: "Busca vuelos en el sistema. Es una herramienta bloqueante que devolverá directamente los itinerarios encontrados (vuelos, precios, duración). Úsala después de confirmar los aeropuertos (IATA) y fechas con el usuario.",
-                    parameters: {
-                        type: "object",
-                        properties: {
-                            origins: { type: "array", items: { type: "string" }, description: "Lista de códigos IATA de los aeropuertos de origen." },
-                            destinations: { type: "array", items: { type: "string" }, description: "Lista de códigos IATA de los aeropuertos de destino." },
-                            departure_date: { type: "string", description: "Fecha de salida en formato YYYY-MM-DD. DEBE ser una fecha futura respecto a hoy." },
-                            return_date: { type: "string", description: "Fecha de regreso opcional en formato YYYY-MM-DD. DEBE ser posterior a la salida." },
-                            priority: { type: "string", enum: ["cheap", "fast", "balanced"], description: "Preferencia de búsqueda: 'cheap' (precio), 'fast' (duración) o 'balanced' (mixto)." }
-                        },
-                        required: ["origins", "destinations", "departure_date", "priority"]
-                    }
-                }
+    private getTools(): ChatCompletionTool[] {
+        return Object.entries(this.toolRegistry.getRegistry()).map(([name, tool]) => ({
+            type: "function",
+            function: {
+                name,
+                ...tool.metadata
             }
-        ];
+        }));
     }
 
-    private async *executeTool(name: string, args: any, call_id: string, userId?: string): AsyncGenerator<AgentStreamEvent, any> {
+    private isValidTool(name: string): name is ToolName {
+        return this.getTools().some(t => t.type === 'function' && t.function.name === name);
+    }
+
+    private async *executeTool<T extends keyof ToolArgsMap>(
+        name: T,
+        args: ToolArgsMap[T],
+        call_id: string,
+        userId?: string
+    ): AsyncGenerator<AgentStreamEvent, ToolResultsMap[T]> {
         this.auditService.register({
             resource: 'AGENT',
             action: 'TOOL_CALL',
@@ -444,40 +321,7 @@ export class AgentService {
                 args: args
             }
         });
-        switch (name) {
-            case "getUserInfo":
-                if (!userId) throw new Error("No autenticado");
-                const user = await this.userService.getUser(userId);
-                return { username: user.username, preferences: user.preferences };
-            case "getUserSearchHistory":
-                if (!userId) throw new Error("No autenticado");
-                return (await this.searchService.getSearches(userId, userId, 1, args.limit || 5)).items;
-            case "searchAirports":
-                return await this.airportService.searchAirports(args.query);
-            case "searchAirlines":
-                return await this.airlineService.searchAirlines(args.query);
-            case "performSearch":
-                const searchReq: SearchRequest & { user_id?: string } = {
-                    ...args,
-                    departure_date: new Date(args.departure_date),
-                    return_date: args.return_date ? new Date(args.return_date) : undefined,
-                    criteria: { priority: args.priority },
-                    source: "agent",
-                    user_id: userId
-                };
 
-                let finalData: any;
-                for await (const event of this.searchService.createSearchStream(searchReq)) {
-                    yield { type: 'tool_progress', name, event, call_id };
-                    if (event.type === 'completed') {
-                        finalData = event.data;
-                    } else if (event.type === 'failed') {
-                        throw new Error(event.message);
-                    }
-                }
-                return finalData;
-            default:
-                throw new Error("Herramienta no encontrada");
-        }
+        return yield* this.toolRegistry.getRegistry()[name].execute(args, userId, call_id);
     }
 }

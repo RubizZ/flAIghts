@@ -105,12 +105,14 @@ export default function HomeCard({
                     </div>
 
                     {/* Title & Subtitle - Middle on mobile, left on desktop */}
-                    <div className="flex flex-col gap-0.5 order-2 lg:order-1 items-center lg:items-start text-center lg:text-left pt-4 lg:pt-0">
-                        <div className="flex items-center gap-3">
-                            <h1 className={`font-bold text-content tracking-tight transition-all duration-500 ease-in-out ${searchMode === 'ai' ? 'text-2xl' : 'text-3xl'}`}>Vuela más allá.</h1>
+                    {searchMode !== 'ai' && (
+                        <div className="flex flex-col gap-0.5 order-2 lg:order-1 items-center lg:items-start text-center lg:text-left pt-4 lg:pt-0">
+                            <div className="flex items-center gap-3">
+                                <h1 className="font-bold text-content tracking-tight transition-all duration-500 ease-in-out text-3xl">Vuela más allá.</h1>
+                            </div>
+                            <p className="text-content-muted transition-all duration-500 ease-in-out text-[13px]">Explora destinos mundiales con flAIghts.</p>
                         </div>
-                        <p className={`text-content-muted transition-all duration-500 ease-in-out ${searchMode === 'ai' ? 'text-[11px]' : 'text-[13px]'}`}>Explora destinos mundiales con flAIghts.</p>
-                    </div>
+                    )}
                 </div>
             </div>
 
