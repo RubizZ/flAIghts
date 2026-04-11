@@ -59,7 +59,7 @@ const FlightSearchInput: React.FC<FlightSearchInputProps> = ({
         >
             <AirportAutocomplete
                 placeholder={placeholder || (isOrigin ? "¿Desde dónde?" : "¿A dónde?")}
-                className="bg-transparent border-none p-0 text-content placeholder:text-content-muted/60 focus:outline-none w-full text-sm lg:text-base font-sans"
+                className="bg-transparent border-none p-0 text-content placeholder:text-content-muted/60 focus:outline-none w-full text-base lg:text-base font-sans"
                 value={value}
                 onChange={onChange}
                 otherSelected={otherSelected}

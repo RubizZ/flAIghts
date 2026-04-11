@@ -74,7 +74,7 @@ const DateSearchInput: React.FC<DateSearchInputProps> = ({
                     }
                 }}
             >
-                <span className={`truncate text-sm lg:text-base font-sans transition-all ${value ? 'text-content' : 'text-content-muted/50 font-normal'
+                <span className={`truncate text-base lg:text-base font-sans transition-all ${value ? 'text-content' : 'text-content-muted/50 font-normal'
                     }`}>
                     {formatDate(value)}
                 </span>
