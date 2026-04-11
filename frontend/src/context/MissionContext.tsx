@@ -51,6 +51,7 @@ interface MissionContextType {
     surveyOnboardingStep: number;
     nextSurveyOnboardingStep: () => void;
     skipOnboarding: () => void;
+    declineConsent: () => void;
 }
 
 const MissionContext = createContext<MissionContextType | undefined>(undefined);
@@ -161,6 +162,10 @@ export const MissionProvider: React.FC<{ children: ReactNode }> = ({ children })
         return localStorage.getItem('onboarding_survey_seen') === 'true';
     });
 
+    const [isDeclined, setIsDeclined] = useState(() => {
+        return localStorage.getItem('flaights_evaluation_declined') === 'true';
+    });
+
     const submitResultsMutation = useSubmitResults();
 
     // Persistir estado
@@ -219,6 +224,11 @@ export const MissionProvider: React.FC<{ children: ReactNode }> = ({ children })
             setSurveyOnboardingStep(0);
         }
     }, [onboardingStep, surveyOnboardingStep]);
+
+    const declineConsent = useCallback(() => {
+        localStorage.setItem('flaights_evaluation_declined', 'true');
+        setIsDeclined(true);
+    }, []);
 
     const completeStep = useCallback((missionId: string, stepId: string) => {
         if (evaluationFinished) return;
@@ -378,9 +388,10 @@ export const MissionProvider: React.FC<{ children: ReactNode }> = ({ children })
             nextOnboardingStep,
             surveyOnboardingStep,
             nextSurveyOnboardingStep,
-            skipOnboarding
+            skipOnboarding,
+            declineConsent
         }}>
-            {IS_EVAL_MODE && (
+            {IS_EVAL_MODE && !isDeclined && (
                 <>
                     {!hasConsented && <ConsentModal onAccept={acceptConsent} />}
                     {hasConsented && (
