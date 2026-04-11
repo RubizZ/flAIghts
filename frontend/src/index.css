@@ -114,6 +114,16 @@ body,
   .custom-scrollbar::-webkit-scrollbar-thumb:hover {
     background: color-mix(in srgb, var(--color-brand) 40%, transparent);
   }
+
+  /* Prevent zoom on focus in mobile (iOS) by ensuring 16px font-size */
+  @media screen and (max-width: 768px) {
+
+    input,
+    select,
+    textarea {
+      font-size: 16px !important;
+    }
+  }
 }
 
 #nprogress .bar {
