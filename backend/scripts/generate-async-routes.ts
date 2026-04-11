@@ -72,7 +72,7 @@ async function generate() {
                     controllerInfo.channels.push({
                         methodName: method.getName(),
                         path: channelPath,
-                        protocol: (options.protocol as 'ws' | 'http' | 'sse') || 'http', 
+                        protocol: (options.protocol as 'ws' | 'http' | 'sse') || 'http',
                         httpMethod: (options.method as 'POST' | 'GET') || 'POST',
                         summary: options.summary,
                         security,
@@ -200,7 +200,7 @@ ${controllers.map(c => {
             } else {
                 const possibleArgs = ['reqWithUser.body', 'reqWithUser.user', 'reqWithUser', 'res'];
                 const callArgs = possibleArgs.slice(0, chan.parameterCount).join(', ');
-                
+
                 return `    // Canal SSE para ${chan.methodName}
     app.${chan.httpMethod.toLowerCase()}('${fullPath}', ${authLogic}
         async (req: Request, res: Response, next: NextFunction) => {
@@ -231,17 +231,29 @@ ${controllers.map(c => {
 async function streamToSSE<T>(generator: AsyncGenerator<T, unknown, unknown>, res: Response) {
     if (res.flush) res.flush();
 
+    let isClosed = false;
+    res.on('close', () => {
+        isClosed = true;
+        // Notificamos al generador que debe terminar para liberar recursos en el backend
+        generator.return(null).catch(err => console.error('[SSE] Error closing generator:', err));
+    });
+
     try {
         for await (const event of generator) {
+            if (isClosed) break;
             res.write(\`data: \${JSON.stringify(event)}\\n\\n\`);
             if (res.flush) res.flush();
         }
     } catch (error: unknown) {
-        const errorMsg = error instanceof Error ? error.message : 'Unknown error';
-        res.write(\`data: \${JSON.stringify({ type: 'error', message: errorMsg })}\\n\\n\`);
-        if (res.flush) res.flush();
+        if (!isClosed) {
+            const errorMsg = error instanceof Error ? error.message : 'Unknown error';
+            res.write(\`data: \${JSON.stringify({ type: 'error', message: errorMsg })}\\n\\n\`);
+            if (res.flush) res.flush();
+        }
     } finally {
-        res.end();
+        if (!res.writableEnded) {
+            res.end();
+        }
     }
 }
 `;
