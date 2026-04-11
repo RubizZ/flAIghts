@@ -1,6 +1,6 @@
 import React, { useState, useLayoutEffect, useRef } from 'react';
 import { useMissions } from '@/context/MissionContext';
-import { X, Lock, CheckCircle2, MessageSquareText } from 'lucide-react';
+import { X, Lock, CheckCircle2, MessageSquareText, Trophy } from 'lucide-react';
 
 interface MissionRoadmapProps {
     onClose: () => void;
@@ -222,9 +222,25 @@ const MissionRoadmap: React.FC<MissionRoadmapProps> = ({ onClose, onMissionClick
                     <X size={24} />
                 </button>
 
-                <div className="mb-4 sm:mb-8 text-center sm:text-left px-10 sm:px-0">
-                    <h2 className="text-2xl sm:text-4xl font-black mb-1 sm:mb-2 tracking-tight bg-linear-to-r from-blue-400 to-indigo-400 bg-clip-text text-transparent">Roadmap de Evaluación</h2>
-                    <p className="text-[10px] sm:text-sm text-gray-400">Progreso y flujo secuencial de los retos de usabilidad.</p>
+                <div className="mb-4 sm:mb-8 flex flex-col sm:flex-row items-center sm:items-end justify-between gap-4 px-4 pr-12 sm:px-0 sm:pr-20">
+                    <div className="text-center sm:text-left">
+                        <h2 className="text-2xl sm:text-4xl font-black mb-1 sm:mb-2 tracking-tight bg-linear-to-r from-blue-400 to-indigo-400 bg-clip-text text-transparent">Roadmap de Evaluación</h2>
+                        <p className="text-[10px] sm:text-sm text-gray-400 font-medium italic">Progreso de los retos de usabilidad.</p>
+                    </div>
+
+                    <div className="flex items-center gap-3 px-5 py-2 rounded-2xl bg-white/5 border border-white/10 shadow-xl backdrop-blur-md">
+                        <div className="flex flex-col items-end">
+                            <span className="text-[8px] font-black uppercase tracking-widest text-white/30">Misiones</span>
+                            <div className="flex items-baseline gap-1">
+                                <span className="text-xl sm:text-2xl font-black text-white">{missions.filter(m => isMissionCompleted(m.id)).length}</span>
+                                <span className="text-xs font-bold text-white/20">/ {missions.length}</span>
+                            </div>
+                        </div>
+                        <div className="h-8 w-px bg-white/10 mx-1"></div>
+                        <div className={`h-10 w-10 rounded-xl flex items-center justify-center border ${missions.every(m => isMissionCompleted(m.id)) ? 'bg-green-500/20 text-green-400 border-green-500/20' : 'bg-blue-500/20 text-blue-400 border-blue-500/20'}`}>
+                            <Trophy size={20} />
+                        </div>
+                    </div>
                 </div>
 
                 <div
