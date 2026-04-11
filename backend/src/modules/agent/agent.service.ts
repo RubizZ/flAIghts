@@ -85,15 +85,19 @@ export class AgentService {
         userId: string,
         location?: { latitude: number; longitude: number },
         manual_state?: { origins?: string[]; destinations?: string[]; departure_date?: string; return_date?: string },
-        model?: string,
+        model: string | undefined = this.config.AVAILABLE_MODELS[0],
         date?: Date
     ): AsyncGenerator<AgentStreamEvent> {
+        if (!model) {
+            throw new Error('No model specified'); // TODO Mejorar tipado de errores para async generator
+        }
+
         this.auditService.register({
             resource: 'AGENT',
             action: 'CHAT',
             details: {
                 messages_count: messages.length,
-                model: model || "gpt-4o-mini"
+                model: model
             }
         });
 
@@ -161,7 +165,7 @@ export class AgentService {
                 yield { type: 'iteration', count: iterations };
 
                 const stream = await this.openai.chat.completions.create({
-                    model: model || "gpt-4o-mini",
+                    model: model,
                     messages: history,
                     tools: this.getTools(),
                     tool_choice: "auto",
