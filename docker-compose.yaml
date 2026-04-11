@@ -17,7 +17,7 @@ services:
     volumes:
       - ollama_storage:/root/.ollama
     entrypoint: /bin/sh
-    command: -c "ollama serve & sleep 10 && ollama pull qwen2.5-coder:7b && ollama pull llama3.1:8b && ollama pull mistral-nemo && wait"
+    command: -c "ollama serve & sleep 10 && ollama pull qwen2.5:14b-instruct-q4_K_M && printf \"FROM qwen2.5:14b-instruct-q4_K_M\\nPARAMETER num_ctx 32768\" > Modelfile.14b && ollama create qwen2.5:14b-instruct-q4_K_M -f Modelfile.14b && ollama pull qwen2.5:7b-instruct-q8_0 && printf \"FROM qwen2.5:7b-instruct-q8_0\\nPARAMETER num_ctx 32768\" > Modelfile.7b && ollama create qwen2.5:7b-instruct-q8_0 -f Modelfile.7b && wait"
     deploy:
       resources:
         reservations:
@@ -88,7 +88,7 @@ services:
       - S3_SECRET_ACCESS_KEY=admin123
       - OPENAI_BASE_URL=${OPENAI_BASE_URL-http://ollama:11434/v1}
       - OPENAI_API_KEY=${OPENAI_API_KEY:-ollama}
-      - AVAILABLE_MODELS=${AVAILABLE_MODELS:-}
+      - AVAILABLE_MODELS=qwen2.5:14b-instruct-q4_K_M,qwen2.5:7b-instruct-q8_0
     healthcheck:
       test: [ "CMD", "node", "-e", "fetch('http://localhost:3000/health').then(r => r.ok ? process.exit(0) : process.exit(1)).catch(() => process.exit(1))" ]
       interval: 5s
