@@ -55,7 +55,7 @@ export default function HomeCard({
     const chatRef = useRef<any>(null);
 
     return (
-        <div className={`premium-glass relative rounded-4xl flex flex-col transition-all duration-500 ease-in-out w-[min(96vw,580px)] ${searchMode === 'ai' ? 'h-162.5 lg:h-187.5 p-5 gap-6' : 'h-125 lg:h-128 p-7 gap-8'} ${className}`}>
+        <div className={`premium-glass relative rounded-4xl flex flex-col transition-all duration-500 ease-in-out w-[min(96vw,580px)] ${searchMode === 'ai' ? 'h-[min(650px,calc(100dvh-200px))] lg:h-187.5 p-5 gap-6' : 'max-h-[calc(100dvh-200px)] h-auto p-7 gap-8'} ${className}`}>
 
             {/* Card header: title & mode toggle */}
             <div className="flex flex-col gap-6 shrink-0">
@@ -105,14 +105,21 @@ export default function HomeCard({
                     </div>
 
                     {/* Title & Subtitle - Middle on mobile, left on desktop */}
-                    {searchMode !== 'ai' && (
-                        <div className="flex flex-col gap-0.5 order-2 lg:order-1 items-center lg:items-start text-center lg:text-left pt-4 lg:pt-0">
-                            <div className="flex items-center gap-3">
-                                <h1 className="font-bold text-content tracking-tight transition-all duration-500 ease-in-out text-3xl">Vuela más allá.</h1>
-                            </div>
-                            <p className="text-content-muted transition-all duration-500 ease-in-out text-[13px]">Explora destinos mundiales con flAIghts.</p>
+                    <div className={`order-2 lg:order-1 pt-4 lg:pt-0 grid grid-cols-1 grid-rows-1 ${searchMode === 'ai' ? 'hidden lg:grid' : 'grid'}`}>
+                        {/* Manual Mode Title */}
+                        <div className={`col-start-1 row-start-1 flex flex-col gap-0.5 items-center lg:items-start text-center lg:text-left transition-all duration-500 ${searchMode === 'manual' ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4 pointer-events-none'}`}>
+                            <h1 className="font-bold text-content tracking-tight text-3xl">Vuela más allá.</h1>
+                            <p className="text-content-muted text-[13px]">Explora destinos mundiales con flAIghts.</p>
                         </div>
-                    )}
+
+                        {/* AI Mode Title */}
+                        <div className={`col-start-1 row-start-1 flex flex-col gap-0.5 items-center lg:items-start text-center lg:text-left transition-all duration-500 ${searchMode === 'ai' ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4 pointer-events-none'}`}>
+                            <h1 className="font-bold text-content tracking-tight text-3xl flex items-center gap-3">
+                                Agente flAIghts
+                            </h1>
+                            <p className="text-content-muted text-[13px]">Tu copiloto inteligente para planificar viajes.</p>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -123,6 +130,25 @@ export default function HomeCard({
                     : 'opacity-0 pointer-events-none absolute inset-x-0 top-0'}`}
                 >
                     <div className="flex flex-col gap-6">
+                        {/* Mobile Explore Globe Button - Improved Placement */}
+                        {onExploreGlobe && (
+                            <div className="lg:hidden flex flex-col gap-5 animate-fade-in-up">
+                                <button
+                                    onClick={onExploreGlobe}
+                                    className="mx-auto bg-surface/90 dark:bg-main/90 backdrop-blur-3xl px-5 py-2.5 rounded-full border border-line flex items-center gap-2.5 shadow-2xl active:scale-95 transition-all cursor-pointer whitespace-nowrap"
+                                >
+                                    <GlobeIcon size={14} className="text-brand" />
+                                    <span className="text-[10px] font-bold uppercase tracking-widest text-content">Explorar globo terráqueo</span>
+                                </button>
+
+                                <div className="flex items-center gap-4 px-2">
+                                    <div className="flex-1 h-px bg-line/20" />
+                                    <div className="flex items-center justify-center w-6 h-6 rounded-full border border-line/20 bg-main/5 text-[9px] font-black text-content-muted uppercase tracking-tighter">o</div>
+                                    <div className="flex-1 h-px bg-line/20" />
+                                </div>
+                            </div>
+                        )}
+
                         <ManualSearchForm
                             origins={origins}
                             setOrigins={setOrigins}
@@ -183,18 +209,6 @@ export default function HomeCard({
                 </div>
             </div>
 
-            {/* Mobile Explore Globe Button - Sitting ON the bottom border */}
-            {onExploreGlobe && (
-                <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 z-30 lg:hidden">
-                    <button
-                        onClick={onExploreGlobe}
-                        className="bg-surface/90 dark:bg-main/90 backdrop-blur-3xl px-5 py-2.5 rounded-full border border-line flex items-center gap-2.5 shadow-2xl active:scale-95 transition-all cursor-pointer whitespace-nowrap"
-                    >
-                        <GlobeIcon size={14} className="text-brand" />
-                        <span className="text-[10px] font-bold uppercase tracking-widest text-content">Explorar globo terráqueo</span>
-                    </button>
-                </div>
-            )}
         </div>
     );
 }

@@ -679,30 +679,35 @@ const AgentChat = forwardRef<any, AgentChatProps>(({
 
     return (
         <div className="flex flex-col h-full w-full bg-linear-to-b from-main/60 to-surface/40 dark:from-surface/60 dark:to-main/40 rounded-2xl border border-line/20 overflow-hidden backdrop-blur-sm transition-all duration-500">
-            {/* Model Selector Header */}
-            <div className="px-4 py-2 border-b border-line/10 bg-surface/30 flex items-center justify-between">
+            {/* Mobile-only Header */}
+            <div className="lg:hidden px-4 py-2 border-b border-line/10 bg-surface/30 flex items-center justify-between shrink-0">
                 <div className="flex items-center gap-2">
                     <Sparkles size={14} className="text-brand animate-pulse" />
                     <span className="text-[10px] font-black uppercase tracking-widest text-content-muted">Agente flAIghts</span>
                 </div>
-                <div className="flex gap-1 overflow-x-auto no-scrollbar max-w-[70%]">
-                    {availableModels.map(model => (
-                        <button
-                            key={model}
-                            onClick={() => setSelectedModel(model)}
-                            title={model}
-                            className={`px-2 py-1 rounded-lg text-[9px] font-black uppercase tracking-tighter transition-all cursor-pointer whitespace-nowrap
-                                ${selectedModel === model
-                                    ? 'bg-brand text-white shadow-sm ring-2 ring-brand/10'
-                                    : 'bg-main/20 text-content-muted/60 hover:bg-main/40'}`}
-                        >
-                            {model.includes(':') ? model.split(':')[0] : model}
-                        </button>
-                    ))}
+                <div className="flex items-center gap-3">
+                    {availableModels.length > 0 && (
+                        <div className="relative group/model">
+                            <select
+                                value={selectedModel}
+                                onChange={(e) => setSelectedModel(e.target.value)}
+                                className="appearance-none bg-main/50 border border-line/30 pl-2.5 pr-7 py-1.5 rounded-xl text-[9px] font-bold uppercase tracking-widest text-content-muted focus:outline-none transition-all cursor-pointer max-w-[120px] truncate"
+                            >
+                                {availableModels.map(model => (
+                                    <option key={model} value={model} className="bg-surface text-content text-xs">
+                                        {(model as string).toUpperCase()}
+                                    </option>
+                                ))}
+                            </select>
+                            <div className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none text-content-muted/50">
+                                <ChevronDown size={10} />
+                            </div>
+                        </div>
+                    )}
                     {availableModels.length === 0 && (
-                        <div className="flex items-center gap-1.5 px-2 py-1 bg-main/10 rounded-lg">
-                            <div className="w-1.5 h-1.5 bg-brand/40 rounded-full animate-pulse" />
-                            <span className="text-[9px] font-black uppercase text-content-muted/40 tracking-tighter">Buscando agentes...</span>
+                        <div className="flex items-center gap-1">
+                            <div className="w-1 h-1 bg-brand rounded-full animate-pulse" />
+                            <span className="text-[8px] font-bold uppercase text-content-muted/40">Conectando...</span>
                         </div>
                     )}
                 </div>
@@ -855,43 +860,65 @@ const AgentChat = forwardRef<any, AgentChatProps>(({
             </div>
 
             {/* Input Area */}
-            <div className="p-3 lg:p-4 border-t border-line/20 bg-white/5 backdrop-blur-md shrink-0 flex flex-col gap-3">
-                <div className="relative flex items-center gap-3">
-                    <div className="relative flex-1">
-                        <input
-                            type="text"
-                            value={input}
-                            onChange={(e) => setInput(e.target.value)}
-                            onKeyDown={(e) => e.key === 'Enter' && handleSend()}
-                            placeholder="Dime lo que buscas o pídeme una recomendación..."
-                            className="w-full bg-main/50 border border-line/50 rounded-2xl pl-5 pr-14 py-4 text-sm focus:outline-none focus:border-brand focus:ring-4 focus:ring-brand/10 transition-all shadow-inner placeholder:text-content-muted/50 placeholder:italic font-medium"
-                        />
+            <div className="p-2 lg:p-4 border-t border-line/20 bg-white/5 backdrop-blur-md shrink-0">
+                <div className="relative w-full flex items-center gap-2 bg-main/50 border border-line/50 rounded-2xl pl-4 pr-1.5 py-1.5 focus-within:border-brand/50 focus-within:ring-4 focus-within:ring-brand/10 transition-all shadow-inner group">
+                    <input
+                        type="text"
+                        value={input}
+                        onChange={(e) => setInput(e.target.value)}
+                        onKeyDown={(e) => e.key === 'Enter' && handleSend()}
+                        placeholder="Pregunta lo que quieras..."
+                        className="flex-1 bg-transparent py-2 text-sm focus:outline-none placeholder:text-content-muted/40 placeholder:italic font-medium min-w-0"
+                    />
+
+                    <div className="flex items-center gap-1.5 shrink-0">
                         {isStreaming ? (
                             <button
                                 onClick={() => stopStream('user')}
-                                className="absolute right-2 top-2 p-2.5 rounded-xl transition-all duration-300 bg-red-500 hover:bg-red-600 text-white shadow-lg scale-100 hover:scale-105 active:scale-95 cursor-pointer"
+                                className="p-2 rounded-xl transition-all duration-300 bg-red-500 hover:bg-red-600 text-white shadow-lg scale-100 hover:scale-105 active:scale-95 cursor-pointer"
                                 title="Detener"
                             >
-                                <Square size={18} className="fill-white" />
+                                <Square size={16} className="fill-white" />
                             </button>
-
                         ) : (
-                            <button
-                                onClick={() => handleSend()}
-                                disabled={!input.trim()}
-                                className={`absolute right-2 top-2 p-2.5 rounded-xl transition-all duration-300 cursor-pointer
-                                    ${input.trim()
-                                        ? 'bg-brand text-content-on-brand shadow-lg scale-100'
-                                        : 'bg-line/30 text-content-muted scale-95 opacity-50'}`}
-                            >
-                                <Send size={18} className={input.trim() ? 'animate-pulse' : ''} />
-                            </button>
+                            <>
+                                {/* Compact Model Selector Dropdown - Hidden on mobile, shown on desktop */}
+                                {availableModels.length > 0 && (
+                                    <div className="hidden lg:block relative group/model">
+                                        <select
+                                            value={selectedModel}
+                                            onChange={(e) => setSelectedModel(e.target.value)}
+                                            className="appearance-none bg-surface/80 hover:bg-white/10 border border-line/30 hover:border-brand/40 pl-2.5 pr-7 py-2 rounded-xl text-[9px] lg:text-[10px] font-bold uppercase tracking-widest text-content-muted hover:text-brand focus:outline-none transition-all cursor-pointer max-w-[120px] truncate"
+                                        >
+                                            {availableModels.map(model => (
+                                                <option key={model} value={model} className="bg-surface text-content text-xs">
+                                                    {(model as string).toUpperCase()}
+                                                </option>
+                                            ))}
+                                        </select>
+                                        <div className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none text-content-muted/50">
+                                            <ChevronDown size={10} />
+                                        </div>
+                                    </div>
+                                )}
+
+                                <button
+                                    onClick={() => handleSend()}
+                                    disabled={!input.trim()}
+                                    className={`p-2 rounded-xl transition-all duration-300 cursor-pointer
+                                        ${input.trim()
+                                            ? 'bg-brand text-content-on-brand shadow-lg scale-100 ring-2 ring-brand/10'
+                                            : 'bg-line/20 text-content-muted scale-95 opacity-50'}`}
+                                >
+                                    <Send size={16} className={input.trim() ? 'animate-pulse' : ''} />
+                                </button>
+                            </>
                         )}
                     </div>
                 </div>
-                <div className="mt-3 flex items-center justify-center gap-2">
-                    <span className="text-[9px] font-bold uppercase tracking-widest text-content-muted/40 text-center">
-                        El agente flAIghts es experimental y puede cometer errores. Verifica la información importante.
+                <div className="mt-2.5 flex items-center justify-center">
+                    <span className="text-[8px] font-bold uppercase tracking-widest text-content-muted/30 text-center">
+                        IA Experimental • flAIghts puede cometer errores. Verifica la información importante.
                     </span>
                 </div>
             </div>

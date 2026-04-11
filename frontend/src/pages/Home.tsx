@@ -417,11 +417,12 @@ export default function Home() {
             </div>
 
             {/* Main Search Card */}
-            <div className={`absolute transition-all duration-700 cubic-bezier(0.16, 1, 0.3, 1) z-10 ${!isSelectingOnMap
-                ? 'left-1/2 lg:left-8 top-1/2 -translate-y-1/2 -translate-x-1/2 lg:translate-x-0 scale-100'
-                : 'left-1/2 lg:-left-150 top-0 lg:top-1/2 -translate-y-[150%] lg:-translate-y-1/2 -translate-x-1/2 lg:translate-x-0 scale-95 pointer-events-none'
+            <div className={`absolute inset-0 z-10 transition-all duration-700 cubic-bezier(0.16, 1, 0.3, 1) flex flex-col items-center lg:items-start justify-center pointer-events-none p-4 lg:p-12
+                ${!isSelectingOnMap
+                    ? 'opacity-100 pt-24 pb-24 lg:py-0'
+                    : 'opacity-0 -translate-y-[150%] scale-95'
                 }`}>
-                <div className="relative">
+                <div className={`relative pointer-events-auto transition-all duration-700 ${!isSelectingOnMap ? 'translate-y-0 scale-100' : 'translate-y-20 scale-90'}`}>
                     <HomeCard
                         origins={origins}
                         setOrigins={setOrigins}
