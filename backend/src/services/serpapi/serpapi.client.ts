@@ -27,7 +27,7 @@ export class SerpApiClient {
             RequestsPerDay.findOneAndUpdate(
                 { date: new Date().toISOString().slice(0, 10) },
                 { $inc: { count: 1 } },
-                { runValidators: true, upsert: true, new: true }
+                { runValidators: true, upsert: true, returnDocument: 'after' }
             ).then(doc => {
                 if (doc && doc.count > this.maxRequestPerDay) {
                     throw new Error("SerpApi daily request limit exceeded");

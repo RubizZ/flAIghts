@@ -102,7 +102,7 @@ export class AuthService {
     }
 
     public async logoutAll(userId: string) {
-        const user = await User.findOneAndUpdate({ _id: userId }, { $inc: { auth_version: 1 } });
+        const user = await User.findOneAndUpdate({ _id: userId }, { $inc: { auth_version: 1 } }, { returnDocument: 'after' });
         if (!user) {
             const error = new LoginUserNotFoundError(userId);
             this.auditService.register({
@@ -179,7 +179,7 @@ export class AuthService {
                     password_reset_expires: new Date(Date.now() + 3600000)
                 }
             },
-            { new: true }
+            { returnDocument: 'after' }
         );
 
         if (!user) {
@@ -223,7 +223,7 @@ export class AuthService {
                 $unset: { password_reset_token: 1, password_reset_expires: 1 },
                 $inc: { auth_version: 1 }
             },
-            { new: true }
+            { returnDocument: 'after' }
         );
 
         if (!user) {
