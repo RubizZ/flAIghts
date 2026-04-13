@@ -23,7 +23,7 @@ services:
         reservations:
           devices:
             - driver: nvidia
-              count: all
+              count: ${OLLAMA_GPU_COUNT:-all}
               capabilities: [ gpu ]
 
   mailpit:
