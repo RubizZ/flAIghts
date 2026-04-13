@@ -19,3 +19,6 @@ export class SearchNotAuthorizedError extends AppError<'NOT_AUTHORIZED', { searc
         this.details = { searchId, requesterId };
     }
 }
+
+
+

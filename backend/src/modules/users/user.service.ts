@@ -67,7 +67,7 @@ export class UserService {
                 code: hashedCode,
                 expires: new Date(Date.now() + 3600000)
             },
-            { upsert: true }
+            { upsert: true, returnDocument: 'after' }
         );
 
         const template = MailTemplates.emailVerification(verificationCode);
@@ -221,7 +221,7 @@ export class UserService {
             const existing = await User.findOne({ username: data.username, _id: { $ne: userId } });
             if (existing) throw new UsernameAlreadyInUseError(data.username);
         }
-        const user = await User.findByIdAndUpdate(userId, data, { new: true });
+        const user = await User.findByIdAndUpdate(userId, data, { returnDocument: 'after' });
         if (!user) throw new UserNotFoundError(userId);
 
         this.auditService.register({

@@ -10,6 +10,7 @@ interface NavIconButtonProps {
     variant?: 'floating' | 'flat';
     showBadge?: boolean;
     isPill?: boolean;
+    id?: string;
 }
 
 const NavIconButton: React.FC<NavIconButtonProps> = ({
@@ -20,7 +21,8 @@ const NavIconButton: React.FC<NavIconButtonProps> = ({
     className = '',
     variant = 'floating',
     isPill = false,
-    showBadge = false
+    showBadge = false,
+    id
 }) => {
     const isFloating = variant === 'floating';
 
@@ -50,6 +52,7 @@ const NavIconButton: React.FC<NavIconButtonProps> = ({
     if (to) {
         return (
             <Link
+                id={id}
                 to={to}
                 title={title}
                 className={`${baseStyles} ${sizeStyles} ${shapeStyles} ${glassStyles} ${hoverStyles} ${className} animate-in fade-in zoom-in duration-700 cubic-bezier(0.4, 0, 0.2, 1)`}
@@ -61,6 +64,7 @@ const NavIconButton: React.FC<NavIconButtonProps> = ({
 
     return (
         <button
+            id={id}
             onClick={onClick}
             title={title}
             className={`${baseStyles} ${sizeStyles} ${shapeStyles} ${glassStyles} ${hoverStyles} ${className} animate-in fade-in zoom-in duration-700 cubic-bezier(0.4, 0, 0.2, 1)`}

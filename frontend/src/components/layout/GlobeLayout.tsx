@@ -40,7 +40,9 @@ export default function GlobeLayout() {
                     <Outlet />
                 </div>
             </main>
-            <Footer />
+            <div className="hidden sm:block">
+                <Footer />
+            </div>
         </div>
     );
 }

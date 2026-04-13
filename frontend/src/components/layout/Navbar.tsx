@@ -15,12 +15,12 @@ import {
     Palette,
     ShieldCheck,
     Bell,
-    Menu,
-    X
+    Trophy
 } from "lucide-react";
-import { PopulatedUser } from "@/api/generated/model";
+import { PopulatedUser } from "@/api/generated/openapi/model";
 import UserAvatar from "@/components/ui/UserAvatar";
 import NavIconButton from "@/components/ui/NavIconButton";
+import { useMissions } from "@/context/MissionContext";
 
 export default function Navbar({ variant = 'floating' }: { variant?: 'floating' | 'flat' }) {
     const navigate = useNavigate();
@@ -43,6 +43,9 @@ export default function Navbar({ variant = 'floating' }: { variant?: 'floating' 
         dark: t("settings.appearance.dark"),
         system: t("settings.appearance.system")
     };
+
+    const { isEvaluationMode, hasConsented, setShowRoadmap, missions, isMissionRated, allCompleted } = useMissions();
+    const pendingSurveysCount = missions.filter(m => m.isCompleted && !isMissionRated(m.id)).length;
 
     const NotificationsMainView = ({ user }: { user: PopulatedUser }) => {
         const { pushMenu } = useDropdown();
@@ -136,6 +139,23 @@ export default function Navbar({ variant = 'floating' }: { variant?: 'floating' 
                         </button>
                     </div>
 
+                    {isEvaluationMode && hasConsented && (
+                        <button
+                            id="nav-missions-button-mobile"
+                            onClick={() => { setIsOpen(false); setShowRoadmap(true); }}
+                            className="lg:hidden w-full flex items-center justify-between px-3 py-2 text-sm text-content hover:bg-surface/70 rounded-xl transition-all cursor-pointer group text-left font-medium"
+                        >
+                            <div className="flex items-center gap-3">
+                                <Trophy size={16} className={`shrink-0 transition-colors ${pendingSurveysCount > 0 ? "text-amber-500 animate-pulse" : allCompleted ? "text-green-500" : "group-hover:text-brand"}`} />
+                                <span className="leading-none">Misiones</span>
+                            </div>
+                            {pendingSurveysCount > 0 && (
+                                <span className="text-[10px] text-brand font-bold bg-brand/10 px-1.5 py-0.5 rounded-full">
+                                    {pendingSurveysCount}
+                                </span>
+                            )}
+                        </button>
+                    )}
                     <button onClick={() => { setIsOpen(false); navigate(`/user/${user?._id}`) }} className="w-full flex items-center justify-between text-content px-3 py-2 text-sm rounded-xl transition-all group text-left hover:bg-surface/70 hover:cursor-pointer font-medium">
                         <div className="flex items-center gap-3">
                             <User size={16} className="shrink-0" />
@@ -243,6 +263,20 @@ export default function Navbar({ variant = 'floating' }: { variant?: 'floating' 
         const { pushMenu, setIsOpen } = useDropdown();
         return (
             <div className="w-64 p-1">
+                {isEvaluationMode && hasConsented && (
+                    <div className="lg:hidden border-b border-line mb-1 pb-1">
+                        <button
+                            id="nav-missions-button-mobile-alt"
+                            onClick={() => { setIsOpen(false); setShowRoadmap(true); }}
+                            className="w-full flex items-center justify-between px-3 py-2 text-sm text-content hover:bg-surface/70 rounded-xl transition-all cursor-pointer group text-left font-medium"
+                        >
+                            <div className="flex items-center gap-3">
+                                <Trophy size={16} className={`shrink-0 transition-colors ${pendingSurveysCount > 0 ? "text-amber-500 animate-pulse" : allCompleted ? "text-green-500" : "group-hover:text-brand"}`} />
+                                <span className="leading-none">Misiones</span>
+                            </div>
+                        </button>
+                    </div>
+                )}
                 {/* Mobile/Tablet Auth Options */}
                 <div className="lg:hidden mb-2 pb-2 border-b border-line">
                     <p className="px-3 py-2 text-[10px] uppercase tracking-widest text-content-muted font-bold opacity-50">{t("navbar.authentication")}</p>
@@ -283,12 +317,30 @@ export default function Navbar({ variant = 'floating' }: { variant?: 'floating' 
         )
     };
 
+
     return (
         <nav className={variant === 'floating' ? "contents" : "contents"}>
             <div className={variant === 'floating'
                 ? "fixed top-4 right-4 flex items-center justify-end gap-2 sm:gap-4 z-10 pointer-events-auto"
                 : "flex items-center gap-2 sm:gap-4 pointer-events-auto"
             }>
+                {/* Mission Indicator Button (Evaluation Mode) */}
+                {isEvaluationMode && hasConsented && (
+                    <NavIconButton
+                        id="nav-missions-button"
+                        variant={variant}
+                        onClick={() => setShowRoadmap(true)}
+                        showBadge={pendingSurveysCount > 0}
+                        title="Misiones de Evaluación"
+                        className={`hidden lg:flex ${pendingSurveysCount > 0 ? "animate-pulse" : ""}`}
+                    >
+                        <Trophy
+                            size={20}
+                            className={pendingSurveysCount > 0 ? "text-amber-500" : allCompleted ? "text-green-500" : "text-content group-hover:text-brand transition-colors"}
+                        />
+                    </NavIconButton>
+                )}
+
                 {isLoading ? (
                     <div className="flex items-center gap-2">
                         <div className="hidden sm:block w-16 h-8 bg-surface rounded-full animate-pulse opacity-50" />
@@ -296,7 +348,7 @@ export default function Navbar({ variant = 'floating' }: { variant?: 'floating' 
                         <div className="w-10 h-10 bg-surface rounded-2xl sm:rounded-full animate-pulse opacity-50" />
                     </div>
                 ) : isAuthenticated ? (
-                    <div className="flex items-center gap-2">
+                    <>
                         <Dropdown
                             isOpen={isNotificationsMenuOpen}
                             onOpenChange={(open) => {
@@ -340,6 +392,7 @@ export default function Navbar({ variant = 'floating' }: { variant?: 'floating' 
                             }}
                             trigger={
                                 <NavIconButton
+                                    id="nav-user-menu-trigger"
                                     variant={variant}
                                     showBadge={!!(user?.received_friend_requests && user.received_friend_requests.length > 0)}
                                 >
@@ -375,7 +428,7 @@ export default function Navbar({ variant = 'floating' }: { variant?: 'floating' 
                                 )
                             }}
                         />
-                    </div>
+                    </>
                 ) : (
                     <div className="hidden lg:flex gap-2">
                         <NavIconButton to="/login" variant={variant} isPill>
@@ -404,7 +457,7 @@ export default function Navbar({ variant = 'floating' }: { variant?: 'floating' 
                             }
                         }}
                         trigger={
-                            <NavIconButton variant={variant}>
+                            <NavIconButton id="nav-options-menu-trigger" variant={variant}>
                                 <User size={22} />
                             </NavIconButton>
                         }

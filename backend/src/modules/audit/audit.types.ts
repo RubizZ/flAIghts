@@ -115,6 +115,16 @@ export interface AuditDetails {
             id: string;
         }
     }
+    AGENT: {
+        CHAT: {
+            messages_count: number;
+            model: string;
+        }
+        TOOL_CALL: {
+            tool: string;
+            args: any;
+        }
+    }
 }
 
 export type AuditUser = {

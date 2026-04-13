@@ -7,6 +7,9 @@ import { container } from "tsyringe"
 import { ServerConfig } from "../../config/server.config.js"
 import { contextStorage } from "../../utils/context.js"
 
+export async function expressAuthentication(request: Request, securityName: "jwt", _scopes?: string[]): Promise<AuthenticatedUser>;
+export async function expressAuthentication(request: Request, securityName: "jwt-optional", _scopes?: string[]): Promise<AuthenticatedUser | null>;
+export async function expressAuthentication(request: Request, securityName: string, _scopes?: string[]): Promise<AuthenticatedUser | null>;
 export async function expressAuthentication(
     request: Request,
     securityName: string,

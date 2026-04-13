@@ -1,3 +1,4 @@
+import type { AirportResponse } from "../airport/airport.types.js";
 import type { ValidationDetails, RequestValidationFailResponse, DatabaseValidationFailResponse, BodyPath } from "../../utils/responses.js";
 import type { DijkstraFlightEdge } from "@/algorithms/dijkstra.js";
 
@@ -29,6 +30,7 @@ export interface SearchRequest {
     };
 
     dates?: string[];
+    source?: "manual" | "agent";
 }
 
 export interface GeneticTripRequest {
@@ -99,6 +101,7 @@ export interface SearchResponseData {
         max_price?: number;
     };
     status: "searching" | "completed" | "failed";
+    source: "manual" | "agent";
     departure_itineraries?: ItineraryResponse[];
     return_itineraries?: ItineraryResponse[];
     /**
@@ -114,3 +117,17 @@ export type SearchRequestValidationFailResponse = RequestValidationFailResponse<
 // Unión de todas las posibles respuestas 422 para search
 export type SearchValidationFailResponse = SearchRequestValidationFailResponse | DatabaseValidationFailResponse;
 
+export interface EnrichedFlightEdge extends DijkstraFlightEdge {
+    airplane: string;
+    flight_number: string;
+    travel_class: string;
+    extensions?: string[];
+}
+
+export interface SearchProgressEvent {
+    type: "progress" | "completed" | "failed";
+    message: string;
+    step?: number;
+    total_steps?: number;
+    data?: SearchResponseData;
+}

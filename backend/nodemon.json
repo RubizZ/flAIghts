@@ -4,9 +4,13 @@
     ],
     "ext": "ts",
     "ignore": [
-        "src/tsoa"
+        "src/generated/**/*",
+        "src/generated/**",
+        "src/generated/",
+        "**/generated/**",
+        "build/**"
     ],
-    "exec": "npx tsoa spec-and-routes && node --enable-source-maps --inspect=0.0.0.0:9229 --import tsx src/index.ts",
+    "exec": "npm run generate:all && npm run sync:frontend && node --enable-source-maps --inspect=0.0.0.0:9229 --import tsx src/index.ts",
     "legacyWatch": true,
     "delay": 1000
 }

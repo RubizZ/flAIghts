@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@plugin "@tailwindcss/typography";
 @import 'tailwind-animations';
 
 html,
@@ -94,6 +95,35 @@ body,
     border-color: var(--color-brand);
     box-shadow: 0 0 20px -5px rgba(var(--color-brand), 0.2);
   }
+
+  /* Small & Discrete Scrollbar System */
+  .custom-scrollbar::-webkit-scrollbar {
+    height: 3px;
+    width: 3px;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: color-mix(in srgb, var(--color-brand) 20%, transparent);
+    border-radius: 20px;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: color-mix(in srgb, var(--color-brand) 40%, transparent);
+  }
+
+  /* Prevent zoom on focus in mobile (iOS) by ensuring 16px font-size */
+  @media screen and (max-width: 768px) {
+
+    input,
+    select,
+    textarea {
+      font-size: 16px !important;
+    }
+  }
 }
 
 #nprogress .bar {
@@ -118,22 +148,63 @@ body,
   }
 }
 
+@keyframes icon-breath {
+
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 0.7;
+  }
+
+  50% {
+    transform: scale(1.15);
+    opacity: 1;
+  }
+}
+
 .animate-radar {
   animation: radar-pulse 2.4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 
-@keyframes radar-pulse {
-  0% {
-    transform: scale(0.3);
-    opacity: 0.8;
+.animate-radar-slow {
+  animation: icon-breath 4s ease-in-out infinite;
+}
+
+/* Cursor parpadeante inline al final del texto del agente mientras escribe */
+@keyframes agent-cursor-blink {
+
+  0%,
+  100% {
+    opacity: 1;
   }
 
-  100% {
-    transform: scale(2.8);
+  50% {
     opacity: 0;
   }
 }
 
-.animate-radar {
-  animation: radar-pulse 2.4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+.streaming-cursor p:last-child::after,
+.streaming-cursor li:last-child::after,
+.streaming-cursor h1:last-child::after,
+.streaming-cursor h2:last-child::after,
+.streaming-cursor h3:last-child::after,
+.streaming-cursor blockquote:last-child::after {
+  content: '';
+  display: inline-block;
+  width: 2px;
+  height: 0.85em;
+  background-color: var(--color-brand);
+  margin-left: 2px;
+  vertical-align: middle;
+  border-radius: 1px;
+  animation: agent-cursor-blink 0.9s ease-in-out infinite;
+}
+
+/* Evitar duplicados: Si un contenedor tiene un hijo que ya va a mostrar el cursor (p, li, etc.), ocultamos el del padre */
+.streaming-cursor *:has(> p:last-child)::after,
+.streaming-cursor *:has(> li:last-child)::after,
+.streaming-cursor *:has(> ul:last-child)::after,
+.streaming-cursor *:has(> ol:last-child)::after,
+.streaming-cursor *:has(> blockquote:last-child)::after {
+  content: none !important;
 }

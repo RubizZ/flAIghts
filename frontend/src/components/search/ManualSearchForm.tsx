@@ -1,9 +1,9 @@
 import React from "react";
-import { ArrowLeftRight, Search, MapPin, X } from "lucide-react";
-import { useTranslation } from "react-i18next";
-import { AirportResponse } from "@/api/generated/model";
+import { ArrowLeftRight, Search } from "lucide-react";
+import { AirportResponse } from "@/api/generated/openapi/model";
 import FlightSearchInput from "./FlightSearchInput";
 import DateSearchInput from "./DateSearchInput";
+import { useTranslation } from "react-i18next";
 
 export interface Layover {
     airport: AirportResponse | null;
@@ -11,10 +11,10 @@ export interface Layover {
 }
 
 interface ManualSearchFormProps {
-    origin: AirportResponse | null;
-    setOrigin: (airport: AirportResponse | null) => void;
-    destination: AirportResponse | null;
-    setDestination: (airport: AirportResponse | null) => void;
+    origins: AirportResponse[];
+    setOrigins: (airports: AirportResponse[]) => void;
+    destinations: AirportResponse[];
+    setDestinations: (airports: AirportResponse[]) => void;
     departureDate: string;
     setDepartureDate: (date: string) => void;
     returnDate: string;
@@ -30,21 +30,14 @@ interface ManualSearchFormProps {
     isHorizontal: boolean;
     isMapMode: boolean;
     today: string;
-    // Layover props
-    layovers: Layover[];
-    onLayoverAirportChange: (index: number, airport: AirportResponse | null) => boolean;
-    onLayoverDateChange: (index: number, date: string) => void;
-    onRemoveLayover: (index: number) => void;
-    layoverPopoverOpen: string | null;
-    setLayoverPopoverOpen: (key: string | null) => void;
-    mode: 'main' | 'map';
+    onHoverChange?: (airport: AirportResponse | null) => void;
 }
 
 const ManualSearchForm: React.FC<ManualSearchFormProps> = ({
-    origin,
-    setOrigin,
-    destination,
-    setDestination,
+    origins,
+    setOrigins,
+    destinations,
+    setDestinations,
     departureDate,
     setDepartureDate,
     returnDate,
@@ -60,38 +53,33 @@ const ManualSearchForm: React.FC<ManualSearchFormProps> = ({
     isHorizontal,
     isMapMode,
     today,
-    layovers,
-    onLayoverAirportChange,
-    onLayoverDateChange,
-    onRemoveLayover,
-    layoverPopoverOpen,
-    setLayoverPopoverOpen,
-    mode,
+    onHoverChange,
 }) => {
     const { t } = useTranslation();
 
     const handleSwitch = () => {
-        const tempOrigin = origin;
-        setOrigin(destination);
-        setDestination(tempOrigin);
+        const tempOrigins = [...origins];
+        setOrigins([...destinations]);
+        setDestinations(tempOrigins);
     };
 
     return (
         <div className={`grow ${isHorizontal ? 'flex flex-row items-stretch gap-4 w-full' : 'flex flex-col gap-3'}`}>
             {/* ── ORIGIN & DESTINATION ── */}
-            <div className={`relative flex gap-3 grow ${isHorizontal ? 'flex-3 min-w-0 flex-row items-center' : (isMapMode ? 'flex-col sm:flex-row items-stretch sm:items-center' : 'flex-col items-stretch')}`}>
+            <div className={`relative flex gap-3 grow ${isHorizontal ? 'flex-3 min-w-0 flex-row items-stretch' : (isMapMode ? 'flex-col sm:flex-row items-stretch sm:items-center' : 'flex-col items-stretch')}`}>
                 {/* Origin */}
                 <FlightSearchInput
                     type="origin"
-                    value={origin}
-                    onChange={(airport) => {
-                        if (airport && destination && airport.iata_code === destination.iata_code) return false;
-                        setOrigin(airport);
+                    value={origins}
+                    onChange={(newOrigins) => {
+                        setOrigins(newOrigins);
                         return true;
                     }}
                     onMapClick={() => startMapSelection('origin')}
                     isMapSelecting={selectingType === 'origin'}
-                    className={'flex-1 min-w-0'}
+                    className={'flex-1 min-w-0 h-full'}
+                    otherSelected={destinations}
+                    onHoverChange={onHoverChange}
                 />
 
                 {/* Switch Button */}
@@ -110,15 +98,16 @@ const ManualSearchForm: React.FC<ManualSearchFormProps> = ({
                 {/* Destination */}
                 <FlightSearchInput
                     type="destination"
-                    value={destination}
-                    onChange={(airport) => {
-                        if (airport && origin && airport.iata_code === origin.iata_code) return false;
-                        setDestination(airport);
+                    value={destinations}
+                    onChange={(newDestinations) => {
+                        setDestinations(newDestinations);
                         return true;
                     }}
                     onMapClick={() => startMapSelection('destination')}
                     isMapSelecting={selectingType === 'destination'}
-                    className={'flex-1 min-w-0'}
+                    className={'flex-1 min-w-0 h-full'}
+                    otherSelected={origins}
+                    onHoverChange={onHoverChange}
                 />
             </div>
 
@@ -205,7 +194,7 @@ const ManualSearchForm: React.FC<ManualSearchFormProps> = ({
             {/* Search Button */}
             <button
                 onClick={onSearch}
-                disabled={isPending || !origin || !destination || !departureDate}
+                disabled={isPending || origins.length === 0 || destinations.length === 0 || !departureDate}
                 className={`group relative flex items-center justify-center gap-2 bg-brand text-content-on-brand rounded-2xl font-bold hover:bg-brand-hover transition-all disabled:opacity-40 disabled:grayscale disabled:cursor-not-allowed overflow-hidden shadow-lg shadow-brand/20 active:scale-95 shrink-0 min-w-fit px-4 lg:px-6 cursor-pointer ${isHorizontal
                     ? 'w-full lg:w-auto py-3.5 lg:py-0'
                     : 'py-4 lg:py-4.5 text-lg w-full'

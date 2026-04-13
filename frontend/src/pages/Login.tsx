@@ -1,4 +1,4 @@
-import { useLogin } from "@/api/generated/auth/auth";
+import { useLogin } from "@/api/generated/openapi/auth";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import AuthLayout from "@/components/layout/AuthLayout";

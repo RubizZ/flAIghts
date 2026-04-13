@@ -17,8 +17,14 @@ export default defineConfig({
             run: ['npm', 'run', 'orval'],
             startup: false,
             condition: (file) => file.includes('openapi.json') || file.includes('orval.config.js'),
+        }),
+        run({
+            run: ['npm', 'run', 'asyncapi:client'],
+            startup: false,
+            condition: (file) => file.includes('asyncapi.json'),
         })
     ],
+    assetsInclude: ['**/*.glb'],
     server: {
         port: 5173,
         host: '0.0.0.0',
@@ -33,8 +39,15 @@ export default defineConfig({
             protocol: 'ws',
         },
         middlewareMode: false,
+        proxy: {
+            '/api': {
+                target: 'http://server:3000',
+                changeOrigin: true,
+                rewrite: (path) => path.replace(/^\/api/, ''),
+            }
+        }
     },
     build: {
         sourcemap: false,
     },
-})
+}) 

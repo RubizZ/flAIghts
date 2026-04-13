@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useAuth } from "@/context/AuthContext";
-import { useUpdateUser, getGetSelfUserQueryKey, useInitiateEmailChange, useCompleteEmailChange, useCancelEmailChange, getGetUserByIdQueryKey, useSetProfilePicture } from "@/api/generated/users/users";
+import { useUpdateUser, getGetSelfUserQueryKey, useInitiateEmailChange, useCompleteEmailChange, useCancelEmailChange, getGetUserByIdQueryKey, useSetProfilePicture } from "@/api/generated/openapi/users";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import {
@@ -23,7 +23,7 @@ import {
 } from "lucide-react";
 import { useTheme } from "@/context/ThemeContext";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { useChangePassword } from "@/api/generated/auth/auth";
+import { useChangePassword } from "@/api/generated/openapi/auth";
 import UserAvatar from "@/components/ui/UserAvatar";
 import { useTranslation } from "react-i18next";
 

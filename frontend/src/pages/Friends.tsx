@@ -6,7 +6,7 @@ import {
     useCancelFriendRequest,
     useRemoveFriend,
     getGetSelfUserQueryKey
-} from "@/api/generated/users/users";
+} from "@/api/generated/openapi/users";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { UserMinus, Check, X, Clock, Users, UserPlus, MessageCircle, UserSearch } from "lucide-react";
