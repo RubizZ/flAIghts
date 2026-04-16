@@ -1,15 +1,21 @@
-import { Body, Controller, Get, Patch, Path, Post, Query, RequestProp, Response, Route, Security, SuccessResponse, Tags } from "tsoa";
+import { Body, Controller, Get, Patch, Path, Post, Query, RequestProp, Response, Route, Security, SuccessResponse, Tags, Request } from "tsoa";
+import * as express from 'express';
 import type { SearchRequest, SearchResponseData, SearchValidationFailResponse } from "./search.types.js";
 import { inject, injectable } from "tsyringe";
 import { SearchService } from "./search.service.js";
 import type { AuthenticatedUser } from "../auth/auth.types.js";
 import type { SuccessResponse as SuccessResponseType, FailResponseFromError, PathPath, QueryPath, ValidationDetails, RequestValidationFailResponse } from "../../utils/responses.js";
 import { SearchNotFoundError, SearchNotAuthorizedError } from "./search.errors.js";
+import { AsyncAPIChannel, AsyncAPIController, AsyncAPIMessage } from "../../utils/asyncapi.decorators.js";
+import type { SearchProgressEvent } from "./search.types.js";
+
 
 @injectable()
 @Route("search")
 @Tags("Search")
+@AsyncAPIController("Search")
 export class SearchController extends Controller {
+
 
     constructor(
         @inject(SearchService) private readonly searchService: SearchService
@@ -35,6 +41,21 @@ export class SearchController extends Controller {
         const result = await this.searchService.createSearch(request);
         return result satisfies SearchResponseData as any;
     }
+
+    /**
+     * Canal de streaming para el progreso de la búsqueda (SSE).
+     */
+    @AsyncAPIChannel("/stream", { method: 'POST', summary: "Canal de streaming de búsqueda de vuelos", security: "jwt-optional" })
+    public async *searchRequestStream(
+        @Body() body: SearchRequest,
+        @RequestProp('user') user: AuthenticatedUser | null
+    ): AsyncGenerator<SearchProgressEvent> {
+        const requestData: SearchRequest & { user_id?: string } = { ...body };
+        if (user) requestData.user_id = user._id;
+
+        yield* this.searchService.createSearchStream(requestData);
+    }
+
 
     /**
      * Obtiene los resultados de una búsqueda por su ID.
@@ -96,3 +117,4 @@ export class SearchController extends Controller {
         return searches satisfies { items: SearchResponseData[], total: number, page: number, totalPages: number } as any;
     }
 }
+

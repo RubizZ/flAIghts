@@ -1,22 +1,25 @@
 import { createBrowserRouter, RouterProvider } from "react-router-dom"
 import { ThemeProvider } from "@/context/ThemeContext"
 import { AuthProvider } from "@/context/AuthContext"
+import { UserLocationProvider } from "@/context/UserLocationContext";
 import { routes } from "@/routes";
-import { QueryClientProvider, QueryErrorResetBoundary } from "@tanstack/react-query";
+import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from 'sonner';
-import ErrorBoundary from "@/components/common/ErrorBoundary.tsx";
 import queryClient from "@/api/query-client";
+import ConnectionOverlay from "@/components/common/ConnectionOverlay";
 
 const router = createBrowserRouter(routes);
-
 
 export default function App() {
     return (
         <QueryClientProvider client={queryClient}>
             <ThemeProvider>
                 <AuthProvider>
-                    <RouterProvider router={router} />
-                    <Toaster richColors position="top-center" />
+                    <UserLocationProvider>
+                        <RouterProvider router={router} />
+                        <ConnectionOverlay />
+                        <Toaster richColors position="top-center" />
+                    </UserLocationProvider>
                 </AuthProvider>
             </ThemeProvider>
         </QueryClientProvider>

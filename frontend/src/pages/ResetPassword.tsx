@@ -1,4 +1,4 @@
-import { useResetPassword } from "@/api/generated/auth/auth";
+import { useResetPassword } from "@/api/generated/openapi/auth";
 import AuthLayout from "@/components/layout/AuthLayout";
 import AuthCard from "@/components/ui/AuthCard";
 import FloatingLabelInput from "@/components/ui/FloatingLabelInput";

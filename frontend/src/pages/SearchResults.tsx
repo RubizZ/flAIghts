@@ -1,9 +1,9 @@
 import { useState, useMemo, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { useSearchResult } from "@/api/generated/search/search";
-import { useGetGlobeAirports } from "@/api/generated/airports/airports";
+import { useSearchResult } from "@/api/generated/openapi/search";
+import { useGetGlobeAirports } from "@/api/generated/openapi/airports";
 import { AlertCircle, Loader2, Plane, ArrowLeft, ArrowRight, DollarSign, Clock, Calendar } from "lucide-react";
-import type { ItineraryResponse, GlobeAirportResponse, AirportResponse } from "@/api/generated/model";
+import type { ItineraryResponse, GlobeAirportResponse, AirportResponse } from "@/api/generated/openapi/model";
 import StarsBackground from "@/components/ui/StarsBackground";
 import { toast } from "sonner";
 import Globe from "@/components/Globe";
@@ -15,6 +15,7 @@ export default function SearchResults() {
     const navigate = useNavigate();
     const [sortBy, setSortBy] = useState<'price' | 'duration'>('price');
     const [hoveredItinerary, setHoveredItinerary] = useState<ItineraryResponse | null>(null);
+    const [expandedItinerary, setExpandedItinerary] = useState<ItineraryResponse | null>(null);
     const [selectionStep, setSelectionStep] = useState<'departure' | 'return' | 'summary'>('departure');
     const [selectedDeparture, setSelectedDeparture] = useState<ItineraryResponse | null>(null);
     const [selectedReturn, setSelectedReturn] = useState<ItineraryResponse | null>(null);
@@ -58,11 +59,14 @@ export default function SearchResults() {
         return map;
     }, [airportsData]);
 
-    // Extract origin and destination from search criteria or hovered itinerary to visualize route in Globe
+    // Extract origin and destination from search criteria or hovered/expanded itinerary to visualize route in Globe
     const globeRoute = useMemo(() => {
-        if (hoveredItinerary) {
-            const origin = hoveredItinerary.legs[0]?.origin;
-            const destination = hoveredItinerary.legs[hoveredItinerary.legs.length - 1]?.destination;
+        // Hovered takes precedence, then expanded
+        const activeItinerary = hoveredItinerary || expandedItinerary;
+
+        if (activeItinerary) {
+            const origin = activeItinerary.legs[0]?.origin;
+            const destination = activeItinerary.legs[activeItinerary.legs.length - 1]?.destination;
             return { origin, destination };
         }
 
@@ -73,7 +77,7 @@ export default function SearchResults() {
         const destination = searchData.destinations?.[0] || (firstItinerary ? firstItinerary.legs[firstItinerary.legs.length - 1]?.destination : undefined);
 
         return { origin, destination };
-    }, [searchData, hoveredItinerary]);
+    }, [searchData, hoveredItinerary, expandedItinerary]);
 
     const sortItineraries = (itineraries?: ItineraryResponse[]) => {
         if (!itineraries) return [];
@@ -108,32 +112,81 @@ export default function SearchResults() {
         return formatted.charAt(0).toUpperCase() + formatted.slice(1).replace(/\./g, '');
     };
 
-    // Convert strings to AirportResponse objects for the Globe component
-    const originAirport = useMemo(() => {
-        const iata = globeRoute.origin;
-        if (!iata) return null;
-        const a = airportsMap.get(iata);
-        if (!a) return null;
-        return {
-            iata_code: a.i,
-            name: a.n,
-            city: a.ci,
-            location: { coordinates: [a.lo, a.la], type: "Point" }
-        } as AirportResponse;
-    }, [globeRoute.origin, airportsMap]);
+    const currentOrigins = useMemo(() => {
+        const activeItinerary = hoveredItinerary || expandedItinerary;
+        if (activeItinerary) {
+            const iata = activeItinerary.legs[0]?.origin;
+            const a = iata ? airportsMap.get(iata) : null;
+            if (!a) return [];
+            return [{
+                iata_code: a.i,
+                name: a.n,
+                city: a.ci,
+                location: { coordinates: [a.lo, a.la], type: "Point" }
+            } as AirportResponse];
+        }
+        if (!searchData?.origins) return [];
+        return searchData.origins
+            .map(iata => {
+                const a = airportsMap.get(iata);
+                if (!a) return null;
+                return {
+                    iata_code: a.i,
+                    name: a.n,
+                    city: a.ci,
+                    location: { coordinates: [a.lo, a.la], type: "Point" }
+                } as AirportResponse;
+            })
+            .filter((a): a is AirportResponse => !!a);
+    }, [hoveredItinerary, expandedItinerary, searchData?.origins, airportsMap]);
 
-    const destinationAirport = useMemo(() => {
-        const iata = globeRoute.destination;
-        if (!iata) return null;
-        const a = airportsMap.get(iata);
-        if (!a) return null;
-        return {
-            iata_code: a.i,
-            name: a.n,
-            city: a.ci,
-            location: { coordinates: [a.lo, a.la], type: "Point" }
-        } as AirportResponse;
-    }, [globeRoute.destination, airportsMap]);
+    const currentDestinations = useMemo(() => {
+        const activeItinerary = hoveredItinerary || expandedItinerary;
+        if (activeItinerary) {
+            const iata = activeItinerary.legs[activeItinerary.legs.length - 1]?.destination;
+            const a = iata ? airportsMap.get(iata) : null;
+            if (!a) return [];
+            return [{
+                iata_code: a.i,
+                name: a.n,
+                city: a.ci,
+                location: { coordinates: [a.lo, a.la], type: "Point" }
+            } as AirportResponse];
+        }
+        if (!searchData?.destinations) return [];
+        return searchData.destinations
+            .map(iata => {
+                const a = airportsMap.get(iata);
+                if (!a) return null;
+                return {
+                    iata_code: a.i,
+                    name: a.n,
+                    city: a.ci,
+                    location: { coordinates: [a.lo, a.la], type: "Point" }
+                } as AirportResponse;
+            })
+            .filter((a): a is AirportResponse => !!a);
+    }, [hoveredItinerary, expandedItinerary, searchData?.destinations, airportsMap]);
+
+    const currentSteps = useMemo(() => {
+        const activeItinerary = hoveredItinerary || expandedItinerary;
+        if (!activeItinerary || activeItinerary.legs.length < 2) return [];
+
+        const steps: AirportResponse[][] = [];
+        for (let i = 0; i < activeItinerary.legs.length - 1; i++) {
+            const iata = activeItinerary.legs[i]?.destination;
+            const a = iata ? airportsMap.get(iata) : null;
+            if (a) {
+                steps.push([{
+                    iata_code: a.i,
+                    name: a.n,
+                    city: a.ci,
+                    location: { coordinates: [a.lo, a.la], type: "Point" }
+                } as AirportResponse]);
+            }
+        }
+        return steps;
+    }, [hoveredItinerary, expandedItinerary, airportsMap]);
 
     if (error) {
         return (
@@ -159,6 +212,8 @@ export default function SearchResults() {
     const isOneWay = !searchData?.return_date || !returnItineraries || returnItineraries.length === 0;
 
     const handleSelectItinerary = (itinerary: ItineraryResponse, type: 'departure' | 'return') => {
+        setExpandedItinerary(null);
+        window.dispatchEvent(new CustomEvent('app:select-flight'));
         if (type === 'departure') {
             setSelectedDeparture(itinerary);
             if (isOneWay) {
@@ -175,6 +230,7 @@ export default function SearchResults() {
     };
 
     const handleGoBack = () => {
+        setExpandedItinerary(null);
         if (selectionStep === 'return') {
             setSelectionStep('departure');
             setSelectedDeparture(null);
@@ -190,17 +246,18 @@ export default function SearchResults() {
         window.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
+    const allStepsIata = useMemo(() => currentSteps.flat().map(s => s.iata_code).filter(Boolean) as string[], [currentSteps]);
     const selectedAirports = useMemo(() =>
-        [globeRoute.origin, globeRoute.destination].filter(Boolean) as string[],
-        [globeRoute.origin, globeRoute.destination]
+        [globeRoute.origin, ...allStepsIata, globeRoute.destination].filter(Boolean) as string[],
+        [globeRoute.origin, allStepsIata, globeRoute.destination]
     );
 
     const handleGlobeReady = useCallback(() => setIsGlobeReady(true), []);
 
     return (
-        <div className="absolute inset-0 w-full h-full overflow-hidden bg-main lg:bg-black text-content flex">
+        <div className="relative min-h-screen w-full overflow-y-auto overflow-x-hidden bg-main lg:bg-black text-content flex lg:block">
             {/* Loading Overlay */}
-            <div className={`absolute inset-0 z-50 bg-main flex flex-col items-center justify-center gap-6 transition-opacity duration-700 pointer-events-none ${showLoading ? 'opacity-100' : 'opacity-0'}`}>
+            <div className={`fixed inset-0 z-50 bg-main flex flex-col items-center justify-center gap-6 transition-opacity duration-700 pointer-events-none ${showLoading ? 'opacity-100' : 'opacity-0'}`}>
                 <div className="relative flex items-center justify-center">
                     {/* Radar rings — staggered expanding pulses using brand color */}
                     <div className="absolute w-20 h-20 rounded-full border border-brand/40 animate-radar" style={{ animationDelay: '0s' }} />
@@ -221,14 +278,14 @@ export default function SearchResults() {
             </div>
 
             {/* Mobile Background Globe (Full screen) */}
-            <div className="absolute inset-0 z-0 lg:hidden">
+            <div className="fixed inset-0 z-0 lg:hidden">
                 <StarsBackground className="opacity-30" />
             </div>
 
             {/* Left Column: Results List */}
             {searchData && (
-                <div className="relative z-10 w-full lg:w-[65%] xl:w-[60%] h-full">
-                    <div className="relative w-full h-full overflow-y-auto overflow-x-hidden scroll-smooth [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+                <div className="relative z-10 w-full lg:w-[65%] xl:w-[60%]">
+                    <div className="relative w-full">
                         <div className="max-w-3xl mx-auto px-4 pt-24 pb-6 lg:pt-24 lg:pb-10 min-h-full flex flex-col gap-6 lg:gap-8">
 
                             {/* Header Card */}
@@ -243,18 +300,15 @@ export default function SearchResults() {
                                     </button>
                                     <div>
                                         <h1 className="text-lg md:text-xl font-bold flex items-center gap-3 text-content">
-                                            {selectionStep === 'departure' && (
+                                            {(selectionStep === 'departure' || selectionStep === 'return') && (
                                                 <>
-                                                    {globeRoute.origin}
-                                                    <Plane className="w-5 h-5 text-brand rotate-90" />
-                                                    {globeRoute.destination}
-                                                </>
-                                            )}
-                                            {selectionStep === 'return' && (
-                                                <>
-                                                    {globeRoute.destination}
-                                                    <Plane className="w-5 h-5 text-brand rotate-90" />
-                                                    {globeRoute.origin}
+                                                    <span className="truncate max-w-50 md:max-w-none">
+                                                        {searchData.origins?.join(' + ') || (searchData.departure_itineraries?.[0]?.legs?.[0]?.origin)}
+                                                    </span>
+                                                    <Plane className="w-5 h-5 text-brand rotate-45 shrink-0" />
+                                                    <span className="truncate max-w-50 md:max-w-none">
+                                                        {searchData.destinations?.join(' + ') || (searchData.departure_itineraries?.[0]?.legs?.at(-1)?.destination)}
+                                                    </span>
                                                 </>
                                             )}
                                             {selectionStep === 'summary' && `Resumen de tu viaje`}
@@ -346,7 +400,10 @@ export default function SearchResults() {
                                                 </p>
                                             </div>
                                             <button
-                                                onClick={() => toast.info("Función no implementada", { description: "Esta acción te redirigirá a la web del vendedor." })}
+                                                onClick={() => {
+                                                    window.dispatchEvent(new CustomEvent('app:buy-flight'));
+                                                    toast.info("Función no implementada", { description: "Esta acción te redirigirá a la web del vendedor." });
+                                                }}
                                                 className="w-full sm:w-auto px-8 py-4 bg-brand hover:bg-brand-hover text-white text-base font-bold rounded-2xl shadow-lg shadow-brand/20 transition-all hover:scale-105 active:scale-95 cursor-pointer"
                                             >
                                                 Reservar Vuelos
@@ -373,6 +430,7 @@ export default function SearchResults() {
                                                     formatDuration={formatDuration}
                                                     airportsMap={airportsMap}
                                                     onHover={setHoveredItinerary}
+                                                    onExpandChange={setExpandedItinerary}
                                                     onSelect={(it) => handleSelectItinerary(it, 'departure')}
                                                 />
                                             ))}
@@ -396,7 +454,7 @@ export default function SearchResults() {
                                         <div className="space-y-4 animate-in slide-in-from-bottom-8 fade-in duration-700 delay-200">
                                             <h2 className="text-xl font-bold text-content flex items-center gap-3 ml-2">
                                                 <div className="p-2 bg-destination/20 rounded-lg">
-                                                    <Plane className="w-5 h-5 text-destination rotate-[135deg]" />
+                                                    <Plane className="w-5 h-5 text-destination rotate-135" />
                                                 </div>
                                                 Vuelos de Vuelta
                                             </h2>
@@ -409,6 +467,7 @@ export default function SearchResults() {
                                                         formatDuration={formatDuration}
                                                         airportsMap={airportsMap}
                                                         onHover={setHoveredItinerary}
+                                                        onExpandChange={setExpandedItinerary}
                                                         onSelect={(it) => handleSelectItinerary(it, 'return')}
                                                     />
                                                 ))}
@@ -438,12 +497,13 @@ export default function SearchResults() {
                 </div>
             )}
 
-            {/* Desktop Globe (Absolute Full Screen with Offset) */}
-            <div className={`absolute inset-0 z-0 transition-opacity duration-700 ${!isLargeScreen ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
+            {/* Desktop Globe (Fixed Full Screen with Offset) */}
+            <div className={`fixed inset-0 z-0 transition-opacity duration-700 pointer-events-none ${!isLargeScreen ? 'opacity-0' : 'opacity-100'}`}>
                 <Globe
                     selectedAirports={selectedAirports}
-                    origin={originAirport}
-                    destination={destinationAirport}
+                    origins={currentOrigins}
+                    destinations={currentDestinations}
+                    steps={currentSteps}
                     interactive={false}
                     horizontalOffset={isLargeScreen ? 450 : 0}
                     onReady={handleGlobeReady}

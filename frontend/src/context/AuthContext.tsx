@@ -1,8 +1,8 @@
 import { createContext, useContext, useCallback, ReactNode, useMemo } from 'react';
-import { useGetSelfUser, getGetSelfUserQueryKey } from '@/api/generated/users/users';
-import { useLogout } from '@/api/generated/auth/auth';
+import { useGetSelfUser, getGetSelfUserQueryKey } from '@/api/generated/openapi/users';
+import { useLogout } from '@/api/generated/openapi/auth';
 import { useQueryClient } from '@tanstack/react-query';
-import type { PopulatedUser } from '@/api/generated/model';
+import type { PopulatedUser } from '@/api/generated/openapi/model';
 
 interface AuthContextType {
     /** Usuario autenticado actual, null si no está autenticado */

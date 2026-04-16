@@ -1,4 +1,4 @@
-import { PublicUser, User, PopulatedUser, FriendUser } from "@/api/generated/model";
+import { PublicUser, User, PopulatedUser, FriendUser } from "@/api/generated/openapi/model";
 
 interface UserAvatarProps {
     user?: User | PopulatedUser | PublicUser | FriendUser | null;

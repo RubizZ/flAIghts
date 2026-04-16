@@ -1,5 +1,5 @@
 import { Plane } from "lucide-react";
-import type { ItineraryResponse, GlobeAirportResponse } from "@/api/generated/model";
+import type { ItineraryResponse, GlobeAirportResponse } from "@/api/generated/openapi/model";
 import FlightCard from "./FlightCard";
 
 export default function SelectedFlightSummary({

@@ -22,6 +22,16 @@ export class AuthFailError extends Error {
     }
 }
 
+// Clase de error para fallos de conexión
+export class ConnectionError extends Error {
+    public readonly isConnectionError = true;
+
+    constructor(message?: string) {
+        super(message ?? 'No se ha podido establecer conexión con el servidor.');
+        this.name = 'ConnectionError';
+    }
+}
+
 // Función para verificar si un código es un error de auth fail
 export const isAuthFailCode = (code: unknown): code is AuthFailCode => {
     return typeof code === 'string' && AUTH_FAIL_CODES.includes(code as AuthFailCode);
@@ -62,6 +72,17 @@ export const AXIOS_INSTANCE = axios.create({
 
 // Mutador para Orval: extrae los datos y gestiona la cancelación
 export type BodyType<T> = T extends { data: infer D } ? D : T;
+
+// Interceptor para peticiones exitosas: si una petición tiene éxito, el servidor está vivo
+AXIOS_INSTANCE.interceptors.response.use(
+    (response) => {
+        window.dispatchEvent(new CustomEvent('server-up'));
+        return response;
+    },
+    (error) => {
+        return Promise.reject(error);
+    }
+);
 
 export const customInstance = <T>(
     config: AxiosRequestConfig,
@@ -104,6 +125,34 @@ export const customInstance = <T>(
             if (errorData) {
                 return Promise.reject(errorData);
             }
+
+            const isCancel = axios.isCancel(error) || error.name === 'CanceledError' || error.message === 'Query was cancelled';
+            const status = error.response?.status;
+
+            // Si es una cancelación, no es un error de conexión ni de servidor
+            if (isCancel) return Promise.reject(error);
+
+            const isNetworkError = !error.response ||
+                error.code === 'ERR_NETWORK' ||
+                error.code === 'ECONNABORTED' ||
+                error.code === 'ECONNREFUSED' ||
+                error.message.toLowerCase().includes('network error') ||
+                error.message.toLowerCase().includes('connection refused');
+
+            // Detección inteligente: Si no es un error de red, comprobamos si la respuesta viene 
+            // de nuestra aplicación (formato JSend). Si no hay respuesta o no tiene el formato 
+            // esperado, es un fallo de infraestructura (Proxy, Server Down, etc.)
+            const isAppResponse = error.response?.data && 
+                                typeof error.response.data === 'object' && 
+                                'status' in error.response.data;
+
+            if (isNetworkError || (error.response && !isAppResponse)) {
+                // Emitimos un evento global para que el ConnectionOverlay reaccione al instante
+                window.dispatchEvent(new CustomEvent('server-down'));
+
+                return Promise.reject(new ConnectionError(error.message));
+            }
+
             return Promise.reject(error);
         });
 

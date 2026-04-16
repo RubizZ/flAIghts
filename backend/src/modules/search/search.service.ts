@@ -1,5 +1,5 @@
 import { singleton, inject } from "tsyringe";
-import type { SearchRequest, SearchResponseData, LegResponse, EnrichedFlightEdge } from "./search.types.js";
+import type { SearchRequest, SearchResponseData, LegResponse, EnrichedFlightEdge, SearchProgressEvent } from "./search.types.js";
 import { Itinerary } from "./models/itinerary.model.js";
 import { SerpApiClient } from "@/services/serpapi/serpapi.client.js";
 import { Search, type ISearch } from "./models/search.model.js";
@@ -31,7 +31,14 @@ export class SearchService {
         const createdData: Partial<ISearch> = { ...data };
         createdData.shared = !data.user_id;
         const search = await Search.create(createdData);
-        this.runExploration(search._id, data);
+
+        // Ejecución desvinculada (background)
+        void (async () => {
+            for await (const _ of this.runExploration(search._id, data)) {
+                // Consumimos el generador para que se ejecute la lógica
+            }
+        })();
+
         this.auditService.register({
             resource: "SEARCH",
             action: "CREATE",
@@ -46,6 +53,32 @@ export class SearchService {
             }
         });
         return this.formatSearchResponse(search.toJSON());
+    }
+
+    public async *createSearchStream(data: SearchRequest & { user_id?: string }): AsyncGenerator<SearchProgressEvent> {
+        const createdData: Partial<ISearch> = { ...data };
+        createdData.shared = !data.user_id;
+        const search = await Search.create(createdData);
+
+        yield* this.runExploration(search._id, data);
+    }
+
+    public async createSearchBlocking(data: SearchRequest & { user_id?: string }): Promise<SearchResponseData> {
+        const createdData: Partial<ISearch> = { ...data };
+        createdData.shared = !data.user_id;
+        const search = await Search.create(createdData);
+
+        let finalData: SearchResponseData | undefined;
+        for await (const event of this.runExploration(search._id, data)) {
+            if (event.type === 'completed') {
+                finalData = event.data;
+            } else if (event.type === 'failed') {
+                throw new Error(event.message);
+            }
+        }
+
+        if (!finalData) throw new Error("La exploración no pudo completarse.");
+        return finalData;
     }
 
     public async getSearch(searchId: string, requesterId: string | undefined): Promise<SearchResponseData> {
@@ -115,19 +148,27 @@ export class SearchService {
         return this.formatSearchResponse(search.toJSON());
     }
 
-    private async runExploration(searchId: string, criteria: SearchRequest) {
+    public async *runExploration(searchId: string, criteria: SearchRequest): AsyncGenerator<SearchProgressEvent> {
         try {
             const sequence = [criteria.origins[0], ...criteria.destinations].filter((node): node is string => !!node);
             let currentDate = criteria.departure_date.toISOString().split("T")[0]!;
             const layoverDays = criteria.layover_days ?? [];
             const fullPath: EnrichedFlightEdge[] = [];
+            const totalSteps = sequence.length - 1;
 
-            for (let i = 0; i < sequence.length - 1; i++) {
+            for (let i = 0; i < totalSteps; i++) {
                 const puntoA = sequence[i];
                 const puntoB = sequence[i + 1];
                 const edges: EnrichedFlightEdge[] = [];
 
                 if (!puntoA || !puntoB) continue;
+
+                yield {
+                    type: "progress",
+                    message: `Buscando la mejor ruta de ${puntoA} a ${puntoB}...`,
+                    step: i + 1,
+                    total_steps: totalSteps
+                };
 
                 const stayDays = layoverDays[i] ?? 1;
                 const searchDate = i === 0 ? currentDate : addDays(currentDate, stayDays);
@@ -157,6 +198,7 @@ export class SearchService {
                 if (!tramo) {
                     logger.warn(`Tramo inalcanzable: ${puntoA} -> ${puntoB} para búsqueda ${searchId}`);
                     await Search.updateOne({ _id: searchId }, { status: "failed" });
+                    yield { type: "failed", message: `No se encontró una ruta válida entre ${puntoA} y ${puntoB}.` };
                     this.auditService.register({
                         resource: "SEARCH",
                         action: "FAIL",
@@ -223,13 +265,24 @@ export class SearchService {
                     created_at: new Date()
                 });
 
-                await Search.updateOne(
-                    { _id: searchId },
+                const updatedSearch = await Search.findByIdAndUpdate(
+                    searchId,
                     {
                         status: "completed",
                         $push: { departure_itineraries: itinerary._id }
-                    }
-                );
+                    },
+                    { new: true }
+                ).populate("departure_itineraries").populate("return_itineraries");
+
+                if (!updatedSearch) throw new Error("Search not found after update");
+
+                const responseData = this.formatSearchResponse(updatedSearch.toJSON());
+
+                yield {
+                    type: "completed",
+                    message: "Búsqueda finalizada con éxito.",
+                    data: responseData
+                };
 
                 this.auditService.register({
                     resource: "SEARCH",
@@ -242,11 +295,13 @@ export class SearchService {
 
             } else {
                 await Search.updateOne({ _id: searchId }, { status: "failed" });
+                yield { type: "failed", message: "No se encontraron vuelos para esta ruta." };
             }
 
-        } catch (error) {
+        } catch (error: any) {
             logger.error({ error, searchId }, `Error en exploración ${searchId}`);
             await Search.updateOne({ _id: searchId }, { status: "failed" });
+            yield { type: "failed", message: error.message || "Error interno durante la exploración." };
         }
     }
 

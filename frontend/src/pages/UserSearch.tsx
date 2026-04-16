@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { useSearchUsers } from "@/api/generated/users/users";
+import { useSearchUsers } from "@/api/generated/openapi/users";
 import { Search, Clock } from "lucide-react";
 import UserAvatar from "@/components/ui/UserAvatar";
 

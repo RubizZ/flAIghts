@@ -84,6 +84,22 @@ const serverConfigSchema = z.object({
         return v === undefined ? undefined : v === "true";
     }, z.boolean().default(false)),
     SERPAPI_API_KEY: z.preprocess(emptyToUndefined, z.string()),
+    OPENAI_API_KEY: z.preprocess(emptyToUndefined, z.string()),
+    OPENAI_BASE_URL: z.preprocess(emptyToUndefined, z.url().optional()),
+    AVAILABLE_MODELS: z.preprocess(emptyToUndefined, z.string().optional().transform((val) =>
+        val ? val.split(",").map((o) => o.trim()) : []
+    )),
+    GEOCODING_PROVIDER: z.preprocess(emptyToUndefined, z.enum(["nominatim", "google"]).default("nominatim")),
+    GEOCODING_API_KEY: z.preprocess(emptyToUndefined, z.string().optional()),
+    GEOCODE_CACHE_TTL: z.preprocess(emptyToUndefined, msSchema.default("7d")).transform(v => v as StringValue),
+}).superRefine((data, ctx) => {
+    if (data.GEOCODING_PROVIDER === "google" && !data.GEOCODING_API_KEY) {
+        ctx.addIssue({
+            code: "custom",
+            message: "GEOCODING_API_KEY is required when GEOCODING_PROVIDER is 'google'",
+            path: ["GEOCODING_API_KEY"],
+        });
+    }
 });
 
 function sanitize<K extends keyof ServerConfigType>(val: ServerConfigType[K], field: K): ServerConfigType[K] | string {
@@ -96,6 +112,8 @@ function sanitize<K extends keyof ServerConfigType>(val: ServerConfigType[K], fi
         case "SMTP_USER":
         case "SERPAPI_API_KEY":
         case "MONGODB_URI":
+        case "OPENAI_API_KEY":
+        case "GEOCODING_API_KEY":
             return "[REDACTED] (please check .env file)";
         // Other non-sensitive values
         default:

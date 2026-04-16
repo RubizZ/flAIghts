@@ -1,17 +1,18 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import Globe from "../components/Globe.tsx"
-import { Plus, Bot, SlidersHorizontal, Globe as GlobeIcon, Maximize2, PlaneTakeoff, PlaneLanding, AlertTriangle, X, Plane, ChevronDown, ChevronRight, Search, Calendar as CalendarIcon } from "lucide-react";
-import { useSearchRequest } from "@/api/generated/search/search";
+import { Plus, Maximize2, PlaneTakeoff, PlaneLanding, X, Plane, ChevronDown, ChevronRight, Search, Calendar as CalendarIcon } from "lucide-react";
+import { useSearchRequest } from "@/api/generated/openapi/search";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
-import { AirportResponse } from "@/api/generated/model";
+import { AirportResponse } from "@/api/generated/openapi/model";
 import StarsBackground from "../components/ui/StarsBackground.tsx";
 import ManualSearchForm from "../components/search/ManualSearchForm.tsx";
 import NavIconButton from "../components/ui/NavIconButton.tsx";
+import HomeCard from "../components/home/HomeCard.tsx";
 
-function SearchFlight() {
-    const [origin, setOrigin] = useState<AirportResponse | null>(null);
-    const [destination, setDestination] = useState<AirportResponse | null>(null);
+export default function Home() {
+    const [origins, setOrigins] = useState<AirportResponse[]>([]);
+    const [destinations, setDestinations] = useState<AirportResponse[]>([]);
     const [departureDate, setDepartureDate] = useState("");
     const [activeDeparturePopover, setActiveDeparturePopover] = useState<'main' | 'map' | null>(null);
     const [returnDate, setReturnDate] = useState("");
@@ -20,30 +21,25 @@ function SearchFlight() {
     const [selectingType, setSelectingType] = useState<'origin' | 'destination' | null>(null);
     const [globeReady, setGlobeReady] = useState(false);
     const [shouldCloseOnSelect, setShouldCloseOnSelect] = useState(false);
-    const [searchMode, setSearchMode] = useState<'manual' | 'chatbot'>('manual');
     const today = new Date().toISOString().split('T')[0]!;
     const [isSMScreen, setIsSMScreen] = useState(window.innerWidth >= 640);
     const [isLargeScreen, setIsLargeScreen] = useState(window.innerWidth >= 1024);
     const [isXXLScreen, setIsXXLScreen] = useState(window.innerWidth >= 1536);
     const [isMobileCardExpanded, setIsMobileCardExpanded] = useState(false);
     const [isUserInteracting, setIsUserInteracting] = useState(false);
-    const [userLocation, setUserLocation] = useState<{ latitude: number; longitude: number } | undefined>(undefined);
+    const [isInteractionSuppressed, setIsInteractionSuppressed] = useState(false);
+    const [initialMousePos, setInitialMousePos] = useState<{ x: number, y: number } | null>(null);
+    const [searchMode, setSearchMode] = useState<'manual' | 'ai'>(() => {
+        const saved = localStorage.getItem('searchMode');
+        return (saved === 'manual' || saved === 'ai') ? saved : 'manual';
+    });
+    const [hoveredAirport, setHoveredAirport] = useState<AirportResponse | null>(null);
 
     useEffect(() => {
-        if ("geolocation" in navigator) {
-            navigator.geolocation.getCurrentPosition(
-                (position) => {
-                    setUserLocation({
-                        latitude: position.coords.latitude,
-                        longitude: position.coords.longitude
-                    });
-                },
-                (error) => {
-                    console.warn("Geolocation Error:", error.message);
-                }
-            );
-        }
-    }, []);
+        localStorage.setItem('searchMode', searchMode);
+    }, [searchMode]);
+
+
 
     useEffect(() => {
         const handleResize = () => {
@@ -90,29 +86,42 @@ function SearchFlight() {
 
     const handleMapSelect = (airport: AirportResponse) => {
         if (selectingType === 'origin') {
-            if (airport.iata_code === destination?.iata_code) {
+            if (destinations.some(d => d.iata_code === airport.iata_code)) {
                 toast.error("El origen y el destino no pueden ser el mismo");
                 return;
             }
-            setOrigin(airport);
+            if (origins.some(o => o.iata_code === airport.iata_code)) {
+                toast.error("Ese aeropuerto ya está seleccionado como origen");
+                return;
+            }
+            setOrigins([...origins, airport]);
         } else if (selectingType === 'destination') {
-            if (airport.iata_code === origin?.iata_code) {
+            if (origins.some(o => o.iata_code === airport.iata_code)) {
                 toast.error("El origen y el destino no pueden ser el mismo");
                 return;
             }
-            setDestination(airport);
+            if (destinations.some(d => d.iata_code === airport.iata_code)) {
+                toast.error("Ese aeropuerto ya está seleccionado como destino");
+                return;
+            }
+            setDestinations([...destinations, airport]);
         } else {
-            if (!origin) {
-                if (airport.iata_code === destination?.iata_code) return;
-                setOrigin(airport);
-            } else if (!destination && origin.iata_code !== airport.iata_code) {
-                setDestination(airport);
+            // Default logic if not specifically selecting for one side (e.g. from general map click)
+            if (origins.length === 0) {
+                if (destinations.some(d => d.iata_code === airport.iata_code)) return;
+                setOrigins([airport]);
+            } else if (destinations.length === 0 && !origins.some(o => o.iata_code === airport.iata_code)) {
+                setDestinations([airport]);
             } else {
-                if (airport.iata_code === destination?.iata_code) return;
-                setOrigin(airport);
-                setDestination(null);
+                if (destinations.some(d => d.iata_code === airport.iata_code)) return;
+                setOrigins([airport]);
+                setDestinations([]);
             }
         }
+
+        // Si el usuario selecciona algo del mapa, pasamos a modo manual para que lo vea en la tarjeta
+        setSearchMode('manual');
+
         if (shouldCloseOnSelect) {
             setIsSelectingOnMap(false);
             setShouldCloseOnSelect(false);
@@ -132,12 +141,10 @@ function SearchFlight() {
     const [inspectedAirport, setInspectedAirport] = useState<AirportResponse | null>(null);
     const [renderedAirport, setRenderedAirport] = useState<AirportResponse | null>(null);
     const [isChanging, setIsChanging] = useState(false);
-
     const [isGlobeMoving, setIsGlobeMoving] = useState(false);
 
     const isCardVisible = !!(isSelectingOnMap && inspectedAirport && renderedAirport && !selectingType && !isChanging);
     const isContentVisible = isCardVisible;
-
 
     useEffect(() => {
         if (!inspectedAirport) {
@@ -159,6 +166,38 @@ function SearchFlight() {
         }
     }, [inspectedAirport, renderedAirport?.iata_code]);
 
+    const wasOpenRef = useRef(isSelectingOnMap);
+    useEffect(() => {
+        if (!isSelectingOnMap && wasOpenRef.current) {
+            setIsInteractionSuppressed(true);
+            setInitialMousePos(null);
+        }
+        wasOpenRef.current = isSelectingOnMap;
+    }, [isSelectingOnMap]);
+
+    useEffect(() => {
+        if (!isInteractionSuppressed) return;
+
+        const handleMouseMove = (e: MouseEvent) => {
+            if (!initialMousePos) {
+                setInitialMousePos({ x: e.clientX, y: e.clientY });
+                return;
+            }
+
+            const dx = e.clientX - initialMousePos.x;
+            const dy = e.clientY - initialMousePos.y;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+
+            if (distance > 150) {
+                setIsInteractionSuppressed(false);
+                setInitialMousePos(null);
+            }
+        };
+
+        window.addEventListener('mousemove', handleMouseMove);
+        return () => window.removeEventListener('mousemove', handleMouseMove);
+    }, [isInteractionSuppressed, initialMousePos]);
+
     useEffect(() => {
         if (!isSelectingOnMap) {
             setInspectedAirport(null);
@@ -166,12 +205,17 @@ function SearchFlight() {
     }, [isSelectingOnMap]);
 
     const handleSetOrigin = (airport: AirportResponse) => {
-        if (airport.iata_code === destination?.iata_code) {
+        if (destinations.some(d => d.iata_code === airport.iata_code)) {
             toast.error("El origen y el destino no pueden ser el mismo");
             return;
         }
-        setOrigin(airport);
+        if (origins.some(o => o.iata_code === airport.iata_code)) {
+            toast.error("Ese aeropuerto ya está seleccionado como origen");
+            return;
+        }
+        setOrigins([...origins, airport]);
         setInspectedAirport(null);
+        setSearchMode('manual');
 
         if (shouldCloseOnSelect) {
             setIsSelectingOnMap(false);
@@ -181,12 +225,17 @@ function SearchFlight() {
     }
 
     const handleSetDestination = (airport: AirportResponse) => {
-        if (airport.iata_code === origin?.iata_code) {
+        if (origins.some(o => o.iata_code === airport.iata_code)) {
             toast.error("El origen y el destino no pueden ser el mismo");
             return;
         }
-        setDestination(airport);
+        if (destinations.some(d => d.iata_code === airport.iata_code)) {
+            toast.error("Ese aeropuerto ya está seleccionado como destino");
+            return;
+        }
+        setDestinations([...destinations, airport]);
         setInspectedAirport(null);
+        setSearchMode('manual');
 
         if (shouldCloseOnSelect) {
             setIsSelectingOnMap(false);
@@ -196,14 +245,14 @@ function SearchFlight() {
     }
 
     const handleSearch = () => {
-        if (!origin || !destination || !departureDate) {
+        if (origins.length === 0 || destinations.length === 0 || !departureDate) {
             toast.error("Por favor, completa origen, destino y fecha de salida");
             return;
         }
 
         const requestData = {
-            origins: [origin.iata_code],
-            destinations: [destination.iata_code],
+            origins: origins.map(o => o.iata_code),
+            destinations: destinations.map(d => d.iata_code),
             criteria: {
                 priority: "balanced" as const,
             },
@@ -220,10 +269,10 @@ function SearchFlight() {
         const isMapMode = mode === 'map';
         return (
             <ManualSearchForm
-                origin={origin}
-                setOrigin={setOrigin}
-                destination={destination}
-                setDestination={setDestination}
+                origins={origins}
+                setOrigins={setOrigins}
+                destinations={destinations}
+                setDestinations={setDestinations}
                 departureDate={departureDate}
                 setDepartureDate={setDepartureDate}
                 returnDate={returnDate}
@@ -239,24 +288,30 @@ function SearchFlight() {
                 isHorizontal={isMapMode && isLargeScreen}
                 isMapMode={isMapMode}
                 today={today}
+                onHoverChange={setHoveredAirport}
             />
         );
     }
 
+    const selectedAirports = useMemo(() => [
+        ...origins.map(o => o.iata_code),
+        ...destinations.map(d => d.iata_code),
+        inspectedAirport?.iata_code,
+    ].filter(Boolean) as string[], [origins, destinations, inspectedAirport]);
 
     return (
         <div className={`absolute inset-0 overflow-hidden transition-colors duration-700 ${!isLargeScreen && !isSelectingOnMap ? 'bg-main' : 'bg-black'}`}>
-            {/* CSS Parallax Stars Background (Visible mainly on small screens when map is collapsed) */}
             <StarsBackground className={`transition-opacity duration-1000 ${!isLargeScreen && !isSelectingOnMap ? 'opacity-30' : 'opacity-0'}`} />
-            {/* Background Globe */}
+
+            {/* Globe Layer */}
             <div className={`absolute inset-0 z-0 transition-opacity duration-700 ${!isLargeScreen && !isSelectingOnMap ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
                 <Globe
                     onAirportSelect={selectingType ? handleMapSelect : undefined}
-                    selectedAirports={[origin?.iata_code, destination?.iata_code, inspectedAirport?.iata_code].filter(Boolean) as string[]}
-                    origin={origin}
-                    destination={destination}
+                    selectedAirports={selectedAirports}
+                    origins={origins}
+                    destinations={destinations}
                     interactive={isSelectingOnMap && !(inspectedAirport && !isLargeScreen)}
-                    horizontalOffset={isSelectingOnMap ? 0 : (isLargeScreen ? 258 : 0)}
+                    horizontalOffset={isSelectingOnMap ? 0 : (isLargeScreen ? 306 : 0)}
                     onReady={() => setGlobeReady(true)}
                     onSetOrigin={handleSetOrigin}
                     onSetDestination={handleSetDestination}
@@ -266,14 +321,32 @@ function SearchFlight() {
                         setIsUserInteracting(interacting);
                     }}
                     focusIata={inspectedAirport?.iata_code}
+                    hoveredAirport={hoveredAirport || undefined}
                 />
             </div>
 
+            {/* Background Interaction Overlay */}
+            {!isSelectingOnMap && !isInteractionSuppressed && isLargeScreen && (
+                <div
+                    onClick={() => setIsSelectingOnMap(true)}
+                    className={`absolute top-1/2 left-1/2 -translate-y-1/2 z-5 cursor-pointer group flex items-center justify-center overflow-hidden w-[100vh] h-[100vh] rounded-[4rem] transition-all duration-700 ${isLargeScreen ? '-translate-x-[calc(50%-306px)]' : '-translate-x-1/2'}`}
+                >
+                    <div className={`flex flex-col items-center gap-3 opacity-0 group-hover:opacity-100 transition-all duration-500 scale-95 group-hover:scale-100 bg-black/10 backdrop-blur-sm px-10 py-8 rounded-[2.5rem] border border-white/5 shadow-2xl`}>
+                        <div className="w-16 h-16 rounded-full bg-brand/20 border border-brand/40 flex items-center justify-center shadow-[0_0_30px_rgba(var(--brand-rgb),0.3)] animate-radar-slow">
+                            <Maximize2 size={24} className="text-white animate-pulse" />
+                        </div>
+                        <div className="flex flex-col items-center gap-1.5">
+                            <span className="text-white font-black uppercase tracking-[0.4em] text-[10px] text-center drop-shadow-lg">Interacción 3D</span>
+                            <div className="h-px w-8 bg-white/20" />
+                            <span className="text-white/60 text-[9px] font-bold uppercase tracking-widest text-center drop-shadow-sm">Haz clic para explorar el mapa</span>
+                        </div>
+                    </div>
+                </div>
+            )}
 
-            {/* Full-screen loading overlay — visible until Globe is fully ready */}
+            {/* Loading Screen */}
             <div className={`absolute inset-0 z-50 bg-main flex flex-col items-center justify-center gap-6 transition-opacity duration-700 pointer-events-none ${globeReady ? 'opacity-0' : 'opacity-100'}`}>
                 <div className="relative flex items-center justify-center">
-                    {/* Radar rings — staggered expanding pulses using brand color */}
                     <div className="absolute w-20 h-20 rounded-full border border-brand/40 animate-radar" style={{ animationDelay: '0s' }} />
                     <div className="absolute w-20 h-20 rounded-full border border-brand/25 animate-radar" style={{ animationDelay: '0.8s' }} />
                     <div className="absolute w-20 h-20 rounded-full border border-brand/15 animate-radar" style={{ animationDelay: '1.6s' }} />
@@ -282,23 +355,17 @@ function SearchFlight() {
                     </svg>
                 </div>
                 <div className="flex flex-col items-center gap-1">
-                    <span className="text-content-muted text-xs">Cargando globo terráqueo...</span>
-                </div>
-                <div className="flex gap-1.5">
-                    {[0, 1, 2].map(i => (
-                        <div key={i} className="w-1.5 h-1.5 rounded-full bg-brand/40 animate-pulse" style={{ animationDelay: `${i * 200}ms` }} />
-                    ))}
+                    <span className="text-content-muted text-xs font-bold uppercase tracking-widest">flAIghts está despegando...</span>
                 </div>
             </div>
 
-            {/* Map Action HUD (Always rendered for smooth entry/exit transition) */}
+            {/* Floating Selection Controls */}
             <div
                 className={`absolute bottom-8 left-1/2 -translate-x-1/2 z-20 flex flex-col items-center gap-4 w-[min(90vw,fit-content)] transition-all duration-500 ease-out
                     ${isSelectingOnMap
                         ? 'opacity-100 translate-y-0 scale-100'
                         : 'opacity-0 translate-y-12 scale-90 pointer-events-none'}`}
             >
-                {/* Floating Action Button (Unified with System HUD) */}
                 <div className="relative flex flex-col items-center w-full">
                     <NavIconButton
                         onClick={() => {
@@ -323,14 +390,13 @@ function SearchFlight() {
                         </div>
                     </NavIconButton>
 
-                    {/* Floating Search Button (Animate in place above the bar) */}
                     <div className={`absolute bottom-full mb-4 transition-all duration-400 ${!isLargeScreen && !isMobileCardExpanded && !selectingType
                         ? 'animate-fade-in opacity-100 scale-100 visible'
                         : 'animate-fade-out opacity-0 scale-95 invisible pointer-events-none'
                         }`}>
                         <button
                             onClick={handleSearch}
-                            disabled={isPending || !origin || !destination || !departureDate}
+                            disabled={isPending || origins.length === 0 || destinations.length === 0 || !departureDate}
                             className="group relative flex items-center justify-center gap-2.5 px-6 py-3 bg-brand text-content-on-brand rounded-xl font-bold shadow-[0_15px_40px_rgba(var(--brand-rgb),0.25)] active:scale-95 transition-all outline-hidden disabled:opacity-50 disabled:grayscale cursor-pointer overflow-hidden w-auto"
                         >
                             <div className="absolute inset-0 bg-linear-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
@@ -349,112 +415,43 @@ function SearchFlight() {
                     </div>
                 </div>
             </div>
-            {/* 1. Normal/Vertical Card (Center on Mobile, Left on Desktop) - ONLY HOME SCREEN */}
-            <div className={`absolute transition-all duration-700 cubic-bezier(0.16, 1, 0.3, 1) z-10 ${!isSelectingOnMap
-                ? 'left-1/2 lg:left-8 top-1/2 -translate-y-1/2 -translate-x-1/2 lg:translate-x-0 scale-100'
-                : 'left-1/2 lg:-left-150 top-0 lg:top-1/2 -translate-y-[150%] lg:-translate-y-1/2 -translate-x-1/2 lg:translate-x-0 scale-95 pointer-events-none'
+
+            {/* Main Search Card */}
+            <div className={`absolute inset-0 z-10 transition-all duration-700 cubic-bezier(0.16, 1, 0.3, 1) flex flex-col items-center lg:items-start justify-center pointer-events-none p-4 lg:p-12
+                ${!isSelectingOnMap
+                    ? 'opacity-100 pt-24 pb-24 lg:py-0'
+                    : 'opacity-0 -translate-y-[150%] scale-95'
                 }`}>
-                <div className="premium-glass relative p-7 rounded-4xl flex flex-col gap-6 transition-all hover:scale-[1.01] w-[min(96vw,540px)] overflow-visible">
-
-                    {/* Mobile Map Toggle Button */}
-                    {!isLargeScreen && searchMode === 'manual' && !isSelectingOnMap && (
-                        <button
-                            onClick={() => {
-                                setIsSelectingOnMap(true);
-                                setIsMobileCardExpanded(false);
-                            }}
-                            className="absolute -top-4 left-1/2 -translate-x-1/2 bg-surface/90 backdrop-blur-2xl border border-line px-5 py-2.5 rounded-full shadow-xl flex items-center gap-2.5 group hover:bg-surface transition-all active:scale-95 cursor-pointer z-30 whitespace-nowrap"
-                        >
-                            <GlobeIcon size={14} className="text-brand" />
-                            <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-content/90">Ver mapa 3D</span>
-                        </button>
-                    )}
-
-                    {/* Desktop Expand Button */}
-                    {isLargeScreen && searchMode === 'manual' && (
-                        <button
-                            onClick={() => setIsSelectingOnMap(true)}
-                            className="absolute -right-5 top-1/2 -translate-y-1/2 w-10 h-24 bg-main/90 backdrop-blur-xl border border-line rounded-2xl shadow-xl flex items-center justify-center group hover:bg-brand hover:border-brand/40 transition-all active:scale-95 cursor-pointer z-30"
-                            title="Expandir mapa"
-                        >
-                            <Maximize2 size={18} className="text-content-muted group-hover:text-content-on-brand transition-colors rotate-90" />
-                            <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-10 transition-opacity">
-                                <GlobeIcon size={40} className="text-white" />
-                            </div>
-                        </button>
-                    )}
-
-                    {/* Card header: title + mode toggle */}
-                    <div className="flex items-start justify-between gap-4">
-                        <div className="flex flex-col gap-0.5">
-                            <h1 className="text-3xl font-bold text-content tracking-tight">Vuela más allá.</h1>
-                            <p className="text-content-muted text-sm">Explora destinos mundiales con flAIghts.</p>
-                        </div>
-
-                        <div className="flex shrink-0 items-center bg-main/50 dark:bg-surface rounded-xl p-1 gap-0.5 border border-line mt-1">
-                            <button
-                                onClick={() => setSearchMode('manual')}
-                                title="Búsqueda manual"
-                                className={`p-2 rounded-lg transition-all ${searchMode === 'manual'
-                                    ? 'bg-brand text-content-on-brand shadow-sm'
-                                    : 'text-content-muted hover:text-content cursor-pointer'
-                                    }`}
-                            >
-                                <SlidersHorizontal size={16} />
-                            </button>
-                            <button
-                                onClick={() => setSearchMode('chatbot')}
-                                title="Asistente IA"
-                                className={`p-2 rounded-lg transition-all ${searchMode === 'chatbot'
-                                    ? 'bg-brand text-content-on-brand shadow-sm'
-                                    : 'text-content-muted hover:text-content cursor-pointer'
-                                    }`}
-                            >
-                                <Bot size={16} />
-                            </button>
-                        </div>
-                    </div>
-
-                    <div className="flex flex-col gap-8 pt-2 mt-2">
-                        {searchMode === 'manual' ? (
-                            <>
-                                {renderManualSearch('main')}
-                                <div className="flex items-center justify-center gap-4 text-xs text-content-muted">
-                                    <div className="flex items-center gap-1">
-                                        <Plus size={12} className="text-brand" />
-                                        <span>Añadir escala</span>
-                                    </div>
-                                    <div className="w-1 h-1 bg-line rounded-full" />
-                                    <span>Filtros avanzados</span>
-                                </div>
-                            </>
-                        ) : (
-                            /* Chatbot mode panel */
-                            <div className="flex flex-col gap-4">
-                                <div className="flex flex-col items-center justify-center gap-3 py-8 text-center">
-                                    <div className="w-14 h-14 rounded-2xl bg-brand/10 border border-brand/20 flex items-center justify-center">
-                                        <Bot size={28} className="text-brand" />
-                                    </div>
-                                    <div className="flex flex-col gap-1">
-                                        <span className="text-content font-semibold">Asistente flAIghts</span>
-                                        <span className="text-content-muted text-sm">Próximamente — describe tu viaje ideal con IA</span>
-                                    </div>
-                                </div>
-                                <div className="flex items-center gap-3 bg-main/60 dark:bg-surface/60 border border-line rounded-2xl px-4 py-3 opacity-50 pointer-events-none">
-                                    <Bot size={18} className="text-content-muted shrink-0" />
-                                    <span className="text-content-muted text-sm">Ej: "Quiero ir a Tokio en verano por menos de 600€"</span>
-                                </div>
-                                <button disabled className="flex items-center justify-center gap-3 bg-brand/50 text-content-on-brand py-4 rounded-2xl font-bold text-base opacity-50 cursor-not-allowed">
-                                    <Bot size={18} />
-                                    <span>Preguntar al asistente</span>
-                                </button>
-                            </div>
-                        )}
-                    </div>
+                <div className={`relative pointer-events-auto transition-all duration-700 ${!isSelectingOnMap ? 'translate-y-0 scale-100' : 'translate-y-20 scale-90'}`}>
+                    <HomeCard
+                        origins={origins}
+                        setOrigins={setOrigins}
+                        destinations={destinations}
+                        setDestinations={setDestinations}
+                        departureDate={departureDate}
+                        setDepartureDate={setDepartureDate}
+                        returnDate={returnDate}
+                        setReturnDate={setReturnDate}
+                        today={today}
+                        isPending={isPending}
+                        onSearch={handleSearch}
+                        startMapSelection={(type) => startMapSelection(type, true)}
+                        activeDeparturePopover={activeDeparturePopover}
+                        setActiveDeparturePopover={setActiveDeparturePopover}
+                        activeReturnPopover={activeReturnPopover}
+                        setActiveReturnPopover={setActiveReturnPopover}
+                        onExploreGlobe={() => {
+                            setIsSelectingOnMap(true);
+                            setIsMobileCardExpanded(false);
+                        }}
+                        searchMode={searchMode}
+                        onSearchModeChange={setSearchMode}
+                        onHoverChange={setHoveredAirport}
+                    />
                 </div>
             </div>
 
-            {/* 2. Horizontal/Top Card (Only when general map expanded) */}
+            {/* Horizontal/Top Card (Only when general map expanded) */}
             <div className={`absolute left-1/2 -translate-x-1/2 z-10 transition-all duration-700 cubic-bezier(0.16, 1, 0.3, 1) ${isSelectingOnMap && !selectingType
                 ? (isXXLScreen
                     ? 'top-6 w-[min(calc(100%-400px),1200px)] scale-100'
@@ -468,8 +465,6 @@ function SearchFlight() {
                 : 'top-0 -translate-y-[200%] scale-95 pointer-events-none'
                 }`}>
                 <div className={`premium-glass relative border border-line/50 flex flex-col transition-all duration-700 cubic-bezier(0.4, 0, 0.2, 1) ${!isLargeScreen && isSelectingOnMap && !isMobileCardExpanded ? 'p-2 px-4 rounded-3xl' : 'p-3 lg:p-4 rounded-3xl lg:rounded-4xl'}`}>
-
-                    {/* Summary Header (Only for Collapsible Drawer mode < 1024px) */}
                     {!isLargeScreen && (
                         <div
                             className="flex items-center justify-between gap-4 cursor-pointer select-none"
@@ -486,8 +481,8 @@ function SearchFlight() {
                                         <div className="flex items-center gap-2">
                                             <Plane size={14} className="text-brand rotate-45 shrink-0" />
                                             <span>
-                                                {origin && destination
-                                                    ? `${origin.iata_code} → ${destination.iata_code}`
+                                                {origins.length > 0 && destinations.length > 0
+                                                    ? `${origins[0]?.iata_code || '???'}${origins.length > 1 ? '...' : ''} → ${destinations[0]?.iata_code || '???'}${destinations.length > 1 ? '...' : ''}`
                                                     : "Configuración del viaje"}
                                             </span>
                                         </div>
@@ -496,9 +491,9 @@ function SearchFlight() {
                                 {!isMobileCardExpanded && (
                                     <div className="flex items-center gap-1.5 mt-0.5">
                                         <div className="flex items-center gap-1 overflow-hidden">
-                                            <span className="text-content-muted text-[10px] font-medium truncate">{origin ? (origin.city || origin.name || origin.iata_code) : "Origen"}</span>
+                                            <span className="text-content-muted text-[10px] font-medium truncate">{origins.length > 0 ? (origins[0]?.city || origins[0]?.name || origins[0]?.iata_code || "Origen") + (origins.length > 1 ? ` +${origins.length - 1}` : '') : "Origen"}</span>
                                             <ChevronRight size={8} className="text-content-muted/30 shrink-0" />
-                                            <span className="text-content-muted text-[10px] font-medium truncate">{destination ? (destination.city || destination.name || destination.iata_code) : "Destino"}</span>
+                                            <span className="text-content-muted text-[10px] font-medium truncate">{destinations.length > 0 ? (destinations[0]?.city || destinations[0]?.name || destinations[0]?.iata_code || "Destino") + (destinations.length > 1 ? ` +${destinations.length - 1}` : '') : "Destino"}</span>
                                         </div>
                                         {(departureDate || returnDate) && (
                                             <>
@@ -523,21 +518,12 @@ function SearchFlight() {
                         </div>
                     )}
 
-                    {/* Content Container */}
                     <div className={`${!isLargeScreen ? `transition-all duration-500 ${!isMobileCardExpanded ? 'max-h-0 opacity-0 overflow-hidden' : 'max-h-200 opacity-100 mt-4 overflow-visible!'}` : 'flex flex-row items-center gap-4 overflow-visible'}`}>
                         <div className="flex flex-col lg:flex-row items-stretch lg:items-center gap-2 lg:gap-4 w-full min-w-0 opacity-100 scale-100">
-                            {/* Minimized Header (Fixed Horizontal Bar Only) */}
-                            {isXXLScreen && (
-                                <div className="hidden lg:flex items-center gap-2 px-3 border-r border-line/10 h-10 shrink-0">
-                                    <Plane size={18} className="text-brand fill-brand rotate-45" />
-                                    <h1 className="text-lg font-black text-brand tracking-tighter italic uppercase">flAIghts</h1>
-                                </div>
-                            )}
                             {renderManualSearch('map')}
                         </div>
                     </div>
 
-                    {/* Mobile/Tablet Collapse Button (Only for Expanded Drawer) */}
                     {!isLargeScreen && isSelectingOnMap && isMobileCardExpanded && (
                         <button
                             onClick={(e) => {
@@ -551,9 +537,17 @@ function SearchFlight() {
                         </button>
                     )}
                 </div>
+
+                {/* Floating validation bubble attached to the card summary ONLY ON MOBILE */}
+                {origins.length > 0 && destinations.length > 0 && !departureDate && !isMobileCardExpanded && !isLargeScreen && (
+                    <div className="absolute top-full mt-3 left-1/2 -translate-x-1/2 bg-red-500/90 backdrop-blur-md text-white text-[9px] font-black uppercase tracking-widest px-3 py-1.5 rounded-lg shadow-2xl border border-white/20 animate-bounce flex items-center gap-1.5 whitespace-nowrap z-50">
+                        <CalendarIcon size={10} />
+                        <span>Falta fecha de salida</span>
+                        <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-red-500 rotate-45" />
+                    </div>
+                )}
             </div>
 
-            {/* Mobile Click-away Backdrop */}
             {!isLargeScreen && isCardVisible && (
                 <div
                     className="absolute inset-0 z-25 cursor-default bg-black/5 backdrop-blur-[1px] animate-fade-in"
@@ -589,20 +583,20 @@ function SearchFlight() {
 
                         <div className="flex flex-col gap-4">
                             <div className="flex flex-col">
-                                <span className="text-[10px] text-content-muted uppercase font-bold tracking-wider">Nombre</span>
+                                <span className="text-xs text-content-muted uppercase font-bold tracking-wider">Nombre</span>
                                 <span className="text-content font-medium">{renderedAirport?.name}</span>
                             </div>
                             <div className="flex flex-col">
-                                <span className="text-[10px] text-content-muted uppercase font-bold tracking-wider">Ciudad / Región</span>
+                                <span className="text-xs text-content-muted uppercase font-bold tracking-wider">Ciudad / Región</span>
                                 <span className="text-content font-medium">{renderedAirport?.city}</span>
                             </div>
                             <div className="grid grid-cols-2 gap-4 pt-2 border-t border-line/50">
                                 <div className="flex flex-col">
-                                    <span className="text-[10px] text-content-muted uppercase font-bold tracking-wider">Latitud</span>
+                                    <span className="text-xs text-content-muted uppercase font-bold tracking-wider">Latitud</span>
                                     <span className="text-content text-xs font-mono">{renderedAirport?.location?.coordinates[1]?.toFixed(4)}°</span>
                                 </div>
                                 <div className="flex flex-col">
-                                    <span className="text-[10px] text-content-muted uppercase font-bold tracking-wider">Longitud</span>
+                                    <span className="text-xs text-content-muted uppercase font-bold tracking-wider">Longitud</span>
                                     <span className="text-content text-xs font-mono">{renderedAirport?.location?.coordinates[0]?.toFixed(4)}°</span>
                                 </div>
                             </div>
@@ -611,31 +605,22 @@ function SearchFlight() {
                         <div className="mt-2 flex flex-col gap-2">
                             <button
                                 onClick={() => renderedAirport && handleSetOrigin(renderedAirport)}
-                                className="flex items-center justify-center gap-2 w-full py-3 bg-origin/10 hover:bg-origin/20 border border-origin/20 rounded-2xl text-origin text-xs font-bold transition-all group/btn cursor-pointer"
+                                className="flex items-center justify-center gap-2 w-full py-3 bg-brand/10 hover:bg-brand/20 border border-brand/20 rounded-2xl text-brand text-xs font-black uppercase transition-all group/btn cursor-pointer"
                             >
                                 <PlaneTakeoff size={14} className="group-hover/btn:-translate-y-0.5 transition-transform" />
                                 Definir como Origen
                             </button>
                             <button
                                 onClick={() => renderedAirport && handleSetDestination(renderedAirport)}
-                                className="flex items-center justify-center gap-2 w-full py-3 bg-destination/10 hover:bg-destination/20 border border-destination/20 rounded-2xl text-destination text-xs font-bold transition-all group/btn cursor-pointer"
+                                className="flex items-center justify-center gap-2 w-full py-3 bg-brand/10 hover:bg-brand/20 border border-brand/20 rounded-2xl text-brand text-xs font-black uppercase transition-all group/btn cursor-pointer"
                             >
                                 <PlaneLanding size={14} className="group-hover/btn:translate-y-0.5 transition-transform" />
                                 Definir como Destino
                             </button>
-                            <button
-                                onClick={() => { }}
-                                className="flex items-center justify-center gap-1.5 self-center mt-3 text-[9px] font-bold text-red-500/60 hover:text-red-500 transition-all cursor-pointer group/report"
-                            >
-                                <AlertTriangle size={10} className="group-hover/report:animate-pulse" />
-                                <span className="italic underline-offset-2 hover:underline">Reportar error en los datos</span>
-                            </button>
                         </div>
                     </div>
                 </div>
-            </div >
-        </div >
-    )
+            </div>
+        </div>
+    );
 }
-
-export default SearchFlight;

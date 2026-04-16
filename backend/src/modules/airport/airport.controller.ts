@@ -1,7 +1,7 @@
 import { Controller, Get, Route, Query, Tags, Response, SuccessResponse } from "tsoa";
 import { injectable, inject } from "tsyringe";
 import { AirportService } from "./airport.service.js";
-import type { AirportResponse, PaginatedAirportResponse, GlobeAirportResponse } from "./airport.types.js";
+import type { AirportResponse, AirportSearchPaginatedResult, GlobeAirportResponse } from "./airport.types.js";
 import type { SuccessResponse as SuccessResponseType, RequestValidationFailResponse, ValidationDetails, QueryPath } from "../../utils/responses.js";
 
 @injectable()
@@ -19,17 +19,34 @@ export class AirportController extends Controller {
     public async searchAirports(
         @Query() q: string,
         @Query() page: number = 1,
-        @Query() limit: number = 10
-    ): Promise<SuccessResponseType<PaginatedAirportResponse>> {
-        const results = await this.airportService.searchAirports(q, page, limit);
-        return results satisfies PaginatedAirportResponse as any;
+        @Query() limit: number = 10,
+        @Query() lat?: number,
+        @Query() lon?: number
+    ): Promise<SuccessResponseType<AirportSearchPaginatedResult>> {
+        const results = await this.airportService.searchAirports(q, lat, lon, page, limit);
+        return { status: "success", data: results };
+    }
+
+    @Get("/near")
+    @Response<SuccessResponseType<AirportResponse[]>>(200, "Aeropuertos cercanos encontrados")
+    public async getNearAirports(
+        @Query() lat: number,
+        @Query() lon: number,
+        @Query() limit?: number,
+        @Query() maxDistanceKm?: number
+    ): Promise<SuccessResponseType<AirportResponse[]>> {
+        const results = await this.airportService.getNearAirports(lat, lon, limit, maxDistanceKm);
+        return {
+            status: "success",
+            data: results
+        };
     }
 
     @Get("/globe")
     @SuccessResponse(200, "Aeropuertos para el globo")
     public async getGlobeAirports(): Promise<SuccessResponseType<GlobeAirportResponse[]>> {
         const airports = await this.airportService.getGlobeAirports();
-        return airports satisfies GlobeAirportResponse[] as any;
+        return { status: "success", data: airports as any };
     }
 
     @Get("/{iata}")

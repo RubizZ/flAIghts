@@ -1,3 +1,4 @@
+import type { AirportResponse } from "../airport/airport.types.js";
 import type { ValidationDetails, RequestValidationFailResponse, DatabaseValidationFailResponse, BodyPath } from "../../utils/responses.js";
 import type { DijkstraFlightEdge } from "@/algorithms/dijkstra.js";
 
@@ -29,9 +30,7 @@ export interface SearchRequest {
     };
 
     layover_days?: number[];
-
-
-
+    source?: "manual" | "agent";
 }
 
 export interface LegResponse {
@@ -82,6 +81,7 @@ export interface SearchResponseData {
         max_price?: number;
     };
     status: "searching" | "completed" | "failed";
+    source: "manual" | "agent";
     departure_itineraries?: ItineraryResponse[];
     return_itineraries?: ItineraryResponse[];
     /**
@@ -102,4 +102,12 @@ export interface EnrichedFlightEdge extends DijkstraFlightEdge {
     flight_number: string;
     travel_class: string;
     extensions?: string[];
+}
+
+export interface SearchProgressEvent {
+    type: "progress" | "completed" | "failed";
+    message: string;
+    step?: number;
+    total_steps?: number;
+    data?: SearchResponseData;
 }

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
-import { Compass, Menu, Users, X } from "lucide-react";
+import { Compass, Menu, Users, X, Sparkles } from "lucide-react";
 import NavIconButton from "../ui/NavIconButton";
 
 interface SidebarProps {
@@ -24,7 +24,7 @@ export default function Sidebar({ isOpen, onClose, onToggle, variant = 'classic'
     const location = useLocation();
     const navItems = [
         {
-            label: "Buscar vuelos",
+            label: "Inicio",
             path: "/",
             icon: <Compass size={20} />,
             show: true,
@@ -77,27 +77,27 @@ export default function Sidebar({ isOpen, onClose, onToggle, variant = 'classic'
                 `}
             >
                 {/* ── HEADER / TOGGLE BUTTON ── */}
-                <div className={`flex items-center shrink-0 ${isFloating ? 'h-14 px-3 border-b border-line/40' : 'h-16 px-2'}`}>
+                <div className={`flex items-center shrink-0 ${isFloating ? 'h-14 px-3 border-b border-line/40' : 'h-16 px-2 border-b border-line/40'}`}>
                     <button
                         onClick={onToggle}
                         aria-label={isOpen ? "Cerrar menú" : "Abrir menú"}
                         className={`transition-all duration-200 cursor-pointer rounded-2xl
-                            text-content-muted hover:text-content active:scale-95
+                            text-content-muted hover:text-content active:scale-95 flex items-center group
                             ${isFloating
-                                ? 'p-2.5 hover:bg-white/10 hover:backdrop-blur-md w-full flex items-center gap-3 group'
-                                : 'p-3 hover:bg-surface w-full flex justify-center sm:justify-start group'
+                                ? 'p-2.5 hover:bg-white/10 hover:backdrop-blur-md w-full gap-3'
+                                : isOpen
+                                    ? 'p-2.5 px-3.5 hover:bg-surface w-full gap-4 justify-start'
+                                    : 'p-3 hover:bg-surface w-full justify-center sm:justify-start'
                             }
                         `}
                     >
-                        {isFloating ? (
+                        {isOpen || isFloating ? (
                             <>
                                 <X size={20} className="shrink-0 transition-transform duration-300 group-hover:rotate-90" />
                                 <span className="font-bold text-sm text-content">Menú</span>
                             </>
                         ) : (
-                            isOpen
-                                ? <X size={22} className="group-hover:text-content transition-colors" />
-                                : <Menu size={22} className="group-hover:text-content transition-colors" />
+                            <Menu size={22} className="group-hover:text-content transition-colors shrink-0" />
                         )}
                     </button>
                 </div>
@@ -170,6 +170,20 @@ export default function Sidebar({ isOpen, onClose, onToggle, variant = 'classic'
                     )}
                 </div>
 
+                {/* ── MOBILE FOOTER LINKS ── */}
+                <div
+                    className={`sm:hidden px-6 py-4 flex flex-col gap-4 transition-all duration-500 delay-100
+                        ${isOpen ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10 pointer-events-none'}
+                    `}
+                >
+                    <div className="grid grid-cols-2 gap-x-4 gap-y-3">
+                        <Link to="/about" onClick={onClose} className="text-[11px] font-bold text-content-muted hover:text-brand transition-colors text-center">About us</Link>
+                        <Link to="/contact" onClick={onClose} className="text-[11px] font-bold text-content-muted hover:text-brand transition-colors text-center">Contact</Link>
+                        <Link to="/privacy" onClick={onClose} className="text-[11px] font-bold text-content-muted hover:text-brand transition-colors text-center">Privacy Policy</Link>
+                        <Link to="/terms" onClick={onClose} className="text-[11px] font-bold text-content-muted hover:text-brand transition-colors text-center">Terms of Service</Link>
+                    </div>
+                </div>
+
                 {/* ── FOOTER ── */}
                 <div
                     className={`p-4 border-t border-line/40 transition-all duration-300
@@ -180,14 +194,13 @@ export default function Sidebar({ isOpen, onClose, onToggle, variant = 'classic'
                     `}
                     {...(isFloating ? { style: { transitionDelay: isOpen ? '160ms' : '0ms' } } : {})}
                 >
-                    <Link
-                        to="/about"
-                        onClick={() => onClose?.()}
-                        className="block text-[10px] uppercase tracking-widest text-content-muted font-bold opacity-40
-                            whitespace-nowrap text-center hover:text-brand hover:opacity-100 transition-all duration-300"
+                    <span
+                        className={`block text-[10px] uppercase tracking-widest text-content-muted font-bold opacity-40
+                            whitespace-nowrap text-center transition-all duration-300
+                        `}
                     >
                         flAIghts
-                    </Link>
+                    </span>
                 </div>
             </aside>
         </>
