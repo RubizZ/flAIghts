@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { AlertTriangle, Loader2 } from "lucide-react";
 import { toast } from "sonner";
-import { useReportAirportError } from "@/api/generated/airports/airports";
-import { AirportResponse } from "@/api/generated/model";
+import { useReportAirportError } from "@/api/generated/openapi/airports";
+import { AirportResponse } from "@/api/generated/openapi/model";
 
 interface AirportReportModalProps {
     isOpen: boolean;
@@ -10,8 +10,13 @@ interface AirportReportModalProps {
     airport: AirportResponse | null;
 }
 
+const MIN_CHARS = 5;
+const MAX_CHARS = 1000;
+
 export default function AirportReportModal({ isOpen, onClose, airport }: AirportReportModalProps) {
     const [reportReason, setReportReason] = useState("");
+
+    const isTooShort = reportReason.trim().length < MIN_CHARS;
 
     const { mutate: sendReport, isPending } = useReportAirportError({
         mutation: {
@@ -29,7 +34,7 @@ export default function AirportReportModal({ isOpen, onClose, airport }: Airport
     if (!isOpen || !airport) return null;
 
     const handleSendReport = () => {
-        if (!reportReason.trim()) {
+        if (isTooShort) {
             toast.error("Por favor, describe el error antes de enviar");
             return;
         }
@@ -79,8 +84,14 @@ export default function AirportReportModal({ isOpen, onClose, airport }: Airport
                             onChange={(e) => setReportReason(e.target.value)}
                             placeholder="Ej: El nombre está mal escrito, la ubicación es incorrecta o es una base militar..."
                             className="w-full h-32 px-4 py-3 bg-main/50 border border-line rounded-2xl focus:ring-2 focus:ring-brand focus:border-brand outline-none transition-all text-sm resize-none text-content"
+                            maxLength={MAX_CHARS}
                             autoFocus
                         />
+                        <div className="flex justify-end px-1">
+                            <span className={`text-[10px] font-bold ${isTooShort ? 'text-red-500' : 'text-content-muted'}`}>
+                                {reportReason.length} / {MAX_CHARS} {isTooShort && `(mínimo ${MIN_CHARS})`}
+                            </span>
+                        </div>
                     </div>
                 </div>
 
@@ -93,7 +104,7 @@ export default function AirportReportModal({ isOpen, onClose, airport }: Airport
                     </button>
                     <button
                         onClick={handleSendReport}
-                        disabled={isPending || !reportReason.trim()}
+                        disabled={isPending || isTooShort}
                         className="flex-1 py-3 bg-brand text-content-on-brand font-bold rounded-2xl hover:opacity-90 transition-all shadow-lg shadow-brand/20 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                     >
                         {isPending ? (
