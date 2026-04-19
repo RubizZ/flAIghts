@@ -13,6 +13,8 @@ import Friends from "@/pages/Friends.tsx";
 import UserSearch from "@/pages/UserSearch.tsx";
 import Settings from "@/pages/Settings.tsx";
 import Home from "@/pages/Home.tsx";
+import Chats from "@/pages/Chats.tsx";
+import Chat from "@/pages/Chat.tsx";
 
 export const routes: RouteObject[] = [
     {
@@ -36,6 +38,8 @@ export const routes: RouteObject[] = [
                     { path: "/friends", element: <Friends /> },
                     { path: "/user/:id", element: <UserProfile /> },
                     { path: "/user/search", element: <UserSearch /> },
+                    { path: "/chats", element: <Chats /> },
+                    { path: "/chats/:userId", element: <Chat /> },
                     { path: "/settings", element: <Settings /> },
                     { path: "*", element: <NotFound /> },
                 ]

@@ -146,9 +146,8 @@ export default function Friends() {
                                         </div>
                                         <div className="mt-4 pt-4 border-t border-line flex justify-end gap-2">
                                             <Link
-                                                to={`/chat/${friend._id}`}
-                                                onClick={(e) => e.preventDefault()}
-                                                className="flex items-center gap-2 px-4 py-2 bg-brand text-content-on-brand rounded-full text-sm font-bold opacity-50 hover:cursor-not-allowed"
+                                                to={`/chats/${friend._id}`}
+                                                className="flex items-center gap-2 px-4 py-2 bg-brand text-content-on-brand rounded-full text-sm font-bold hover:bg-brand/90 transition-colors cursor-pointer hover:scale-105 active:scale-95"
                                                 title="Enviar mensaje"
                                             >
                                                 <MessageCircle size={16} />

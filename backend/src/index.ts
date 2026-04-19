@@ -1,5 +1,6 @@
 import 'reflect-metadata'
 import express from 'express';
+import expressWs from 'express-ws';
 import cors from 'cors';
 import { container } from 'tsyringe';
 import { ServerConfig } from './config/server.config.js';
@@ -36,7 +37,7 @@ const config = container.resolve(ServerConfig);
 
 const PORT = config.PORT;
 
-const app = express();
+const { app } = expressWs(express());
 app.use(compression());
 
 const origins = config.ALLOWED_ORIGINS || [];
@@ -128,8 +129,8 @@ app.get('/health', (req, res) => {
 });
 
 // Register routes from tsoa and asyncapi
-RegisterRoutes(app)
-RegisterAsyncRoutes(app)
+RegisterRoutes(app as any);
+RegisterAsyncRoutes(app as any);
 
 // Error handling middleware for validation request errors, business logic errors and unhandled errors
 app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction): express.Response | void => {
