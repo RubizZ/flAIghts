@@ -91,3 +91,7 @@ export interface GlobeAirportResponse {
      */
     c: string;
 }
+
+export interface AirportReportRequest {
+    reason: string;
+}

@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useMemo } from "react";
 import Globe from "../components/Globe.tsx"
-import { Plus, Maximize2, PlaneTakeoff, PlaneLanding, X, Plane, ChevronDown, ChevronRight, Search, Calendar as CalendarIcon } from "lucide-react";
+import { Plus, Maximize2, PlaneTakeoff, PlaneLanding, X, Plane, ChevronDown, ChevronRight, AlertTriangle, Search, Calendar as CalendarIcon } from "lucide-react";
 import { useSearchRequest } from "@/api/generated/openapi/search";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
@@ -8,6 +8,7 @@ import { AirportResponse } from "@/api/generated/openapi/model";
 import StarsBackground from "../components/ui/StarsBackground.tsx";
 import ManualSearchForm from "../components/search/ManualSearchForm.tsx";
 import NavIconButton from "../components/ui/NavIconButton.tsx";
+import AirportReportModal from "../components/search/AirportReportModal.tsx";
 import HomeCard from "../components/home/HomeCard.tsx";
 
 export default function Home() {
@@ -27,6 +28,7 @@ export default function Home() {
     const [isXXLScreen, setIsXXLScreen] = useState(window.innerWidth >= 1536);
     const [isMobileCardExpanded, setIsMobileCardExpanded] = useState(false);
     const [isUserInteracting, setIsUserInteracting] = useState(false);
+    const [isReportModalOpen, setIsReportModalOpen] = useState(false);
     const [isInteractionSuppressed, setIsInteractionSuppressed] = useState(false);
     const [initialMousePos, setInitialMousePos] = useState<{ x: number, y: number } | null>(null);
     const [searchMode, setSearchMode] = useState<'manual' | 'ai'>(() => {
@@ -310,7 +312,7 @@ export default function Home() {
                     selectedAirports={selectedAirports}
                     origins={origins}
                     destinations={destinations}
-                    interactive={isSelectingOnMap && !(inspectedAirport && !isLargeScreen)}
+                    interactive={isSelectingOnMap && !(inspectedAirport && !isLargeScreen) && !isReportModalOpen}
                     horizontalOffset={isSelectingOnMap ? 0 : (isLargeScreen ? 306 : 0)}
                     onReady={() => setGlobeReady(true)}
                     onSetOrigin={handleSetOrigin}
@@ -617,10 +619,23 @@ export default function Home() {
                                 <PlaneLanding size={14} className="group-hover/btn:translate-y-0.5 transition-transform" />
                                 Definir como Destino
                             </button>
+                            <button
+                                onClick={() => setIsReportModalOpen(true)}
+                                className="flex items-center justify-center gap-1.5 self-center mt-3 text-[9px] font-bold text-red-500/60 hover:text-red-500 transition-all cursor-pointer group/report"
+                            >
+                                <AlertTriangle size={10} className="group-hover/report:animate-pulse" />
+                                <span className="italic underline-offset-2 hover:underline">Reportar error en los datos</span>
+                            </button>
                         </div>
                     </div>
                 </div>
             </div>
+
+            <AirportReportModal
+                isOpen={isReportModalOpen}
+                onClose={() => setIsReportModalOpen(false)}
+                airport={renderedAirport}
+            />
         </div>
     );
 }
