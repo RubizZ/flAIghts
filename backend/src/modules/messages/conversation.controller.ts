@@ -110,7 +110,6 @@ export class ConversationController extends Controller {
         typedWs: TypedWebSocket<ChatClientMessage, ChatServerMessage>,
         @RequestProp('user') user: AuthenticatedUser
     ): Promise<void> {
-        console.log("WebSocket connected for user " + user._id);
         this.messageService.addOnlineUser(user._id, typedWs);
 
         typedWs.onMessage(async (data) => {

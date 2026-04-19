@@ -1,11 +1,12 @@
 import { useState, useEffect, useRef, UIEvent, useCallback } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
-import { ArrowLeft, Send, Loader2, CheckCheck, Plane } from "lucide-react";
+import { ArrowLeft, Send, Loader2, CheckCheck, Plane, X, History, Calendar, MapPin } from "lucide-react";
 import { useGetUserById } from "@/api/generated/openapi/users";
 import UserAvatar from "@/components/ui/UserAvatar";
 import { useAuth } from "@/context/AuthContext";
 import { useInfiniteQuery, useQueryClient, type InfiniteData } from "@tanstack/react-query";
 import { getMessages, useMarkConversationAsRead, getGetConversationsQueryKey } from "@/api/generated/openapi/conversations";
+import { useGetSearches } from "@/api/generated/openapi/search";
 import { useConversationsStreamWS } from "@/api/generated/asyncapi/hooks";
 import type { MessageResponse, PaginatedMessagesResponse } from "@/api/generated/openapi/model";
 import type { ChatServerMessage } from "@/api/generated/asyncapi/models";
@@ -20,6 +21,12 @@ export default function Chat() {
     const [newMessage, setNewMessage] = useState("");
     const messageContainerRef = useRef<HTMLDivElement>(null);
     const [isOnline, setIsOnline] = useState(false);
+    const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+
+    // Cargar búsquedas del usuario actual para el modal de compartir
+    const { data: userSearches, isLoading: isLoadingSearches } = useGetSearches(selfUser?._id || '', undefined, {
+        query: { enabled: isShareModalOpen && !!selfUser?._id }
+    });
 
     const { data: otherUser, isLoading: isLoadingUser } = useGetUserById(userId!, {
         query: { enabled: !!userId },
@@ -159,7 +166,7 @@ export default function Chat() {
             connect();
             return () => disconnect();
         }
-    }, [isAuthenticated, selfUser, userId]);
+    }, [isAuthenticated, selfUser, userId, connect, disconnect]);
 
     // Helper to format date separators (Today, Yesterday, DD/MM/YYYY)
     const formatDateSeparator = (dateString: string) => {
@@ -184,6 +191,18 @@ export default function Chat() {
         if (date.toDateString() === now.toDateString()) return `hoy a las ${time}`;
         if (date.toDateString() === yesterday.toDateString()) return `ayer a las ${time}`;
         return `${date.toLocaleDateString()} a las ${time}`;
+    };
+
+    const handleShareSearch = (search: any) => {
+        const origins = search.origins.join(", ");
+        const destinations = search.destinations.join(", ");
+        // Formato: SHARE_SEARCH:id:origen:destino
+        send({
+            type: 'sendMessage',
+            receiverId: userId!,
+            content: `SHARE_SEARCH:${search._id}:${origins}:${destinations}`,
+        });
+        setIsShareModalOpen(false);
     };
 
     const handleSendMessage = (e?: React.FormEvent) => {
@@ -322,8 +341,58 @@ export default function Chat() {
                     }
                 </div>
 
-                <div className="p-4 border-t border-line bg-main shrink-0">
+                <div className="p-4 border-t border-line bg-main shrink-0 relative">
+                    {/* Desplegable de compartir búsquedas */}
+                    {isShareModalOpen && (
+                        <div className="absolute bottom-full left-4 right-4 mb-2 bg-main border border-line rounded-2xl shadow-2xl overflow-hidden animate-in slide-in-from-bottom-2 duration-200 z-50 max-h-80 flex flex-col">
+                            <div className="p-3 border-b border-line bg-surface/50 flex justify-between items-center">
+                                <h3 className="text-xs font-bold uppercase tracking-wider text-content-muted flex items-center gap-2">
+                                    <History size={14} /> Tus búsquedas recientes
+                                </h3>
+                                <button onClick={() => setIsShareModalOpen(false)} className="text-content-muted hover:text-content">
+                                    <X size={16} />
+                                </button>
+                            </div>
+                            <div className="overflow-y-auto p-2 flex flex-col gap-2 custom-scrollbar">
+                                {isLoadingSearches ? (
+                                    <div className="p-8 flex justify-center"><Loader2 className="animate-spin text-brand" /></div>
+                                ) : userSearches?.items.length === 0 ? (
+                                    <div className="p-8 text-center text-xs text-content-muted">No tienes búsquedas para compartir.</div>
+                                ) : (
+                                    userSearches?.items.map((search: any) => (
+                                        <button
+                                            key={search._id}
+                                            onClick={() => handleShareSearch(search)}
+                                            className="flex flex-col gap-1 p-3 rounded-xl hover:bg-surface border border-transparent hover:border-line transition-all text-left group"
+                                        >
+                                            <div className="flex items-center justify-between">
+                                                <div className="font-bold text-sm text-content flex items-center gap-2">
+                                                    {search.origins[0]} <Plane size={12} className="text-brand rotate-45" /> {search.destinations[0]}
+                                                </div>
+                                                <span className="text-[10px] bg-brand/10 text-brand px-2 py-0.5 rounded-full font-bold uppercase">
+                                                    {search.criteria.priority}
+                                                </span>
+                                            </div>
+                                            <div className="flex items-center gap-3 text-[10px] text-content-muted">
+                                                <span className="flex items-center gap-1"><Calendar size={10} /> {new Date(search.departure_date).toLocaleDateString()}</span>
+                                                <span className="flex items-center gap-1"><MapPin size={10} /> {search.origins.length + search.destinations.length} ciudades</span>
+                                            </div>
+                                        </button>
+                                    ))
+                                )}
+                            </div>
+                        </div>
+                    )}
+
                     <form onSubmit={handleSendMessage} className="flex items-start gap-4">
+                        <button
+                            type="button"
+                            onClick={() => setIsShareModalOpen(!isShareModalOpen)}
+                            className={`p-3 rounded-full transition-all shadow-sm border border-line cursor-pointer ${isShareModalOpen ? 'bg-brand text-white' : 'bg-surface text-content-muted hover:text-brand'}`}
+                            title="Compartir búsqueda de vuelo"
+                        >
+                            <Plane size={20} className={isShareModalOpen ? '' : 'rotate-45'} />
+                        </button>
                         <TextareaAutosize
                             value={newMessage}
                             onChange={(e) => setNewMessage(e.target.value)}
