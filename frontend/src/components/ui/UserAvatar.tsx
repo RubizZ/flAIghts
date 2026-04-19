@@ -6,7 +6,7 @@ interface UserAvatarProps {
     size?: number;
 }
 
-export default function UserAvatar({ user, className = "", size = 32 }: UserAvatarProps) {
+export default function UserAvatar({ user, className = "", size }: UserAvatarProps) {
     const baseUrl = import.meta.env.VITE_BACKEND_API_BASE_URL || "";
     const avatarUrl = user?.profile_picture
         ? `${baseUrl.replace(/\/$/, '')}${user.profile_picture}`
@@ -16,7 +16,7 @@ export default function UserAvatar({ user, className = "", size = 32 }: UserAvat
         <img
             src={avatarUrl}
             className={`rounded-full shadow-inner bg-surface border border-line object-cover ${className}`}
-            style={{ width: size, height: size }}
+            style={size ? { width: size, height: size } : undefined}
             alt={`${user?.username || 'User'}'s avatar`}
         />
     );

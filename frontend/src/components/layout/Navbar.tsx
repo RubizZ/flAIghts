@@ -393,6 +393,7 @@ export default function Navbar({ variant = 'floating' }: { variant?: 'floating' 
                                     id="nav-user-menu-trigger"
                                     variant={variant}
                                     showBadge={!!(user?.received_friend_requests && user.received_friend_requests.length > 0)}
+                                    className={variant === 'flat' ? 'bg-transparent! border-transparent! shadow-none' : ''}
                                 >
                                     <UserAvatar user={user} size={32} />
                                 </NavIconButton>

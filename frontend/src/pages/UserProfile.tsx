@@ -168,15 +168,15 @@ export default function UserProfile() {
     const now = new Date().getTime();
 
     return (
-        <div className="flex p-8 gap-8 justify-center w-full max-w-6xl mx-auto items-start h-[calc(100vh-100px)]">
-            <div className="flex flex-col gap-6">
-                <div className="flex flex-col text-center gap-4 bg-main p-8 rounded-3xl border border-line shadow-sm shrink-0 w-fit sticky top-8">
+        <div className="flex flex-col lg:flex-row p-4 lg:p-8 gap-6 lg:gap-8 justify-center w-full max-w-6xl mx-auto items-start min-h-[calc(100vh-100px)] lg:h-[calc(100vh-100px)] overflow-y-auto lg:overflow-hidden">
+            <div className="flex flex-col gap-6 w-full lg:w-fit">
+                <div className="flex flex-col text-center gap-4 bg-main p-6 lg:p-8 rounded-3xl border border-line shadow-sm shrink-0 w-full lg:w-fit lg:sticky lg:top-8">
                     <div className="relative self-center">
-                        <UserAvatar user={user} size={256} className="border-4 border-line p-1 bg-main" />
+                        <UserAvatar user={user} className="w-32 h-32 lg:w-64 lg:h-64 border-4 border-line p-1 bg-main" />
                         {lastSeenAt + 5 * 60 * 1000 >= now ? (
-                            <div className="absolute bottom-6 right-6 w-8 h-8 bg-green-500 rounded-full border-4 border-line shadow-sm" title="Online"></div>
+                            <div className="absolute bottom-2 right-2 lg:bottom-6 lg:right-6 w-6 h-6 lg:w-8 lg:h-8 bg-green-500 rounded-full border-4 border-line shadow-sm" title="Online"></div>
                         ) : (
-                            <div className="absolute bottom-6 right-6 w-8 h-8 bg-red-500 rounded-full border-4 border-line shadow-sm" title="Offline"></div>
+                            <div className="absolute bottom-2 right-2 lg:bottom-6 lg:right-6 w-6 h-6 lg:w-8 lg:h-8 bg-red-500 rounded-full border-4 border-line shadow-sm" title="Offline"></div>
                         )}
                     </div>
                     <div>
@@ -223,8 +223,8 @@ export default function UserProfile() {
 
             </div>
 
-            <div className="flex-1 bg-main rounded-3xl border border-line shadow-sm p-8 flex flex-col h-full max-h-full">
-                <h1 className="text-3xl font-bold text-content mb-6">Últimas búsquedas</h1>
+            <div className="flex-1 bg-main rounded-3xl border border-line shadow-sm p-6 lg:p-8 flex flex-col w-full lg:h-full lg:max-h-full">
+                <h1 className="text-2xl lg:text-3xl font-bold text-content mb-6">Últimas búsquedas</h1>
 
                 {user.type === "public" && !user.public ? (
                     <div className="flex-1 flex flex-col items-center justify-center gap-4 text-content-muted opacity-70">
@@ -236,7 +236,7 @@ export default function UserProfile() {
                     </div>
                 ) : (
                     <div
-                        className="flex-1 overflow-y-auto pr-4 flex flex-col gap-4 custom-scrollbar"
+                        className="flex-1 lg:overflow-y-auto lg:pr-4 flex flex-col gap-4 custom-scrollbar"
                         onScroll={handleScroll}
                     >
                         {isSearchesLoading ? (

@@ -34,9 +34,18 @@ export default function Settings() {
     const [searchParams, setSearchParams] = useSearchParams();
 
     const activeTab = searchParams.get("tab") || "perfil";
+    const mainContentRef = useRef<HTMLDivElement>(null);
 
     const setActiveTab = (tab: string) => {
         setSearchParams({ tab }, { replace: true });
+        
+        if (window.innerWidth < 768) {
+            setTimeout(() => {
+                if (mainContentRef.current) {
+                    mainContentRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            }, 50);
+        }
     };
 
     useEffect(() => {
@@ -357,7 +366,7 @@ export default function Settings() {
                 </aside>
 
                 {/* Main Content */}
-                <div className="md:col-span-2 flex flex-col gap-8 min-h-[60vh] md:pt-15">
+                <div ref={mainContentRef} className="md:col-span-2 flex flex-col gap-8 min-h-[60vh] md:pt-15">
                     {/* Seccion Perfil */}
                     {activeTab === 'perfil' && (
                         <>
