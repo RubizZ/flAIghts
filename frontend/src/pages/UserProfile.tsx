@@ -15,9 +15,9 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/context/AuthContext";
 import { Lock, MessageCircle, UserMinus, Share2 } from "lucide-react";
 import UserAvatar from "@/components/ui/UserAvatar";
-import { useSendMessage } from "@/api/generated/conversations/conversations";
+import { useSendMessage } from "@/api/generated/openapi/conversations";
 import SmartPopover from "@/components/ui/SmartPopover";
-import type { FriendUser } from "@/api/generated/model";
+import type { FriendUser } from "@/api/generated/openapi/model/friendUser";
 
 export default function UserProfile() {
     const { id } = useParams();

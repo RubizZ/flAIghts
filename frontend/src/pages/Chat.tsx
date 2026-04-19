@@ -1,13 +1,14 @@
-import { useState, useEffect, useRef, UIEvent, Fragment } from "react";
+import { useState, useEffect, useRef, UIEvent, useCallback } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { ArrowLeft, Send, Loader2, CheckCheck, Plane } from "lucide-react";
-import { useGetUserById } from "@/api/generated/users/users";
+import { useGetUserById } from "@/api/generated/openapi/users";
 import UserAvatar from "@/components/ui/UserAvatar";
 import { useAuth } from "@/context/AuthContext";
-import { io, Socket } from "socket.io-client";
 import { useInfiniteQuery, useQueryClient, type InfiniteData } from "@tanstack/react-query";
-import { getMessages, useMarkConversationAsRead, getGetConversationsQueryKey } from "@/api/generated/conversations/conversations";
-import type { MessageResponse, PaginatedMessagesResponse } from "@/api/generated/model";
+import { getMessages, useMarkConversationAsRead, getGetConversationsQueryKey } from "@/api/generated/openapi/conversations";
+import { useConversationsStreamWS } from "@/api/generated/asyncapi/hooks";
+import type { MessageResponse, PaginatedMessagesResponse } from "@/api/generated/openapi/model";
+import type { ChatServerMessage } from "@/api/generated/asyncapi/models";
 import TextareaAutosize from "react-textarea-autosize";
 import { toast } from "sonner";
 
@@ -17,7 +18,6 @@ export default function Chat() {
     const navigate = useNavigate();
     const queryClient = useQueryClient();
     const [newMessage, setNewMessage] = useState("");
-    const socketRef = useRef<Socket | null>(null);
     const messageContainerRef = useRef<HTMLDivElement>(null);
     const [isOnline, setIsOnline] = useState(false);
 
@@ -102,14 +102,10 @@ export default function Chat() {
         }
     }, [lastMessageId, isLoadingHistory]);
 
-    useEffect(() => {
-        if (!isAuthenticated || !selfUser || !userId) return;
-
-        const socket = io(import.meta.env.VITE_BACKEND_API_BASE_URL, { withCredentials: true });
-        socketRef.current = socket;
-
-        socket.on('receiveMessage', (incomingMessage: MessageResponse) => {
-            const conversationUserIds = [selfUser._id, userId];
+    const { connect, disconnect, send, status: wsStatus } = useConversationsStreamWS(useCallback((data: ChatServerMessage) => {
+        if (data.type === 'receiveMessage') {
+            const incomingMessage = data.message;
+            const conversationUserIds = [selfUser?._id, userId];
             if (conversationUserIds.includes(incomingMessage.sender) && conversationUserIds.includes(incomingMessage.receiver)) {
                 queryClient.setQueryData<InfiniteData<PaginatedMessagesResponse>>(['messages', userId], (oldData) => {
                     if (!oldData || oldData.pages.length === 0) {
@@ -136,17 +132,14 @@ export default function Chat() {
                     return { ...oldData, pages: newPages };
                 });
             }
-        });
-
-        socket.on('userStatus', (data: { userId: string, online: boolean }) => {
+        }
+        else if (data.type === 'userStatus') {
             if (data.userId === userId) {
                 setIsOnline(data.online);
             }
-        });
-
-        // Listen for when the other user reads MY messages
-        socket.on('conversationRead', (data: { byUserId: string }) => {
-            if (data.byUserId === userId) {
+        }
+        else if (data.type === 'conversationRead') {
+            if (data.byUserId === userId && selfUser) {
                 queryClient.setQueryData<InfiniteData<PaginatedMessagesResponse>>(['messages', userId], (oldData) => {
                     if (!oldData) return oldData;
                     return {
@@ -158,13 +151,15 @@ export default function Chat() {
                     };
                 });
             }
-        });
+        }
+    }, [selfUser?._id, userId, queryClient]));
 
-        return () => {
-            socket.disconnect();
-            socketRef.current = null;
-        };
-    }, [isAuthenticated, selfUser, userId, queryClient]);
+    useEffect(() => {
+        if (isAuthenticated && selfUser && userId) {
+            connect();
+            return () => disconnect();
+        }
+    }, [isAuthenticated, selfUser, userId]);
 
     // Helper to format date separators (Today, Yesterday, DD/MM/YYYY)
     const formatDateSeparator = (dateString: string) => {
@@ -193,13 +188,12 @@ export default function Chat() {
 
     const handleSendMessage = (e?: React.FormEvent) => {
         e?.preventDefault();
-        if (newMessage.trim() === "" || !socketRef.current || !userId) return;
+        if (newMessage.trim() === "" || !userId) return;
 
-        socketRef.current.emit('sendMessage', {
+        send({
+            type: 'sendMessage',
             receiverId: userId,
             content: newMessage.trim(),
-        }, (ack: { ok: boolean }) => {
-            if (!ack.ok) toast.error("Error al enviar el mensaje");
         });
 
         setNewMessage("");
@@ -342,7 +336,8 @@ export default function Chat() {
                         />
                         <button
                             type="submit"
-                            disabled={newMessage.trim() === ""}
+                            disabled={newMessage.trim() === "" || wsStatus !== 'open'}
+                            title={wsStatus !== 'open' ? 'Conectando al chat...' : 'Enviar mensaje'}
                             className="p-3 bg-brand text-content-on-brand rounded-full hover:bg-brand/90 transition-all shadow-lg shadow-brand/20 active:scale-95 disabled:bg-brand/50 disabled:cursor-not-allowed disabled:scale-100"
                             aria-label="Enviar mensaje"
                         >

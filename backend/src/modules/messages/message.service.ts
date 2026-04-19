@@ -1,12 +1,50 @@
 import { singleton } from "tsyringe";
 import { Message, type IMessage } from "./models/message.model.js";
 import { MessageValidationError } from "./message.errors.js";
-import type { ConversationResponse, MessageResponse } from "./message.types.js";
+import type { ConversationResponse, MessageResponse, ChatServerMessage } from "./message.types.js";
+import type { TypedWebSocket } from "../../utils/asyncapi.utils.js";
 import type { HydratedDocument } from "mongoose";
 import type { PipelineStage } from "mongoose";
 
 @singleton()
 export class MessageService {
+    private onlineUsers = new Map<string, Set<TypedWebSocket<any, ChatServerMessage>>>();
+
+    public addOnlineUser(userId: string, ws: TypedWebSocket<any, ChatServerMessage>) {
+        if (!this.onlineUsers.has(userId)) {
+            this.onlineUsers.set(userId, new Set());
+            this.broadcastUserStatus(userId, true);
+        }
+        this.onlineUsers.get(userId)!.add(ws);
+    }
+
+    public removeOnlineUser(userId: string, ws: TypedWebSocket<any, ChatServerMessage>) {
+        const userSockets = this.onlineUsers.get(userId);
+        if (userSockets) {
+            userSockets.delete(ws);
+            if (userSockets.size === 0) {
+                this.onlineUsers.delete(userId);
+                this.broadcastUserStatus(userId, false);
+            }
+        }
+    }
+
+    public emitToUser(userId: string, event: ChatServerMessage) {
+        const userSockets = this.onlineUsers.get(userId);
+        if (userSockets) {
+            const eventStr = JSON.stringify(event);
+            userSockets.forEach(socket => socket.send(eventStr as any));
+        }
+    }
+
+    private broadcastUserStatus(userId: string, online: boolean) {
+        const event: ChatServerMessage = { type: 'userStatus', userId, online };
+        const eventStr = JSON.stringify(event);
+
+        this.onlineUsers.forEach((sockets) => {
+            sockets.forEach(ws => ws.send(eventStr as any));
+        });
+    }
     public static getConversationId(userId: string, otherUserId: string): string {
         return [userId, otherUserId].sort().join('--');
     }

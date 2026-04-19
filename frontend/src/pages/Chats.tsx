@@ -1,10 +1,11 @@
 import { useAuth } from "@/context/AuthContext";
 import { Link } from "react-router-dom";
-import { useGetConversations, getGetConversationsQueryKey } from "@/api/generated/conversations/conversations";
+import { useGetConversations, getGetConversationsQueryKey } from "@/api/generated/openapi/conversations";
+import { useConversationsStreamWS } from "@/api/generated/asyncapi/hooks";
+import type { ChatServerMessage } from "@/api/generated/asyncapi/models";
 import { MessageSquare, Clock, UserPlus } from "lucide-react";
 import UserAvatar from "@/components/ui/UserAvatar";
-import { useEffect } from "react";
-import { io } from "socket.io-client";
+import { useEffect, useCallback } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 
 export default function Chats() {
@@ -18,21 +19,19 @@ export default function Chats() {
     });
 
     // Real-time updates for conversation list
-    useEffect(() => {
-        if (!isAuthenticated || !user) return;
-
-        const socket = io(import.meta.env.VITE_BACKEND_API_BASE_URL, { withCredentials: true });
-
-        socket.on('receiveMessage', () => {
-            // When any message is received (even if it's a new conversation), refresh the list
-            // This updates the unread count and the "last message" preview
+    const { connect, disconnect } = useConversationsStreamWS(useCallback((data: ChatServerMessage) => {
+        if (data.type === 'receiveMessage') {
+            // Cuando se recibe cualquier mensaje, refrescamos la lista para ver el preview y el contador
             queryClient.invalidateQueries({ queryKey: getGetConversationsQueryKey() });
-        });
+        }
+    }, [queryClient]));
 
-        return () => {
-            socket.disconnect();
-        };
-    }, [isAuthenticated, user, queryClient]);
+    useEffect(() => {
+        if (isAuthenticated && user) {
+            connect();
+            return () => disconnect();
+        }
+    }, [isAuthenticated, user, connect, disconnect]);
 
     if (isAuthLoading) {
         return (

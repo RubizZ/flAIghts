@@ -40,8 +40,15 @@ function inferMessageType(method: MethodDeclaration, type: 'publish' | 'subscrib
     if (isWS && wsParam) {
         const typeArgs = wsParam.getType().getTypeArguments();
         if (typeArgs.length >= 2) {
-            const sym = type === 'publish' ? typeArgs[0].getSymbol() : typeArgs[1].getSymbol();
-            return sym?.getName();
+            const typeArg = type === 'publish' ? typeArgs[0] : typeArgs[1];
+            if (!typeArg) return undefined;
+
+            // Fallback para obtener el nombre del símbolo, y si falla (común en uniones), usamos el texto del tipo
+            let name = typeArg.getSymbol()?.getName();
+            if (!name) {
+                name = typeArg.getText().split('.').pop()?.replace(/[\[\]]/g, "");
+            }
+            return name;
         }
     }
 
@@ -58,7 +65,7 @@ function inferMessageType(method: MethodDeclaration, type: 'publish' | 'subscrib
 
         if (typeArgs.length > 0) {
             let messageType = typeArgs[0].getSymbol()?.getName();
-            
+
             // Fallback agresivo si el símbolo no está resuelto
             if (!messageType) {
                 const text = typeArgs[0].getText();

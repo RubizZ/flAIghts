@@ -30,3 +30,13 @@ export interface PaginatedConversationsResponse {
     page: number;
     totalPages: number;
 }
+
+export type ChatClientMessage =
+    | { type: 'sendMessage'; receiverId: string; content: string; }
+    | { type: 'readConversation'; otherUserId: string; };
+
+export type ChatServerMessage =
+    | { type: 'receiveMessage'; message: MessageResponse; }
+    | { type: 'userStatus'; userId: string; online: boolean; }
+    | { type: 'conversationRead'; byUserId: string; }
+    | { type: 'error'; message: string; };

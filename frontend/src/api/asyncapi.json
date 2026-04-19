@@ -19,6 +19,19 @@
         }
       }
     },
+    "/conversations/stream": {
+      "x-protocol": "ws",
+      "publish": {
+        "message": {
+          "$ref": "#/components/messages/ChatClientMessage"
+        }
+      },
+      "subscribe": {
+        "message": {
+          "$ref": "#/components/messages/ChatServerMessage"
+        }
+      }
+    },
     "/search/stream": {
       "x-protocol": "sse",
       "publish": {
@@ -529,6 +542,124 @@
             "additionalProperties": false,
             "required": [
               "data",
+              "type"
+            ]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "const": "error"
+              },
+              "message": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false,
+            "required": [
+              "message",
+              "type"
+            ]
+          }
+        ]
+      },
+      "ChatClientMessage": {
+        "anyOf": [
+          {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "const": "sendMessage"
+              },
+              "receiverId": {
+                "type": "string"
+              },
+              "content": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false,
+            "required": [
+              "content",
+              "receiverId",
+              "type"
+            ]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "const": "readConversation"
+              },
+              "otherUserId": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false,
+            "required": [
+              "otherUserId",
+              "type"
+            ]
+          }
+        ]
+      },
+      "ChatServerMessage": {
+        "anyOf": [
+          {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "const": "receiveMessage"
+              },
+              "message": {
+                "$ref": "#/components/schemas/MessageResponse"
+              }
+            },
+            "additionalProperties": false,
+            "required": [
+              "message",
+              "type"
+            ]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "const": "userStatus"
+              },
+              "userId": {
+                "type": "string"
+              },
+              "online": {
+                "type": "boolean"
+              }
+            },
+            "additionalProperties": false,
+            "required": [
+              "online",
+              "type",
+              "userId"
+            ]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "const": "conversationRead"
+              },
+              "byUserId": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false,
+            "required": [
+              "byUserId",
               "type"
             ]
           },
@@ -1138,6 +1269,42 @@
           "content",
           "role"
         ]
+      },
+      "MessageResponse": {
+        "additionalProperties": false,
+        "type": "object",
+        "properties": {
+          "_id": {
+            "type": "string"
+          },
+          "read": {
+            "type": "boolean"
+          },
+          "conversationId": {
+            "type": "string"
+          },
+          "sender": {
+            "type": "string"
+          },
+          "receiver": {
+            "type": "string"
+          },
+          "content": {
+            "type": "string"
+          },
+          "created_at": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "_id",
+          "content",
+          "conversationId",
+          "created_at",
+          "read",
+          "receiver",
+          "sender"
+        ]
       }
     },
     "messages": {
@@ -1149,6 +1316,16 @@
       "AgentStreamEvent": {
         "payload": {
           "$ref": "#/components/schemas/AgentStreamEvent"
+        }
+      },
+      "ChatClientMessage": {
+        "payload": {
+          "$ref": "#/components/schemas/ChatClientMessage"
+        }
+      },
+      "ChatServerMessage": {
+        "payload": {
+          "$ref": "#/components/schemas/ChatServerMessage"
         }
       },
       "SearchRequest": {
