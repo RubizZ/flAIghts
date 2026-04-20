@@ -510,7 +510,7 @@ export default function Settings() {
                                         label: "Precio",
                                         value: priceWeight,
                                         setter: setPriceWeight,
-                                        icon: "€",
+                                        icon: "💵",
                                         getDescription: (v: number) => {
                                             if (v === 0) return "El precio me es indiferente";
                                             if (v < 0.3) return "Pagaría más por un mejor vuelo";
@@ -631,7 +631,7 @@ export default function Settings() {
                                                     <Mail size={18} />
                                                 </div>
                                             </div>
-                                            <div className="mt-2 flex justify-end flex-wrap gap-2 animate-fade-in">
+                                            <div className="mt-2 flex justify-end flex-wrap gap-2">
                                                 <button
                                                     type="button"
                                                     onClick={() => initiateEmailChange({ data: { newEmail: email } })}

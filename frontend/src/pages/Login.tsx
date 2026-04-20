@@ -24,7 +24,6 @@ export default function Login() {
         mutation: {
             onSuccess: async () => {
                 // El token se guarda en una cookie HttpOnly
-                toast.success("¡Bienvenido a bordo!");
                 await refetch();
                 navigate("/");
             },

@@ -64,7 +64,6 @@ export default function Home() {
     const { mutate: searchRequest, isPending } = useSearchRequest({
         mutation: {
             onSuccess: (data) => {
-                toast.success("Búsqueda iniciada");
                 navigate(`/search/${data._id}`);
             },
             onError: (error) => {
