@@ -14,6 +14,7 @@ import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/context/AuthContext";
 import { Lock, MessageCircle, UserMinus, Share2 } from "lucide-react";
+import { useEffect } from "react";
 import UserAvatar from "@/components/ui/UserAvatar";
 import { useSendMessage } from "@/api/generated/openapi/conversations";
 import SmartPopover from "@/components/ui/SmartPopover";
@@ -110,6 +111,12 @@ export default function UserProfile() {
             fetchNextPage();
         }
     };
+
+    useEffect(() => {
+        if (user && user.type !== "self") {
+            window.dispatchEvent(new CustomEvent('view_user_profile'));
+        }
+    }, [user]);
 
     if (isAuthLoading || isLoading) {
         return (

@@ -7,6 +7,7 @@ import "@/modules/users/models/user.model.js"; // Necesario para mongoose.model(
 export interface IEvaluationDocument {
     _id: string;
     results: SurveyResult[];
+    susResults?: number[];
     timestamp: Date;
     userId?: string;
     fullName?: string;
@@ -31,6 +32,7 @@ const EvaluationSchema = new Schema<IEvaluationDocument>({
             comment: { type: String }
         }
     }],
+    susResults: [{ type: Number }],
     timestamp: { type: Date, required: true },
     userId: { type: String, ref: "User" },
     fullName: { type: String },

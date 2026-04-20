@@ -14,7 +14,8 @@ import {
     Palette,
     ShieldCheck,
     Bell,
-    Trophy
+    Trophy,
+    MoreHorizontal
 } from "lucide-react";
 import { PopulatedUser } from "@/api/generated/openapi/model";
 import UserAvatar from "@/components/ui/UserAvatar";
@@ -42,7 +43,7 @@ export default function Navbar({ variant = 'floating' }: { variant?: 'floating' 
         system: 'Sistema'
     };
 
-    const { isEvaluationMode, hasConsented, setShowRoadmap, missions, isMissionRated, allCompleted } = useMissions();
+    const { isEvaluationMode, hasConsented, setShowRoadmap, missions, isMissionRated, allCompleted, reopenConsent } = useMissions();
     const pendingSurveysCount = missions.filter(m => m.isCompleted && !isMissionRated(m.id)).length;
 
     const NotificationsMainView = ({ user }: { user: PopulatedUser }) => {
@@ -108,6 +109,33 @@ export default function Navbar({ variant = 'floating' }: { variant?: 'floating' 
         const { pushMenu, setIsOpen } = useDropdown();
         return (
             <div className="w-64">
+                {isEvaluationMode && (
+                    <div className="lg:hidden p-1 border-b border-line bg-brand/5">
+                        <p className="px-3 py-1.5 text-[10px] uppercase tracking-widest text-brand font-black opacity-70">Evaluación</p>
+                        <button
+                            id="nav-missions-button-mobile"
+                            onClick={() => {
+                                setIsOpen(false);
+                                if (hasConsented) {
+                                    setShowRoadmap(true);
+                                } else {
+                                    reopenConsent();
+                                }
+                            }}
+                            className="w-full flex items-center justify-between px-3 py-2 text-sm text-content hover:bg-brand/10 rounded-xl transition-all cursor-pointer group text-left font-medium"
+                        >
+                            <div className="flex items-center gap-3">
+                                <Trophy size={16} className={`shrink-0 transition-colors ${pendingSurveysCount > 0 ? "text-amber-500 animate-pulse" : allCompleted ? "text-green-500" : "group-hover:text-brand"}`} />
+                                <span className="leading-none font-bold">Misiones</span>
+                            </div>
+                            {pendingSurveysCount > 0 && (
+                                <span className="text-[10px] text-brand font-bold bg-brand/10 px-1.5 py-0.5 rounded-full">
+                                    {pendingSurveysCount}
+                                </span>
+                            )}
+                        </button>
+                    </div>
+                )}
                 <div className="p-3 border-b border-line bg-surface/50">
                     <p className="text-[10px] uppercase tracking-widest text-content-muted font-bold mb-1 opacity-50">Cuenta</p>
                     <p className="text-sm font-bold text-content truncate">{user?.email}</p>
@@ -137,23 +165,7 @@ export default function Navbar({ variant = 'floating' }: { variant?: 'floating' 
                         </button>
                     </div>
 
-                    {isEvaluationMode && hasConsented && (
-                        <button
-                            id="nav-missions-button-mobile"
-                            onClick={() => { setIsOpen(false); setShowRoadmap(true); }}
-                            className="lg:hidden w-full flex items-center justify-between px-3 py-2 text-sm text-content hover:bg-surface/70 rounded-xl transition-all cursor-pointer group text-left font-medium"
-                        >
-                            <div className="flex items-center gap-3">
-                                <Trophy size={16} className={`shrink-0 transition-colors ${pendingSurveysCount > 0 ? "text-amber-500 animate-pulse" : allCompleted ? "text-green-500" : "group-hover:text-brand"}`} />
-                                <span className="leading-none">Misiones</span>
-                            </div>
-                            {pendingSurveysCount > 0 && (
-                                <span className="text-[10px] text-brand font-bold bg-brand/10 px-1.5 py-0.5 rounded-full">
-                                    {pendingSurveysCount}
-                                </span>
-                            )}
-                        </button>
-                    )}
+
                     <button onClick={() => { setIsOpen(false); navigate(`/user/${user?._id}`) }} className="w-full flex items-center justify-between text-content px-3 py-2 text-sm rounded-xl transition-all group text-left hover:bg-surface/70 hover:cursor-pointer font-medium">
                         <div className="flex items-center gap-3">
                             <User size={16} className="shrink-0" />
@@ -261,20 +273,29 @@ export default function Navbar({ variant = 'floating' }: { variant?: 'floating' 
         const { pushMenu, setIsOpen } = useDropdown();
         return (
             <div className="w-64 p-1">
-                {isEvaluationMode && hasConsented && (
-                    <div className="lg:hidden border-b border-line mb-1 pb-1">
+                {isEvaluationMode && (
+                    <div className="lg:hidden mb-2 pb-2 border-b border-line bg-brand/5 rounded-xl">
+                        <p className="px-3 py-1.5 text-[10px] uppercase tracking-widest text-brand font-black opacity-70">Evaluación</p>
                         <button
                             id="nav-missions-button-mobile-alt"
-                            onClick={() => { setIsOpen(false); setShowRoadmap(true); }}
-                            className="w-full flex items-center justify-between px-3 py-2 text-sm text-content hover:bg-surface/70 rounded-xl transition-all cursor-pointer group text-left font-medium"
+                            onClick={() => {
+                                setIsOpen(false);
+                                if (hasConsented) {
+                                    setShowRoadmap(true);
+                                } else {
+                                    reopenConsent();
+                                }
+                            }}
+                            className="w-full flex items-center justify-between px-3 py-2 text-sm text-content hover:bg-brand/10 rounded-xl transition-all cursor-pointer group text-left font-medium"
                         >
                             <div className="flex items-center gap-3">
                                 <Trophy size={16} className={`shrink-0 transition-colors ${pendingSurveysCount > 0 ? "text-amber-500 animate-pulse" : allCompleted ? "text-green-500" : "group-hover:text-brand"}`} />
-                                <span className="leading-none">Misiones</span>
+                                <span className="leading-none font-bold">Misiones</span>
                             </div>
                         </button>
                     </div>
                 )}
+
                 {/* Mobile/Tablet Auth Options */}
                 <div className="lg:hidden mb-2 pb-2 border-b border-line">
                     <p className="px-3 py-2 text-[10px] uppercase tracking-widest text-content-muted font-bold opacity-50">Autenticación</p>
@@ -323,11 +344,17 @@ export default function Navbar({ variant = 'floating' }: { variant?: 'floating' 
                 : "flex items-center gap-2 sm:gap-4 pointer-events-auto"
             }>
                 {/* Mission Indicator Button (Evaluation Mode) */}
-                {isEvaluationMode && hasConsented && (
+                {isEvaluationMode && (
                     <NavIconButton
                         id="nav-missions-button"
                         variant={variant}
-                        onClick={() => setShowRoadmap(true)}
+                        onClick={() => {
+                            if (hasConsented) {
+                                setShowRoadmap(true);
+                            } else {
+                                reopenConsent();
+                            }
+                        }}
                         showBadge={pendingSurveysCount > 0}
                         title="Misiones de Evaluación"
                         className={`hidden lg:flex ${pendingSurveysCount > 0 ? "animate-pulse" : ""}`}
@@ -457,7 +484,8 @@ export default function Navbar({ variant = 'floating' }: { variant?: 'floating' 
                         }}
                         trigger={
                             <NavIconButton id="nav-options-menu-trigger" variant={variant}>
-                                <User size={22} />
+                                <MoreHorizontal size={22} className="hidden lg:block" />
+                                <User size={22} className="block lg:hidden" />
                             </NavIconButton>
                         }
                         menus={{

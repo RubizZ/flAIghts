@@ -201,6 +201,14 @@ export default function SearchResults() {
         return steps;
     }, [hoveredItinerary, expandedItinerary, airportsMap]);
 
+    const allStepsIata = useMemo(() => currentSteps.flat().map(s => s.iata_code).filter(Boolean) as string[], [currentSteps]);
+    const selectedAirports = useMemo(() =>
+        [globeRoute.origin, ...allStepsIata, globeRoute.destination].filter(Boolean) as string[],
+        [globeRoute.origin, allStepsIata, globeRoute.destination]
+    );
+
+    const handleGlobeReady = useCallback(() => setIsGlobeReady(true), []);
+
     if (error) {
         return (
             <div className="flex flex-col items-center justify-center min-h-screen bg-main text-red-500 gap-4 p-4 text-center">
@@ -259,13 +267,6 @@ export default function SearchResults() {
         window.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
-    const allStepsIata = useMemo(() => currentSteps.flat().map(s => s.iata_code).filter(Boolean) as string[], [currentSteps]);
-    const selectedAirports = useMemo(() =>
-        [globeRoute.origin, ...allStepsIata, globeRoute.destination].filter(Boolean) as string[],
-        [globeRoute.origin, allStepsIata, globeRoute.destination]
-    );
-
-    const handleGlobeReady = useCallback(() => setIsGlobeReady(true), []);
 
     return (
         <div className="relative min-h-screen w-full overflow-y-auto overflow-x-hidden bg-main lg:bg-black text-content flex lg:block">
@@ -420,6 +421,54 @@ export default function SearchResults() {
                                         </div>
                                     </div>
                                 )}
+                                {/* Share Button */}
+                                <button
+                                    onClick={async () => {
+                                        // Disparamos el evento de la misión al inicio para asegurar que cuente
+                                        window.dispatchEvent(new CustomEvent('share_search'));
+
+                                        const url = window.location.href;
+                                        const shareData = {
+                                            title: 'flAIghts - Búsqueda de vuelos',
+                                            text: '¡Mira los vuelos que he encontrado en flAIghts!',
+                                            url: url
+                                        };
+
+                                        // 1. Intentar Share Nativo
+                                        const canShareNative = typeof navigator.share === 'function' &&
+                                            (typeof navigator.canShare !== 'function' || navigator.canShare(shareData));
+
+                                        if (canShareNative) {
+                                            try {
+                                                await navigator.share(shareData);
+                                                return;
+                                            } catch (err) {
+                                                console.log('Native share failed or cancelled', err);
+                                            }
+                                        }
+
+                                        // 2. Intentar Portapapeles (requiere HTTPS/localhost)
+                                        if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
+                                            try {
+                                                await navigator.clipboard.writeText(url);
+                                                toast.info("Enlace copiado", { description: "Copiado al portapapeles correctamente" });
+                                                return;
+                                            } catch (err) {
+                                                console.error('Clipboard copy failed', err);
+                                            }
+                                        }
+
+                                        // 3. Fallback visual (para contextos no seguros como IP en móvil)
+                                        toast.info("Copia el enlace de la barra de direcciones", {
+                                            description: "Tu navegador bloquea el acceso al portapapeles en conexiones no seguras.",
+                                            duration: 5000
+                                        });
+                                    }}
+                                    className="p-2.5 bg-surface/50 hover:bg-surface border border-line/30 rounded-xl transition-all group active:scale-95 cursor-pointer ml-auto"
+                                    title="Compartir búsqueda"
+                                >
+                                    <Share2 size={20} className="text-content-muted group-hover:text-brand" />
+                                </button>
                             </div>
 
                             {/* Results Columns */}

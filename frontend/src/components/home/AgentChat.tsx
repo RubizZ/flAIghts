@@ -538,6 +538,11 @@ const AgentChat = forwardRef<any, AgentChatProps>(({
                         });
                     } else if (event.type === 'final_result') {
                         hasFinalResult = true;
+                        
+                        if (event.data?.flights && event.data.flights.length > 0) {
+                            window.dispatchEvent(new CustomEvent('ai_flights_returned'));
+                        }
+
                         setMessages((prev: ExtendedChatMessage[]) => {
                             const cleaned = prev.map(m => m.isStreaming ? { ...m, isStreaming: false } : m);
                             if (event.data?.flights && event.data.flights.length > 0) {
