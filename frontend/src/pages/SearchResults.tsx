@@ -2,7 +2,7 @@ import { useState, useMemo, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useSearchResult } from "@/api/generated/openapi/search";
 import { useGetGlobeAirports } from "@/api/generated/openapi/airports";
-import { AlertCircle, Loader2, Plane, ArrowLeft, ArrowRight, DollarSign, Clock, Calendar } from "lucide-react";
+import { AlertCircle, Loader2, Plane, ArrowLeft, ArrowRight, DollarSign, Clock, Calendar, Star } from "lucide-react";
 import type { ItineraryResponse, GlobeAirportResponse, AirportResponse } from "@/api/generated/openapi/model";
 import StarsBackground from "@/components/ui/StarsBackground";
 import { toast } from "sonner";
@@ -15,7 +15,7 @@ export default function SearchResults() {
     const { t } = useTranslation();
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
-    const [sortBy, setSortBy] = useState<'price' | 'duration'>('price');
+    const [sortBy, setSortBy] = useState<'price' | 'duration' | 'personalized'>('personalized');
     const [hoveredItinerary, setHoveredItinerary] = useState<ItineraryResponse | null>(null);
     const [expandedItinerary, setExpandedItinerary] = useState<ItineraryResponse | null>(null);
     const [selectionStep, setSelectionStep] = useState<'departure' | 'return' | 'summary'>('departure');
@@ -84,6 +84,7 @@ export default function SearchResults() {
     const sortItineraries = (itineraries?: ItineraryResponse[]) => {
         if (!itineraries) return [];
         return [...itineraries].sort((a, b) => {
+            if (sortBy === 'personalized') return (b.score || 0) - (a.score || 0);
             if (sortBy === 'price') return a.total_price - b.total_price;
             if (sortBy === 'duration') return a.total_duration - b.total_duration;
             return 0;
@@ -270,7 +271,7 @@ export default function SearchResults() {
                     </svg>
                 </div>
                 <div className="flex flex-col items-center gap-1">
-                    <span className="text-content-muted text-xs">Buscando las mejores rutas...</span>
+                    <span className="text-content-muted text-xs">{t('searchResultsPage.searchingBestRoutes')}</span>
                 </div>
                 <div className="flex gap-1.5">
                     {[0, 1, 2].map(i => (
@@ -296,7 +297,7 @@ export default function SearchResults() {
                                     <button
                                         onClick={selectionStep === 'departure' ? () => navigate(-1) : handleGoBack}
                                         className="p-2.5 bg-surface/50 hover:bg-surface border border-line/30 rounded-xl transition-all group active:scale-95 cursor-pointer"
-                                        title={selectionStep === 'departure' ? "Volver atrás" : "Paso anterior"}
+                                        title={selectionStep === 'departure' ? t('searchResultsPage.back') : t('searchResultsPage.prevStep')}
                                     >
                                         <ArrowLeft size={20} className="text-content-muted group-hover:text-content" />
                                     </button>
@@ -313,7 +314,7 @@ export default function SearchResults() {
                                                     </span>
                                                 </>
                                             )}
-                                            {selectionStep === 'summary' && `Resumen de tu viaje`}
+                                            {selectionStep === 'summary' && t('searchResultsPage.summary')}
                                         </h1>
                                         <div className="flex flex-col justify-start gap-3 flex-wrap mt-1 text-xs text-content-muted font-medium">
                                             {searchData.departure_date && (
@@ -333,10 +334,10 @@ export default function SearchResults() {
                                                     <Loader2 className="w-3 h-3 animate-spin text-brand" />
                                                 )}
                                                 <p>
-                                                    {selectionStep === 'departure' && searchData.status === 'searching' && 'Buscando en tiempo real...'}
-                                                    {selectionStep === 'departure' && searchData.status !== 'searching' && `${departureItineraries?.length || 0} resultados de ida`}
-                                                    {selectionStep === 'return' && `${returnItineraries?.length || 0} resultados de vuelta`}
-                                                    {selectionStep === 'summary' && 'Confirma tu selección'}
+                                                    {selectionStep === 'departure' && searchData.status === 'searching' && t('searchResultsPage.realTimeSearching')}
+                                                    {selectionStep === 'departure' && searchData.status !== 'searching' && t('searchResultsPage.departureResults', { count: departureItineraries?.length || 0 })}
+                                                    {selectionStep === 'return' && t('searchResultsPage.returnResults', { count: returnItineraries?.length || 0 })}
+                                                    {selectionStep === 'summary' && t('searchResultsPage.confirmSelection')}
                                                 </p>
                                             </div>
                                         </div>
@@ -346,8 +347,18 @@ export default function SearchResults() {
                                 {/* Sorting Controls */}
                                 {selectionStep !== 'summary' && (
                                     <div className="flex items-center gap-2">
-                                        <span className="text-xs font-medium text-content-muted block">Ordenar por:</span>
+                                        <span className="text-xs font-medium text-content-muted block">{t('searchResultsPage.sortBy')}</span>
                                         <div className="flex items-center gap-1 bg-surface p-1 rounded-xl border border-line">
+                                            <button
+                                                onClick={() => setSortBy('personalized')}
+                                                className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs md:text-sm font-medium transition-all cursor-pointer ${sortBy === 'personalized'
+                                                    ? 'bg-brand text-content-on-brand shadow-sm'
+                                                    : 'text-content-muted hover:text-content hover:bg-main'
+                                                    }`}
+                                            >
+                                                <Star size={14} className={sortBy === 'personalized' ? 'fill-current' : ''} />
+                                                <span>{t('searchResultsPage.personalized')}</span>
+                                            </button>
                                             <button
                                                 onClick={() => setSortBy('price')}
                                                 className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs md:text-sm font-medium transition-all cursor-pointer ${sortBy === 'price'
@@ -356,7 +367,7 @@ export default function SearchResults() {
                                                     }`}
                                             >
                                                 <DollarSign size={14} />
-                                                <span>Precio</span>
+                                                <span>{t('searchResultsPage.price')}</span>
                                             </button>
                                             <button
                                                 onClick={() => setSortBy('duration')}
@@ -366,7 +377,7 @@ export default function SearchResults() {
                                                     }`}
                                             >
                                                 <Clock size={14} />
-                                                <span>Duración</span>
+                                                <span>{t('searchResultsPage.duration')}</span>
                                             </button>
                                         </div>
                                     </div>
@@ -384,6 +395,7 @@ export default function SearchResults() {
                                             airportsMap={airportsMap}
                                             formatTime={formatTime}
                                             formatDuration={formatDuration}
+                                            title={t('searchResultsPage.selectedFlight', { type: t('common.outbound') })}
                                         />
                                         {selectedReturn && (
                                             <SelectedFlightSummary
@@ -392,11 +404,12 @@ export default function SearchResults() {
                                                 airportsMap={airportsMap}
                                                 formatTime={formatTime}
                                                 formatDuration={formatDuration}
+                                                title={t('searchResultsPage.selectedFlight', { type: t('common.return') })}
                                             />
                                         )}
                                         <div className="bg-main/80 dark:bg-main/60 backdrop-blur-xl border border-line rounded-2xl shadow-lg p-6 flex flex-col sm:flex-row items-center justify-between gap-4">
                                             <div className="text-center sm:text-left">
-                                                <span className="text-sm font-bold text-content-muted uppercase tracking-wider">Precio total del viaje</span>
+                                                <span className="text-sm font-bold text-content-muted uppercase tracking-wider">{t('searchResultsPage.tripTotalPrice')}</span>
                                                 <p className="text-4xl font-black text-brand">
                                                     {(selectedDeparture.total_price + (selectedReturn?.total_price || 0)).toFixed(2)}€
                                                 </p>
@@ -421,7 +434,7 @@ export default function SearchResults() {
                                             <div className="p-2 bg-origin/20 rounded-lg">
                                                 <Plane className="w-5 h-5 text-origin -rotate-45" />
                                             </div>
-                                            Vuelos de Ida
+                                            {t('common.outboundFlights')}
                                         </h2>
                                         <div className="space-y-4">
                                             {departureItineraries.map((itinerary, index) => (
@@ -450,6 +463,7 @@ export default function SearchResults() {
                                                 airportsMap={airportsMap}
                                                 formatTime={formatTime}
                                                 formatDuration={formatDuration}
+                                                title={t('searchResultsPage.selectedFlight', { type: t('common.outbound') })}
                                             />
                                         )}
 
@@ -458,7 +472,7 @@ export default function SearchResults() {
                                                 <div className="p-2 bg-destination/20 rounded-lg">
                                                     <Plane className="w-5 h-5 text-destination rotate-135" />
                                                 </div>
-                                                Vuelos de Vuelta
+                                                {t('common.returnFlights')}
                                             </h2>
                                             <div className="space-y-4">
                                                 {returnItineraries.map((itinerary, index) => (
@@ -481,8 +495,8 @@ export default function SearchResults() {
                                 {selectionStep === 'departure' && searchData.status === 'searching' && !departureItineraries?.length && (
                                     <div className="flex flex-col items-center justify-center py-20 bg-main/40 backdrop-blur-md rounded-3xl border border-line text-center text-content-muted mx-4">
                                         <Loader2 size={48} className="mb-4 opacity-50 text-brand animate-spin" />
-                                        <h3 className="text-xl font-semibold text-content mb-2">Buscando más vuelos...</h3>
-                                        <p className="text-sm opacity-70">Estamos encontrando más opciones para ti en tiempo real.</p>
+                                        <h3 className="text-xl font-semibold text-content mb-2">{t('searchResultsPage.searchingMore')}</h3>
+                                        <p className="text-sm opacity-70">{t('searchResultsPage.searchingBestRoutes')}</p>
                                     </div>
                                 )}
                                 {selectionStep === 'departure' && searchData.status === 'completed' && !departureItineraries?.length && (
