@@ -115,6 +115,8 @@ const SearchParametersSchema = new Schema<ApiRequestParameters>({
     sort_by: { type: Number, enum: [1, 2, 3, 4, 5, 6], required: false },
     stops: { type: Number, enum: [0, 1, 2, 3], required: false },
     bags: { type: Number, required: false },
+    departure_token: { type: String, required: false },
+    booking_token: { type: String, required: false },
 }, { _id: false });
 
 // Schema principal de SerpApiStorage
