@@ -45,7 +45,6 @@ export default function Register() {
         mutation: {
             onSuccess: () => {
                 queryClient.invalidateQueries({ queryKey: getGetSelfUserQueryKey() });
-                toast.success("¡Bienvenido a bordo!");
                 navigate("/");
             },
             onError: () => {
