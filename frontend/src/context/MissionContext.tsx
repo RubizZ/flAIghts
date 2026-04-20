@@ -41,7 +41,7 @@ interface MissionContextType {
     addSurveyAnswer: (missionId: string, answer: SurveyAnswer['answer']) => void;
     showSurveyMissionId: string | null;
     setShowSurveyMissionId: (id: string | null) => void;
-    finishEvaluation: (fullName: string) => Promise<void>;
+    finishEvaluation: (fullName: string, susResults: number[]) => Promise<void>;
     evaluationFinished: boolean;
     isMissionRated: (missionId: string) => boolean;
     showRoadmap: boolean;
@@ -52,6 +52,7 @@ interface MissionContextType {
     nextSurveyOnboardingStep: () => void;
     skipOnboarding: () => void;
     declineConsent: () => void;
+    reopenConsent: () => void;
 }
 
 const MissionContext = createContext<MissionContextType | undefined>(undefined);
@@ -230,8 +231,29 @@ export const MissionProvider: React.FC<{ children: ReactNode }> = ({ children })
         setIsDeclined(true);
     }, []);
 
+    const reopenConsent = useCallback(() => {
+        setIsDeclined(false);
+    }, []);
+
+    const isMissionCompleted = useCallback((missionId: string) => {
+        return missions.find(m => m.id === missionId)?.isCompleted || false;
+    }, [missions]);
+
+    const isMissionUnlocked = useCallback((missionId: string) => {
+        const mission = missions.find(m => m.id === missionId);
+        if (!mission) return false;
+        if (!mission.dependsOn || mission.dependsOn.length === 0) return true;
+        return mission.dependsOn.every(depId => isMissionCompleted(depId));
+    }, [missions, isMissionCompleted]);
+
     const completeStep = useCallback((missionId: string, stepId: string) => {
         if (evaluationFinished) return;
+
+        // No permitir completar pasos si la misión está bloqueada
+        if (!isMissionUnlocked(missionId)) {
+            console.warn(`Intento de completar paso "${stepId}" en misión bloqueada "${missionId}"`);
+            return;
+        }
 
         // Usamos flushSync para que la actualización de estado sea síncrona.
         // Esto garantiza que los listeners (componentes) sean desmontados 
@@ -251,7 +273,7 @@ export const MissionProvider: React.FC<{ children: ReactNode }> = ({ children })
                     const newSteps = m.steps.map((s: MissionStep) => {
                         if (s.id === stepId) {
                             // Toast con ID único para deduplicación automática
-                            toast.success(`¡Paso completado!: ${s.title}`, {
+                            toast.success(`¡Paso completado de la misión "${m.title}": ${s.title}`, {
                                 id: `step-${missionId}-${stepId}`,
                                 icon: '✨',
                                 style: {
@@ -275,10 +297,9 @@ export const MissionProvider: React.FC<{ children: ReactNode }> = ({ children })
                     const allStepsCompleted = newSteps.every(s => s.isCompleted);
 
                     if (allStepsCompleted && !m.isCompleted) {
-                        toast.success(`🎉 Misión conseguida: ${m.title}`, {
+                        toast.success(`🎉 Misión completada: ${m.title}`, {
                             id: `mission-${missionId}`,
-                            duration: 5000,
-                            description: '¡Buen trabajo! Cuéntanos qué tal te ha ido pulsando en el aviso.'
+                            duration: 5000
                         });
 
                         if (!hasSeenSurveyOnboarding && surveyOnboardingStep === 0) {
@@ -299,18 +320,7 @@ export const MissionProvider: React.FC<{ children: ReactNode }> = ({ children })
                 return newMissions;
             });
         });
-    }, [user, evaluationFinished, hasSeenSurveyOnboarding, surveyOnboardingStep]);
-
-    const isMissionCompleted = useCallback((missionId: string) => {
-        return missions.find(m => m.id === missionId)?.isCompleted || false;
-    }, [missions]);
-
-    const isMissionUnlocked = useCallback((missionId: string) => {
-        const mission = missions.find(m => m.id === missionId);
-        if (!mission) return false;
-        if (!mission.dependsOn || mission.dependsOn.length === 0) return true;
-        return mission.dependsOn.every(depId => isMissionCompleted(depId));
-    }, [missions, isMissionCompleted]);
+    }, [user, evaluationFinished, hasSeenSurveyOnboarding, surveyOnboardingStep, isMissionUnlocked]);
 
     const unlockedMissions = useMemo(() => {
         return missions.filter(m => isMissionUnlocked(m.id));
@@ -344,12 +354,13 @@ export const MissionProvider: React.FC<{ children: ReactNode }> = ({ children })
         return surveyAnswers.some(a => a.missionId === missionId);
     }, [surveyAnswers]);
 
-    const finishEvaluation = async (fullName: string) => {
+    const finishEvaluation = async (fullName: string, susResults: number[]) => {
         try {
             await submitResultsMutation.mutateAsync({
                 data: {
                     fullName,
                     results: surveyAnswers,
+                    susResults,
                     timestamp: new Date().toISOString()
                 }
             });
@@ -389,19 +400,20 @@ export const MissionProvider: React.FC<{ children: ReactNode }> = ({ children })
             surveyOnboardingStep,
             nextSurveyOnboardingStep,
             skipOnboarding,
-            declineConsent
+            declineConsent,
+            reopenConsent
         }}>
-            {IS_EVAL_MODE && !isDeclined && (
+            {IS_EVAL_MODE && (
                 <>
-                    {!hasConsented && <ConsentModal onAccept={acceptConsent} />}
+                    {!hasConsented && !isDeclined && <ConsentModal onAccept={acceptConsent} />}
                     {hasConsented && (
                         <>
                             {(onboardingStep > 0 || surveyOnboardingStep > 0) && <MissionOnboarding />}
                             {showSurveyMissionId && <SurveyModal key={showSurveyMissionId} />}
                             <FinalEvaluationModal />
-                            {/* Renderizar listeners de cada paso activo */}
+                            {/* Renderizar listeners solo de misiones desbloqueadas */}
                             {missions.map(m =>
-                                m.steps.map(step => {
+                                isMissionUnlocked(m.id) && m.steps.map(step => {
                                     if (step.listener && !step.isCompleted) {
                                         const Listener = step.listener;
                                         return <Listener key={step.id} />;

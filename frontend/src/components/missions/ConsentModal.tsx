@@ -63,20 +63,20 @@ const ConsentModal: React.FC<ConsentModalProps> = ({ onAccept }) => {
                                 </ul>
                             </div>
 
-                            <p className="flex items-start gap-3 text-xs italic">
-                                <Shield size={20} className="mt-1 shrink-0 text-amber-400" />
-                                <span>Para vincular los resultados con tu actividad, recogeremos datos asociados a tu sesión. Solo utilizaremos esta información para fines académicos y análisis de usabilidad.</span>
-                            </p>
-
                             <div className="flex items-center gap-4 rounded-xl border border-amber-500/20 bg-amber-500/5 p-4 animate-pulse-slow">
                                 <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-amber-500/20 text-amber-400">
                                     <Sparkles size={20} />
                                 </div>
                                 <div className="text-left">
-                                    <p className="text-[11px] font-black uppercase tracking-wider text-amber-400">Tutorial Recomendado</p>
-                                    <p className="text-[10px] text-gray-400 leading-tight">Al aceptar, comenzará una <strong>guía interactiva</strong>. Te recomendamos seguirla para no perderte ningún detalle del sistema de misiones.</p>
+                                    <p className="text-[12px] font-black uppercase tracking-wider text-amber-400">Tutorial Recomendado</p>
+                                    <p className="text-[11px] text-gray-400 leading-tight">Al aceptar, comenzará una <strong>guía interactiva</strong>. Te recomendamos seguirla para no perderte ningún detalle del sistema de misiones.</p>
                                 </div>
                             </div>
+
+                            <p className="flex items-start gap-3 text-xs italic">
+                                <Shield size={20} className="mt-1 shrink-0 text-amber-400" />
+                                <span>Para vincular los resultados con tu actividad, recogeremos datos asociados a tu sesión. Solo utilizaremos esta información para fines académicos y análisis de usabilidad.</span>
+                            </p>
                         </div>
 
                         <div className="mb-8 space-y-4 rounded-2xl border border-white/10 bg-white/5 p-5">

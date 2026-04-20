@@ -8,7 +8,7 @@ interface MissionRoadmapProps {
 }
 
 const MissionRoadmap: React.FC<MissionRoadmapProps> = ({ onClose, onMissionClick }) => {
-    const { missions, isMissionUnlocked, isMissionCompleted, isMissionRated, activeMission } = useMissions();
+    const { missions, isMissionUnlocked, isMissionCompleted, isMissionRated, activeMission, onboardingStep, surveyOnboardingStep } = useMissions();
     const [isClosing, setIsClosing] = useState(false);
     const [connections, setConnections] = useState<Array<{
         x1: number; y1: number; x2: number; y2: number;
@@ -113,7 +113,7 @@ const MissionRoadmap: React.FC<MissionRoadmapProps> = ({ onClose, onMissionClick
     };
 
     const handleMouseDown = (e: React.MouseEvent) => {
-        if (!scrollContainerRef.current) return;
+        if (!scrollContainerRef.current || onboardingStep > 0 || surveyOnboardingStep > 0) return;
         isDragging.current = true;
         setIsGrabbing(true);
         startX.current = e.pageX - scrollContainerRef.current.offsetLeft;
@@ -301,7 +301,7 @@ const MissionRoadmap: React.FC<MissionRoadmapProps> = ({ onClose, onMissionClick
                             return (
                                 <div
                                     key={level}
-                                    className={`flex flex-row gap-10 items-center relative w-max
+                                    className={`flex flex-row gap-10 items-center relative w-max z-10
                                         ${level === 0 ? 'sm:pl-48' : level % 2 === 0 ? 'sm:pl-96' : 'sm:pl-0'}
                                     `}
                                 >
@@ -323,12 +323,15 @@ const MissionRoadmap: React.FC<MissionRoadmapProps> = ({ onClose, onMissionClick
                                                 {/* Node Card */}
                                                 <div
                                                     id={`roadmap-mission-${mission.id}`}
-                                                    className={`w-72 sm:w-96 p-4 sm:p-6 rounded-2xl sm:rounded-3xl border transition-all duration-300 relative z-10 ${completed
-                                                        ? 'bg-green-500/10 border-green-500/30 hover:bg-green-500/20 hover:scale-[1.02] hover:border-green-500/50'
+                                                    className={`w-72 sm:w-96 p-4 sm:p-6 rounded-2xl sm:rounded-3xl border transition-all duration-300 relative z-20 shadow-2xl ${completed
+                                                        ? 'bg-gray-950 border-green-500/30 hover:border-green-500/50'
                                                         : unlocked
-                                                            ? 'bg-blue-500/10 border-blue-500/30 shadow-xl shadow-blue-500/5 hover:bg-blue-500/20 hover:scale-[1.02]'
-                                                            : 'bg-white/5 border-white/10 grayscale opacity-40'
-                                                        } ${needsRating ? 'animate-pulse border-amber-500/50 shadow-lg shadow-amber-500/20' : ''}`}>
+                                                            ? 'bg-gray-950 border-blue-500/30 shadow-blue-500/5'
+                                                            : 'bg-gray-950/50 border-white/10 grayscale opacity-40'
+                                                        } ${needsRating ? 'animate-pulse border-amber-500/50 shadow-amber-500/20' : ''}`}>
+                                                    
+                                                    {/* Background overlay for color without losing opacity */}
+                                                    <div className={`absolute inset-0 rounded-[inherit] -z-10 transition-colors duration-300 ${completed ? 'bg-green-500/5 group-hover:bg-green-500/10' : unlocked ? 'bg-blue-500/5 group-hover:bg-blue-500/10' : ''}`} />
                                                     <div className="flex items-center gap-4 mb-4">
                                                         <div className={`h-12 w-12 flex items-center justify-center rounded-2xl text-xl ${completed ? 'bg-green-500/20 text-green-400' :
                                                             unlocked ? 'bg-blue-500/20 text-blue-400' : 'bg-gray-800 text-gray-500'

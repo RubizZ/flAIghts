@@ -127,16 +127,15 @@ const MissionDashboard: React.FC<MissionDashboardProps> = ({
                                 </h3>
                             </div>
 
-                            <p className="font-black uppercase tracking-[0.4em] text-[8px] sm:text-[9px] mb-4 sm:mb-6 text-blue-500">
-                                Objetivo Principal
-                            </p>
-
-                            <div className="space-y-3 sm:space-y-4 mb-6">
+                            <div className="space-y-1 sm:space-y-2 mt-4 sm:mt-6 mb-6">
+                                <p className="font-black uppercase tracking-[0.4em] text-[8px] sm:text-[9px] text-blue-500/80">
+                                    Objetivo Principal
+                                </p>
                                 <p className="text-base sm:text-lg text-white/90 leading-relaxed max-w-md">
                                     {mission.description}
                                 </p>
                                 {mission.isCompleted && (
-                                    <p className="text-[11px] sm:text-xs text-white/40 italic leading-relaxed max-w-md border-l-2 border-green-500/30 pl-4 py-1">
+                                    <p className="text-[11px] sm:text-xs text-white/40 italic leading-relaxed max-w-md border-l-2 border-green-500/30 pl-4 py-1 mt-4">
                                         Has finalizado este desafío con éxito. Tu experiencia es vital para la investigación; por favor, comparte tus impresiones sobre la facilidad de uso.
                                     </p>
                                 )}

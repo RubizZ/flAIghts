@@ -3620,6 +3620,13 @@
             },
             "type": "array"
           },
+          "susResults": {
+            "items": {
+              "type": "number",
+              "format": "double"
+            },
+            "type": "array"
+          },
           "timestamp": {
             "type": "string"
           },

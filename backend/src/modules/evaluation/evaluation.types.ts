@@ -19,6 +19,7 @@ export interface SurveyResult {
 
 export interface EvaluationPayload {
     results: SurveyResult[];
+    susResults?: number[];
     timestamp: string;
     userId?: string;
     fullName?: string;
