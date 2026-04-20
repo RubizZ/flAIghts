@@ -89,37 +89,21 @@ export class GeneticTripOptimizer {
             legDates.push(toDateString(addDays(startDate, daysPerCity * i)));
         }
 
-        const firstLegPromise = this.storageService.getFlightEdges(
-            [origin],
-            cities,
-            legDates[0]!
-        );
+        // PRE-FETCHING OPTIMIZADO: Cargamos todos los vuelos potenciales en batches
+        const promises: Promise<unknown>[] = [];
 
-        const lastLegPromise = this.storageService.getFlightEdges(
-            cities,
-            [origin],
-            legDates[cities.length]!
-        );
+        // 1. Primera Leg: Origen -> Todas las ciudades
+        promises.push(this.storageService.getBatchedFlightEdges([origin], cities, legDates[0]!));
 
+        // 2. Última Leg: Todas las ciudades -> Origen
+        promises.push(this.storageService.getBatchedFlightEdges(cities, [origin], legDates[cities.length]!));
 
-        const citiesWithoutFirst = cities.slice(1);
-        const firstCityOnly = [cities[0]!];
-
-        const middleLegPromises: Promise<unknown>[] = [];
+        // 3. Legs Intermedias: Todas las ciudades -> Todas las ciudades (para cada fecha intermedia)
         for (let i = 1; i < cities.length; i++) {
-            const date = legDates[i]!;
-            middleLegPromises.push(
-                this.storageService.getFlightEdges(cities, citiesWithoutFirst, date)
-            );
-            middleLegPromises.push(
-                this.storageService.getFlightEdges(cities, firstCityOnly, date)
-            );
+            promises.push(this.storageService.getBatchedFlightEdges(cities, cities, legDates[i]!));
         }
 
-        await Promise.all([firstLegPromise, lastLegPromise, ...middleLegPromises]);
-        await Promise.all(
-            legDates.map(date => this.storageService.warmUpCache(date))
-        );
+        await Promise.all(promises);
 
 
         for (let gen = 0; gen < generations; gen++) {
