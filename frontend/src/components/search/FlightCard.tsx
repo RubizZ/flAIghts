@@ -1,5 +1,6 @@
 import { useState, Fragment, useMemo } from "react";
-import { ChevronDown, Clock, Info, PlaneLanding, PlaneTakeoff, Ticket, Calendar, Moon, AlertTriangle } from "lucide-react";
+import { ChevronDown, Clock, Info, PlaneLanding, PlaneTakeoff, Ticket, Calendar, Moon, AlertTriangle, CalendarClock, Clock3 } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import type { ItineraryResponse, GlobeAirportResponse, LegResponse } from "@/api/generated/openapi/model";
 import FlightRouteInfo from "./FlightRouteInfo";
 import { COUNTRY_NAMES } from "@/constants/countries";
@@ -30,18 +31,10 @@ interface LegDetailsProps {
 }
 
 export default function FlightCard({ itinerary, formatTime, formatDuration, airportsMap, onHover, onExpandChange, onSelect, showSelectButton = true }: FlightCardProps) {
+    const { t } = useTranslation();
     const [isExpanded, setIsExpanded] = useState(false);
     const firstDepartureTime = itinerary.legs[0]?.departure_time;
     const lastArrivalLeg = itinerary.legs[itinerary.legs.length - 1];
-
-    const formattedArrivalDate = useMemo(() => {
-        if (!lastArrivalLeg?.arrival_time) return "";
-        return new Date(lastArrivalLeg.arrival_time).toLocaleDateString('es-ES', {
-            weekday: 'long',
-            day: 'numeric',
-            month: 'long'
-        });
-    }, [lastArrivalLeg?.arrival_time]);
 
     return (
         <div
@@ -71,9 +64,9 @@ export default function FlightCard({ itinerary, formatTime, formatDuration, airp
                     />
 
                     {/* Price & Action */}
-                    <div className="flex flex-row lg:flex-col items-center lg:items-end justify-between w-full lg:w-auto pt-0 lg:pl-8 lg:border-l border-line gap-3">
-                        <div className="text-left lg:text-right">
-                            <span className="text-[10px] uppercase font-bold text-content-muted tracking-wider block mb-0.5">Precio total</span>
+                    <div className="flex flex-col items-center sm:items-end justify-center px-4 sm:px-8 border-t sm:border-t-0 sm:border-l border-line/20 py-4 sm:py-0 bg-brand/[0.02] sm:bg-transparent w-full sm:w-auto">
+                        <span className="text-[10px] font-bold text-content-muted/60 uppercase tracking-widest mb-1">{t('flightCard.totalPrice')}</span>
+                        <div className="flex items-baseline gap-1">
                             <span className="text-3xl font-black text-brand tracking-tight">{itinerary.total_price}€</span>
                         </div>
                         {showSelectButton && onSelect && (
@@ -82,9 +75,9 @@ export default function FlightCard({ itinerary, formatTime, formatDuration, airp
                                     e.stopPropagation();
                                     onSelect(itinerary);
                                 }}
-                                className="px-6 py-2.5 bg-brand hover:bg-brand-hover text-white text-sm font-bold rounded-xl shadow-lg shadow-brand/20 transition-all hover:-translate-y-px active:translate-y-px cursor-pointer"
+                                className="mt-3 w-full sm:w-auto px-6 py-2.5 bg-brand hover:bg-brand-hover text-white text-sm font-bold rounded-xl shadow-lg shadow-brand/20 transition-all hover:-translate-y-px active:translate-y-px cursor-pointer"
                             >
-                                Seleccionar
+                                {t('flightCard.select')}
                             </button>
                         )}
                     </div>
@@ -103,7 +96,7 @@ export default function FlightCard({ itinerary, formatTime, formatDuration, airp
                     <div className="pt-4 space-y-4">
                         {itinerary.legs.map((leg, legIndex) => (
                             <Fragment key={legIndex}>
-                                {legIndex > 0 && leg.wait_time && leg.wait_time > 0 && (
+                                {legIndex > 0 && leg.wait_time !== undefined && leg.wait_time > 0 && (
                                     <StopoverDetails
                                         leg={leg}
                                         airportsMap={airportsMap}
@@ -126,13 +119,15 @@ export default function FlightCard({ itinerary, formatTime, formatDuration, airp
                         ))}
 
                         {/* Final arrival summary notice */}
-                        <div className="mt-4 border-t border-line flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-content-muted bg-surface/20 -mx-5 px-5 py-4">
-                            <div className="flex items-center gap-2">
-                                <Clock size={16} className="text-brand" />
-                                <span>Llegada final a <strong>{lastArrivalLeg?.destination}</strong>:</span>
+                        <div className="flex items-center gap-3 px-6 py-3 bg-brand/5 border-t border-b border-brand/10">
+                            <div className="w-8 h-8 rounded-full bg-brand/10 flex items-center justify-center">
+                                <CalendarClock size={16} className="text-brand" />
                             </div>
-                            <span className="font-bold text-content text-sm first-letter:uppercase">
-                                {formattedArrivalDate} a las {formatTime(lastArrivalLeg?.arrival_time)}
+                            <span className="text-xs font-bold text-content leading-none">
+                                {t('flightCard.finalArrival', { airport: lastArrivalLeg?.destination })}
+                                <span className="text-brand ml-1">
+                                    {t('flightCard.atTime', { time: formatTime(lastArrivalLeg?.arrival_time) })}
+                                </span>
                             </span>
                         </div>
                     </div>
@@ -149,19 +144,13 @@ interface StopoverDetailsPropsWithParams extends StopoverDetailsProps {
 }
 
 function StopoverDetails({ leg, formatDuration, airportsMap, index, totalSteps, previousLeg }: StopoverDetailsPropsWithParams) {
+    const { t } = useTranslation();
     const airport = airportsMap.get(leg.origin);
-    const t = index / (totalSteps + 1);
-    const stopoverColor = `color-mix(in srgb, var(--color-origin), var(--color-destination) ${t * 100}%)`;
+    const tVal = index / (totalSteps + 1);
+    const stopoverColor = `color-mix(in srgb, var(--color-origin), var(--color-destination) ${tVal * 100}%)`;
 
-    const isOvernight = useMemo(() => {
-        const arrivalDate = new Date(previousLeg.arrival_time).getDate();
-        const departureDate = new Date(leg.departure_time).getDate();
-        const isLongLayover = (leg.wait_time || 0) > 240; // > 4 hours
-
-        return (isLongLayover && arrivalDate !== departureDate);
-    }, [leg, previousLeg]);
-
-    const isShortLayover = (leg.wait_time || 0) < 70; // Escada < 1h 10m
+    const isOvernight = (leg.wait_time || 0) > 480;
+    const isShortLayover = (leg.wait_time || 0) < 60;
 
     return (
         <div
@@ -176,20 +165,22 @@ function StopoverDetails({ leg, formatDuration, airportsMap, index, totalSteps, 
                     {index}
                 </div>
                 <div className="flex flex-col">
-                    <span className="font-bold whitespace-nowrap" style={{ color: stopoverColor }}>
-                        {index}ª Escala - {formatDuration(leg.wait_time!)}
-                    </span>
+                    <div className="flex items-center gap-2 mb-3">
+                        <span className="text-[10px] font-black text-brand uppercase tracking-widest px-2 py-0.5 bg-brand/10 rounded-md">
+                            {t('flightCard.scale', { count: index })} - {formatDuration(leg.wait_time || 0)}
+                        </span>
+                    </div>
                     <div className="flex flex-col gap-0.5 mt-0.5">
                         {isOvernight && (
-                            <div className="flex items-center gap-1 text-[10px] text-amber-600 dark:text-amber-400 font-bold uppercase tracking-tighter">
-                                <Moon size={10} className="fill-current" />
-                                Escala nocturna
+                            <div className="flex items-center gap-1.5 text-[10px] font-bold text-amber-600 bg-amber-50 px-2 py-1 rounded-lg">
+                                <Moon size={12} />
+                                <span>{t('flightCard.overnightScale')}</span>
                             </div>
                         )}
                         {isShortLayover && (
-                            <div className="flex items-center gap-1 text-[10px] text-red-600 dark:text-red-400 font-black uppercase tracking-tight">
-                                <AlertTriangle size={11} className="fill-current" strokeWidth={3} />
-                                Escala muy corta
+                            <div className="flex items-center gap-1.5 text-[10px] font-bold text-rose-600 bg-rose-50 px-2 py-1 rounded-lg">
+                                <Clock3 size={12} />
+                                <span>{t('flightCard.shortScale')}</span>
                             </div>
                         )}
                     </div>

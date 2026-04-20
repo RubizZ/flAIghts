@@ -7,13 +7,15 @@ export default function SelectedFlightSummary({
     type,
     airportsMap,
     formatTime,
-    formatDuration
+    formatDuration,
+    title
 }: {
     itinerary: ItineraryResponse,
     type: 'Ida' | 'Vuelta',
     airportsMap: Map<string, GlobeAirportResponse>,
     formatTime: (s?: string) => string,
-    formatDuration: (m: number) => string
+    formatDuration: (m: number) => string,
+    title: string
 }) {
     return (
         <div className="space-y-4">
@@ -21,7 +23,7 @@ export default function SelectedFlightSummary({
                 <div className={`p-2 rounded-lg ${type === 'Ida' ? 'bg-origin/20' : 'bg-destination/20'}`}>
                     <Plane className={`w-5 h-5 ${type === 'Ida' ? 'text-origin -rotate-45' : 'text-destination rotate-[135deg]'}`} />
                 </div>
-                Vuelo de {type} Seleccionado
+                {title}
             </h2>
             <FlightCard
                 itinerary={itinerary}

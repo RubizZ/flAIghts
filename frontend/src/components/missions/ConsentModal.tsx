@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { useMissions } from '@/context/MissionContext';
 import { Shield, Check, Info, Rocket, Sparkles } from 'lucide-react';
 
@@ -7,6 +8,7 @@ interface ConsentModalProps {
 }
 
 const ConsentModal: React.FC<ConsentModalProps> = ({ onAccept }) => {
+    const { t } = useTranslation();
     const { missions, declineConsent } = useMissions();
     const [isChecked, setIsChecked] = React.useState(false);
     const [isClosing, setIsClosing] = React.useState(false);
@@ -40,18 +42,18 @@ const ConsentModal: React.FC<ConsentModalProps> = ({ onAccept }) => {
                         </div>
 
                         <h2 className="mb-4 text-3xl font-bold text-white tracking-tight">
-                            Evaluación de <span className="text-blue-400">flAIghts</span>
+                            {t('missions.consent.title_prefix')} <span className="text-blue-400">flAIghts</span>
                         </h2>
 
                         <div className="mb-6 space-y-4 text-gray-300 leading-relaxed">
                             <p className="flex items-start gap-3 text-sm">
                                 <Info size={20} className="mt-1 shrink-0 text-blue-400" />
-                                <span>Este sistema de evaluación interactivo forma parte de un estudio de <strong>usabilidad para nuestro Trabajo de Fin de Grado (TFG)</strong>.</span>
+                                <span>{t('missions.consent.description')}</span>
                             </p>
 
                             <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
                                 <h3 className="mb-3 text-sm font-bold uppercase tracking-wider text-blue-400 flex items-center gap-2">
-                                    <Rocket size={16} /> Misiones a realizar
+                                    <Rocket size={16} /> {t('missions.consent.missions_title')}
                                 </h3>
                                 <ul className="space-y-2">
                                     {missions.map(m => (
@@ -65,7 +67,7 @@ const ConsentModal: React.FC<ConsentModalProps> = ({ onAccept }) => {
 
                             <p className="flex items-start gap-3 text-xs italic">
                                 <Shield size={20} className="mt-1 shrink-0 text-amber-400" />
-                                <span>Para vincular los resultados con tu actividad, recogeremos datos asociados a tu sesión. Solo utilizaremos esta información para fines académicos y análisis de usabilidad.</span>
+                                <span>{t('missions.consent.privacy_notice')}</span>
                             </p>
 
                             <div className="flex items-center gap-4 rounded-xl border border-amber-500/20 bg-amber-500/5 p-4 animate-pulse-slow">
@@ -73,8 +75,8 @@ const ConsentModal: React.FC<ConsentModalProps> = ({ onAccept }) => {
                                     <Sparkles size={20} />
                                 </div>
                                 <div className="text-left">
-                                    <p className="text-[11px] font-black uppercase tracking-wider text-amber-400">Tutorial Recomendado</p>
-                                    <p className="text-[10px] text-gray-400 leading-tight">Al aceptar, comenzará una <strong>guía interactiva</strong>. Te recomendamos seguirla para no perderte ningún detalle del sistema de misiones.</p>
+                                    <p className="text-[11px] font-black uppercase tracking-wider text-amber-400">{t('missions.consent.tutorial_title')}</p>
+                                    <p className="text-[10px] text-gray-400 leading-tight">{t('missions.consent.tutorial_description')}</p>
                                 </div>
                             </div>
                         </div>
@@ -91,7 +93,7 @@ const ConsentModal: React.FC<ConsentModalProps> = ({ onAccept }) => {
                                     />
                                 </div>
                                 <label htmlFor="consent-check" className="text-xs text-white/90 leading-tight cursor-pointer select-none">
-                                    <span className="font-bold text-blue-400">Consentimiento obligatorio:</span> Consiento el procesamiento de mis datos de interacción vinculados a mi usuario para el Trabajo de Fin de Grado.
+                                    <span className="font-bold text-blue-400">{t('missions.consent.checkbox_label_bold')}</span> {t('missions.consent.checkbox_label')}
                                 </label>
                             </div>
                         </div>
@@ -103,7 +105,7 @@ const ConsentModal: React.FC<ConsentModalProps> = ({ onAccept }) => {
                                 className="group relative flex w-full items-center justify-center gap-2 overflow-hidden rounded-xl bg-blue-600 px-6 py-4 font-bold text-white transition-all hover:bg-blue-500 active:scale-95 disabled:opacity-50 disabled:grayscale disabled:pointer-events-none hover:cursor-pointer"
                             >
                                 <span className="relative z-10 flex items-center gap-2">
-                                    Acepto participar <Check size={20} />
+                                    {t('missions.consent.accept')} <Check size={20} />
                                 </span>
                                 <div className="absolute inset-0 -translate-x-full bg-linear-to-r from-transparent via-white/20 to-transparent transition-transform duration-500 group-hover:translate-x-full" />
                             </button>
@@ -112,7 +114,7 @@ const ConsentModal: React.FC<ConsentModalProps> = ({ onAccept }) => {
                                 onClick={handleDecline}
                                 className="text-center text-[11px] text-gray-500 hover:text-gray-300 transition-colors uppercase tracking-widest font-bold"
                             >
-                                Prefiero no participar
+                                {t('missions.consent.decline')}
                             </button>
                         </div>
                     </div>

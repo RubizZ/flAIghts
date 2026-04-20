@@ -126,7 +126,7 @@ export default function Navbar({ variant = 'floating' }: { variant?: 'floating' 
                         >
                             <div className="flex items-center gap-3">
                                 <Bell size={16} className="shrink-0 group-hover:text-brand transition-colors" />
-                                <span className="leading-none">Notificaciones</span>
+                                <span className="leading-none">{t("navbar.notifications")}</span>
                             </div>
                             <div className="flex items-center gap-1.5">
                                 {user?.received_friend_requests && user.received_friend_requests.length > 0 && (
@@ -147,7 +147,7 @@ export default function Navbar({ variant = 'floating' }: { variant?: 'floating' 
                         >
                             <div className="flex items-center gap-3">
                                 <Trophy size={16} className={`shrink-0 transition-colors ${pendingSurveysCount > 0 ? "text-amber-500 animate-pulse" : allCompleted ? "text-green-500" : "group-hover:text-brand"}`} />
-                                <span className="leading-none">Misiones</span>
+                                <span className="leading-none">{t("navbar.missions")}</span>
                             </div>
                             {pendingSurveysCount > 0 && (
                                 <span className="text-[10px] text-brand font-bold bg-brand/10 px-1.5 py-0.5 rounded-full">
@@ -272,7 +272,7 @@ export default function Navbar({ variant = 'floating' }: { variant?: 'floating' 
                         >
                             <div className="flex items-center gap-3">
                                 <Trophy size={16} className={`shrink-0 transition-colors ${pendingSurveysCount > 0 ? "text-amber-500 animate-pulse" : allCompleted ? "text-green-500" : "group-hover:text-brand"}`} />
-                                <span className="leading-none">Misiones</span>
+                                <span className="leading-none">{t("navbar.missions")}</span>
                             </div>
                         </button>
                     </div>
@@ -331,7 +331,7 @@ export default function Navbar({ variant = 'floating' }: { variant?: 'floating' 
                         variant={variant}
                         onClick={() => setShowRoadmap(true)}
                         showBadge={pendingSurveysCount > 0}
-                        title="Misiones de Evaluación"
+                        title={t("navbar.evaluationMissions")}
                         className={`hidden lg:flex ${pendingSurveysCount > 0 ? "animate-pulse" : ""}`}
                     >
                         <Trophy

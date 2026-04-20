@@ -117,11 +117,33 @@ export type SearchRequestValidationFailResponse = RequestValidationFailResponse<
 // Unión de todas las posibles respuestas 422 para search
 export type SearchValidationFailResponse = SearchRequestValidationFailResponse | DatabaseValidationFailResponse;
 
+export interface FlightSegment {
+    departure_airport: {
+        name: string;
+        id: string;
+        time: string;
+    };
+    arrival_airport: {
+        name: string;
+        id: string;
+        time: string;
+    };
+    duration: number;
+    airplane: string;
+    airline: string;
+    airline_logo?: string;
+    travel_class: string;
+    flight_number: string;
+    extensions?: string[];
+}
+
 export interface EnrichedFlightEdge extends DijkstraFlightEdge {
     airplane: string;
     flight_number: string;
     travel_class: string;
+    departure_token?: string;
     extensions?: string[];
+    segments?: FlightSegment[];
 }
 
 export interface SearchProgressEvent {

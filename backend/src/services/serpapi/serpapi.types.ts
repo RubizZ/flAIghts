@@ -55,8 +55,9 @@ export interface ApiRequestParameters {
     hl: string; //idioma de los resultados
     currency: string; //default:USD
 
-    type: 2; // 2 = one way, lo usamos así siempre
+    type: 1 | 2 | 3; // 1 = round trip, 2 = one way, 3 = multi-city
     outbound_date: string; //formato: YYYY-MM-DD
+    return_date?: string; //formato: YYYY-MM-DD
     travel_class?: 1 | 2 | 3 | 4; // 1=Economy(default), 2=Premium, 3=Business, 4=First
 
     show_hidden?: boolean; //default: false
@@ -82,6 +83,9 @@ export interface ApiRequestParameters {
     //3 - 2 stops or fewer
 
     bags?: number; //default: 0
+    max_price?: number; 
+    departure_token?: string; // used for round trips or next leg
+    booking_token?: string; // used for final booking
 }
 
 export interface SerpApiRequest {

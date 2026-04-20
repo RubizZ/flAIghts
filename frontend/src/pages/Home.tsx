@@ -8,7 +8,6 @@ import { toast } from "sonner";
 import { AirportResponse } from "@/api/generated/openapi/model";
 import StarsBackground from "../components/ui/StarsBackground.tsx";
 import ManualSearchForm from "../components/search/ManualSearchForm.tsx";
-import type { Layover } from "../components/search/ManualSearchForm.tsx";
 import NavIconButton from "../components/ui/NavIconButton.tsx";
 import HomeCard from "../components/home/HomeCard.tsx";
 
@@ -20,12 +19,8 @@ export default function Home() {
     const [activeDeparturePopover, setActiveDeparturePopover] = useState<'main' | 'map' | null>(null);
     const [returnDate, setReturnDate] = useState("");
     const [activeReturnPopover, setActiveReturnPopover] = useState<'main' | 'map' | null>(null);
-    const [layovers, setLayovers] = useState<Layover[]>([]);
-    const [layoverPopoverOpen, setLayoverPopoverOpen] = useState<string | null>(null);
     const [isSelectingOnMap, setIsSelectingOnMap] = useState(false);
-    const [selectingType, setSelectingType] = useState<'origin' | 'destination' | string | null>(null);
-    const [originDisplay, setOriginDisplay] = useState<string>("");
-    const [destinationDisplay, setDestinationDisplay] = useState<string>("");
+    const [selectingType, setSelectingType] = useState<'origin' | 'destination' | null>(null);
     const [globeReady, setGlobeReady] = useState(false);
     const [shouldCloseOnSelect, setShouldCloseOnSelect] = useState(false);
     const today = new Date().toISOString().split('T')[0]!;
@@ -82,14 +77,7 @@ export default function Home() {
 
     const isPending = isSearchPending;
 
-    const handleSwitch = () => {
-        const temp = origin;
-        setOrigin(destination);
-        setDestination(temp);
-        const tempDisplay = originDisplay;
-        setOriginDisplay(destinationDisplay);
-        setDestinationDisplay(tempDisplay);
-    }
+
 
     const formatDate = (dateStr: string) => {
         if (!dateStr) return "";
@@ -148,7 +136,7 @@ export default function Home() {
         setSelectingType(null);
     }
 
-    const startMapSelection = (type: 'origin' | 'destination' | string, fromMainCard: boolean = false) => {
+    const startMapSelection = (type: 'origin' | 'destination', fromMainCard: boolean = false) => {
         setSelectingType(type);
         setIsSelectingOnMap(true);
         setShouldCloseOnSelect(fromMainCard);
@@ -229,7 +217,7 @@ export default function Home() {
             return;
         }
         if (origins.some(o => o.iata_code === airport.iata_code)) {
-            toast.error("Ese aeropuerto ya está seleccionado como origen");
+            toast.error(t("searchFlight.validation.alreadySelectedOrigin"));
             return;
         }
         setOrigins([...origins, airport]);
@@ -249,7 +237,7 @@ export default function Home() {
             return;
         }
         if (destinations.some(d => d.iata_code === airport.iata_code)) {
-            toast.error("Ese aeropuerto ya está seleccionado como destino");
+            toast.error(t("searchFlight.validation.alreadySelectedDestination"));
             return;
         }
         setDestinations([...destinations, airport]);
@@ -263,30 +251,9 @@ export default function Home() {
         setSelectingType(null);
     }
 
-    const handleAddStop = () => {
-        if (layovers.length >= 5) {
-            toast.error(t("searchFlight.validation.maxLayovers"));
-            return;
-        }
-        setLayovers([...layovers, { airport: null, date: "" }]);
-    };
-
-    const handleRemoveLayover = (index: number) => {
-        const newLayovers = [...layovers];
-        newLayovers.splice(index, 1);
-        setLayovers(newLayovers);
-    };
-
-
-    const handleLayoverDateChange = (index: number, date: string) => {
-        const newLayovers = [...layovers];
-        const existing = newLayovers[index]!;
-        newLayovers[index] = { airport: existing.airport, date };
-        setLayovers(newLayovers);
-    };
 
     const handleSearch = () => {
-        if (origins.length === 0 || destinations.length === 0 || !departureDate || layovers.some(l => !l.airport || !l.date)) {
+        if (origins.length === 0 || destinations.length === 0 || !departureDate) {
             toast.error(t("searchFlight.validation.completeFields"));
             return;
         }

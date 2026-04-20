@@ -3,12 +3,20 @@ import type { ApiRequestParameters, SerpApiResponse } from "./serpapi.types.js";
 import mongoose, { Schema } from "mongoose";
 import { ServerConfig } from "../../config/server.config.js";
 
-const requestsPerDaySchema = new Schema<{ date: string; count: number }>({
-    date: { type: String, required: true, unique: true },
-    count: { type: Number, required: true, default: 0, max: 2500 },
+import { SerpapiQuotaExceededError } from "./serpapi.errors.js";
+import { User } from "../../modules/users/models/user.model.js";
+import { contextStorage } from "../../utils/context.js";
+
+const serpApiQuotaSchema = new Schema({
+    identifier: { type: String, required: true }, // userId, IP o 'global'
+    period: { type: String, enum: ['hour', 'day'], required: true },
+    key: { type: String, required: true },
+    count: { type: Number, default: 0 }
 });
 
-export const RequestsPerDay = mongoose.model<{ date: string; count: number }>("RequestsPerDay", requestsPerDaySchema);
+serpApiQuotaSchema.index({ identifier: 1, period: 1, key: 1 }, { unique: true });
+
+export const SerpApiQuota = mongoose.model("SerpApiQuota", serpApiQuotaSchema);
 
 @injectable()
 export class SerpApiClient {
@@ -17,33 +25,62 @@ export class SerpApiClient {
 
     constructor(@inject(ServerConfig) private config: ServerConfig) { }
 
-    private maxRequestPerDay = 1000;
+    private globalDailyLimit = 1000;
+    private userHourlyLimit = 100;
 
     public async search(
-        parameters: ApiRequestParameters
+        parameters: ApiRequestParameters,
+        explicitUserId?: string
     ): Promise<SerpApiResponse> {
+        const store = contextStorage.getStore();
+        const userId = explicitUserId || store?.userId;
+        const ip = store?.ip || "unknown";
 
-        try {
-            RequestsPerDay.findOneAndUpdate(
-                { date: new Date().toISOString().slice(0, 10) },
-                { $inc: { count: 1 } },
-                { runValidators: true, upsert: true, returnDocument: 'after' }
-            ).then(doc => {
-                if (doc && doc.count > this.maxRequestPerDay) {
-                    throw new Error("SerpApi daily request limit exceeded");
-                }
-            });
-        } catch (error: any) {
-            if (error.name === "ValidationError") {
-                throw new Error("SerpApi daily request limit exceeded");
+        let isAdmin = false;
+        if (userId && mongoose.Types.ObjectId.isValid(userId)) {
+            const user = await User.findById(userId).select('role').lean();
+            if (user && user.role === 'admin') {
+                isAdmin = true;
             }
-            throw error;
         }
+
+        if (!isAdmin) {
+            const now = new Date();
+            const dateKey = now.toISOString().slice(0, 10);
+            const hourKey = `${dateKey}-${now.getHours()}`;
+
+            // Check and increment Global Daily Quota
+            const globalQuota = await SerpApiQuota.findOneAndUpdate(
+                { identifier: 'global', period: 'day', key: dateKey },
+                { $inc: { count: 1 } },
+                { upsert: true, new: true }
+            );
+
+            if (globalQuota && globalQuota.count > this.globalDailyLimit) {
+                throw new SerpapiQuotaExceededError("Límite diario global de SerpApi alcanzado.");
+            }
+
+            // Check and increment User Hourly Quota
+            const userIdentifier = userId || ip;
+            const userQuota = await SerpApiQuota.findOneAndUpdate(
+                { identifier: userIdentifier, period: 'hour', key: hourKey },
+                { $inc: { count: 1 } },
+                { upsert: true, new: true }
+            );
+
+            if (userQuota && userQuota.count > this.userHourlyLimit) {
+                throw new SerpapiQuotaExceededError(`Has excedido tu límite de 100 créditos de SerpApi por hora.`);
+            }
+        }
+
+        const cleanParameters = Object.fromEntries(
+            Object.entries(parameters).filter(([_, v]) => v !== undefined && v !== null)
+        );
 
         const query = new URLSearchParams({
             engine: "google_flights",
             api_key: this.config.SERPAPI_API_KEY,
-            ...parameters as any
+            ...cleanParameters as any
         });
 
         const response = await fetch(`${this.baseUrl}/search?${query.toString()}`);

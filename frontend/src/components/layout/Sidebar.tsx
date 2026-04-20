@@ -4,9 +4,6 @@ import { useAuth } from "@/context/AuthContext";
 import { Compass, Menu, Users, X, Sparkles, Zap } from "lucide-react";
 import NavIconButton from "../ui/NavIconButton";
 import { useTranslation } from "react-i18next";
-import GeneticTripModal from "../GeneticTripModal";
-import { useGeneticTrip } from "@/api/generated/search/search";
-import { toast } from "sonner";
 
 interface NavItem {
     label: string;
@@ -38,21 +35,6 @@ export default function Sidebar({ isOpen, onClose, onToggle, variant = 'classic'
     const location = useLocation();
     const navigate = useNavigate();
 
-    const [isGeneticModalOpen, setIsGeneticModalOpen] = useState(false);
-
-    const { mutate: geneticRequest } = useGeneticTrip({
-        mutation: {
-            onSuccess: (data) => {
-                toast.success(t("searchFlight.geneticTrip.toast.success"));
-                navigate(`/search/${data._id}`);
-            },
-            onError: (error: any) => {
-                console.error(error);
-                toast.error(error?.message || t("searchFlight.geneticTrip.toast.error"));
-            }
-        }
-    });
-
     const navItems: NavItem[] = [
         {
             label: t("sidebar.searchFlights"),
@@ -62,9 +44,9 @@ export default function Sidebar({ isOpen, onClose, onToggle, variant = 'classic'
         },
         {
             label: t("sidebar.geneticTrip"),
+            path: "/genetic-trip",
             icon: <Zap size={20} />,
             show: true,
-            onClick: () => setIsGeneticModalOpen(true),
         },
         {
             label: t("sidebar.friends"),
@@ -241,10 +223,10 @@ export default function Sidebar({ isOpen, onClose, onToggle, variant = 'classic'
                     `}
                 >
                     <div className="grid grid-cols-2 gap-x-4 gap-y-3">
-                        <Link to="/about" onClick={onClose} className="text-[11px] font-bold text-content-muted hover:text-brand transition-colors text-center">About us</Link>
-                        <Link to="/contact" onClick={onClose} className="text-[11px] font-bold text-content-muted hover:text-brand transition-colors text-center">Contact</Link>
-                        <Link to="/privacy" onClick={onClose} className="text-[11px] font-bold text-content-muted hover:text-brand transition-colors text-center">Privacy Policy</Link>
-                        <Link to="/terms" onClick={onClose} className="text-[11px] font-bold text-content-muted hover:text-brand transition-colors text-center">Terms of Service</Link>
+                        <Link to="/about" onClick={onClose} className="text-[11px] font-bold text-content-muted hover:text-brand transition-colors text-center">{t("footer.aboutUs")}</Link>
+                        <Link to="/contact" onClick={onClose} className="text-[11px] font-bold text-content-muted hover:text-brand transition-colors text-center">{t("footer.contact")}</Link>
+                        <Link to="/privacy" onClick={onClose} className="text-[11px] font-bold text-content-muted hover:text-brand transition-colors text-center">{t("footer.privacyPolicy")}</Link>
+                        <Link to="/terms" onClick={onClose} className="text-[11px] font-bold text-content-muted hover:text-brand transition-colors text-center">{t("footer.termsOfService")}</Link>
                     </div>
                 </div>
 
@@ -267,14 +249,6 @@ export default function Sidebar({ isOpen, onClose, onToggle, variant = 'classic'
                     </span>
                 </div>
             </aside>
-
-            <GeneticTripModal
-                isOpen={isGeneticModalOpen}
-                onClose={() => setIsGeneticModalOpen(false)}
-                onSubmit={(data) => {
-                    geneticRequest({ data });
-                }}
-            />
         </>
     );
 }

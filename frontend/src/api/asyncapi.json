@@ -599,10 +599,10 @@
               "priority"
             ]
           },
-          "layover_days": {
+          "dates": {
             "type": "array",
             "items": {
-              "type": "number"
+              "type": "string"
             }
           },
           "source": {

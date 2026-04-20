@@ -438,7 +438,9 @@
     },
     "validation": {
       "sameOriginDestination": "El origen y el destino no pueden ser el mismo",
-      "completeFields": "Por favor, completa origen, destino y fecha de salida"
+      "completeFields": "Por favor, completa origen, destino y fecha de salida",
+      "alreadySelectedOrigin": "Ese aeropuerto ya está seleccionado como origen",
+      "alreadySelectedDestination": "Ese aeropuerto ya está seleccionado como destino"
     },
     "toast": {
       "searchStarted": "Búsqueda iniciada",
@@ -499,18 +501,20 @@
     "copyError": "Copiar error"
   },
   "navbar": {
-    "view": "Ver",
+    "account": "Cuenta",
     "notifications": "Notificaciones",
     "friendRequests": "Solicitudes de amistad",
-    "newFriendRequests": "Tienes {{count}} nueva{{plural}}",
-    "noNotifications": "No tienes notificaciones",
+    "newFriendRequests": "{{count}} nueva{{plural}} solicitud{{plural}}",
+    "noNotifications": "No hay notificaciones nuevas",
     "back": "Volver",
-    "account": "Cuenta",
+    "view": "Ver",
     "myProfile": "Mi Perfil",
-    "settings": "Ajustes",
-    "adminPanel": "Panel Admin",
-    "soon": "Soon",
+    "settings": "Configuración",
+    "adminPanel": "Panel de Administración",
+    "soon": "Próximamente",
     "theme": "Tema",
+    "missions": "Misiones",
+    "evaluationMissions": "Misiones de Evaluación",
     "authentication": "Autenticación",
     "options": "Opciones"
   },
@@ -575,6 +579,234 @@
         "title": "5. Contáctenos",
         "content": "Si tiene alguna pregunta sobre esta Política de Privacidad, contáctenos a través de los formularios disponibles en nuestra aplicación o a través de nuestro correo de soporte. Al utilizar este Sitio, significa que acepta esta política. Si no está de acuerdo con esta política, por favor no utilice nuestro Sitio."
       }
+    }
+  },
+  "flightCard": {
+    "totalPrice": "Precio total",
+    "select": "Seleccionar",
+    "finalArrival": "Llegada final a {{airport}}:",
+    "atTime": " a las {{time}}",
+    "scale": "{{count}}ª Escala",
+    "overnightScale": "Escala nocturna",
+    "shortScale": "Escala muy corta",
+    "travelClassFallback": "Turista"
+  },
+  "agentChat": {
+    "recommendedFlight": "Vuelo Recomendado",
+    "totalPrice": "Precio Total",
+    "scales_one": "1 escala",
+    "scales_other": "{{count}} escalas",
+    "direct": "Directo",
+    "toolStatus": {
+      "searchCompleted": "Búsqueda de vuelos completada",
+      "searchFailed": "Error: {{message}}",
+      "accessingProfile": "Accediendo a tu perfil...",
+      "consultingHistory": "Consultando tu historial...",
+      "locatingAirports": "Localizando aeropuertos para \"{{query}}\"...",
+      "searchingAirlines": "Buscando aerolíneas para \"{{query}}\"...",
+      "trackingFlights": "Rastreando vuelos desde {{origins}} a {{destinations}}...",
+      "dataFromProfile": "Datos obtenidos de tu perfil",
+      "dataFromHistory": "Datos obtenidos de tu historial",
+      "airportsLocated": "Aeropuertos localizados con éxito",
+      "airlinesLocated": "Aerolíneas localizadas con éxito",
+      "searchCreated": "Búsqueda creada con éxito",
+      "thinking": "Pensando...",
+      "completed": "Búsqueda completada",
+      "processing": "Procesando...",
+      "executing": "Ejecutando"
+    },
+    "rawResult": "Resultado Raw",
+    "moreSteps": "( + {{count}} pasos )",
+    "interruptedByUser": "Generación interrumpida por el usuario",
+    "generationError": "Error en la generación, por favor, intenta de nuevo",
+    "historyCleared": "Historial de aventura borrado",
+    "connectionError": "Error al conectar con el servidor",
+    "suggestions": {
+      "whereToGo": "¿A dónde puedo ir en {{month}}?",
+      "suggestTrip": "Sugiéreme un viaje basado en mis gustos",
+      "whatIsMyHistory": "¿Cual es mi historial de busquedas?"
+    },
+    "notAuthenticated": {
+      "title": "Inteligencia Exclusiva",
+      "description": "Nuestro asistente **flAIghts** utiliza IA para aprender de tus gustos y sugerirte destinos únicos.\n\nPara interactuar con él y ver recomendaciones, necesitas estar identificado.",
+      "login": "Iniciar Sesión",
+      "register": "¿No tienes cuenta? Únete aquí"
+    },
+    "header": "Agente flAIghts",
+    "connecting": "Conectando...",
+    "welcome": "¡Hola, {{username}}!",
+    "welcomeFallback": "explorador",
+    "emptyDescription": "Soy fl**AI**ghts. No solo busco vuelos, aprendo de ti para sugerirte tu próximo destino.",
+    "you": "Tú",
+    "continueAnalyzing": "Seguir analizando",
+    "inputPlaceholder": "Pregunta lo que quieras...",
+    "legalNotice": "IA Experimental • flAIghts puede cometer errores. Verifica la información importante."
+  },
+  "manualSearch": {
+    "selectDepartureFirst": "Selecciona primero la fecha de salida",
+    "searching": "Buscando...",
+    "search": "Buscar",
+    "exploreFlights": "Explorar vuelos"
+  },
+  "geneticTripPage": {
+    "betaBadge": "Algoritmo Genético Beta",
+    "changeOrigin": "Cambiar origen",
+    "change": "Cambiar",
+    "startingPoint": "Punto de partida",
+    "tripConfig": "Configuración del Viaje",
+    "daysPerCity": "Días por Ciudad",
+    "processing": "Procesando...",
+    "itinerary": "Itinerario"
+  },
+  "searchResultsPage": {
+    "searchingBestRoutes": "Buscando las mejores rutas...",
+    "searchingMore": "Buscando más vuelos...",
+    "reserve": "Reservar Vuelos",
+    "realTimeSearching": "Buscando en tiempo real...",
+    "departureResults": "{{count}} resultados de ida",
+    "returnResults": "{{count}} resultados de vuelta",
+    "summary": "Resumen de tu viaje",
+    "confirmSelection": "Confirma tu selección",
+    "sortBy": "Ordenar por:",
+    "personalized": "Personalizado",
+    "price": "Precio",
+    "duration": "Duración",
+    "back": "Volver atrás",
+    "prevStep": "Paso anterior",
+    "selectedFlight": "Vuelo de {{type}} Seleccionado",
+    "tripTotalPrice": "Precio total del viaje"
+  },
+  "homeCard": {
+    "aiAssistant": "Asistente IA",
+    "manual": "Manual",
+    "exploreGlobe": "Explorar globo terráqueo",
+    "addStop": "Añadir escala",
+    "advancedFilters": "Filtros avanzados",
+    "manualTitle": "Vuela más allá.",
+    "manualSubtitle": "Explora destinos mundiales con flAIghts.",
+    "aiTitle": "Agente flAIghts",
+    "aiSubtitle": "Tu copiloto inteligente para planificar viajes.",
+    "clearChat": "Limpiar chat"
+  },
+  "missions": {
+    "dashboard": {
+      "backToRoadmap": "Volver al Roadmap",
+      "missionPassed": "Misión Superada",
+      "mainObjective": "Objetivo Principal",
+      "successMessage": "Has finalizado este desafío con éxito. Tu experiencia es vital para la investigación; por favor, comparte tus impresiones sobre la facilidad de uso.",
+      "giveFeedback": "Danos tu opinión",
+      "feedbackSaved": "Feedback guardado",
+      "progress": "Progreso",
+      "taskStatus": "Estatus de Tareas",
+      "branding": "Investigación TFG flAIghts",
+      "footerHero": "🚀 Explorando el futuro del viaje con IA"
+    },
+    "roadmap": {
+      "title": "Roadmap de Evaluación",
+      "subtitle": "Progreso de los retos de usabilidad.",
+      "count": "Misiones",
+      "status": {
+        "completed": "Completado",
+        "available": "Disponible",
+        "locked": "Cerrado"
+      },
+      "pendingFeedback": "Pendiente Feedback",
+      "legend": {
+        "achieved": "Conseguida",
+        "inProgress": "En curso",
+        "feedback": "Feedback",
+        "blocked": "Bloqueada"
+      }
+    },
+    "onboarding": {
+      "title": "Tutorial de Evaluación",
+      "feedbackTitle": "Feedback de Misión",
+      "stepLabel": "Paso {{current}} de {{total}}",
+      "surveyTour": "Feedback de Misión",
+      "evaluationTour": "Tutorial de Evaluación",
+      "steps": {
+        "openMenu": "Abre el Menú",
+        "missionComplete": "¡Misión Cumplida!",
+        "readyToEvaluate": "Listo para evaluar",
+        "yourOpinionMatters": "Tu Opinión Importa",
+        "openMissions": "Abre las Misiones",
+        "selectChallenge": "Selecciona un Reto",
+        "missionSummary": "Resumen de Misión",
+        "checklist": "Checklist de Tareas",
+        "backToMap": "Volver al Mapa",
+        "lockedRoute": "Ruta Bloqueada",
+        "closePanel": "Cerrar Panel"
+      },
+      "descriptions": {
+        "openMenuMobile": "Pulsa en tu avatar para abrir las opciones de cuenta.",
+        "missionComplete": "Has completado un reto. Pulsa el trofeo para reclamar tu insignia y darnos feedback.",
+        "readyToEvaluate": "Esta misión brilla con un nuevo color. Pulsa en ella para completar la evaluación.",
+        "yourOpinionMatters": "¡Casi has terminado! Pulsa el botón de feedback para compartir tu experiencia.",
+        "openMissions": "Haz clic en el trofeo para ver el Roadmap de evaluación.",
+        "selectChallenge": "Esta es tu misión actual. Pulsa en la tarjeta para abrir los detalles.",
+        "missionSummaryMobile": "En la parte superior encontrarás el objetivo principal y tu progreso actual.",
+        "missionSummaryDesktop": "En la parte izquierda encontrarás el objetivo principal y tu progreso actual.",
+        "checklistMobile": "En la parte inferior tienes los pasos específicos. flAIghts los detectará automáticamente.",
+        "checklistDesktop": "A la derecha tienes los pasos específicos. flAIghts los detectará automáticamente.",
+        "backToMap": "Pulsa aquí para volver a la vista general de todas las misiones.",
+        "lockedRoute": "Algunas misiones están bloqueadas. Deberás completar sus dependencias primero.",
+        "closePanel": "Finalmente, usa la X para cerrar el Roadmap y empezar a navegar libremente."
+      },
+      "actions": {
+        "next": "Siguiente Paso",
+        "skip": "Saltar Tutorial",
+        "directAction": "Requiere acción directa"
+      }
+    },
+    "survey": {
+      "title": "Feedback de Misión",
+      "subtitle": "Ayúdanos a mejorar flAIghts compartiendo tu experiencia.",
+      "achieved": "Conseguida",
+      "validatedSteps": "Pasos validados:",
+      "questionEase": "¿Cómo de fácil e intuitivo te ha parecido completar este reto?",
+      "ratings": {
+        "veryDifficult": "Muy difícil",
+        "difficult": "Difícil",
+        "neutral": "Normal",
+        "easy": "Fácil",
+        "veryEasy": "Muy fácil"
+      },
+      "suggestionsLabel": "Tus Sugerencias (Opcional)",
+      "placeholder": "Cuéntanos qué te ha gustado o qué mejorarías...",
+      "actions": {
+        "sending": "Enviando...",
+        "finish": "Finalizar Evaluación"
+      }
+    },
+    "consent": {
+      "title": "Participación en Evaluación",
+      "title_prefix": "Evaluación de",
+      "description": "Este sistema de evaluación interactivo forma parte de un estudio de usabilidad para nuestro Trabajo de Fin de Grado (TFG).",
+      "missions_title": "Misiones a realizar",
+      "privacy_notice": "Para vincular los resultados con tu actividad, recogeremos datos asociados a tu sesión. Solo utilizaremos esta información para fines académicos y análisis de usabilidad.",
+      "tutorial_title": "Tutorial Recomendado",
+      "tutorial_description": "Al aceptar, comenzará una guía interactiva. Te recomendamos seguirla para no perderte ningún detalle del sistema de misiones.",
+      "checkbox_label_bold": "Consentimiento obligatorio:",
+      "checkbox_label": "Consiento el procesamiento de mis datos de interacción vinculados a mi usuario para el Trabajo de Fin de Grado.",
+      "accept": "Acepto participar",
+      "decline": "Prefiero no participar"
+    },
+    "finalEvaluation": {
+      "congrats": "¡ENHORABUENA!",
+      "title": "Evaluación Completada",
+      "missionsCompleted": "Misiones",
+      "objectivesValidated": "Objetivos",
+      "gratitude": "Gratitud",
+      "nameLabel": "Tu nombre y apellidos",
+      "namePlaceholder": "Escribe aquí para los agradecimientos...",
+      "nameDisclaimer": "Usaremos tu nombre para incluirte en los agradecimientos de nuestro TFG.",
+      "anonymous": "Prefiero ser anónimo",
+      "sending": "Enviando resultados...",
+      "submit": "Finalizar y Enviar",
+      "madeWith": "Hecho con",
+      "forTfg": "para el TFG de flAIghts",
+      "finalMessage": "Has completado con éxito todos los desafíos de usabilidad propuestos para este estudio. Tu contribución es un pilar fundamental de nuestra investigación académica.",
+      "closeAndExplore": "Cerrar y seguir explorando"
     }
   }
 }

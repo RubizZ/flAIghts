@@ -2805,7 +2805,7 @@
             ],
             "type": "object"
           },
-          "body.layover_days": {
+          "body.dates": {
             "properties": {
               "value": {},
               "message": {
@@ -4227,70 +4227,6 @@
         "required": [
           "token",
           "newPassword"
-        ],
-        "type": "object",
-        "additionalProperties": false
-      },
-      "GlobeAirportResponse": {
-        "description": "Compact format for globe visualization",
-        "properties": {
-          "i": {
-            "type": "string"
-          },
-          "n": {
-            "type": "string"
-          },
-          "ci": {
-            "type": "string"
-          },
-          "la": {
-            "type": "number",
-            "format": "double"
-          },
-          "lo": {
-            "type": "number",
-            "format": "double"
-          },
-          "s": {
-            "type": "number",
-            "format": "double"
-          },
-          "c": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "i",
-          "n",
-          "ci",
-          "la",
-          "lo",
-          "s",
-          "c"
-        ],
-        "type": "object",
-        "additionalProperties": false
-      },
-      "SuccessResponse_GlobeAirportResponse-Array_": {
-        "description": "Wrapper de éxito JSend (aplicado por el middleware global).",
-        "properties": {
-          "status": {
-            "type": "string",
-            "enum": [
-              "success"
-            ],
-            "nullable": false
-          },
-          "data": {
-            "items": {
-              "$ref": "#/components/schemas/GlobeAirportResponse"
-            },
-            "type": "array"
-          }
-        },
-        "required": [
-          "status",
-          "data"
         ],
         "type": "object",
         "additionalProperties": false
@@ -6775,12 +6711,12 @@
         }
       }
     },
-    "/airports/globe": {
+    "/airports": {
       "get": {
-        "operationId": "GetGlobeAirports",
+        "operationId": "SearchAirports",
         "responses": {
           "200": {
-            "description": "Ok",
+            "description": "Aeropuertos encontrados",
             "content": {
               "application/json": {
                 "schema": {
@@ -6794,13 +6730,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/SuccessResponse_PaginatedAirportResponse_"
+                  "$ref": "#/components/schemas/RequestValidationFailResponse_ValidationDetails_QueryPath__q-string____"
                 }
               }
             }
           }
         },
-        "description": "Búsqueda con detección de errores (typos) y normalización.",
         "tags": [
           "Airports"
         ],
@@ -6819,6 +6754,7 @@
             "name": "page",
             "required": false,
             "schema": {
+              "default": 1,
               "format": "double",
               "type": "number"
             }
@@ -6940,17 +6876,16 @@
         "operationId": "GetAirportByIata",
         "responses": {
           "200": {
-            "description": "Ok",
+            "description": "Aeropuerto encontrado",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/SuccessResponse_AirportResponse_"
+                  "$ref": "#/components/schemas/SuccessResponseType_AirportResponse_"
                 }
               }
             }
           }
         },
-        "description": "Detalle de un aeropuerto por código IATA.",
         "tags": [
           "Airports"
         ],

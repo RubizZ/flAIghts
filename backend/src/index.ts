@@ -21,7 +21,8 @@ import {
     globalApiLimiter,
     authLimiter,
     registrationLimiter,
-    searchLimiter
+    searchLimiter,
+    chatbotLimiter
 } from './middlewares/rateLimiter.js';
 
 
@@ -145,22 +146,11 @@ app.post('/users/register/complete', registrationLimiter);
 
 // Search endpoint rate limiter (20 req/min)
 app.post('/search', searchLimiter);
+app.post('/search/stream', searchLimiter);
 
-// Global API rate limiter (100 req/min)
-app.use(globalApiLimiter);
-
-
-// Authentication endpoints rate limiter (5 req/min)
-app.post('/auth/login', authLimiter);
-app.post('/auth/forgot-password', authLimiter);
-app.post('/auth/reset-password', authLimiter);
-
-// Registration endpoints rate limiter (3 req/min)
-app.post('/users/register/initiate', registrationLimiter);
-app.post('/users/register/complete', registrationLimiter);
-
-// Search endpoint rate limiter (20 req/min)
-app.post('/search', searchLimiter);
+// Chatbot endpoint rate limiter (10 req/min)
+app.post('/agent', chatbotLimiter);
+app.post('/agent/stream', chatbotLimiter);
 
 // Global API rate limiter (100 req/min)
 app.use(globalApiLimiter);
