@@ -7,6 +7,7 @@ const rateLimitMessages = {
         auth: 'Demasiados intentos de autenticación. Por favor, inténtalo de nuevo en un minuto.',
         registration: 'Demasiados intentos de registro. Por favor, inténtalo de nuevo en un minuto.',
         search: 'Demasiadas peticiones de búsqueda. Por favor, inténtalo de nuevo en un minuto.',
+        chatbot: 'Has alcanzado el límite de mensajes del chatbot. Por favor, inténtalo de nuevo en un minuto.',
         profilePicture: 'Demasiadas peticiones de cambio de foto de perfil. Inténtalo de nuevo más tarde.'
     },
     en: {
@@ -14,6 +15,7 @@ const rateLimitMessages = {
         auth: 'Too many authentication attempts, please try again after a minute.',
         registration: 'Too many registration attempts, please try again after a minute.',
         search: 'Too many search requests, please try again after a minute.',
+        chatbot: 'You have reached the chatbot message limit, please try again after a minute.',
         profilePicture: 'Too many profile picture change requests, please try again later.'
     }
 };
@@ -61,7 +63,7 @@ export const authLimiter = rateLimit({
 });
 
 export const registrationLimiter = rateLimit({
-    windowMs: 60 * 1000, // 1 minute
+    windowMs: 15 * 60 * 1000, // 15 minutes
     limit: 3,
     standardHeaders: 'draft-7',
     legacyHeaders: false,
@@ -71,7 +73,7 @@ export const registrationLimiter = rateLimit({
 
 export const searchLimiter = rateLimit({
     windowMs: 60 * 1000, // 1 minute
-    limit: 20,
+    limit: 10,
     standardHeaders: 'draft-7',
     legacyHeaders: false,
     handler: createRateLimitHandler('search'),
@@ -84,5 +86,14 @@ export const profilePictureRateLimit = rateLimit({
     standardHeaders: 'draft-7',
     legacyHeaders: false,
     handler: createRateLimitHandler('profilePicture'),
+    skipSuccessfulRequests: false,
+});
+
+export const chatbotLimiter = rateLimit({
+    windowMs: 60 * 1000, // 1 minute
+    limit: 10,
+    standardHeaders: 'draft-7',
+    legacyHeaders: false,
+    handler: createRateLimitHandler('chatbot'),
     skipSuccessfulRequests: false,
 });
