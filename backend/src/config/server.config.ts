@@ -92,6 +92,7 @@ const serverConfigSchema = z.object({
     GEOCODING_PROVIDER: z.preprocess(emptyToUndefined, z.enum(["nominatim", "google"]).default("nominatim")),
     GEOCODING_API_KEY: z.preprocess(emptyToUndefined, z.string().optional()),
     GEOCODE_CACHE_TTL: z.preprocess(emptyToUndefined, msSchema.default("7d")).transform(v => v as StringValue),
+    GOOGLE_CLIENT_ID: z.preprocess(emptyToUndefined, z.string()),
 }).superRefine((data, ctx) => {
     if (data.GEOCODING_PROVIDER === "google" && !data.GEOCODING_API_KEY) {
         ctx.addIssue({
@@ -114,6 +115,7 @@ function sanitize<K extends keyof ServerConfigType>(val: ServerConfigType[K], fi
         case "MONGODB_URI":
         case "OPENAI_API_KEY":
         case "GEOCODING_API_KEY":
+        case "GOOGLE_CLIENT_ID":
             return "[REDACTED] (please check .env file)";
         // Other non-sensitive values
         default:

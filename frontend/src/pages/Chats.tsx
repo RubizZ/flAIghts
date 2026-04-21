@@ -56,6 +56,14 @@ export default function Chats() {
     }
 
     const conversations = response?.items || [];
+    
+    const formatMessageContent = (content: string) => {
+        if (content.startsWith("SHARE_SEARCH:")) {
+            const [, , origin, destination] = content.split(":");
+            return `✈️ Vuelo compartido: ${origin} → ${destination}`;
+        }
+        return content;
+    };
 
     return (
         <div className="flex flex-col max-w-5xl mx-auto w-full p-6 sm:p-8 gap-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -121,7 +129,7 @@ export default function Chats() {
                                         </span>
                                     </div>
                                     <p className={`text-sm truncate ${conv.unreadCount > 0 ? 'font-bold text-content' : 'text-content-muted'}`}>
-                                        {conv.lastMessage.content}
+                                        {formatMessageContent(conv.lastMessage.content)}
                                     </p>
                                 </div>
                             </Link>

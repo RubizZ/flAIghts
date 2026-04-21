@@ -24,16 +24,23 @@ export class AirportService {
 
     constructor(@inject(ServerConfig) private config: ServerConfig) {
         this.initializeCache();
+
+        // Reiniciamos el caché cada 6 horas para captar cambios en la base de datos
+        setInterval(() => {
+            this.initializeCache();
+        }, ms('6h'));
     }
 
     private async initializeCache() {
         try {
-            logger.info("Initializing Airport Search Cache...");
+            const isRefresh = this.isInitialized;
+            logger.info(`${isRefresh ? 'Refreshing' : 'Initializing'} Airport Search Cache...`);
+
             // Cargamos todos los aeropuertos en memoria
             const airports = await Airport.find({}).lean();
 
-            // Pre-procesamos para fuzzysort con normalización
-            this.airportsCache = airports.map(a => {
+            // Pre-procesamos en una variable temporal para evitar estados parciales en el caché
+            const newAirportsCache: CachedAirport[] = airports.map(a => {
                 const names = COUNTRY_NAMES[a.country] || [];
                 return {
                     ...a,
@@ -47,9 +54,11 @@ export class AirportService {
                 } as CachedAirport;
             });
 
-            // Precomputamos las ciudades más importantes (O(1) lookup para geocodificación gratuita)
+            // Precomputamos las ciudades más importantes en un nuevo Map
+            const newCitiesCache = new Map<string, { lat: number, lon: number, display_name: string, country: string }>();
             const tempCityImportance = new Map<string, { airport: CachedAirport, importance: number }>();
-            this.airportsCache.forEach(a => {
+
+            newAirportsCache.forEach(a => {
                 const cityKey = a._normCity;
                 const existing = tempCityImportance.get(cityKey);
                 if (!existing || a.importance_score > existing.importance) {
@@ -61,7 +70,7 @@ export class AirportService {
                 const a = val.airport;
                 const countryInfo = COUNTRY_NAMES[a.country];
                 const countryName = (countryInfo && countryInfo[1]) || a.country;
-                this.citiesCache.set(cityKey, {
+                newCitiesCache.set(cityKey, {
                     lat: a.location.coordinates[1]!,
                     lon: a.location.coordinates[0]!,
                     display_name: `${a.city}, ${countryName}`,
@@ -69,8 +78,12 @@ export class AirportService {
                 });
             });
 
+            // Swapping atómico de los cachés
+            this.airportsCache = newAirportsCache;
+            this.citiesCache = newCitiesCache;
             this.isInitialized = true;
-            logger.info(`Airport cache ready: ${this.airportsCache.length} airports`);
+
+            logger.info(`Airport cache ${isRefresh ? 'refreshed' : 'ready'}: ${this.airportsCache.length} airports`);
         } catch (error) {
             logger.error({ error }, "Failed to initialize airport cache");
         }
@@ -109,7 +122,7 @@ export class AirportService {
         const fuzzyItems = results.map((result) => {
             const airport = result.obj;
             const textScore = Math.max(0, (1000 + result.score) / 1000);
-            const importanceScore = (airport.importance_score || 0) / 100;
+            const importanceScore = (airport.importance_score) / 100;
             let distanceScore = 0;
             let distance_km: number | undefined = undefined;
 

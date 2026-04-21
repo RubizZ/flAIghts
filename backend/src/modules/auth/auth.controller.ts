@@ -2,10 +2,10 @@ import { Body, Controller, Post, Request, RequestProp, Response, Route, Security
 import type { Request as ExpressRequest } from "express";
 import { inject, injectable } from "tsyringe";
 import { AuthService } from "./auth.service.js";
-import type { AuthenticatedUser, ChangePasswordRequest, ChangePasswordValidationFailResponse, ForgotPasswordRequest, ForgotPasswordValidationFailResponse, LoginRequest, LoginResponseData, LoginValidationFailResponse, ResetPasswordRequest, ResetPasswordValidationFailResponse, ChangePasswordErrorResponse } from "./auth.types.js";
+import type { AuthenticatedUser, ChangePasswordRequest, ChangePasswordValidationFailResponse, ForgotPasswordRequest, ForgotPasswordValidationFailResponse, LoginRequest, LoginResponseData, LoginValidationFailResponse, ResetPasswordRequest, ResetPasswordValidationFailResponse, ChangePasswordErrorResponse, GoogleLoginRequest, GoogleLoginValidationFailResponse, GoogleConnectRequest, GoogleConnectValidationFailResponse, SetPasswordRequest, SetPasswordValidationFailResponse } from "./auth.types.js";
 import type { FailResponseFromError, MessageResponseData, SuccessResponse } from "../../utils/responses.js";
 import type { AuthFailResponse } from "./auth.types.js";
-import { InvalidCredentialsError, LoginUserNotFoundError, InvalidPasswordError, ResetTokenInvalidOrExpiredError, NewPasswordSameAsOldError } from "./auth.errors.js";
+import { InvalidCredentialsError, LoginUserNotFoundError, InvalidPasswordError, ResetTokenInvalidOrExpiredError, NewPasswordSameAsOldError, InvalidTokenError, GoogleAccountAlreadyLinkedError, CannotDisconnectGoogleWithoutPasswordError, PasswordAlreadySetError } from "./auth.errors.js";
 
 import { ServerConfig } from "../../config/server.config.js";
 
@@ -60,6 +60,65 @@ export class AuthController extends Controller {
     }
 
     /**
+     * Inicia sesión o registra usuario mediante Google OAuth.
+     */
+    @Post("/login/google")
+    @Response<GoogleLoginValidationFailResponse>(422, "Error de validación")
+    @Response<FailResponseFromError<InvalidTokenError>>(401, "Token de Google inválido")
+    public async loginWithGoogle(@Body() body: GoogleLoginRequest, @Request() request: ExpressRequest): Promise<SuccessResponse<LoginResponseData>> {
+        const { credential, responseType } = body;
+
+        const result = await this.authService.loginWithGoogle(credential);
+
+        switch (responseType) {
+            case 'cookie':
+                logger.info(`Setting auth cookie for user: ${result.userId} via Google`);
+                const isProduction = this.config.NODE_ENV === 'production';
+                request.res!.cookie('token', result.token, {
+                    httpOnly: true,
+                    secure: isProduction,
+                    sameSite: 'lax',
+                    maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
+                });
+                return result satisfies LoginResponseData as any;
+            case 'json':
+            default:
+                return result satisfies LoginResponseData as any;
+        }
+    }
+
+    /**
+     * Vincula la cuenta de Google al usuario actual.
+     */
+    @Post("/google/connect")
+    @Security("jwt")
+    @Response<GoogleConnectValidationFailResponse>(422, "Error de validación")
+    @Response<FailResponseFromError<InvalidTokenError>>(401, "Token de Google inválido")
+    @Response<FailResponseFromError<GoogleAccountAlreadyLinkedError>>(409, "Cuenta de Google ya vinculada")
+    @Response<AuthFailResponse>(401, "No autenticado")
+    public async connectGoogle(@RequestProp("user") user: AuthenticatedUser, @Body() body: GoogleConnectRequest): Promise<SuccessResponse<MessageResponseData>> {
+        const { credential } = body;
+        await this.authService.connectGoogle(user._id, credential);
+        return {
+            message: "Cuenta de Google vinculada correctamente."
+        } satisfies MessageResponseData as any;
+    }
+
+    /**
+     * Desvincula la cuenta de Google del usuario actual.
+     */
+    @Post("/google/disconnect")
+    @Security("jwt")
+    @Response<AuthFailResponse>(401, "No autenticado")
+    @Response<FailResponseFromError<CannotDisconnectGoogleWithoutPasswordError>>(400, "Debe establecer una contraseña primero")
+    public async disconnectGoogle(@RequestProp("user") user: AuthenticatedUser): Promise<SuccessResponse<MessageResponseData>> {
+        await this.authService.disconnectGoogle(user._id);
+        return {
+            message: "Cuenta de Google desvinculada correctamente."
+        } satisfies MessageResponseData as any;
+    }
+
+    /**
  * Cierra la sesión actual (limpia la cookie del navegador).
  */
     @Post("/logout")
@@ -108,6 +167,22 @@ export class AuthController extends Controller {
         await this.authService.changePassword(user._id, oldPassword, newPassword);
         return {
             message: "Contraseña cambiada correctamente."
+        } satisfies MessageResponseData as any;
+    }
+
+    /**
+     * Establece la contraseña por primera vez para el usuario autenticado (si no tiene una).
+     */
+    @Post("/set-password")
+    @Security("jwt")
+    @Response<SetPasswordValidationFailResponse>(422, "Error de validación")
+    @Response<FailResponseFromError<PasswordAlreadySetError>>(400, "Contraseña ya establecida")
+    @Response<AuthFailResponse>(401, "No autenticado")
+    public async setPassword(@RequestProp("user") user: AuthenticatedUser, @Body() body: SetPasswordRequest): Promise<SuccessResponse<MessageResponseData>> {
+        const { password } = body;
+        await this.authService.setPassword(user._id, password);
+        return {
+            message: "Contraseña establecida correctamente."
         } satisfies MessageResponseData as any;
     }
 

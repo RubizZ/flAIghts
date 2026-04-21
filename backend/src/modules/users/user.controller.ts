@@ -292,7 +292,10 @@ export class UsersController extends Controller {
             sent_friend_requests: user.sent_friend_requests.map(p => this.userPopulatedDocToString(p)),
             received_friend_requests: user.received_friend_requests.map(p => this.userPopulatedDocToString(p)),
             pending_email: user.email_change_request?.new_email,
-            profile_picture: this.getAvatarUrl(user)
+            profile_picture: this.getAvatarUrl(user),
+            google_id: user.google_id,
+            google_email: user.google_email,
+            is_password_set: user.is_password_set
         };
     }
 
@@ -322,7 +325,10 @@ export class UsersController extends Controller {
             sent_friend_requests: user.sent_friend_requests.filter((f): f is IUserUnpopulated => typeof f !== 'string').map(f => this.sanitizePublicUser(f, true, false)),
             received_friend_requests: user.received_friend_requests.filter((f): f is IUserUnpopulated => typeof f !== 'string').map(f => this.sanitizePublicUser(f, false, true)),
             pending_email: user.email_change_request?.new_email,
-            profile_picture: this.getAvatarUrl(user)
+            profile_picture: this.getAvatarUrl(user),
+            google_id: user.google_id,
+            google_email: user.google_email,
+            is_password_set: user.is_password_set
         };
     }
 
@@ -356,6 +362,7 @@ export class UsersController extends Controller {
 
     private getAvatarUrl(user: { _id: string; profile_picture?: string }): string | undefined {
         if (!user.profile_picture) return undefined;
+        if (user.profile_picture.startsWith('http')) return user.profile_picture;
 
         // Extraemos el timestamp de la key (ej: media/avatars/uuid-TIMESTAMP.jpg)
         const parts = user.profile_picture.split('-');

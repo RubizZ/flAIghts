@@ -6,7 +6,7 @@ import UserAvatar from "@/components/ui/UserAvatar";
 import { useAuth } from "@/context/AuthContext";
 import { useInfiniteQuery, useQueryClient, type InfiniteData } from "@tanstack/react-query";
 import { getMessages, useMarkConversationAsRead, getGetConversationsQueryKey } from "@/api/generated/openapi/conversations";
-import { useGetSearches } from "@/api/generated/openapi/search";
+import { useGetSearches, useShareSearch } from "@/api/generated/openapi/search";
 import { useConversationsStreamWS } from "@/api/generated/asyncapi/hooks";
 import type { MessageResponse, PaginatedMessagesResponse } from "@/api/generated/openapi/model";
 import type { ChatServerMessage } from "@/api/generated/asyncapi/models";
@@ -36,6 +36,7 @@ export default function Chat() {
         mutation: {
             onSuccess: () => {
                 queryClient.invalidateQueries({ queryKey: getGetConversationsQueryKey() });
+                queryClient.invalidateQueries({ queryKey: ['messages', userId] });
 
                 queryClient.setQueryData<InfiniteData<PaginatedMessagesResponse>>(['messages', userId], (oldData) => {
                     if (!oldData) return oldData;
@@ -136,6 +137,12 @@ export default function Chat() {
                             items: [...firstPage.items, incomingMessage],
                         };
                     }
+
+                    // Si el mensaje es para mí, lo marcamos como leído en el servidor
+                    if (incomingMessage.receiver === selfUser?._id) {
+                        markConversationAsRead({ otherUserId: userId! });
+                    }
+
                     return { ...oldData, pages: newPages };
                 });
             }
@@ -193,7 +200,21 @@ export default function Chat() {
         return `${date.toLocaleDateString()} a las ${time}`;
     };
 
-    const handleShareSearch = (search: any) => {
+    const { mutateAsync: shareSearch } = useShareSearch();
+
+    const handleShareSearch = async (search: any) => {
+        // Si la búsqueda es privada, la hacemos pública primero
+        if (!search.shared) {
+            try {
+                await shareSearch({ searchId: search._id });
+                // Actualizamos localmente para evitar re-llamadas si el usuario vuelve a compartir rápido
+                search.shared = true;
+            } catch (err) {
+                toast.error("No se pudo preparar la búsqueda para compartir");
+                return;
+            }
+        }
+
         const origins = search.origins.join(", ");
         const destinations = search.destinations.join(", ");
         // Formato: SHARE_SEARCH:id:origen:destino
@@ -219,6 +240,9 @@ export default function Chat() {
         window.dispatchEvent(new CustomEvent('send_message'));
 
         setNewMessage("");
+        // Reset height after sending
+        const textarea = document.getElementById('chat-textarea') as HTMLTextAreaElement;
+        if (textarea) textarea.style.height = '46px';
     };
 
     const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -255,8 +279,8 @@ export default function Chat() {
     }
 
     return (
-        <div className="h-full w-full px-2 py-4 sm:px-6 sm:py-6 flex justify-center">
-            <div className="flex flex-col w-full h-[calc(100vh-5.5rem)] sm:h-full max-w-4xl bg-main rounded-3xl border border-line shadow-lg overflow-hidden animate-in fade-in duration-300">
+        <div className="h-full w-full px-2 py-4 sm:px-6 sm:py-6 flex justify-center overflow-hidden">
+            <div className="flex flex-col w-full h-full max-w-4xl bg-main rounded-3xl border border-line shadow-lg overflow-hidden animate-in fade-in duration-300">
 
                 <header className="flex items-center gap-4 p-4 border-b border-line shrink-0">
                     <button
@@ -396,14 +420,19 @@ export default function Chat() {
                         >
                             <Plane size={20} className={isShareModalOpen ? '' : 'rotate-45'} />
                         </button>
-                        <TextareaAutosize
+                        <textarea
+                            id="chat-textarea"
                             value={newMessage}
-                            onChange={(e: ChangeEvent<HTMLTextAreaElement>) => setNewMessage(e.target.value)}
+                            onChange={(e: ChangeEvent<HTMLTextAreaElement>) => {
+                                setNewMessage(e.target.value);
+                                e.target.style.height = '46px';
+                                const newHeight = Math.min(e.target.scrollHeight, 120); // 120px is roughly 4-5 rows
+                                e.target.style.height = `${newHeight}px`;
+                            }}
                             onKeyDown={handleKeyDown}
                             placeholder="Escribe un mensaje..."
-                            className="flex-1 bg-surface placeholder-content-muted outline-none px-4 pt-3 pb-3.5 rounded-xl font-medium border border-line focus:border-brand shadow-sm resize-none custom-scrollbar"
+                            className="flex-1 bg-surface placeholder-content-muted outline-none px-4 py-3 rounded-xl font-medium border border-line focus:border-brand shadow-sm resize-none custom-scrollbar h-[46px] transition-[height] duration-100"
                             autoComplete="off"
-                            maxRows={4}
                             rows={1}
                         />
                         <button

@@ -2,9 +2,10 @@ import { useState, useEffect, useRef, useMemo } from "react";
 import Globe from "../components/Globe.tsx"
 import { Plus, Maximize2, PlaneTakeoff, PlaneLanding, X, Plane, ChevronDown, ChevronRight, AlertTriangle, Search, Calendar as CalendarIcon } from "lucide-react";
 import { useSearchRequest } from "@/api/generated/openapi/search";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
 import { AirportResponse } from "@/api/generated/openapi/model";
+import { useGetGlobeAirports } from "@/api/generated/openapi/airports";
 import StarsBackground from "../components/ui/StarsBackground.tsx";
 import ManualSearchForm from "../components/search/ManualSearchForm.tsx";
 import NavIconButton from "../components/ui/NavIconButton.tsx";
@@ -41,6 +42,85 @@ export default function Home() {
     useEffect(() => {
         localStorage.setItem('searchMode', searchMode);
     }, [searchMode]);
+
+    const [searchParams, setSearchParams] = useSearchParams();
+    const { data: globeAirports } = useGetGlobeAirports({
+        query: { staleTime: Infinity, refetchOnWindowFocus: false }
+    });
+
+    // Initialize state from URL parameters
+    const initialParamsLoaded = useRef(false);
+    useEffect(() => {
+        if (!globeAirports || initialParamsLoaded.current) return;
+
+        const o = searchParams.get('o');
+        const d = searchParams.get('d');
+        const date = searchParams.get('date');
+        const ret = searchParams.get('ret');
+        const m = searchParams.get('m');
+
+        if (o) {
+            const iatas = o.split(',');
+            const found = iatas.map(iata => {
+                const a = globeAirports.find(ga => ga.i === iata);
+                if (!a) return null;
+                return {
+                    iata_code: a.i,
+                    name: a.n,
+                    city: a.ci,
+                    location: { coordinates: [a.lo, a.la], type: "Point" }
+                } as AirportResponse;
+            }).filter(Boolean) as AirportResponse[];
+            setOrigins(found);
+        }
+
+        if (d) {
+            const iatas = d.split(',');
+            const found = iatas.map(iata => {
+                const a = globeAirports.find(ga => ga.i === iata);
+                if (!a) return null;
+                return {
+                    iata_code: a.i,
+                    name: a.n,
+                    city: a.ci,
+                    location: { coordinates: [a.lo, a.la], type: "Point" }
+                } as AirportResponse;
+            }).filter(Boolean) as AirportResponse[];
+            setDestinations(found);
+        }
+
+        if (date) setDepartureDate(date);
+        if (ret) setReturnDate(ret);
+        if (m === 'manual' || m === 'ai') setSearchMode(m as 'manual' | 'ai');
+
+        initialParamsLoaded.current = true;
+    }, [globeAirports, searchParams]);
+
+    // Synchronize state to URL parameters
+    useEffect(() => {
+        if (!initialParamsLoaded.current) return;
+
+        const params = new URLSearchParams(searchParams);
+
+        if (origins.length > 0) params.set('o', origins.map(o => o.iata_code).join(','));
+        else params.delete('o');
+
+        if (destinations.length > 0) params.set('d', destinations.map(d => d.iata_code).join(','));
+        else params.delete('d');
+
+        if (departureDate) params.set('date', departureDate);
+        else params.delete('date');
+
+        if (returnDate) params.set('ret', returnDate);
+        else params.delete('ret');
+
+        if (searchMode) params.set('m', searchMode);
+        else params.delete('m');
+
+        if (params.toString() !== searchParams.toString()) {
+            setSearchParams(params, { replace: true });
+        }
+    }, [origins, destinations, departureDate, returnDate, searchMode, setSearchParams]);
 
 
 
@@ -133,6 +213,7 @@ export default function Home() {
 
         // Si el usuario selecciona algo del mapa, pasamos a modo manual para que lo vea en la tarjeta
         setSearchMode('manual');
+        window.dispatchEvent(new CustomEvent('app:select-on-map', { detail: { airport } }));
 
         if (shouldCloseOnSelect) {
             setIsSelectingOnMap(false);
@@ -144,6 +225,7 @@ export default function Home() {
     const startMapSelection = (type: 'origin' | 'destination', fromMainCard: boolean = false) => {
         setSelectingType(type);
         setIsSelectingOnMap(true);
+        window.dispatchEvent(new CustomEvent('app:open-map'));
         setShouldCloseOnSelect(fromMainCard);
         if (!isLargeScreen) {
             setIsMobileCardExpanded(false);
@@ -226,6 +308,7 @@ export default function Home() {
             return;
         }
         setOrigins([...origins, airport]);
+        window.dispatchEvent(new CustomEvent('app:select-on-map', { detail: { airport } }));
         setInspectedAirport(null);
         setSearchMode('manual');
 
@@ -246,6 +329,7 @@ export default function Home() {
             return;
         }
         setDestinations([...destinations, airport]);
+        window.dispatchEvent(new CustomEvent('app:select-on-map', { detail: { airport } }));
         setInspectedAirport(null);
         setSearchMode('manual');
 
@@ -340,7 +424,10 @@ export default function Home() {
             {/* Background Interaction Overlay */}
             {!isSelectingOnMap && !isInteractionSuppressed && isLargeScreen && (
                 <div
-                    onClick={() => setIsSelectingOnMap(true)}
+                    onClick={() => {
+                        setIsSelectingOnMap(true);
+                        window.dispatchEvent(new CustomEvent('app:open-map'));
+                    }}
                     className={`absolute top-1/2 left-1/2 -translate-y-1/2 z-5 cursor-pointer group flex items-center justify-center overflow-hidden w-[100vh] h-[100vh] rounded-[4rem] transition-all duration-700 ${isLargeScreen ? '-translate-x-[calc(50%-306px)]' : '-translate-x-1/2'}`}
                 >
                     <div className={`flex flex-col items-center gap-3 opacity-0 group-hover:opacity-100 transition-all duration-500 scale-95 group-hover:scale-100 bg-black/10 backdrop-blur-sm px-10 py-8 rounded-[2.5rem] border border-white/5 shadow-2xl`}>
@@ -432,7 +519,7 @@ export default function Home() {
             <div className={`absolute inset-0 z-10 transition-all duration-700 cubic-bezier(0.16, 1, 0.3, 1) flex flex-col items-center lg:items-start justify-center pointer-events-none p-4 lg:p-12
                 ${!isSelectingOnMap
                     ? 'opacity-100 pt-24 pb-24 lg:py-0'
-                    : 'opacity-0 -translate-y-[150%] scale-95'
+                    : `opacity-0 ${isLargeScreen ? '-translate-x-[150%]' : '-translate-y-[150%]'} scale-95`
                 }`}>
                 <div className={`relative pointer-events-auto transition-all duration-700 ${!isSelectingOnMap ? 'translate-y-0 scale-100' : 'translate-y-20 scale-90'}`}>
                     <HomeCard
@@ -454,6 +541,7 @@ export default function Home() {
                         setActiveReturnPopover={setActiveReturnPopover}
                         onExploreGlobe={() => {
                             setIsSelectingOnMap(true);
+                            window.dispatchEvent(new CustomEvent('app:open-map'));
                             setIsMobileCardExpanded(false);
                         }}
                         searchMode={searchMode}

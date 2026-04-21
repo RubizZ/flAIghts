@@ -180,6 +180,7 @@ export default function AirportAutocomplete({ value, onChange, placeholder, clas
         }
 
         onChange([...value, airport]);
+        window.dispatchEvent(new CustomEvent('app:add-airport', { detail: { airport } }));
         onHoverChange?.(null); // Clear hover on select
         setQuery("");
         setDebouncedQuery("");
@@ -248,6 +249,7 @@ export default function AirportAutocomplete({ value, onChange, placeholder, clas
                         }}
                         onFocus={(e) => {
                             setIsOpen(true);
+                            window.dispatchEvent(new CustomEvent('app:open-airport-card'));
                             if (window.visualViewport) {
                                 e.target.scrollIntoView({ behavior: 'smooth', block: 'center' });
                             }

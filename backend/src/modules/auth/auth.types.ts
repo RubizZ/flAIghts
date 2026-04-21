@@ -58,6 +58,19 @@ export interface LoginRequest {
     responseType?: "cookie" | "json";
 }
 
+export interface GoogleLoginRequest {
+    credential: string;
+    /**
+     * Indicates how the token should be returned.
+     * @default "json"
+     */
+    responseType?: "cookie" | "json";
+}
+
+export interface GoogleConnectRequest {
+    credential: string;
+}
+
 export interface ChangePasswordRequest {
     /**
      * @minLength 8
@@ -67,6 +80,13 @@ export interface ChangePasswordRequest {
      * @minLength 8
      */
     newPassword: string;
+}
+
+export interface SetPasswordRequest {
+    /**
+     * @minLength 8
+     */
+    password: string;
 }
 
 export interface ForgotPasswordRequest {
@@ -86,8 +106,16 @@ export interface ResetPasswordRequest {
 
 // ==================== VALIDATION FAIL RESPONSES (422) ====================
 
-export type LoginRequestValidationFailResponse = RequestValidationFailResponse<ValidationDetails<
+export type LoginValidationFailResponse = RequestValidationFailResponse<ValidationDetails<
     BodyPath<LoginRequest>
+>>;
+
+export type GoogleLoginValidationFailResponse = RequestValidationFailResponse<ValidationDetails<
+    BodyPath<GoogleLoginRequest>
+>>;
+
+export type GoogleConnectValidationFailResponse = RequestValidationFailResponse<ValidationDetails<
+    BodyPath<GoogleConnectRequest>
 >>;
 
 export type ChangePasswordRequestValidationFailResponse = RequestValidationFailResponse<ValidationDetails<
@@ -103,9 +131,14 @@ export type ResetPasswordRequestValidationFailResponse = RequestValidationFailRe
 >>;
 
 // Uniones para todas las posibles respuestas 422
-export type LoginValidationFailResponse = LoginRequestValidationFailResponse;
+// Ya no usamos unión para login porque son requests diferentes con detalles diferentes.
 export type ChangePasswordValidationFailResponse = ChangePasswordRequestValidationFailResponse | DatabaseValidationFailResponse;
 export type ForgotPasswordValidationFailResponse = ForgotPasswordRequestValidationFailResponse;
 export type ResetPasswordValidationFailResponse = ResetPasswordRequestValidationFailResponse | DatabaseValidationFailResponse;
+
+export type SetPasswordRequestValidationFailResponse = RequestValidationFailResponse<ValidationDetails<
+    BodyPath<SetPasswordRequest>
+>>;
+export type SetPasswordValidationFailResponse = SetPasswordRequestValidationFailResponse | DatabaseValidationFailResponse;
 
 export type ChangePasswordErrorResponse = AuthFailResponse | FailResponseFromError<InvalidPasswordError>;

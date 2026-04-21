@@ -96,7 +96,8 @@ export class UserService {
                 username: data.username,
                 email: data.email.toLowerCase(),
                 password: PasswordService.hashPassword(data.password),
-                preferences: data.preferences
+                preferences: data.preferences,
+                is_password_set: true
             });
 
             // Clean up pre-registration

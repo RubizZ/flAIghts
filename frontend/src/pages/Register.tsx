@@ -4,12 +4,14 @@ import AuthLayout from "@/components/layout/AuthLayout";
 import AuthCard from "@/components/ui/AuthCard";
 import FloatingLabelInput from "@/components/ui/FloatingLabelInput";
 import { useInitiateRegistration, useCompleteRegistration } from "@/api/generated/openapi/users";
-import { useLogin } from "@/api/generated/openapi/auth";
+import { useLogin, useLoginWithGoogle } from "@/api/generated/openapi/auth";
+import { GoogleLogin } from '@react-oauth/google';
 import { useNavigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import { getGetSelfUserQueryKey } from "@/api/generated/openapi/users";
 import { useAuth } from "@/context/AuthContext";
 import { Mail, ShieldCheck, User as UserIcon, Lock } from "lucide-react";
+import Logo from "@/components/ui/Logo";
 
 export default function Register() {
     const navigate = useNavigate();
@@ -50,6 +52,18 @@ export default function Register() {
             onError: () => {
                 toast.error("Te has registrado correctamente, pero hubo un error al iniciar sesión. Por favor, identifícate.");
                 navigate("/login");
+            }
+        }
+    });
+
+    const { mutate: performGoogleLogin, isPending: isGooglePending } = useLoginWithGoogle({
+        mutation: {
+            onSuccess: () => {
+                queryClient.invalidateQueries({ queryKey: getGetSelfUserQueryKey() });
+                navigate("/");
+            },
+            onError: () => {
+                toast.error("Error al iniciar sesión o registrarse con Google");
             }
         }
     });
@@ -188,7 +202,12 @@ export default function Register() {
 
     return (
         <AuthLayout>
-            <AuthCard title={step === 1 ? "Únete a flAIghts" : "Completa tu perfil"}>
+            <AuthCard title={
+                <>
+                    <Logo size={32} />
+                    <span>{step === 1 ? "Registrate en la plataforma" : "Completa tu perfil"}</span>
+                </>
+            }>
                 <div className="flex flex-col gap-5">
                     {step === 1 ? (
                         <>
@@ -214,6 +233,33 @@ export default function Register() {
                             >
                                 {isInitiating ? "Enviando código..." : "Continuar"}
                             </button>
+
+                            <div className="relative flex py-2 items-center">
+                                <div className="grow border-t border-content-muted/30"></div>
+                                <span className="shrink-0 mx-4 text-content-muted text-sm">O continúa con</span>
+                                <div className="grow border-t border-content-muted/30"></div>
+                            </div>
+
+                            <div className="flex justify-center">
+                                <GoogleLogin
+                                    onSuccess={credentialResponse => {
+                                        if (credentialResponse.credential) {
+                                            performGoogleLogin({
+                                                data: {
+                                                    credential: credentialResponse.credential,
+                                                    responseType: 'cookie'
+                                                }
+                                            });
+                                        }
+                                    }}
+                                    onError={() => {
+                                        toast.error('Error al conectar con Google');
+                                    }}
+                                    theme="filled_black"
+                                    shape="circle"
+                                    text="continue_with"
+                                />
+                            </div>
                         </>
                     ) : (
                         <>
@@ -288,6 +334,14 @@ export default function Register() {
                                 onKeyDown={enterKeyPress}
                                 icon={<Lock size={18} />}
                             />
+
+                            <div className="p-3 bg-brand/5 rounded-xl border border-line">
+                                <h4 className="text-[10px] font-bold text-brand uppercase tracking-wider mb-1.5">Requisitos de seguridad:</h4>
+                                <ul className="text-[10px] text-content-muted space-y-1 list-disc list-inside opacity-80">
+                                    <li>Mínimo 8 caracteres</li>
+                                    <li>Recomendamos incluir números y símbolos</li>
+                                </ul>
+                            </div>
 
                             <div className="flex flex-col gap-2">
                                 <label className="flex items-center gap-3 cursor-pointer group">

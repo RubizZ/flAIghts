@@ -5,6 +5,7 @@ import FloatingLabelInput from "@/components/ui/FloatingLabelInput";
 import { JSX } from "react";
 import { useState } from "react";
 import { toast } from "sonner";
+import Logo from "@/components/ui/Logo";
 
 export default function ForgotPassword(): JSX.Element {
     const [email, setEmail] = useState('');
@@ -49,7 +50,12 @@ export default function ForgotPassword(): JSX.Element {
 
     return (
         <AuthLayout>
-            <AuthCard title="Forgot Password">
+            <AuthCard title={
+                <>
+                    <Logo size={32} />
+                    <span>Recuperar contraseña</span>
+                </>
+            }>
                 <form action="" className="flex flex-col gap-4">
                     <p className="text-center text-content-muted text-sm text-muted-foreground">
                         Escribe tu email y te enviaremos un enlace para restablecer tu contraseña.

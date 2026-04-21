@@ -13,13 +13,49 @@ import {
     CreditCard,
     Calendar as CalendarIcon,
     ArrowLeft,
-    ChevronDown
+    ChevronDown,
+    Globe,
+    Lock,
+    Loader2
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import Calendar from "@/components/ui/Calendar";
+import { useShareSearch, usePrivatizeSearch } from "@/api/generated/openapi/search";
+import { useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 
 export default function SearchHistory() {
     const { user, isAuthenticated } = useAuth();
+    const queryClient = useQueryClient();
+    
+    // Hooks de compartir/privatizar
+    const { mutate: shareSearch, isPending: isSharing } = useShareSearch({
+        mutation: {
+            onSuccess: () => {
+                queryClient.invalidateQueries({ queryKey: ['infinite'] });
+                toast.success("Búsqueda ahora es pública");
+            },
+            onError: () => toast.error("Error al compartir la búsqueda")
+        }
+    });
+
+    const { mutate: privatizeSearch, isPending: isPrivatizing } = usePrivatizeSearch({
+        mutation: {
+            onSuccess: () => {
+                queryClient.invalidateQueries({ queryKey: ['infinite'] });
+                toast.success("Búsqueda ahora es privada");
+            },
+            onError: () => toast.error("Error al privatizar la búsqueda")
+        }
+    });
+
+    const toggleShare = (searchId: string, isShared: boolean) => {
+        if (isShared) {
+            privatizeSearch({ searchId });
+        } else {
+            shareSearch({ searchId });
+        }
+    };
     
     // Filtros
     const [origin, setOrigin] = useState("");
@@ -269,7 +305,30 @@ export default function SearchHistory() {
                                                     key={search._id} 
                                                     search={search} 
                                                     isFeatured={search.shared}
-                                                />
+                                                >
+                                                    <button
+                                                        onClick={(e) => {
+                                                            e.preventDefault();
+                                                            e.stopPropagation();
+                                                            toggleShare(search._id, !!search.shared);
+                                                        }}
+                                                        disabled={isSharing || isPrivatizing}
+                                                        className={`p-2 rounded-xl transition-all border cursor-pointer ${
+                                                            search.shared 
+                                                            ? "bg-amber-500/10 text-amber-500 border-amber-500/20 hover:bg-amber-500/20" 
+                                                            : "bg-surface text-content-muted border-line hover:border-brand hover:text-brand"
+                                                        }`}
+                                                        title={search.shared ? "Hacer privada" : "Hacer pública"}
+                                                    >
+                                                        {isSharing || isPrivatizing ? (
+                                                            <Loader2 size={16} className="animate-spin" />
+                                                        ) : search.shared ? (
+                                                            <Globe size={16} />
+                                                        ) : (
+                                                            <Lock size={16} />
+                                                        )}
+                                                    </button>
+                                                </SearchCard>
                                             ))}
                                         </div>
                                     ))}

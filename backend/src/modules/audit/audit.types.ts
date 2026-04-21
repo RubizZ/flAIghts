@@ -61,8 +61,15 @@ export interface AuditDetails {
         LOGIN: {
             identifier: string;
         }
+        LOGIN_GOOGLE: {
+            email: string;
+        }
         FAILED_LOGIN: {
             identifier: string;
+            reason: string;
+        }
+        FAILED_LOGIN_GOOGLE: {
+            email: string;
             reason: string;
         }
         LOGOUT_ALL: {
@@ -73,6 +80,7 @@ export interface AuditDetails {
         }
         CHANGE_PASSWORD: {
             auth_version: number;
+            method: "change-password" | "set-password";
         }
         FAILED_CHANGE_PASSWORD: {
             reason: string;
@@ -87,6 +95,19 @@ export interface AuditDetails {
             email: string;
         }
         FAILED_RESET_PASSWORD: {
+            reason: string;
+        }
+        CONNECT_GOOGLE: {
+            userId: string;
+            googleId: string;
+            email: string;
+        }
+        DISCONNECT_GOOGLE: {
+            userId: string;
+            googleId: string;
+        }
+        FAILED_DISCONNECT_GOOGLE: {
+            userId: string;
             reason: string;
         }
     }
