@@ -125,6 +125,16 @@ export interface AuditDetails {
             args: any;
         }
     }
+    BOOKING: {
+        PREPARE: {
+            tokens: {
+                token: string;
+                origin: string;
+                destination: string;
+                departure_date: string;
+            }[];
+        }
+    }
 }
 
 export type AuditUser = {

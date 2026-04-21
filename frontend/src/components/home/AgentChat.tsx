@@ -158,7 +158,7 @@ const getToolDescription = (step: UIStep, t: any) => {
             const pe = step.progress;
             if (pe.type === 'progress') return pe.message;
             if (pe.type === 'completed') return t('agentChat.toolStatus.searchCompleted');
-            if (pe.type === 'failed') return `${t('agentChat.toolStatus.error')}: ${pe.message}`;
+            if (pe.type === 'failed') return t('agentChat.toolStatus.searchFailed', { message: pe.message });
         }
 
         switch (step.name) {
@@ -185,7 +185,7 @@ const getToolDescription = (step: UIStep, t: any) => {
         const progressEvent = step.event;
         if (progressEvent.type === 'progress') return progressEvent.message;
         if (progressEvent.type === 'completed') return t('agentChat.toolStatus.searchCompleted');
-        if (progressEvent.type === 'failed') return `${t('agentChat.toolStatus.error')}: ${progressEvent.message}`;
+        if (progressEvent.type === 'failed') return t('agentChat.toolStatus.searchFailed', { message: progressEvent.message });
         return t('agentChat.toolStatus.processing');
     }
     return null;
@@ -334,7 +334,7 @@ const StepProgress = ({ steps }: { steps: any[] }) => {
                                 <span className="italic">{getToolDescription(lastStep, t)}</span>
                                 {!isExpanded && filteredSteps.length > 1 && (
                                     <span className="opacity-0 group-hover/steps:opacity-100 transition-all duration-300 text-[8px] font-black text-brand/50 uppercase tracking-widest translate-x-1 group-hover/steps:translate-x-0">
-                                        ( + {filteredSteps.length - 1} {t('agentChat.steps')})
+                                        ( + {filteredSteps.length - 1} {t('agentChat.moreSteps')})
                                     </span>
                                 )}
                             </div>
@@ -646,9 +646,9 @@ const AgentChat = forwardRef<any, AgentChatProps>(({
                     <Lock size={40} className="animate-pulse" />
                     <div className="absolute inset-0 bg-brand/10 blur-xl rounded-full scale-110 opacity-50" />
                 </div>
-                <h2 className="text-xl font-black mb-2 text-content italic">{t('agentChat.exclusiveIntelligence')}</h2>
+                <h2 className="text-xl font-black mb-2 text-content italic">{t('agentChat.notAuthenticated.title')}</h2>
                 <div className="text-sm text-content-muted max-w-72 leading-relaxed mb-10 font-medium">
-                    <ReactMarkdown>{t('agentChat.authRequired')}</ReactMarkdown>
+                    <ReactMarkdown>{t('agentChat.notAuthenticated.description')}</ReactMarkdown>
                 </div>
 
                 <div className="flex flex-col gap-3 w-full max-w-64">
@@ -656,14 +656,14 @@ const AgentChat = forwardRef<any, AgentChatProps>(({
                         to="/login"
                         className="px-6 py-4 bg-brand text-white font-black rounded-2xl shadow-[0_8px_20px_rgba(var(--brand-rgb),0.3)] hover:scale-[1.03] active:scale-95 transition-all flex items-center justify-center gap-3 group text-sm"
                     >
-                        {t('agentChat.login')}
+                        {t('agentChat.notAuthenticated.login')}
                         <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
                     </Link>
                     <Link
                         to="/register"
                         className="px-6 py-3 text-brand font-bold text-xs hover:bg-brand/5 rounded-xl transition-all"
                     >
-                        {t('agentChat.register')}
+                        {t('agentChat.notAuthenticated.register')}
                     </Link>
                 </div>
             </div>
@@ -761,7 +761,7 @@ const AgentChat = forwardRef<any, AgentChatProps>(({
                                                     {getToolIcon((msg as any).toolName)}
                                                 </div>
                                                 <div className="flex flex-col">
-                                                    <span className="text-[9px] font-black uppercase text-brand/70 tracking-widest leading-tight">{t('agentChat.executing')}</span>
+                                                    <span className="text-[9px] font-black uppercase text-brand/70 tracking-widest leading-tight">{t('agentChat.toolStatus.executing')}</span>
                                                     <span className="text-xs font-bold text-content italic leading-snug">
                                                         {getToolDescription({ type: 'tool_call', name: (msg as any).toolName, args: (msg as any).args, call_id: '' } as UIStep, t)}
                                                     </span>

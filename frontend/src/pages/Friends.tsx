@@ -69,7 +69,7 @@ export default function Friends() {
                 </div>
                 <h1 className="text-3xl font-bold text-content">{t("friends.notLogged.title")}</h1>
                 <Link to="/login" className="px-8 py-3 bg-brand text-content-on-brand rounded-full hover:bg-brand/90 transition-all shadow-xl active:scale-95 font-bold hover:scale-[1.02]">
-                    {t("friends.actions.login")}
+                    {t("friends.notLogged.login")}
                 </Link>
             </div>
         );
@@ -249,7 +249,7 @@ export default function Friends() {
                                                 onClick={() => cancelRequest({ id: req._id })}
                                                 className="w-full sm:w-auto px-4 py-2 bg-surface/20 hover:bg-red-100 hover:text-red-600 text-content-muted rounded-xl font-bold transition-all text-sm cursor-pointer hover:scale-105 active:scale-95"
                                             >
-                                                {t("friends.actions.cancel ")}
+                                                {t("friends.actions.cancel")}
                                             </button>
                                         </div>
                                     ))}

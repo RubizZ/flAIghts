@@ -15,7 +15,7 @@ export default function ResetPassword() {
     const token = searchParams.get("token");
 
     if (!token) {
-        throw new Error(t("forgotPassword.validation.tokenMissing"));
+        throw new Error(t("resetPassword.validation.tokenMissing"));
     }
 
     const [password, setPassword] = useState("");
@@ -52,7 +52,7 @@ export default function ResetPassword() {
             newErrors.password = t("resetPassword.validation.passwordRequired");
         }
         if (password !== confirmPassword) {
-            newErrors.confirmPassword = t("resetPassword.validation.confirmPasswordMissmatch");
+            newErrors.confirmPassword = t("resetPassword.validation.confirmPasswordMismatch");
         }
         if (!password || password !== confirmPassword) {
             setErrors(newErrors);

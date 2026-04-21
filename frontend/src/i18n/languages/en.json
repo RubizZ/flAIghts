@@ -125,7 +125,8 @@
       "acceptedTerms": "You must accept the terms and conditions",
       "emailInUse": "This email is already registered",
       "usernameInUse": "Username is already in use",
-      "invalidCode": "The code is invalid or has expired"
+      "invalidCode": "The code is invalid or has expired",
+      "emailInvalid": "Invalid email address"
     },
     "toast": {
       "verificationEmailSent": "Verification email sent. Check your inbox.",
@@ -155,17 +156,13 @@
     }
   },
   "searchResults": {
-    "title": "Search Results",
-    "loading": "Loading results...",
-    "loadingMore": "Searching for more flights...",
     "error": {
-      "fetch": "Error fetching search results",
-      "details": "Details"
+      "backToHome": "Back to home",
+      "noFlights": "No flights found",
+      "tryAgain": "Try again"
     },
-    "itineraries": {
-      "departure": "Departure Flights",
-      "return": "Return Flights",
-      "totalPrice": "Total Price"
+    "toast": {
+      "noBookingOptions": "No booking options found for this flight"
     }
   },
   "settings": {
@@ -702,21 +699,7 @@
       "footerHero": "🚀 Exploring the future of travel with AI"
     },
     "roadmap": {
-      "title": "Evaluation Roadmap",
-      "subtitle": "Progress of usability challenges.",
-      "count": "Missions",
-      "status": {
-        "completed": "Completed",
-        "available": "Available",
-        "locked": "Locked"
-      },
-      "pendingFeedback": "Feedback Pending",
-      "legend": {
-        "achieved": "Achieved",
-        "inProgress": "In progress",
-        "feedback": "Feedback",
-        "blocked": "Blocked"
-      }
+      "missions": "Missions"
     },
     "onboarding": {
       "title": "Evaluation Tutorial",
@@ -807,6 +790,30 @@
       "forTfg": "for the flAIghts TFG",
       "finalMessage": "You have successfully completed all the usability challenges proposed for this study. Your contribution is a fundamental pillar of our academic research.",
       "closeAndExplore": "Close and keep exploring"
+    }
+  },
+  "booking": {
+    "title": "Booking Options",
+    "subtitle": "Select the provider for each segment of your trip.",
+    "segmentTitle": "Leg {{origin}} to {{destination}}",
+    "bookWith": "Book with {{provider}}",
+    "atPrice": "for {{price}}€",
+    "go": "Go to website",
+    "loading": "Getting options...",
+    "error": "Error getting booking options",
+    "noOptions": "No direct booking options found",
+    "postNotice": "You will be redirected to an external page to complete the payment.",
+    "close": "Close"
+  },
+  "common": {
+    "outbound": "Outbound",
+    "return": "Return",
+    "outboundFlights": "Outbound Flights",
+    "returnFlights": "Return Flights"
+  },
+  "home": {
+    "toast": {
+      "evaluationCompleted": "Evaluation completed!"
     }
   }
 }

@@ -9,6 +9,8 @@ import { toast } from "sonner";
 import Globe from "@/components/Globe";
 import FlightCard from "@/components/search/FlightCard";
 import SelectedFlightSummary from "@/components/search/SelectedFlightSummary";
+import BookingModal from "@/components/search/BookingModal";
+import { usePrepareBooking } from "@/api/generated/openapi/booking";
 import { useTranslation } from "react-i18next";
 
 export default function SearchResults() {
@@ -24,6 +26,7 @@ export default function SearchResults() {
     const [isSMScreen, setIsSMScreen] = useState(window.innerWidth >= 640);
     const [isLargeScreen, setIsLargeScreen] = useState(window.innerWidth >= 1024);
     const [isGlobeReady, setIsGlobeReady] = useState(false);
+    const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
 
     useEffect(() => {
         const handleResize = () => {
@@ -52,6 +55,37 @@ export default function SearchResults() {
             }
         }
     );
+
+    const { mutate: prepareBooking, isPending: isPreparingBooking, error: prepareError, data: bookingData } = usePrepareBooking();
+
+    const handleReserve = () => {
+        const tokens: { token: string; origin: string; destination: string; departure_date: string }[] = [];
+        
+        const collectTokens = (legs: any[]) => {
+            legs.forEach(leg => {
+                if (leg.booking_token) {
+                    tokens.push({
+                        token: leg.booking_token,
+                        origin: leg.origin,
+                        destination: leg.destination,
+                        departure_date: leg.departure_time.split(' ')[0] // Extract YYYY-MM-DD from YYYY-MM-DD HH:MM
+                    });
+                }
+            });
+        };
+
+        if (selectedDeparture) collectTokens(selectedDeparture.legs);
+        if (selectedReturn) collectTokens(selectedReturn.legs);
+
+        if (tokens.length === 0) {
+            toast.error(t("searchResults.toast.noBookingOptions"));
+            return;
+        }
+
+        setIsBookingModalOpen(true);
+        prepareBooking({ data: { tokens: tokens as any } });
+        window.dispatchEvent(new CustomEvent('app:buy-flight'));
+    };
 
     const searchData = data;
 
@@ -415,13 +449,10 @@ export default function SearchResults() {
                                                 </p>
                                             </div>
                                             <button
-                                                onClick={() => {
-                                                    window.dispatchEvent(new CustomEvent('app:buy-flight'));
-                                                    toast.info("Función no implementada", { description: "Esta acción te redirigirá a la web del vendedor." });
-                                                }}
+                                                onClick={handleReserve}
                                                 className="w-full sm:w-auto px-8 py-4 bg-brand hover:bg-brand-hover text-white text-base font-bold rounded-2xl shadow-lg shadow-brand/20 transition-all hover:scale-105 active:scale-95 cursor-pointer"
                                             >
-                                                Reservar Vuelos
+                                                {t('searchResultsPage.reserve')}
                                             </button>
                                         </div>
                                     </div>
@@ -525,6 +556,14 @@ export default function SearchResults() {
                     onReady={handleGlobeReady}
                 />
             </div>
+
+            <BookingModal
+                isOpen={isBookingModalOpen}
+                onClose={() => setIsBookingModalOpen(false)}
+                isLoading={isPreparingBooking}
+                bookingData={bookingData || null}
+                error={prepareError}
+            />
         </div>
     );
 }

@@ -68,6 +68,7 @@ export interface LegResponse {
     airplane: string;
     flight_number: string;
     travel_class: string;
+    booking_token?: string;
     extensions?: string[];
 }
 

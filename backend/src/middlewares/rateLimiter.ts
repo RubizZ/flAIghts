@@ -8,7 +8,8 @@ const rateLimitMessages = {
         registration: 'Demasiados intentos de registro. Por favor, inténtalo de nuevo en un minuto.',
         search: 'Demasiadas peticiones de búsqueda. Por favor, inténtalo de nuevo en un minuto.',
         chatbot: 'Has alcanzado el límite de mensajes del chatbot. Por favor, inténtalo de nuevo en un minuto.',
-        profilePicture: 'Demasiadas peticiones de cambio de foto de perfil. Inténtalo de nuevo más tarde.'
+        profilePicture: 'Demasiadas peticiones de cambio de foto de perfil. Inténtalo de nuevo más tarde.',
+        booking: 'Demasiadas peticiones de reserva. Por favor, inténtalo de nuevo en un minuto.'
     },
     en: {
         global: 'Too many requests from this IP, please try again after a minute.',
@@ -16,7 +17,8 @@ const rateLimitMessages = {
         registration: 'Too many registration attempts, please try again after a minute.',
         search: 'Too many search requests, please try again after a minute.',
         chatbot: 'You have reached the chatbot message limit, please try again after a minute.',
-        profilePicture: 'Too many profile picture change requests, please try again later.'
+        profilePicture: 'Too many profile picture change requests, please try again later.',
+        booking: 'Too many booking requests, please try again after a minute.'
     }
 };
 
@@ -95,5 +97,14 @@ export const chatbotLimiter = rateLimit({
     standardHeaders: 'draft-7',
     legacyHeaders: false,
     handler: createRateLimitHandler('chatbot'),
+    skipSuccessfulRequests: false,
+});
+
+export const bookingLimiter = rateLimit({
+    windowMs: 60 * 1000, // 1 minute
+    limit: 10,
+    standardHeaders: 'draft-7',
+    legacyHeaders: false,
+    handler: createRateLimitHandler('booking'),
     skipSuccessfulRequests: false,
 });

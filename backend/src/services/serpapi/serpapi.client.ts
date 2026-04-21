@@ -2,6 +2,7 @@ import { inject, injectable } from "tsyringe";
 import type { ApiRequestParameters, SerpApiResponse } from "./serpapi.types.js";
 import mongoose, { Schema } from "mongoose";
 import { ServerConfig } from "../../config/server.config.js";
+import logger from "../../utils/logger.js";
 
 import { SerpapiQuotaExceededError } from "./serpapi.errors.js";
 import { User } from "../../modules/users/models/user.model.js";
@@ -84,11 +85,17 @@ export class SerpApiClient {
         });
 
         const response = await fetch(`${this.baseUrl}/search?${query.toString()}`);
+        const data = await response.json();
 
         if (!response.ok) {
-            throw new Error(`SerpApi error: ${response.status}`);
+            logger.error({
+                status: response.status,
+                error: data.error || data,
+                parameters: { ...parameters, api_key: 'REDACTED' }
+            }, 'SerpApi Request Failed');
+            throw new Error(`SerpApi error: ${response.status} - ${data.error || JSON.stringify(data)}`);
         }
 
-        return await response.json();
+        return data;
     }
 }

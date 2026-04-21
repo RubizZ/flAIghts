@@ -847,6 +847,9 @@
           "travel_class": {
             "type": "string"
           },
+          "booking_token": {
+            "type": "string"
+          },
           "extensions": {
             "type": "array",
             "items": {

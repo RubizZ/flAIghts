@@ -98,7 +98,7 @@ export default function Home() {
                 return;
             }
             if (origins.some(o => o.iata_code === airport.iata_code)) {
-                toast.error("Ese aeropuerto ya está seleccionado como origen");
+                toast.error(t("searchFlight.validation.alreadySelectedOrigin"));
                 return;
             }
             setOrigins([...origins, airport]);

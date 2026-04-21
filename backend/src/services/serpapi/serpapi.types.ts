@@ -47,6 +47,24 @@ export interface FlightRoute {
     booking_token: string;
 }
 
+export interface SerpApiBookingOption {
+    together?: {
+        book_with: string;
+        price: number;
+        airline_logos?: string[];
+        extensions?: string[];
+        booking_request: {
+            url: string;
+            post_data?: string;
+        };
+    };
+    // Keep legacy fields as optional just in case different engines use them
+    name?: string;
+    price?: number;
+    url?: string;
+    post_data?: string;
+}
+
 export interface ApiRequestParameters {
     departure_id: string | string[];
     arrival_id: string | string[];
@@ -139,4 +157,6 @@ export interface SerpApiResponse {
     price_insights?: PriceInsights;
 
     airports?: Segment[];
-}
+    booking_options?: SerpApiBookingOption[];
+    selected_flights?: FlightRoute[];
+}

@@ -4,6 +4,7 @@ import { useAuth } from './AuthContext';
 import { MISSIONS } from '@/constants/missions';
 import { Mission, MissionStep } from '@/types/missions';
 import { toast } from 'sonner';
+import { useTranslation } from 'react-i18next';
 import ConsentModal from '@/components/missions/ConsentModal';
 import SurveyModal from '@/components/missions/SurveyModal';
 import FinalEvaluationModal from '@/components/missions/FinalEvaluationModal';
@@ -65,6 +66,7 @@ const ONBOARDING_KEY = 'flaights_onboarding_seen';
 
 export const MissionProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     const { isAuthenticated, user } = useAuth();
+    const { t } = useTranslation();
     const [missions, setMissions] = useState<Mission[]>(() => {
         const saved = localStorage.getItem(STORAGE_KEY);
 
@@ -355,7 +357,7 @@ export const MissionProvider: React.FC<{ children: ReactNode }> = ({ children })
             });
 
             setEvaluationFinished(true);
-            toast.success('¡Evaluación completada!');
+            toast.success(t('home.toast.evaluationCompleted'));
         } catch (error) {
             console.error('Error al finalizar:', error);
             setEvaluationFinished(true);

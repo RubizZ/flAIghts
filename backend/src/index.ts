@@ -22,7 +22,8 @@ import {
     authLimiter,
     registrationLimiter,
     searchLimiter,
-    chatbotLimiter
+    chatbotLimiter,
+    bookingLimiter
 } from './middlewares/rateLimiter.js';
 
 
@@ -149,8 +150,10 @@ app.post('/search', searchLimiter);
 app.post('/search/stream', searchLimiter);
 
 // Chatbot endpoint rate limiter (10 req/min)
-app.post('/agent', chatbotLimiter);
 app.post('/agent/stream', chatbotLimiter);
+
+// Booking endpoint rate limiter (10 req/min)
+app.post('/booking/prepare', bookingLimiter);
 
 // Global API rate limiter (100 req/min)
 app.use(globalApiLimiter);

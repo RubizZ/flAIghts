@@ -125,7 +125,8 @@
       "acceptedTerms": "Debes aceptar los términos y condiciones",
       "emailInUse": "Este email ya está registrado",
       "usernameInUse": "El nombre de usuario ya está en uso",
-      "invalidCode": "El código es inválido o ha expirado"
+      "invalidCode": "El código es inválido o ha expirado",
+      "emailInvalid": "El email no es válido"
     },
     "toast": {
       "verificationEmailSent": "Email de verificación enviado. Revisa tu bandeja de entrada.",
@@ -155,17 +156,13 @@
     }
   },
   "searchResults": {
-    "title": "Resultados de búsqueda",
-    "loading": "Cargando resultados...",
-    "loadingMore": "Buscando más vuelos...",
     "error": {
-      "fetch": "Error al cargar la búsqueda",
-      "details": "Detalles"
+      "backToHome": "Volver al inicio",
+      "noFlights": "No se han encontrado vuelos",
+      "tryAgain": "Inténtalo de nuevo"
     },
-    "itineraries": {
-      "departure": "Vuelos de Ida",
-      "return": "Vuelos de Vuelta",
-      "totalPrice": "Precio total"
+    "toast": {
+      "noBookingOptions": "No se han encontrado opciones de reserva para este vuelo"
     }
   },
   "settings": {
@@ -702,21 +699,7 @@
       "footerHero": "🚀 Explorando el futuro del viaje con IA"
     },
     "roadmap": {
-      "title": "Roadmap de Evaluación",
-      "subtitle": "Progreso de los retos de usabilidad.",
-      "count": "Misiones",
-      "status": {
-        "completed": "Completado",
-        "available": "Disponible",
-        "locked": "Cerrado"
-      },
-      "pendingFeedback": "Pendiente Feedback",
-      "legend": {
-        "achieved": "Conseguida",
-        "inProgress": "En curso",
-        "feedback": "Feedback",
-        "blocked": "Bloqueada"
-      }
+      "missions": "Misiones"
     },
     "onboarding": {
       "title": "Tutorial de Evaluación",
@@ -807,6 +790,30 @@
       "forTfg": "para el TFG de flAIghts",
       "finalMessage": "Has completado con éxito todos los desafíos de usabilidad propuestos para este estudio. Tu contribución es un pilar fundamental de nuestra investigación académica.",
       "closeAndExplore": "Cerrar y seguir explorando"
+    }
+  },
+  "booking": {
+    "title": "Opciones de Reserva",
+    "subtitle": "Selecciona el proveedor para cada segmento de tu viaje.",
+    "segmentTitle": "Tramo {{origin}} a {{destination}}",
+    "bookWith": "Reservar con {{provider}}",
+    "atPrice": "por {{price}}€",
+    "go": "Ir a la web",
+    "loading": "Obteniendo opciones...",
+    "error": "Error al obtener opciones de reserva",
+    "noOptions": "No se han encontrado opciones de reserva directa",
+    "postNotice": "Serás redirigido a una página externa para completar el pago.",
+    "close": "Cerrar"
+  },
+  "common": {
+    "outbound": "Ida",
+    "return": "Vuelta",
+    "outboundFlights": "Vuelos de Ida",
+    "returnFlights": "Vuelos de Vuelta"
+  },
+  "home": {
+    "toast": {
+      "evaluationCompleted": "¡Evaluación completada!"
     }
   }
 }

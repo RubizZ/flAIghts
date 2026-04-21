@@ -1,16 +1,11 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useMissions } from '@/context/MissionContext';
-import { MessageSquare, Star, Send, X, Check, Sparkles, Loader2 } from 'lucide-react';
+import { MessageSquare, Star, Send, X, Check, Sparkles } from 'lucide-react';
 
-interface SurveyModalProps {
-    onClose: () => void;
-    missionId: string;
-}
-
-const SurveyModal: React.FC<SurveyModalProps> = ({ onClose, missionId }) => {
+const SurveyModal: React.FC = () => {
     const { t } = useTranslation();
-    const { missions, addSurveyAnswer } = useMissions();
+    const { showSurveyMissionId, setShowSurveyMissionId, missions, addSurveyAnswer } = useMissions();
     const [rating, setRating] = useState<number>(0);
     const [comment, setComment] = useState('');
     const [isClosing, setIsClosing] = useState(false);
@@ -20,23 +15,25 @@ const SurveyModal: React.FC<SurveyModalProps> = ({ onClose, missionId }) => {
     const handleClose = () => {
         setIsClosing(true);
         setTimeout(() => {
-            onClose();
+            setShowSurveyMissionId(null);
             setIsClosing(false);
         }, 300);
     };
 
-    const mission = missions.find(m => m.id === missionId);
+    if (!showSurveyMissionId) return null;
+
+    const mission = missions.find(m => m.id === showSurveyMissionId);
     if (!mission) return null;
 
     const handleSubmit = () => {
         if (rating === 0) return;
         setIsClosing(true);
-        addSurveyAnswer(missionId, {
+        addSurveyAnswer(showSurveyMissionId, {
             rating,
             comment
         });
         setTimeout(() => {
-            onClose();
+            setShowSurveyMissionId(null);
             setRating(0);
             setComment('');
             setIsClosing(false);
@@ -58,6 +55,7 @@ const SurveyModal: React.FC<SurveyModalProps> = ({ onClose, missionId }) => {
         >
             <div className={`relative w-full max-w-lg max-h-[calc(100svh-2rem)] overflow-y-auto custom-scrollbar rounded-[2.5rem] border border-white/10 bg-gray-950 shadow-[0_32px_64px_-16px_rgba(0,0,0,0.6)] animate-duration-300 flex flex-col ${isClosing ? 'animate-zoom-out' : 'animate-zoom-in'}`}>
 
+                {/* Decorative Elements */}
                 <div className="absolute top-0 left-1/2 -translate-x-1/2 w-64 h-24 bg-blue-500/10 blur-[80px] pointer-events-none" />
                 <div className="absolute -bottom-10 -right-10 w-40 h-40 bg-indigo-500/10 blur-[60px] pointer-events-none" />
 
@@ -73,13 +71,12 @@ const SurveyModal: React.FC<SurveyModalProps> = ({ onClose, missionId }) => {
                         <MessageSquare size={28} className="drop-shadow-[0_0_8px_rgba(96,165,250,0.5)]" />
                     </div>
 
-                    <div className="flex flex-col gap-1 mb-8">
-                        <h2 className="text-xl font-black text-white italic tracking-tighter uppercase">{t('missions.survey.title')}</h2>
-                        <p className="text-white/40 text-[10px] font-black uppercase tracking-[0.2em]">
-                            {t('missions.survey.subtitle')}
-                        </p>
+                    <div className="flex items-center gap-3 mb-2">
+                        <h2 className="text-3xl font-black text-white tracking-tight">{t('missions.survey.title')}</h2>
                     </div>
+                    <p className="text-gray-400 text-sm mb-8 font-medium">{t('missions.survey.subtitle')}</p>
 
+                    {/* Mission Context Mini-Card */}
                     <div className="mb-8 p-5 rounded-3xl bg-white/5 border border-white/10 relative overflow-hidden group">
                         <div className="flex items-start gap-4">
                             <div className="h-10 w-10 flex items-center justify-center rounded-xl bg-white/5 text-xl shrink-0 group-hover:scale-110 transition-transform duration-300">
@@ -88,16 +85,14 @@ const SurveyModal: React.FC<SurveyModalProps> = ({ onClose, missionId }) => {
                             <div className="min-w-0 flex-1">
                                 <div className="flex items-center gap-2 mb-1">
                                     <h4 className="text-white font-bold text-sm truncate">{mission.title}</h4>
+                                    <div className="bg-green-500/20 text-green-400 px-2 py-0.5 rounded-full text-[8px] font-black uppercase tracking-widest border border-green-500/10 flex items-center gap-1 shrink-0">
+                                        <Sparkles size={8} /> {t('missions.survey.achieved')}
+                                    </div>
                                 </div>
                                 <p className="text-gray-400 text-xs leading-relaxed mb-3">{mission.description}</p>
 
-                                <div className="flex flex-col items-center sm:items-end text-center sm:text-right">
-                                    <span className="text-[10px] font-black text-green-500 uppercase tracking-widest leading-tight">{t('missions.survey.achieved')}</span>
-                                    <h3 className="text-xl font-black text-white italic leading-tight">{mission.title}</h3>
-                                </div>
-
                                 <div className="pt-3 border-t border-white/5 space-y-1.5">
-                                    <p className="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-2">Pasos validados:</p>
+                                    <p className="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-2">{t('missions.survey.validatedSteps')}</p>
                                     {mission.steps.map(step => (
                                         <div key={step.id} className="flex items-center gap-2 text-[10px] text-gray-400 font-medium italic">
                                             <div className="flex items-center justify-center h-4 w-4 rounded-full bg-emerald-500/20 text-emerald-400">
@@ -112,11 +107,9 @@ const SurveyModal: React.FC<SurveyModalProps> = ({ onClose, missionId }) => {
                     </div>
 
                     <div className="space-y-8">
-                        <div className="mb-10">
-                            <h4 className="text-sm font-bold text-white mb-6 flex items-center gap-3">
-                                <div className="w-1.5 h-4 bg-amber-500 rounded-full" />
-                                {t('missions.survey.questionEase')}
-                            </h4>
+                        {/* Rating Selection */}
+                        <div className="text-center sm:text-left">
+                            <p className="mb-4 text-sm text-gray-200 font-semibold tracking-wide">{t('missions.survey.questionEase')}</p>
                             <div className="flex flex-col items-center gap-6">
                                 <div
                                     className="flex justify-center gap-2 p-2"
@@ -151,26 +144,28 @@ const SurveyModal: React.FC<SurveyModalProps> = ({ onClose, missionId }) => {
                             </div>
                         </div>
 
-                        <div className="mb-10">
-                            <label className="text-[9px] font-black text-white/30 uppercase tracking-[0.2em] mb-3 block ml-1">{t('missions.survey.suggestionsLabel')}</label>
+                        {/* Comments */}
+                        <div className="relative">
+                            <label className="mb-3 block text-[10px] font-black uppercase tracking-[0.2em] text-gray-500 px-1">{t('missions.survey.suggestionsLabel')}</label>
                             <textarea
                                 value={comment}
                                 onChange={(e) => setComment(e.target.value)}
                                 placeholder={t('missions.survey.placeholder')}
-                                className="w-full h-32 p-5 bg-white/5 border border-white/10 rounded-2xl text-white text-sm focus:outline-none focus:border-amber-500/50 transition-all placeholder:text-white/10 placeholder:italic resize-none ring-offset-0 focus:ring-0 shadow-inner"
+                                className="h-32 w-full rounded-2xl border border-white/10 bg-white/3 p-5 text-sm text-white placeholder:text-gray-600 focus:border-blue-500/50 focus:bg-white/5 focus:outline-hidden transition-all duration-300 resize-none shadow-inner"
                             />
                         </div>
 
+                        {/* Submit Button */}
                         <button
                             onClick={handleSubmit}
-                            disabled={rating === 0 || isClosing}
+                            disabled={rating === 0}
                             className={`group relative overflow-hidden flex w-full items-center justify-center gap-3 rounded-2xl py-4 font-black uppercase tracking-[0.2em] text-xs transition-all duration-500 active:scale-[0.98] ${rating > 0
                                 ? 'bg-linear-to-r from-blue-600 to-indigo-600 text-white shadow-xl shadow-blue-500/20 hover:shadow-blue-500/40 cursor-pointer'
                                 : 'bg-white/5 text-white/20 border border-white/5 opacity-50 cursor-not-allowed'
                                 }`}
                         >
                             <div className="absolute inset-0 bg-linear-to-r from-white/0 via-white/10 to-white/0 -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
-                            {isClosing ? 'Enviando...' : 'Finalizar Evaluación'}
+                            {isClosing ? t('missions.survey.actions.sending') : t('missions.survey.actions.finish')}
                             {!isClosing && <Send size={16} className="group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />}
                         </button>
                     </div>

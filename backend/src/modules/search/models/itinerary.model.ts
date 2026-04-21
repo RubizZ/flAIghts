@@ -16,6 +16,7 @@ export interface ILeg {
   airplane: string;
   flight_number: string;
   travel_class: string;
+  booking_token?: string;
   extensions?: string[];
 }
 
@@ -91,6 +92,9 @@ const LegSchema = new Schema<ILeg>({
     type: String
   },
   travel_class: {
+    type: String
+  },
+  booking_token: {
     type: String
   },
   extensions: {

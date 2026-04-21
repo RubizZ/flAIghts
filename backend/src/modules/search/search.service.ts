@@ -216,23 +216,24 @@ export class SearchService {
 
             yield { type: "progress", message: "Calculando mejores rutas con algoritmo de Yen..." };
 
-            const origin = criteria.origins[0]!;
-            const destination = criteria.destinations[0]!;
-            const [bestByPrice, bestByDuration, bestByCustom] = await Promise.all([
-                this.yen.findKPaths(origin, destination, edgePool, 5, "price", userPreferences),
-                this.yen.findKPaths(origin, destination, edgePool, 5, "duration", userPreferences),
-                this.yen.findKPaths(origin, destination, edgePool, 5, "custom", userPreferences)
-            ]);
+            const allOptimalPaths: DijkstraFlightEdge[][] = [];
+            for (const origin of criteria.origins) {
+                for (const destination of criteria.destinations) {
+                    const [bestByPrice, bestByDuration, bestByCustom] = await Promise.all([
+                        this.yen.findKPaths(origin, destination, edgePool, 15, "price", userPreferences),
+                        this.yen.findKPaths(origin, destination, edgePool, 15, "duration", userPreferences),
+                        this.yen.findKPaths(origin, destination, edgePool, 15, "custom", userPreferences)
+                    ]);
+                    allOptimalPaths.push(...bestByPrice, ...bestByDuration, ...bestByCustom);
+                }
+            }
 
             logger.info({
                 searchId,
-                priceCount: bestByPrice.length,
-                durationCount: bestByDuration.length,
-                customCount: bestByCustom.length,
+                pathsCount: allOptimalPaths.length,
                 totalEdges: edgePool.length
-            }, `[Search] Resultados de algoritmos de Yen`);
+            }, `[Search] Resultados consolidados de algoritmos de Yen para múltiples orígenes/destinos`);
 
-            const allOptimalPaths = [...bestByPrice, ...bestByDuration, ...bestByCustom];
             const uniqueItineraryIds = await this.saveOptimalPathsAsItineraries(allOptimalPaths, userPreferences);
 
             await Search.findByIdAndUpdate(
@@ -264,13 +265,18 @@ export class SearchService {
                     returnEdgePool.push(...rManualEdges);
                 }
 
-                const [rBestByPrice, rBestByDuration, rBestByCustom] = await Promise.all([
-                    this.yen.findKPaths(destination, origin, returnEdgePool, 5, "price", userPreferences),
-                    this.yen.findKPaths(destination, origin, returnEdgePool, 5, "duration", userPreferences),
-                    this.yen.findKPaths(destination, origin, returnEdgePool, 5, "custom", userPreferences)
-                ]);
+                const rAllOptimalPaths: DijkstraFlightEdge[][] = [];
+                for (const org of returnCriteria.origins) {
+                    for (const dest of returnCriteria.destinations) {
+                        const [rBestByPrice, rBestByDuration, rBestByCustom] = await Promise.all([
+                            this.yen.findKPaths(org, dest, returnEdgePool, 5, "price", userPreferences),
+                            this.yen.findKPaths(org, dest, returnEdgePool, 5, "duration", userPreferences),
+                            this.yen.findKPaths(org, dest, returnEdgePool, 5, "custom", userPreferences)
+                        ]);
+                        rAllOptimalPaths.push(...rBestByPrice, ...rBestByDuration, ...rBestByCustom);
+                    }
+                }
 
-                const rAllOptimalPaths = [...rBestByPrice, ...rBestByDuration, ...rBestByCustom];
                 const rUniqueItineraryIds = await this.saveOptimalPathsAsItineraries(rAllOptimalPaths, userPreferences);
 
                 await Search.findByIdAndUpdate(searchId, {
@@ -494,35 +500,82 @@ export class SearchService {
             }
 
             const legs: any[] = [];
-            const cityOrder = [p.path[0]!.from];
+            const cityOrder: string[] = [];
+            let currentOrder = 0;
+            let previousArrivalTime: string | null = null;
 
             for (let i = 0; i < p.path.length; i++) {
-                const edge = p.path[i]!;
-                let waitTime = 0;
-                if (i > 0) {
-                    const prevArrival = parseEdgeDateTime(p.path[i - 1]!.arrival_time);
-                    const currDeparture = parseEdgeDateTime(edge.departure_time);
-                    waitTime = Math.max(0, Math.round((currDeparture.getTime() - prevArrival.getTime()) / 60000));
-                }
+                const edge = p.path[i]! as EnrichedFlightEdge;
 
-                cityOrder.push(edge.to);
-                legs.push({
-                    order: i,
-                    flight_id: edge.id,
-                    origin: edge.from,
-                    destination: edge.to,
-                    price: edge.price,
-                    duration: edge.duration,
-                    airline: edge.airline,
-                    airline_logo: edge.airline_logo,
-                    departure_time: edge.departure_time,
-                    arrival_time: edge.arrival_time,
-                    wait_time: waitTime,
-                    airplane: edge.airplane,
-                    flight_number: edge.flight_number,
-                    travel_class: edge.travel_class,
-                    extensions: edge.extensions
-                });
+                if (edge.segments && edge.segments.length > 0) {
+                    for (let sIndex = 0; sIndex < edge.segments.length; sIndex++) {
+                        const seg = edge.segments[sIndex]!;
+
+                        let waitTime = 0;
+                        if (previousArrivalTime) {
+                            const prevArr = parseEdgeDateTime(previousArrivalTime);
+                            const currDep = parseEdgeDateTime(seg.departure_airport.time);
+                            waitTime = Math.max(0, Math.round((currDep.getTime() - prevArr.getTime()) / 60000));
+                        }
+
+                        if (cityOrder.length === 0) {
+                            cityOrder.push(seg.departure_airport.id);
+                        }
+                        cityOrder.push(seg.arrival_airport.id);
+
+                        legs.push({
+                            order: currentOrder++,
+                            flight_id: edge.id,
+                            origin: seg.departure_airport.id,
+                            destination: seg.arrival_airport.id,
+                            price: sIndex === 0 ? edge.price : 0,
+                            duration: seg.duration,
+                            airline: seg.airline,
+                            airline_logo: seg.airline_logo ?? "",
+                            departure_time: seg.departure_airport.time,
+                            arrival_time: seg.arrival_airport.time,
+                            wait_time: waitTime,
+                            airplane: seg.airplane,
+                            flight_number: seg.flight_number,
+                            travel_class: seg.travel_class,
+                            booking_token: edge.id,
+                            extensions: seg.extensions
+                        });
+                        previousArrivalTime = seg.arrival_airport.time;
+                    }
+                } else {
+                    let waitTime = 0;
+                    if (previousArrivalTime) {
+                        const prevArr = parseEdgeDateTime(previousArrivalTime);
+                        const currDep = parseEdgeDateTime(edge.departure_time);
+                        waitTime = Math.max(0, Math.round((currDep.getTime() - prevArr.getTime()) / 60000));
+                    }
+
+                    if (cityOrder.length === 0) {
+                        cityOrder.push(edge.from);
+                    }
+                    cityOrder.push(edge.to);
+
+                    legs.push({
+                        order: currentOrder++,
+                        flight_id: edge.id,
+                        origin: edge.from,
+                        destination: edge.to,
+                        price: edge.price,
+                        duration: edge.duration,
+                        airline: edge.airline,
+                        airline_logo: edge.airline_logo,
+                        departure_time: edge.departure_time,
+                        arrival_time: edge.arrival_time,
+                        wait_time: waitTime,
+                        airplane: edge.airplane,
+                        flight_number: edge.flight_number,
+                        travel_class: edge.travel_class,
+                        booking_token: edge.id,
+                        extensions: edge.extensions
+                    });
+                    previousArrivalTime = edge.arrival_time;
+                }
             }
 
             const itinerary = await Itinerary.create({
@@ -645,6 +698,7 @@ export class SearchService {
                             airplane: seg.airplane,
                             flight_number: seg.flight_number,
                             travel_class: seg.travel_class,
+                            booking_token: bestEdge.id,
                             extensions: seg.extensions,
                         });
                     }
@@ -664,6 +718,7 @@ export class SearchService {
                         airplane: bestEdge.airplane,
                         flight_number: bestEdge.flight_number,
                         travel_class: bestEdge.travel_class,
+                        booking_token: bestEdge.id,
                         extensions: bestEdge.extensions,
                     });
                 }
