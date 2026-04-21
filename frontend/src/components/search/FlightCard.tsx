@@ -132,18 +132,19 @@ export default function FlightCard({ itinerary, formatTime, formatDuration, airp
                                 <span>Llegada final a <strong>{lastArrivalLeg?.destination}</strong>:</span>
                             </div>
 
-                            {/* Collapse Button inside this section */}
-                            <div className="sm:absolute sm:left-1/2 sm:-translate-x-1/2 p-1 bg-surface/50 border border-line/20 rounded-full text-content-muted transition-colors">
+                            <span className="font-bold text-content text-sm first-letter:uppercase">
+                                {formattedArrivalDate} a las {formatTime(lastArrivalLeg?.arrival_time)}
+                            </span>
+
+                            {/* Collapse Button inside this section - now at the end for mobile ordering */}
+                            <div className="sm:absolute sm:left-1/2 sm:-translate-x-1/2 p-1 bg-surface/50 border border-line/20 rounded-full text-content-muted transition-colors order-last sm:order-none">
                                 <ChevronDown
                                     size={16}
                                     className="rotate-180"
                                 />
                             </div>
-
-                            <span className="font-bold text-content text-sm first-letter:uppercase">
-                                {formattedArrivalDate} a las {formatTime(lastArrivalLeg?.arrival_time)}
-                            </span>
                         </div>
+
                     </div>
                 </div>
             )}
