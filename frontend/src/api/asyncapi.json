@@ -879,6 +879,9 @@
               "$ref": "#/components/schemas/ItineraryResponse"
             }
           },
+          "shared": {
+            "type": "boolean"
+          },
           "created_at": {
             "type": "string"
           }
@@ -891,6 +894,7 @@
           "departure_date",
           "destinations",
           "origins",
+          "shared",
           "source",
           "status"
         ]

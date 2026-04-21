@@ -273,7 +273,7 @@ export const MissionProvider: React.FC<{ children: ReactNode }> = ({ children })
                     const newSteps = m.steps.map((s: MissionStep) => {
                         if (s.id === stepId) {
                             // Toast con ID único para deduplicación automática
-                            toast.success(`¡Paso completado de la misión "${m.title}": ${s.title}`, {
+                            toast.success(`¡Paso completado de la misión ${m.title}: ${s.title}`, {
                                 id: `step-${missionId}-${stepId}`,
                                 icon: '✨',
                                 style: {
@@ -297,9 +297,16 @@ export const MissionProvider: React.FC<{ children: ReactNode }> = ({ children })
                     const allStepsCompleted = newSteps.every(s => s.isCompleted);
 
                     if (allStepsCompleted && !m.isCompleted) {
-                        toast.success(`🎉 Misión completada: ${m.title}`, {
+                        toast.success(`Misión completada: ${m.title}`, {
                             id: `mission-${missionId}`,
-                            duration: 5000
+                            icon: '🎉',
+                            duration: 5000,
+                            style: {
+                                background: 'rgba(16, 45, 32, 0.8)',
+                                backdropFilter: 'blur(10px)',
+                                color: '#fff',
+                                borderColor: 'rgba(52, 211, 153, 0.2)'
+                            }
                         });
 
                         if (!hasSeenSurveyOnboarding && surveyOnboardingStep === 0) {

@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { useGetConversations, getGetConversationsQueryKey } from "@/api/generated/openapi/conversations";
 import { useConversationsStreamWS } from "@/api/generated/asyncapi/hooks";
 import type { ChatServerMessage } from "@/api/generated/asyncapi/models";
-import { MessageSquare, Clock, UserPlus } from "lucide-react";
+import { MessageSquare, Clock, UserPlus, Plus } from "lucide-react";
 import UserAvatar from "@/components/ui/UserAvatar";
 import { useEffect, useCallback } from "react";
 import { useQueryClient } from "@tanstack/react-query";
@@ -58,10 +58,19 @@ export default function Chats() {
     const conversations = response?.items || [];
 
     return (
-        <div className="flex flex-col max-w-5xl mx-auto w-full p-6 sm:p-8 md:pt-24 gap-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-            <header className="flex flex-col gap-2">
-                <h1 className="text-4xl font-extrabold text-content tracking-tight">Chats</h1>
-                <p className="text-content-muted text-lg">Tus conversaciones recientes.</p>
+        <div className="flex flex-col max-w-5xl mx-auto w-full p-6 sm:p-8 gap-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <header className="flex justify-between items-end gap-4">
+                <div className="flex flex-col gap-2">
+                    <h1 className="text-4xl font-extrabold text-content tracking-tight">Chats</h1>
+                    <p className="text-content-muted text-lg">Tus conversaciones recientes.</p>
+                </div>
+                <Link
+                    to="/friends"
+                    className="mb-1 flex items-center gap-2 bg-brand text-content-on-brand px-4 py-2 rounded-xl font-bold hover:opacity-90 transition-all shadow-lg shadow-brand/20 hover:scale-105 active:scale-95 whitespace-nowrap"
+                >
+                    <Plus size={20} />
+                    <span className="hidden sm:inline">Nuevo chat</span>
+                </Link>
             </header>
 
             <main className="flex flex-col gap-6">

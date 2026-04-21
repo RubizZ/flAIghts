@@ -106,14 +106,28 @@ export class SearchController extends Controller {
     @Security('jwt-optional')
     @Response<FailResponseFromError<SearchNotFoundError>>(404, "Búsqueda no encontrada")
     @Response<FailResponseFromError<SearchNotAuthorizedError>>(403, "Búsqueda privada no autorizada")
-    @Response<RequestValidationFailResponse<ValidationDetails<PathPath<{ userId: string }> | QueryPath<{ page: number, limit: number }>>>>(422, "Error de validación")
+    @Response<RequestValidationFailResponse<ValidationDetails<PathPath<{ userId: string }> | QueryPath<{ page: number, limit: number, origin?: string, destination?: string, status?: string, minPrice?: number, maxPrice?: number, startDate?: string, endDate?: string, sharedOnly?: boolean }>>>>(422, "Error de validación")
     public async getSearches(
         @Path('userId') userId: string,
         @RequestProp('user') user: AuthenticatedUser | null,
         @Query('page') page: number = 1,
-        @Query('limit') limit: number = 10
+        @Query('limit') limit: number = 10,
+        @Query('origin') origin?: string,
+        @Query('destination') destination?: string,
+        @Query('status') status?: string,
+        @Query('minPrice') minPrice?: number,
+        @Query('maxPrice') maxPrice?: number,
+        @Query('startDate') startDate?: string,
+        @Query('endDate') endDate?: string,
+        @Query('sharedOnly') sharedOnly?: boolean
     ): Promise<SuccessResponseType<{ items: SearchResponseData[], total: number, page: number, totalPages: number }>> {
-        const searches = await this.searchService.getSearches(userId, user?._id || undefined, page, limit);
+        const searches = await this.searchService.getSearches(
+            userId,
+            user?._id || undefined,
+            page,
+            limit,
+            { origin, destination, status, minPrice, maxPrice, startDate, endDate, sharedOnly }
+        );
         return searches satisfies { items: SearchResponseData[], total: number, page: number, totalPages: number } as any;
     }
 }

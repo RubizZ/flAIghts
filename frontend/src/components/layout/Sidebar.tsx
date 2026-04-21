@@ -70,51 +70,52 @@ export default function Sidebar({ isOpen, onClose, onToggle, variant = 'classic'
 
             {/* ── SIDEBAR PANEL ── */}
             <aside
-                className={`fixed z-50 flex flex-col overflow-hidden transition-all duration-300 ease-out ${className}
+                className={`fixed z-50 flex flex-col overflow-hidden transition-all duration-500 ease-in-out ${className}
                     ${isFloating
-                        ? `left-4 top-4 bottom-4 w-60 premium-glass rounded-3xl
+                        ? `left-4 top-4 bottom-4 premium-glass rounded-3xl border border-white/10 shadow-2xl
                            ${isOpen
-                            ? 'translate-x-0 opacity-100 scale-100'
-                            : '-translate-x-8 opacity-0 scale-95 pointer-events-none'
+                            ? 'w-60 translate-x-0 opacity-100 scale-100'
+                            : 'w-16 -translate-x-8 opacity-0 scale-95 pointer-events-none'
                         }`
-                        : `left-0 top-0 h-svh bg-main border-r border-line shadow-lg
+                        : `left-0 top-0 bottom-0 bg-main border-r border-line shadow-lg rounded-none
                            ${isOpen ? 'w-64 translate-x-0' : 'w-16 -translate-x-full sm:translate-x-0'}`
                     }
                 `}
             >
                 {/* ── HEADER / TOGGLE BUTTON ── */}
-                <div className={`flex items-center shrink-0 ${isFloating ? 'h-14 px-3 border-b border-line/40' : 'h-16 px-2 border-b border-line/40'}`}>
-                    <button
-                        onClick={onToggle}
-                        aria-label={isOpen ? "Cerrar menú" : "Abrir menú"}
-                        className={`transition-all duration-200 cursor-pointer rounded-2xl
-                            text-content-muted hover:text-content active:scale-95 flex items-center group
-                            ${isFloating
-                                ? 'p-2.5 hover:bg-white/10 hover:backdrop-blur-md w-full gap-3'
-                                : isOpen
-                                    ? 'p-2.5 px-3.5 hover:bg-surface w-full gap-4 justify-start'
-                                    : 'p-3 hover:bg-surface w-full justify-center sm:justify-start'
-                            }
-                        `}
-                    >
-                        {isOpen || isFloating ? (
-                            <>
-                                <X size={20} className="shrink-0 transition-transform duration-300 group-hover:rotate-90" />
-                                <span className="font-bold text-sm text-content">Menú</span>
-                            </>
-                        ) : (
-                            <Menu size={22} className="group-hover:text-content transition-colors shrink-0" />
-                        )}
-                    </button>
+                <div className={`flex flex-col shrink-0 border-b border-line/40 transition-all duration-500 ${isFloating ? 'h-16' : 'h-20'}`}>
+                    {!isFloating && <div className="h-4 w-full shrink-0" />}
+                    <div className="flex-1 flex items-center px-2">
+                        <button
+                            onClick={onToggle}
+                            aria-label={isOpen ? "Cerrar menú" : "Abrir menú"}
+                            className={`transition-all duration-200 cursor-pointer
+                                text-content-muted hover:text-content active:scale-95 flex items-center group
+                                ${isOpen
+                                    ? 'h-12 px-6 hover:bg-surface gap-4 justify-start w-full rounded-2xl'
+                                    : 'w-12 h-12 hover:bg-surface justify-center rounded-full'
+                                }
+                            `}
+                        >
+                            {isOpen ? (
+                                <>
+                                    <X size={20} className="shrink-0 transition-transform duration-300 group-hover:rotate-90" />
+                                    <span className="font-bold text-sm text-content">Menú</span>
+                                </>
+                            ) : (
+                                <Menu size={20} className="group-hover:text-content transition-colors shrink-0" />
+                            )}
+                        </button>
+                    </div>
                 </div>
 
                 {/* ── NAV ITEMS ── */}
-                <div className={`flex flex-col overflow-y-auto overflow-x-hidden flex-1 ${isFloating ? 'gap-1 p-2' : 'gap-2 p-2 pt-0'}`}>
+                <div className={`flex flex-col overflow-y-auto overflow-x-hidden flex-1 gap-1 px-0 pt-2`}>
                     {isLoading ? (
                         Array.from({ length: 2 }).map((_, i) => (
-                            <div key={`skeleton-${i}`} className="flex items-center rounded-2xl w-full px-3 py-3 gap-3 opacity-50">
+                            <div key={`skeleton-${i}`} className="flex items-center w-full px-6 py-3 gap-3 opacity-50">
                                 <div className="shrink-0 w-5 h-5 bg-line rounded-lg animate-pulse" />
-                                {(isFloating || isOpen) && <div className="h-4 w-24 bg-line rounded animate-pulse" />}
+                                {isOpen && <div className="h-4 w-24 bg-line rounded animate-pulse" />}
                             </div>
                         ))
                     ) : (
@@ -129,29 +130,28 @@ export default function Sidebar({ isOpen, onClose, onToggle, variant = 'classic'
                                     {...(isFloating ? {
                                         style: { transitionDelay: isOpen ? `${idx * 40 + 80}ms` : '0ms' }
                                     } : {})}
-                                    className={`flex items-center rounded-2xl transition-all duration-200 px-3 py-3 font-bold text-sm relative group
+                                    className={`flex items-center transition-all duration-300 font-bold text-sm relative group
                                         ${isFloating
-                                            ? `gap-3 ${isOpen ? 'translate-x-0 opacity-100' : '-translate-x-4 opacity-0'}`
-                                            : 'gap-0 justify-start'
+                                            ? `rounded-2xl mx-2 ${isOpen ? 'translate-x-0 opacity-100' : '-translate-x-4 opacity-0'}`
+                                            : ''
                                         }
+                                        ${isOpen ? 'px-6 py-3.5 gap-4 justify-start' : 'px-[22px] py-3.5 gap-0 justify-start'}
                                         ${isActive
-                                            ? 'bg-brand text-content-on-brand shadow-md'
-                                            : `text-content-muted hover:text-content ${isFloating ? 'hover:bg-white/10 hover:backdrop-blur-md' : 'hover:bg-surface/70'}`
+                                            ? 'bg-brand/10 text-brand border-r-4 border-brand'
+                                            : `text-content-muted hover:text-content ${isFloating ? 'hover:bg-white/10 hover:backdrop-blur-md rounded-2xl' : 'hover:bg-surface/70'}`
                                         }
                                     `}
                                 >
                                     {/* Icon */}
-                                    <div className={`shrink-0 transition-colors duration-300 ${isActive ? 'text-content-on-brand' : 'group-hover:text-brand'}`}>
+                                    <div className={`shrink-0 transition-colors duration-300 ${isActive ? 'text-brand' : 'group-hover:text-brand'}`}>
                                         {item.icon}
                                     </div>
 
                                     {/* Label */}
-                                    <span className={`font-bold whitespace-nowrap overflow-hidden transition-all duration-300
-                                        ${isFloating
-                                            ? 'ml-3'  /* always shown in floating (panel visibility handles it) */
-                                            : isOpen
-                                                ? 'opacity-100 translate-x-0 w-auto ml-4'
-                                                : 'opacity-0 -translate-x-2 w-0 ml-0 pointer-events-none'
+                                    <span className={`font-bold whitespace-nowrap overflow-hidden transition-all duration-500
+                                        ${isOpen
+                                            ? 'opacity-100 translate-x-0 w-auto ml-4'
+                                            : 'opacity-0 -translate-x-2 w-0 ml-0 pointer-events-none'
                                         }
                                     `}>
                                         {item.label}

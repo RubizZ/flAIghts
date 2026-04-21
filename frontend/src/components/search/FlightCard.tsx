@@ -45,24 +45,22 @@ export default function FlightCard({ itinerary, formatTime, formatDuration, airp
 
     return (
         <div
-            className="bg-main/80 dark:bg-main/60 backdrop-blur-xl border border-line rounded-2xl shadow-lg transition-all duration-300 hover:border-brand/40 hover:bg-surface overflow-hidden"
+            className="bg-main/80 dark:bg-main/60 backdrop-blur-xl border border-line rounded-2xl shadow-lg transition-all duration-300 hover:border-brand/40 hover:bg-surface overflow-hidden cursor-pointer group active:scale-[0.99] relative"
             onMouseEnter={() => onHover(itinerary)}
             onMouseLeave={() => onHover(null)}
+            onClick={() => {
+                const next = !isExpanded;
+                setIsExpanded(next);
+                if (next) {
+                    window.dispatchEvent(new CustomEvent('app:view-flight-details'));
+                }
+                onExpandChange?.(next ? itinerary : null);
+            }}
         >
-            <div
-                className="group relative pt-5 px-5 pb-10 cursor-pointer"
-                onClick={() => {
-                    const next = !isExpanded;
-                    setIsExpanded(next);
-                    if (next) {
-                        window.dispatchEvent(new CustomEvent('app:view-flight-details'));
-                    }
-                    onExpandChange?.(next ? itinerary : null);
-                }}
-            >
-                {/* Hover Shine Effect */}
-                <div className="absolute inset-0 bg-linear-to-r from-transparent via-white/5 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 pointer-events-none" />
+            {/* Hover Shine Effect - Now covers entire card */}
+            <div className="absolute inset-0 bg-linear-to-r from-transparent via-white/5 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 pointer-events-none z-20" />
 
+            <div className="relative pt-5 px-5 pb-10">
                 <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
                     <FlightRouteInfo
                         itinerary={itinerary}
@@ -89,13 +87,15 @@ export default function FlightCard({ itinerary, formatTime, formatDuration, airp
                         )}
                     </div>
                 </div>
-
-                <div className="absolute bottom-2 left-1/2 -translate-x-1/2 p-1 bg-surface/30 rounded-full border border-line/20 group-hover:bg-surface transition-colors">
-                    <ChevronDown
-                        size={16}
-                        className={`text-content-muted transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`}
-                    />
-                </div>
+                {/* Collapsed Expand Button - Inside header section */}
+                {!isExpanded && (
+                    <div className="absolute bottom-2 left-1/2 -translate-x-1/2 p-1 bg-surface/30 rounded-full border border-line/20 group-hover:bg-surface transition-colors z-30">
+                        <ChevronDown
+                            size={16}
+                            className="text-content-muted transition-transform duration-300"
+                        />
+                    </div>
+                )}
             </div>
 
             {isExpanded && (
@@ -125,12 +125,21 @@ export default function FlightCard({ itinerary, formatTime, formatDuration, airp
                             </Fragment>
                         ))}
 
-                        {/* Final arrival summary notice */}
-                        <div className="mt-4 border-t border-line flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-content-muted bg-surface/20 -mx-5 px-5 py-4">
+                        {/* Final arrival summary notice - Now contains the collapse button */}
+                        <div className="mt-4 border-t border-line flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-content-muted bg-surface/20 -mx-5 px-5 py-4 relative">
                             <div className="flex items-center gap-2">
                                 <Clock size={16} className="text-brand" />
                                 <span>Llegada final a <strong>{lastArrivalLeg?.destination}</strong>:</span>
                             </div>
+
+                            {/* Collapse Button inside this section */}
+                            <div className="sm:absolute sm:left-1/2 sm:-translate-x-1/2 p-1 bg-surface/50 border border-line/20 rounded-full text-content-muted transition-colors">
+                                <ChevronDown
+                                    size={16}
+                                    className="rotate-180"
+                                />
+                            </div>
+
                             <span className="font-bold text-content text-sm first-letter:uppercase">
                                 {formattedArrivalDate} a las {formatTime(lastArrivalLeg?.arrival_time)}
                             </span>

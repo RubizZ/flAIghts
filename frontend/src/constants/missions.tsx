@@ -244,6 +244,54 @@ export const MISSIONS: BaseMission[] = [
         ]
     },
     {
+        id: 'social_mission',
+        title: 'Haz amigos',
+        description: 'Conecta con otras personas.',
+        icon: '🤝',
+        dependsOn: ['registration_mission'],
+        steps: [
+            {
+                id: 'view_user_profile',
+                title: 'Visita un perfil',
+                description: 'Busca a un usuario y visita su perfil público. Puedes buscar al usuario "flAIghts"',
+                listener: ViewUserProfileListener
+            },
+            {
+                id: 'send_friend_request',
+                title: 'Envía una solicitud',
+                description: 'Manda una solicitud de amistad a ese usuario. El usuario "flAIghts" la aceptará automáticamente.',
+                listener: SendFriendRequestListener
+            },
+            {
+                id: 'send_message',
+                title: 'Escribe un mensaje',
+                description: 'Envíale un mensaje directo para saludar.',
+                listener: SendMessageListener
+            }
+        ]
+    },
+    {
+        id: 'profile_mission',
+        title: 'Personaliza tu perfil',
+        description: 'Sube una foto de perfil y configura tus preferencias de vuelo.',
+        icon: '👤',
+        dependsOn: ['registration_mission'],
+        steps: [
+            {
+                id: 'upload_avatar',
+                title: 'Sube una foto de perfil',
+                description: 'Actualiza tu perfil y sube la foto que más te guste.',
+                listener: AvatarUploadedListener
+            },
+            {
+                id: 'edit_preferences',
+                title: 'Personaliza tus preferencias',
+                description: 'Edita tu perfil y ajusta los pesos de búsqueda o cambia la visibilidad de tu perfil.',
+                listener: ProfileUpdatedListener
+            }
+        ]
+    },
+    {
         id: 'manual_search_mission',
         title: 'Haz una busqueda de vuelos',
         description: 'Realiza una búsqueda manual de vuelos para ver las opciones disponibles.',
@@ -277,6 +325,27 @@ export const MISSIONS: BaseMission[] = [
         ]
     },
     {
+        id: 'share_mission',
+        title: 'Comparte tus viajes',
+        description: 'Comparte tus búsquedas de vuelos con tus amigos.',
+        icon: '📤',
+        dependsOn: ['manual_search_mission', 'social_mission'],
+        steps: [
+            {
+                id: 'share_from_results',
+                title: 'Comparte desde resultados',
+                description: 'Usa el botón de compartir en la página de resultados de búsqueda.',
+                listener: ShareFromResultsListener
+            },
+            {
+                id: 'share_from_chat',
+                title: 'Comparte desde el chat',
+                description: 'Comparte una búsqueda directamente en una conversación con un amigo.',
+                listener: ShareFromChatListener
+            }
+        ]
+    },
+    {
         id: 'ai_mission',
         title: 'Prueba la Inteligencia Artificial',
         description: 'Usa el agente de IA para planificar un viaje complejo mediante lenguaje natural.',
@@ -294,75 +363,6 @@ export const MISSIONS: BaseMission[] = [
                 title: 'Recibe vuelos de la IA',
                 description: 'Pídele al agente que te busque vuelos y espera su respuesta.',
                 listener: AIFlightsReturnedListener
-            }
-        ]
-    },
-    {
-        id: 'profile_mission',
-        title: 'Personaliza tu perfil',
-        description: 'Sube una foto de perfil y configura tus preferencias de vuelo.',
-        icon: '👤',
-        dependsOn: ['registration_mission'],
-        steps: [
-            {
-                id: 'upload_avatar',
-                title: 'Sube una foto de perfil',
-                description: 'Actualiza tu perfil y sube la foto que más te guste.',
-                listener: AvatarUploadedListener
-            },
-            {
-                id: 'edit_preferences',
-                title: 'Personaliza tus preferencias',
-                description: 'Edita tu perfil y ajusta los pesos de búsqueda o cambia la visibilidad de tu perfil.',
-                listener: ProfileUpdatedListener
-            }
-        ]
-    },
-    {
-        id: 'social_mission',
-        title: 'Haz amigos',
-        description: 'Conecta con otras personas.',
-        icon: '🤝',
-        dependsOn: ['manual_search_mission'],
-        steps: [
-            {
-                id: 'view_user_profile',
-                title: 'Visita un perfil',
-                description: 'Busca a un usuario y visita su perfil público. Puedes buscar al usuario "flAIghts"',
-                listener: ViewUserProfileListener
-            },
-            {
-                id: 'send_friend_request',
-                title: 'Envía una solicitud',
-                description: 'Manda una solicitud de amistad a ese usuario. El usuario "flAIghts" la aceptará automáticamente.',
-                listener: SendFriendRequestListener
-            },
-            {
-                id: 'send_message',
-                title: 'Escribe un mensaje',
-                description: 'Envíale un mensaje directo para saludar.',
-                listener: SendMessageListener
-            }
-        ]
-    },
-    {
-        id: 'share_mission',
-        title: 'Comparte tus viajes',
-        description: 'Comparte tus búsquedas de vuelos con tus amigos.',
-        icon: '📤',
-        dependsOn: ['social_mission'],
-        steps: [
-            {
-                id: 'share_from_results',
-                title: 'Comparte desde resultados',
-                description: 'Usa el botón de compartir en la página de resultados de búsqueda.',
-                listener: ShareFromResultsListener
-            },
-            {
-                id: 'share_from_chat',
-                title: 'Comparte desde el chat',
-                description: 'Comparte una búsqueda directamente en una conversación con un amigo.',
-                listener: ShareFromChatListener
             }
         ]
     }

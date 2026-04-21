@@ -15,14 +15,17 @@ import {
     ShieldCheck,
     Bell,
     Trophy,
-    MoreHorizontal
+    MoreHorizontal,
+    History
 } from "lucide-react";
 import { PopulatedUser } from "@/api/generated/openapi/model";
 import UserAvatar from "@/components/ui/UserAvatar";
 import NavIconButton from "@/components/ui/NavIconButton";
 import { useMissions } from "@/context/MissionContext";
+import Logo from "@/components/ui/Logo";
+import type { LogoHandle } from "@/components/ui/Logo";
 
-export default function Navbar({ variant = 'floating' }: { variant?: 'floating' | 'flat' }) {
+export default function Navbar({ variant = 'floating', logoRef }: { variant?: 'floating' | 'flat', logoRef?: React.RefObject<LogoHandle | null> }) {
     const navigate = useNavigate();
     const { user, isAuthenticated, isLoading, logout } = useAuth();
     const { theme, setTheme } = useTheme();
@@ -176,6 +179,12 @@ export default function Navbar({ variant = 'floating' }: { variant?: 'floating' 
                         <div className="flex items-center gap-3">
                             <Settings size={16} className="shrink-0" />
                             <span className="leading-none">Ajustes</span>
+                        </div>
+                    </button>
+                    <button onClick={() => { setIsOpen(false); navigate('/history') }} className="w-full flex items-center justify-between text-content px-3 py-2 text-sm rounded-xl transition-all group text-left hover:bg-surface/70 hover:cursor-pointer font-medium">
+                        <div className="flex items-center gap-3">
+                            <History size={16} className="shrink-0" />
+                            <span className="leading-none">Historial</span>
                         </div>
                     </button>
                     {user?.role === 'admin' && (
@@ -333,106 +342,178 @@ export default function Navbar({ variant = 'floating' }: { variant?: 'floating' 
                     </div>
                 </button>
             </div>
-        )
+        );
     };
 
-
     return (
-        <nav className={variant === 'floating' ? "contents" : "contents"}>
+        <>
+            {/* CENTER LOGO */}
             <div className={variant === 'floating'
-                ? "fixed top-4 right-4 flex items-center justify-end gap-2 sm:gap-4 z-10 pointer-events-auto"
-                : "flex items-center gap-2 sm:gap-4 pointer-events-auto"
+                ? "fixed top-5 left-1/2 -translate-x-1/2 z-50 pointer-events-none"
+                : "absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-50 pointer-events-none"
             }>
-                {/* Mission Indicator Button (Evaluation Mode) */}
-                {isEvaluationMode && (
-                    <NavIconButton
-                        id="nav-missions-button"
-                        variant={variant}
-                        onClick={() => {
-                            if (hasConsented) {
-                                setShowRoadmap(true);
-                            } else {
-                                reopenConsent();
-                            }
-                        }}
-                        showBadge={pendingSurveysCount > 0}
-                        title="Misiones de Evaluación"
-                        className={`hidden lg:flex ${pendingSurveysCount > 0 ? "animate-pulse" : ""}`}
-                    >
-                        <Trophy
-                            size={20}
-                            className={pendingSurveysCount > 0 ? "text-amber-500" : allCompleted ? "text-green-500" : "text-content group-hover:text-brand transition-colors"}
-                        />
-                    </NavIconButton>
-                )}
+                <Logo ref={logoRef} className={variant === 'floating' ? "" : "scale-90 sm:scale-100"} />
+            </div>
 
-                {isLoading ? (
-                    <div className="flex items-center gap-2">
-                        <div className="hidden sm:block w-16 h-8 bg-surface rounded-full animate-pulse opacity-50" />
-                        <div className="hidden sm:block w-20 h-8 bg-surface rounded-full animate-pulse opacity-50" />
-                        <div className="w-10 h-10 bg-surface rounded-2xl sm:rounded-full animate-pulse opacity-50" />
-                    </div>
-                ) : isAuthenticated ? (
-                    <>
-                        <Dropdown
-                            isOpen={isNotificationsMenuOpen}
-                            onOpenChange={(open) => {
-                                setIsNotificationsMenuOpen(open);
-                                if (open) {
-                                    setIsUserMenuOpen(false);
-                                    setIsOptionsMenuOpen(false);
+            <nav className={variant === 'floating' ? "contents" : "contents"}>
+                <div className={variant === 'floating'
+                    ? "fixed top-4 right-4 flex items-center justify-end gap-2 sm:gap-4 z-10 pointer-events-auto"
+                    : "flex items-center gap-2 sm:gap-4 pointer-events-auto"
+                }>
+                    {/* Mission Indicator Button (Evaluation Mode) */}
+                    {isEvaluationMode && (
+                        <NavIconButton
+                            id="nav-missions-button"
+                            variant={variant}
+                            onClick={() => {
+                                if (hasConsented) {
+                                    setShowRoadmap(true);
+                                } else {
+                                    reopenConsent();
                                 }
                             }}
-                            trigger={
-                                <NavIconButton
-                                    variant={variant}
-                                    showBadge={!!(user?.received_friend_requests && user.received_friend_requests.length > 0)}
-                                    className="hidden lg:flex"
-                                >
-                                    <Bell size={20} className="text-content group-hover:text-brand transition-colors" />
-                                </NavIconButton>
-                            }
-                            menus={{
-                                main: (
-                                    <NotificationsMainView
-                                        user={user!}
-                                    />
-                                ),
-                                friend_requests: (
-                                    <NotificationsFriendRequestsView
-                                        user={user!}
-                                        navigate={navigate}
-                                    />
-                                )
-                            }}
-                        />
+                            showBadge={pendingSurveysCount > 0}
+                            title="Misiones de Evaluación"
+                            className={`hidden lg:flex ${pendingSurveysCount > 0 ? "animate-pulse" : ""}`}
+                        >
+                            <Trophy
+                                size={20}
+                                className={pendingSurveysCount > 0 ? "text-amber-500" : allCompleted ? "text-green-500" : "text-content group-hover:text-brand transition-colors"}
+                            />
+                        </NavIconButton>
+                    )}
+
+                    {isLoading ? (
+                        <div className="flex items-center gap-2">
+                            <div className="hidden sm:block w-16 h-8 bg-surface rounded-full animate-pulse opacity-50" />
+                            <div className="hidden sm:block w-20 h-8 bg-surface rounded-full animate-pulse opacity-50" />
+                            <div className="w-10 h-10 bg-surface rounded-2xl sm:rounded-full animate-pulse opacity-50" />
+                        </div>
+                    ) : isAuthenticated ? (
+                        <>
+                            <Dropdown
+                                isOpen={isNotificationsMenuOpen}
+                                onOpenChange={(open) => {
+                                    setIsNotificationsMenuOpen(open);
+                                    if (open) {
+                                        setIsUserMenuOpen(false);
+                                        setIsOptionsMenuOpen(false);
+                                    }
+                                }}
+                                trigger={
+                                    <NavIconButton
+                                        variant={variant}
+                                        showBadge={!!(user?.received_friend_requests && user.received_friend_requests.length > 0)}
+                                        className="hidden lg:flex"
+                                    >
+                                        <Bell size={20} className="text-content group-hover:text-brand transition-colors" />
+                                    </NavIconButton>
+                                }
+                                menus={{
+                                    main: (
+                                        <NotificationsMainView
+                                            user={user!}
+                                        />
+                                    ),
+                                    friend_requests: (
+                                        <NotificationsFriendRequestsView
+                                            user={user!}
+                                            navigate={navigate}
+                                        />
+                                    )
+                                }}
+                            />
+                            <Dropdown
+                                isOpen={isUserMenuOpen}
+                                onOpenChange={(open) => {
+                                    setIsUserMenuOpen(open);
+                                    if (open) {
+                                        setIsOptionsMenuOpen(false);
+                                        setIsNotificationsMenuOpen(false);
+                                    }
+                                }}
+                                trigger={
+                                    <NavIconButton
+                                        id="nav-user-menu-trigger"
+                                        variant={variant}
+                                        showBadge={!!(user?.received_friend_requests && user.received_friend_requests.length > 0)}
+                                    >
+                                        <UserAvatar user={user} size={32} />
+                                    </NavIconButton>
+                                }
+                                menus={{
+                                    main: (
+                                        <UserMainView
+                                            user={user!}
+                                            logout={logout}
+                                            navigate={navigate}
+                                            theme={theme}
+                                            themeLabels={themeLabels}
+                                        />
+                                    ),
+                                    theme: (
+                                        <ThemeMenuView
+                                            theme={theme}
+                                            setTheme={setTheme}
+                                        />
+                                    ),
+                                    notifications: (
+                                        <NotificationsMainView
+                                            user={user!}
+                                        />
+                                    ),
+                                    friend_requests: (
+                                        <NotificationsFriendRequestsView
+                                            user={user!}
+                                            navigate={navigate}
+                                        />
+                                    )
+                                }}
+                            />
+                        </>
+                    ) : (
+                        <div className="hidden lg:flex gap-2">
+                            <NavIconButton to="/login" variant={variant} isPill>
+                                Log in
+                            </NavIconButton>
+                            <NavIconButton
+                                to="/register"
+                                variant={variant}
+                                isPill
+                                className="bg-brand! hover:bg-brand-hover! text-content-on-brand! border-none!"
+                            >
+                                Register
+                            </NavIconButton>
+                        </div>
+                    )}
+
+                    {/* More Options Menu - Solo visible si NO está autenticado y NO está cargando */}
+                    {!isLoading && !isAuthenticated && (
                         <Dropdown
-                            isOpen={isUserMenuOpen}
+                            isOpen={isOptionsMenuOpen}
                             onOpenChange={(open) => {
-                                setIsUserMenuOpen(open);
+                                setIsOptionsMenuOpen(open);
                                 if (open) {
-                                    setIsOptionsMenuOpen(false);
+                                    setIsUserMenuOpen(false);
                                     setIsNotificationsMenuOpen(false);
                                 }
                             }}
                             trigger={
-                                <NavIconButton
-                                    id="nav-user-menu-trigger"
+                                <NavIconButton 
+                                    id="nav-options-menu-trigger" 
                                     variant={variant}
-                                    showBadge={!!(user?.received_friend_requests && user.received_friend_requests.length > 0)}
                                     className={variant === 'flat' ? 'bg-transparent! border-transparent! shadow-none' : ''}
                                 >
-                                    <UserAvatar user={user} size={32} />
+                                    <MoreHorizontal size={22} className="hidden lg:block" />
+                                    <User size={22} className="block lg:hidden" />
                                 </NavIconButton>
                             }
                             menus={{
                                 main: (
-                                    <UserMainView
-                                        user={user!}
-                                        logout={logout}
-                                        navigate={navigate}
+                                    <OptionsMainView
                                         theme={theme}
                                         themeLabels={themeLabels}
+                                        navigate={navigate}
                                     />
                                 ),
                                 theme: (
@@ -440,72 +521,12 @@ export default function Navbar({ variant = 'floating' }: { variant?: 'floating' 
                                         theme={theme}
                                         setTheme={setTheme}
                                     />
-                                ),
-                                notifications: (
-                                    <NotificationsMainView
-                                        user={user!}
-                                    />
-                                ),
-                                friend_requests: (
-                                    <NotificationsFriendRequestsView
-                                        user={user!}
-                                        navigate={navigate}
-                                    />
                                 )
                             }}
                         />
-                    </>
-                ) : (
-                    <div className="hidden lg:flex gap-2">
-                        <NavIconButton to="/login" variant={variant} isPill>
-                            Log in
-                        </NavIconButton>
-                        <NavIconButton
-                            to="/register"
-                            variant={variant}
-                            isPill
-                            className="bg-brand! hover:bg-brand-hover! text-content-on-brand! border-none!"
-                        >
-                            Register
-                        </NavIconButton>
-                    </div>
-                )}
-
-                {/* More Options Menu - Solo visible si NO está autenticado y NO está cargando */}
-                {!isLoading && !isAuthenticated && (
-                    <Dropdown
-                        isOpen={isOptionsMenuOpen}
-                        onOpenChange={(open) => {
-                            setIsOptionsMenuOpen(open);
-                            if (open) {
-                                setIsUserMenuOpen(false);
-                                setIsNotificationsMenuOpen(false);
-                            }
-                        }}
-                        trigger={
-                            <NavIconButton id="nav-options-menu-trigger" variant={variant}>
-                                <MoreHorizontal size={22} className="hidden lg:block" />
-                                <User size={22} className="block lg:hidden" />
-                            </NavIconButton>
-                        }
-                        menus={{
-                            main: (
-                                <OptionsMainView
-                                    theme={theme}
-                                    themeLabels={themeLabels}
-                                    navigate={navigate}
-                                />
-                            ),
-                            theme: (
-                                <ThemeMenuView
-                                    theme={theme}
-                                    setTheme={setTheme}
-                                />
-                            )
-                        }}
-                    />
-                )}
-            </div>
-        </nav>
+                    )}
+                </div>
+            </nav>
+        </>
     );
 }

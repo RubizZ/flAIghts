@@ -59,7 +59,12 @@ export default function SearchResults() {
 
     const { mutate: sendMessage } = useSendMessage({
         mutation: {
-            onSuccess: () => { toast.success("Vuelo compartido"); setIsSharing(false); },
+            onSuccess: () => {
+                toast.success("Vuelo compartido con éxito");
+                window.dispatchEvent(new CustomEvent('send_message'));
+                window.dispatchEvent(new CustomEvent('share_from_results'));
+                setIsSharing(false);
+            },
             onError: () => toast.error("Error al compartir")
         }
     });
@@ -217,7 +222,7 @@ export default function SearchResults() {
                 <p className="text-sm opacity-70 max-w-md">{error.message}</p>
                 <button
                     onClick={() => navigate('/')}
-                    className="mt-4 px-6 py-2 bg-brand text-content-on-brand rounded-xl font-bold hover:bg-brand-hover transition-colors"
+                    className="mt-4 px-6 py-2 bg-brand text-content-on-brand rounded-xl font-bold hover:bg-brand-hover transition-colors cursor-pointer"
                 >
                     Volver al inicio
                 </button>
@@ -300,175 +305,172 @@ export default function SearchResults() {
             {searchData && (
                 <div className="relative z-10 w-full lg:w-[65%] xl:w-[60%] h-full">
                     <div className="relative w-full h-full overflow-y-auto overflow-x-hidden scroll-smooth [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-                        <div className="max-w-3xl mx-auto px-4 pt-[4.5rem] lg:pt-24 pb-6 lg:pb-10 min-h-full flex flex-col gap-6 lg:gap-8">
-                            {isAuthenticated && user && data && (
-                                <div className="-mt-1 lg:-mt-4 -mb-3 lg:-mb-5 self-end">
-                                    <SmartPopover
-                                        isOpen={isSharing}
-                                        setIsOpen={setIsSharing}
-                                        preferredAlign="right"
-                                        trigger={
-                                            <button
-                                                onClick={(e) => {
-                                                    e.preventDefault();
-                                                    e.stopPropagation();
-                                                    setIsSharing(!isSharing);
-                                                }}
-                                                className="flex items-center gap-2 px-4 py-2 bg-brand text-white rounded-full font-bold shadow-lg hover:scale-105 active:scale-95 transition-all"
-                                            >
-                                                <Share2 size={18} />
-                                                <span>Compartir</span>
-                                            </button>
-                                        }
-                                    >
-                                        <div className="p-2 flex flex-col gap-1 min-w-[220px]">
-                                            <p className="px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-content-muted border-b border-line mb-1">Compartir con amigo</p>
-                                            {user.friends.filter((f): f is FriendUser => typeof f !== 'string').map(friend => (
-                                                <button
-                                                    key={friend._id}
-                                                    onClick={() => sendMessage({
-                                                        otherUserId: friend._id,
-                                                        data: { content: `SHARE_SEARCH:${id}:${data.origins[0]}:${data.destinations[0]}` }
-                                                    })}
-                                                    className="flex items-center gap-2 p-2 hover:bg-surface rounded-xl transition-all text-left w-full"
-                                                >
-                                                    <UserAvatar user={friend} size={28} />
-                                                    <span className="text-sm font-bold">{friend.username}</span>
-                                                </button>
-                                            ))}
-                                        </div>
-                                    </SmartPopover>
-                                </div>
-                            )}
+                        <div className="max-w-3xl mx-auto px-4 pt-18 lg:pt-24 pb-6 lg:pb-10 min-h-full flex flex-col gap-6 lg:gap-8">
                             {/* Header Card */}
-                            <div className="sticky top-6 lg:top-8 z-20 backdrop-blur-2xl bg-main/80 dark:bg-main/70 border border-line p-4 rounded-2xl shadow-2xl flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4 animate-in fade-in slide-in-from-top-4 duration-700">
-                                <div className="flex items-center gap-4">
-                                    <button
-                                        onClick={selectionStep === 'departure' ? () => navigate(-1) : handleGoBack}
-                                        className="p-2.5 bg-surface/50 hover:bg-surface border border-line/30 rounded-xl transition-all group active:scale-95 cursor-pointer"
-                                        title={selectionStep === 'departure' ? "Volver atrás" : "Paso anterior"}
-                                    >
-                                        <ArrowLeft size={20} className="text-content-muted group-hover:text-content" />
-                                    </button>
-                                    <div>
-                                        <h1 className="text-lg md:text-xl font-bold flex items-center gap-3 text-content">
-                                            {(selectionStep === 'departure' || selectionStep === 'return') && (
-                                                <>
-                                                    <span className="truncate max-w-50 md:max-w-none">
-                                                        {searchData.origins?.join(' + ') || (searchData.departure_itineraries?.[0]?.legs?.[0]?.origin)}
-                                                    </span>
-                                                    <Plane className="w-5 h-5 text-brand rotate-45 shrink-0" />
-                                                    <span className="truncate max-w-50 md:max-w-none">
-                                                        {searchData.destinations?.join(' + ') || (searchData.departure_itineraries?.[0]?.legs?.at(-1)?.destination)}
-                                                    </span>
-                                                </>
-                                            )}
-                                            {selectionStep === 'summary' && `Resumen de tu viaje`}
-                                        </h1>
-                                        <div className="flex flex-col justify-start gap-3 flex-wrap mt-1 text-xs text-content-muted font-medium">
-                                            {searchData.departure_date && (
-                                                <div className="flex items-center gap-1.5">
-                                                    <Calendar size={14} className="text-brand/80" />
-                                                    <span>{formatDateForDisplay(searchData.departure_date)}</span>
-                                                    {searchData.return_date && (
-                                                        <>
-                                                            <span className="text-content-muted/50 mt-0.5"><ArrowRight size={12} /></span>
-                                                            <span>{formatDateForDisplay(searchData.return_date)}</span>
-                                                        </>
-                                                    )}
-                                                </div>
-                                            )}
-                                            <div className="flex items-center gap-2 justify-start">
-                                                {searchData.status === 'searching' && selectionStep === 'departure' && (
-                                                    <Loader2 className="w-3 h-3 animate-spin text-brand" />
+                            <div className="sticky top-6 lg:top-8 z-20 backdrop-blur-2xl bg-main/80 dark:bg-main/70 border border-line p-4 rounded-2xl shadow-2xl flex flex-col gap-4 animate-in fade-in slide-in-from-top-4 duration-700">
+                                <div className="flex items-center justify-between w-full gap-4">
+                                    <div className="flex items-center gap-4 overflow-hidden">
+                                        <button
+                                            onClick={selectionStep === 'departure' ? () => navigate(-1) : handleGoBack}
+                                            className="shrink-0 p-2.5 bg-surface/50 hover:bg-surface border border-line/30 rounded-xl transition-all group active:scale-95 cursor-pointer"
+                                            title={selectionStep === 'departure' ? "Volver atrás" : "Paso anterior"}
+                                        >
+                                            <ArrowLeft size={20} className="text-content-muted group-hover:text-content" />
+                                        </button>
+                                        <div className="overflow-hidden">
+                                            <h1 className="text-lg md:text-xl font-bold flex items-center gap-3 text-content">
+                                                {(selectionStep === 'departure' || selectionStep === 'return') && (
+                                                    <>
+                                                        <span className="truncate">
+                                                            {searchData.origins?.join(' + ') || (searchData.departure_itineraries?.[0]?.legs?.[0]?.origin)}
+                                                        </span>
+                                                        <Plane className="w-5 h-5 text-brand rotate-45 shrink-0 hidden sm:block" />
+                                                        <span className="truncate">
+                                                            {searchData.destinations?.join(' + ') || (searchData.departure_itineraries?.[0]?.legs?.at(-1)?.destination)}
+                                                        </span>
+                                                    </>
                                                 )}
-                                                <p>
-                                                    {selectionStep === 'departure' && searchData.status === 'searching' && 'Buscando en tiempo real...'}
-                                                    {selectionStep === 'departure' && searchData.status !== 'searching' && `${departureItineraries?.length || 0} resultados de ida`}
-                                                    {selectionStep === 'return' && `${returnItineraries?.length || 0} resultados de vuelta`}
-                                                    {selectionStep === 'summary' && 'Confirma tu selección'}
-                                                </p>
+                                                {selectionStep === 'summary' && `Resumen`}
+                                            </h1>
+                                            <div className="flex items-center gap-2 mt-1 text-[10px] md:text-xs text-content-muted font-medium">
+                                                {searchData.departure_date && (
+                                                    <div className="flex items-center gap-1.5 whitespace-nowrap">
+                                                        <Calendar size={12} className="text-brand/80" />
+                                                        <span>{formatDateForDisplay(searchData.departure_date)}</span>
+                                                    </div>
+                                                )}
+                                                <div className="flex items-center gap-2">
+                                                    {searchData.status === 'searching' && selectionStep === 'departure' && (
+                                                        <Loader2 className="w-3 h-3 animate-spin text-brand" />
+                                                    )}
+                                                    <p className="whitespace-nowrap">
+                                                        {selectionStep === 'departure' && searchData.status === 'searching' && 'Buscando...'}
+                                                        {selectionStep === 'departure' && searchData.status !== 'searching' && `${departureItineraries?.length || 0} ida`}
+                                                        {selectionStep === 'return' && `${returnItineraries?.length || 0} vuelta`}
+                                                        {selectionStep === 'summary' && 'Confirma'}
+                                                    </p>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
+
+                                    {/* Share Button - Now in the top row */}
+                                    <div className="shrink-0">
+                                        <SmartPopover
+                                            isOpen={isSharing}
+                                            setIsOpen={setIsSharing}
+                                            preferredAlign="right"
+                                            trigger={
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.preventDefault();
+                                                        e.stopPropagation();
+                                                        setIsSharing(!isSharing);
+                                                    }}
+                                                    className={`p-2.5 border rounded-xl transition-all group active:scale-95 cursor-pointer ${isSharing ? 'bg-brand border-brand' : 'bg-surface/50 hover:bg-surface border-line/30'}`}
+                                                    title="Compartir búsqueda"
+                                                >
+                                                    <Share2 size={18} className={isSharing ? 'text-white' : 'text-content-muted group-hover:text-brand'} />
+                                                </button>
+                                            }
+                                        >
+                                            <div className="p-2 flex flex-col gap-1 min-w-[240px]">
+                                                {isAuthenticated && user && user.friends.length > 0 && (
+                                                    <>
+                                                        <p className="px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-content-muted border-b border-line mb-1">Compartir con amigos</p>
+                                                        <div className="max-h-60 overflow-y-auto custom-scrollbar flex flex-col gap-1">
+                                                            {user.friends.filter((f): f is FriendUser => typeof f !== 'string').map(friend => (
+                                                                <button
+                                                                    key={friend._id}
+                                                                    onClick={() => sendMessage({
+                                                                        otherUserId: friend._id,
+                                                                        data: { content: `SHARE_SEARCH:${id}:${data!.origins[0]}:${data!.destinations[0]}` }
+                                                                    })}
+                                                                    className="flex items-center gap-2 p-2 hover:bg-surface rounded-xl transition-all text-left w-full group/friend cursor-pointer"
+                                                                >
+                                                                    <UserAvatar user={friend} size={32} />
+                                                                    <span className="text-sm font-bold group-hover/friend:text-brand transition-colors">{friend.username}</span>
+                                                                </button>
+                                                            ))}
+                                                        </div>
+                                                        <div className="h-px bg-line my-1" />
+                                                    </>
+                                                )}
+
+                                                <button
+                                                    onClick={async () => {
+                                                        window.dispatchEvent(new CustomEvent('share_from_results'));
+                                                        const url = window.location.href;
+                                                        const shareData = {
+                                                            title: 'flAIghts - Búsqueda de vuelos',
+                                                            text: '¡Mira los vuelos que he encontrado en flAIghts!',
+                                                            url: url
+                                                        };
+
+                                                        const canShareNative = typeof navigator.share === 'function' &&
+                                                            (typeof navigator.canShare !== 'function' || navigator.canShare(shareData));
+
+                                                        if (canShareNative) {
+                                                            try {
+                                                                await navigator.share(shareData);
+                                                                setIsSharing(false);
+                                                                return;
+                                                            } catch (err) {
+                                                                console.error('Error sharing native:', err);
+                                                            }
+                                                        }
+
+                                                        try {
+                                                            await navigator.clipboard.writeText(url);
+                                                            toast.success('Enlace copiado', { description: 'El enlace se ha copiado al portapapeles.' });
+                                                            setIsSharing(false);
+                                                        } catch (err) {
+                                                            console.error('Error copying to clipboard:', err);
+                                                            toast.error('Error al compartir', { description: 'No se pudo copiar el enlace.' });
+                                                        }
+                                                    }}
+                                                    className="flex items-center gap-2 p-2.5 hover:bg-surface rounded-xl transition-all text-left w-full group/share cursor-pointer"
+                                                >
+                                                    <div className="w-8 h-8 rounded-lg bg-brand/10 flex items-center justify-center text-brand group-hover/share:bg-brand group-hover/share:text-white transition-colors">
+                                                        <Share2 size={16} />
+                                                    </div>
+                                                    <span className="text-sm font-bold group-hover/share:text-brand transition-colors">Compartir enlace</span>
+                                                </button>
+                                            </div>
+                                        </SmartPopover>
+                                    </div>
                                 </div>
 
-                                {/* Sorting Controls */}
+                                {/* Sorting Controls - Bottom row on mobile */}
                                 {selectionStep !== 'summary' && (
-                                    <div className="flex items-center gap-2">
-                                        <span className="text-xs font-medium text-content-muted block">Ordenar por:</span>
-                                        <div className="flex items-center gap-1 bg-surface p-1 rounded-xl border border-line">
-                                            <button
-                                                onClick={() => setSortBy('price')}
-                                                className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs md:text-sm font-medium transition-all cursor-pointer ${sortBy === 'price'
-                                                    ? 'bg-brand text-content-on-brand shadow-sm'
-                                                    : 'text-content-muted hover:text-content hover:bg-main'
-                                                    }`}
-                                            >
-                                                <DollarSign size={14} />
-                                                <span>Precio</span>
-                                            </button>
-                                            <button
-                                                onClick={() => setSortBy('duration')}
-                                                className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs md:text-sm font-medium transition-all cursor-pointer ${sortBy === 'duration'
-                                                    ? 'bg-brand text-content-on-brand shadow-sm'
-                                                    : 'text-content-muted hover:text-content hover:bg-main'
-                                                    }`}
-                                            >
-                                                <Clock size={14} />
-                                                <span>Duración</span>
-                                            </button>
+                                    <div className="flex items-center justify-between sm:justify-start gap-4 pt-2 md:pt-0 border-t md:border-t-0 border-line/30">
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-[10px] md:text-xs font-bold text-content-muted uppercase tracking-wider">Ordenar por:</span>
+                                            <div className="flex items-center gap-1 bg-surface/50 p-1 rounded-xl border border-line/30">
+                                                <button
+                                                    onClick={() => setSortBy('price')}
+                                                    className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${sortBy === 'price'
+                                                        ? 'bg-brand text-content-on-brand shadow-sm'
+                                                        : 'text-content-muted hover:text-content hover:bg-main'
+                                                        }`}
+                                                >
+                                                    <DollarSign size={12} />
+                                                    <span>Precio</span>
+                                                </button>
+                                                <button
+                                                    onClick={() => setSortBy('duration')}
+                                                    className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${sortBy === 'duration'
+                                                        ? 'bg-brand text-content-on-brand shadow-sm'
+                                                        : 'text-content-muted hover:text-content hover:bg-main'
+                                                        }`}
+                                                >
+                                                    <Clock size={12} />
+                                                    <span>Duración</span>
+                                                </button>
+                                            </div>
                                         </div>
                                     </div>
                                 )}
-                                {/* Share Button */}
-                                <button
-                                    onClick={async () => {
-                                        // Disparamos el evento de la misión al inicio para asegurar que cuente
-                                        window.dispatchEvent(new CustomEvent('share_search'));
-
-                                        const url = window.location.href;
-                                        const shareData = {
-                                            title: 'flAIghts - Búsqueda de vuelos',
-                                            text: '¡Mira los vuelos que he encontrado en flAIghts!',
-                                            url: url
-                                        };
-
-                                        // 1. Intentar Share Nativo
-                                        const canShareNative = typeof navigator.share === 'function' &&
-                                            (typeof navigator.canShare !== 'function' || navigator.canShare(shareData));
-
-                                        if (canShareNative) {
-                                            try {
-                                                await navigator.share(shareData);
-                                                return;
-                                            } catch (err) {
-                                                console.log('Native share failed or cancelled', err);
-                                            }
-                                        }
-
-                                        // 2. Intentar Portapapeles (requiere HTTPS/localhost)
-                                        if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
-                                            try {
-                                                await navigator.clipboard.writeText(url);
-                                                toast.info("Enlace copiado", { description: "Copiado al portapapeles correctamente" });
-                                                return;
-                                            } catch (err) {
-                                                console.error('Clipboard copy failed', err);
-                                            }
-                                        }
-
-                                        // 3. Fallback visual (para contextos no seguros como IP en móvil)
-                                        toast.info("Copia el enlace de la barra de direcciones", {
-                                            description: "Tu navegador bloquea el acceso al portapapeles en conexiones no seguras.",
-                                            duration: 5000
-                                        });
-                                    }}
-                                    className="p-2.5 bg-surface/50 hover:bg-surface border border-line/30 rounded-xl transition-all group active:scale-95 cursor-pointer ml-auto"
-                                    title="Compartir búsqueda"
-                                >
-                                    <Share2 size={20} className="text-content-muted group-hover:text-brand" />
-                                </button>
                             </div>
 
                             {/* Results Columns */}

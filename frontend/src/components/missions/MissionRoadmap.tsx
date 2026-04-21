@@ -262,7 +262,8 @@ const MissionRoadmap: React.FC<MissionRoadmapProps> = ({ onClose, onMissionClick
                             {connections.map((conn, i) => {
                                 // Bezier points para una curva más orgánica y fluida
                                 const distY = conn.y2 - conn.y1;
-                                const tension = distY * 0.6;
+                                // Reducimos la tensión para evitar que la curva "abombe" hacia los lados y choque con otros nodos
+                                const tension = distY * 0.4;
                                 const d = `M ${conn.x1},${conn.y1} 
                                            C ${conn.x1},${conn.y1 + tension} ${conn.x2},${conn.y2 - tension} ${conn.x2},${conn.y2 - 8}`;
 
@@ -301,8 +302,8 @@ const MissionRoadmap: React.FC<MissionRoadmapProps> = ({ onClose, onMissionClick
                             return (
                                 <div
                                     key={level}
-                                    className={`flex flex-row gap-10 items-center relative w-max z-10
-                                        ${level === 0 ? 'sm:pl-48' : level % 2 === 0 ? 'sm:pl-96' : 'sm:pl-0'}
+                                    className={`flex flex-row gap-10 items-center justify-start relative w-max z-10
+                                        ${level === 0 ? 'pl-20 sm:pl-48' : level % 2 === 0 ? 'pl-40 sm:pl-96' : 'pl-0'}
                                     `}
                                 >
                                     {levelMissions.map(mission => {
