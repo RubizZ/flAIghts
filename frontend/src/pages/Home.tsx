@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import Globe from "../components/Globe.tsx"
-import { Plus, Maximize2, PlaneTakeoff, PlaneLanding, X, Plane, ChevronDown, ChevronRight, Search, Calendar as CalendarIcon } from "lucide-react";
+import { Plus, Maximize2, PlaneTakeoff, PlaneLanding, X, Plane, ChevronDown, ChevronRight, AlertTriangle, Search, Calendar as CalendarIcon } from "lucide-react";
 import { useSearchRequest } from "@/api/generated/openapi/search";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
@@ -10,6 +10,7 @@ import StarsBackground from "../components/ui/StarsBackground.tsx";
 import ManualSearchForm from "../components/search/ManualSearchForm.tsx";
 import NavIconButton from "../components/ui/NavIconButton.tsx";
 import HomeCard from "../components/home/HomeCard.tsx";
+import AirportReportModal from "../components/search/AirportReportModal.tsx";
 
 export default function Home() {
     const { t } = useTranslation();
@@ -29,6 +30,7 @@ export default function Home() {
     const [isXXLScreen, setIsXXLScreen] = useState(window.innerWidth >= 1536);
     const [isMobileCardExpanded, setIsMobileCardExpanded] = useState(false);
     const [isUserInteracting, setIsUserInteracting] = useState(false);
+    const [isReportModalOpen, setIsReportModalOpen] = useState(false);
     const [isInteractionSuppressed, setIsInteractionSuppressed] = useState(false);
     const [initialMousePos, setInitialMousePos] = useState<{ x: number, y: number } | null>(null);
     const [searchMode, setSearchMode] = useState<'manual' | 'ai'>(() => {
@@ -99,6 +101,7 @@ export default function Home() {
             }
             if (origins.some(o => o.iata_code === airport.iata_code)) {
                 toast.error(t("searchFlight.validation.alreadySelectedOrigin"));
+
                 return;
             }
             setOrigins([...origins, airport]);
@@ -109,6 +112,7 @@ export default function Home() {
             }
             if (destinations.some(d => d.iata_code === airport.iata_code)) {
                 toast.error(t("searchFlight.validation.sameOriginDestination"));
+
                 return;
             }
             setDestinations([...destinations, airport]);
@@ -218,6 +222,7 @@ export default function Home() {
         }
         if (origins.some(o => o.iata_code === airport.iata_code)) {
             toast.error(t("searchFlight.validation.alreadySelectedOrigin"));
+
             return;
         }
         setOrigins([...origins, airport]);
@@ -238,6 +243,7 @@ export default function Home() {
         }
         if (destinations.some(d => d.iata_code === airport.iata_code)) {
             toast.error(t("searchFlight.validation.alreadySelectedDestination"));
+
             return;
         }
         setDestinations([...destinations, airport]);
@@ -255,6 +261,7 @@ export default function Home() {
     const handleSearch = () => {
         if (origins.length === 0 || destinations.length === 0 || !departureDate) {
             toast.error(t("searchFlight.validation.completeFields"));
+
             return;
         }
 
@@ -318,7 +325,7 @@ export default function Home() {
                     selectedAirports={selectedAirports}
                     origins={origins}
                     destinations={destinations}
-                    interactive={isSelectingOnMap && !(inspectedAirport && !isLargeScreen)}
+                    interactive={isSelectingOnMap && !(inspectedAirport && !isLargeScreen) && !isReportModalOpen}
                     horizontalOffset={isSelectingOnMap ? 0 : (isLargeScreen ? 306 : 0)}
                     onReady={() => setGlobeReady(true)}
                     onSetOrigin={handleSetOrigin}
@@ -364,6 +371,7 @@ export default function Home() {
                 </div>
                 <div className="flex flex-col items-center gap-1">
                     <span className="text-content-muted text-xs font-bold uppercase tracking-widest">{t("searchFlight.loading.loadingGlobe")}</span>
+
                 </div>
             </div>
 
@@ -596,6 +604,7 @@ export default function Home() {
                             </div>
                             <div className="flex flex-col">
                                 <span className="text-xs text-content-muted uppercase font-bold tracking-wider">{t("searchFlight.labels2.city")}</span>
+
                                 <span className="text-content font-medium">{renderedAirport?.city}</span>
                             </div>
                             <div className="grid grid-cols-2 gap-4 pt-2 border-t border-line/50">
@@ -605,6 +614,7 @@ export default function Home() {
                                 </div>
                                 <div className="flex flex-col">
                                     <span className="text-xs text-content-muted uppercase font-bold tracking-wider">{t("searchFlight.labels2.longitude")}</span>
+
                                     <span className="text-content text-xs font-mono">{renderedAirport?.location?.coordinates[0]?.toFixed(4)}°</span>
                                 </div>
                             </div>
@@ -624,11 +634,25 @@ export default function Home() {
                             >
                                 <PlaneLanding size={14} className="group-hover/btn:translate-y-0.5 transition-transform" />
                                 {t("searchFlight.mapButtons.defineAsDestination")}
+
+                            </button>
+                            <button
+                                onClick={() => setIsReportModalOpen(true)}
+                                className="flex items-center justify-center gap-1.5 self-center mt-3 text-[9px] font-bold text-red-500/60 hover:text-red-500 transition-all cursor-pointer group/report"
+                            >
+                                <AlertTriangle size={10} className="group-hover/report:animate-pulse" />
+                                <span className="italic underline-offset-2 hover:underline">Reportar error en los datos</span>
                             </button>
                         </div>
                     </div>
                 </div>
             </div>
+
+            <AirportReportModal
+                isOpen={isReportModalOpen}
+                onClose={() => setIsReportModalOpen(false)}
+                airport={renderedAirport}
+            />
         </div>
     );
 }

@@ -16,7 +16,8 @@ import Home from "@/pages/Home.tsx";
 import TermsOfService from "@/pages/TermsOfService.tsx";
 import PrivacyPolicy from "@/pages/PrivacyPolicy.tsx";
 import GeneticTrip from "@/pages/GeneticTrip.tsx";
-
+import Chats from "@/pages/Chats.tsx";
+import Chat from "@/pages/Chat.tsx";
 
 export const routes: RouteObject[] = [
     {
@@ -40,6 +41,8 @@ export const routes: RouteObject[] = [
                     { path: "/friends", element: <Friends /> },
                     { path: "/user/:id", element: <UserProfile /> },
                     { path: "/user/search", element: <UserSearch /> },
+                    { path: "/chats", element: <Chats /> },
+                    { path: "/chats/:userId", element: <Chat /> },
                     { path: "/settings", element: <Settings /> },
                     { path: "/genetic-trip", element: <GeneticTrip /> },
                     { path: "/terms", element: <TermsOfService /> },

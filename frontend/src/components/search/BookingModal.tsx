@@ -21,14 +21,11 @@ const BookingModal: React.FC<BookingModalProps> = ({ isOpen, onClose, bookingDat
         if (!option.url) return;
 
         if (option.post_data) {
-            // Create a form dynamically and submit it
             const form = document.createElement('form');
             form.method = 'POST';
             form.action = option.url;
             form.target = '_blank';
 
-            // post_data is usually a query string or JSON, SerpApi docs say it's to be used in POST
-            // Let's assume it's a query string style for now as it's common for booking redirects
             const params = new URLSearchParams(option.post_data);
             params.forEach((value, key) => {
                 const input = document.createElement('input');
@@ -60,7 +57,7 @@ const BookingModal: React.FC<BookingModalProps> = ({ isOpen, onClose, bookingDat
             }}
         >
             <div className="relative w-full max-w-2xl max-h-[90svh] overflow-hidden rounded-[2.5rem] border border-white/10 bg-gray-950 shadow-[0_32px_64px_-16px_rgba(0,0,0,0.6)] flex flex-col animate-in zoom-in duration-300">
-                
+
                 {/* Header */}
                 <div className="p-8 pb-4 flex justify-between items-start">
                     <div>
@@ -107,9 +104,9 @@ const BookingModal: React.FC<BookingModalProps> = ({ isOpen, onClose, bookingDat
                                         <div className="z-10 flex items-center gap-4 flex-1">
                                             {option.logo ? (
                                                 <div className="h-12 w-12 rounded-xl bg-white p-2 flex items-center justify-center shrink-0 shadow-sm overflow-hidden border border-white/5">
-                                                    <img 
-                                                        src={option.logo} 
-                                                        alt={option.name} 
+                                                    <img
+                                                        src={option.logo}
+                                                        alt={option.name}
                                                         className="h-full w-full object-contain"
                                                         onError={(e) => (e.currentTarget.style.display = 'none')}
                                                     />
@@ -119,7 +116,7 @@ const BookingModal: React.FC<BookingModalProps> = ({ isOpen, onClose, bookingDat
                                                     <Plane size={24} className="text-white/20" />
                                                 </div>
                                             )}
-                                            
+
                                             <div className="flex-1 min-w-0">
                                                 <p className="text-white font-black text-lg group-hover:text-brand transition-colors truncate">
                                                     {option.name}
@@ -140,7 +137,7 @@ const BookingModal: React.FC<BookingModalProps> = ({ isOpen, onClose, bookingDat
                                                 )}
                                             </div>
                                         </div>
-                                        
+
                                         <div className="mt-4 sm:mt-0 flex items-center gap-4 z-10 w-full sm:w-auto justify-between">
                                             {option.price && (
                                                 <span className="text-2xl font-black text-brand">

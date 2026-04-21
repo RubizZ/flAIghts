@@ -2808,7 +2808,7 @@
             ],
             "type": "object"
           },
-          "body.dates": {
+          "body.layover_days": {
             "properties": {
               "value": {},
               "message": {
@@ -3324,6 +3324,252 @@
         ],
         "type": "object"
       },
+      "ConversationUser": {
+        "properties": {
+          "_id": {
+            "type": "string"
+          },
+          "username": {
+            "type": "string"
+          },
+          "profile_picture": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "_id",
+          "username"
+        ],
+        "type": "object",
+        "additionalProperties": false
+      },
+      "Pick_IMessage.Exclude_keyofIMessage.created_at__": {
+        "properties": {
+          "_id": {
+            "type": "string"
+          },
+          "conversationId": {
+            "type": "string"
+          },
+          "sender": {
+            "type": "string"
+          },
+          "receiver": {
+            "type": "string"
+          },
+          "content": {
+            "type": "string"
+          },
+          "read": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "_id",
+          "conversationId",
+          "sender",
+          "receiver",
+          "content",
+          "read"
+        ],
+        "type": "object",
+        "description": "From T, pick a set of properties whose keys are in the union K"
+      },
+      "Omit_IMessage.created_at_": {
+        "$ref": "#/components/schemas/Pick_IMessage.Exclude_keyofIMessage.created_at__",
+        "description": "Construct a type with the properties of T except for those in type K."
+      },
+      "MessageResponse": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/Omit_IMessage.created_at_"
+          },
+          {
+            "properties": {
+              "created_at": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "created_at"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "ConversationResponse": {
+        "properties": {
+          "conversationId": {
+            "type": "string"
+          },
+          "otherUser": {
+            "$ref": "#/components/schemas/ConversationUser"
+          },
+          "lastMessage": {
+            "$ref": "#/components/schemas/MessageResponse"
+          },
+          "unreadCount": {
+            "type": "number",
+            "format": "double"
+          }
+        },
+        "required": [
+          "conversationId",
+          "otherUser",
+          "lastMessage",
+          "unreadCount"
+        ],
+        "type": "object",
+        "additionalProperties": false
+      },
+      "PaginatedConversationsResponse": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/ConversationResponse"
+            },
+            "type": "array"
+          },
+          "total": {
+            "type": "number",
+            "format": "double"
+          },
+          "page": {
+            "type": "number",
+            "format": "double"
+          },
+          "totalPages": {
+            "type": "number",
+            "format": "double"
+          }
+        },
+        "required": [
+          "items",
+          "total",
+          "page",
+          "totalPages"
+        ],
+        "type": "object",
+        "additionalProperties": false
+      },
+      "SuccessResponse_PaginatedConversationsResponse_": {
+        "description": "Wrapper de éxito JSend (aplicado por el middleware global).",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "success"
+            ],
+            "nullable": false
+          },
+          "data": {
+            "$ref": "#/components/schemas/PaginatedConversationsResponse"
+          }
+        },
+        "required": [
+          "status",
+          "data"
+        ],
+        "type": "object",
+        "additionalProperties": false
+      },
+      "PaginatedMessagesResponse": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/MessageResponse"
+            },
+            "type": "array"
+          },
+          "total": {
+            "type": "number",
+            "format": "double"
+          },
+          "page": {
+            "type": "number",
+            "format": "double"
+          },
+          "totalPages": {
+            "type": "number",
+            "format": "double"
+          }
+        },
+        "required": [
+          "items",
+          "total",
+          "page",
+          "totalPages"
+        ],
+        "type": "object",
+        "additionalProperties": false
+      },
+      "SuccessResponse_PaginatedMessagesResponse_": {
+        "description": "Wrapper de éxito JSend (aplicado por el middleware global).",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "success"
+            ],
+            "nullable": false
+          },
+          "data": {
+            "$ref": "#/components/schemas/PaginatedMessagesResponse"
+          }
+        },
+        "required": [
+          "status",
+          "data"
+        ],
+        "type": "object",
+        "additionalProperties": false
+      },
+      "SuccessResponse_MessageResponse_": {
+        "description": "Wrapper de éxito JSend (aplicado por el middleware global).",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "success"
+            ],
+            "nullable": false
+          },
+          "data": {
+            "$ref": "#/components/schemas/MessageResponse"
+          }
+        },
+        "required": [
+          "status",
+          "data"
+        ],
+        "type": "object",
+        "additionalProperties": false
+      },
+      "SuccessResponse_null_": {
+        "description": "Wrapper de éxito JSend (aplicado por el middleware global).",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "success"
+            ],
+            "nullable": false
+          },
+          "data": {
+            "type": "number",
+            "enum": [
+              null
+            ],
+            "nullable": true
+          }
+        },
+        "required": [
+          "status",
+          "data"
+        ],
+        "type": "object",
+        "additionalProperties": false
+      },
       "MissionStepResult": {
         "properties": {
           "id": {
@@ -3416,148 +3662,6 @@
         "required": [
           "results",
           "timestamp"
-        ],
-        "type": "object",
-        "additionalProperties": false
-      },
-      "BookingOption": {
-        "properties": {
-          "name": {
-            "type": "string"
-          },
-          "price": {
-            "type": "number",
-            "format": "double"
-          },
-          "url": {
-            "type": "string"
-          },
-          "post_data": {
-            "type": "string"
-          },
-          "logo": {
-            "type": "string"
-          },
-          "extensions": {
-            "items": {
-              "type": "string"
-            },
-            "type": "array"
-          }
-        },
-        "required": [
-          "name"
-        ],
-        "type": "object",
-        "additionalProperties": false
-      },
-      "BookingSegment": {
-        "properties": {
-          "origin": {
-            "type": "string"
-          },
-          "destination": {
-            "type": "string"
-          },
-          "departure_time": {
-            "type": "string"
-          },
-          "arrival_time": {
-            "type": "string"
-          },
-          "airline": {
-            "type": "string"
-          },
-          "options": {
-            "items": {
-              "$ref": "#/components/schemas/BookingOption"
-            },
-            "type": "array"
-          }
-        },
-        "required": [
-          "origin",
-          "destination",
-          "departure_time",
-          "arrival_time",
-          "airline",
-          "options"
-        ],
-        "type": "object",
-        "additionalProperties": false
-      },
-      "BookingResponse": {
-        "properties": {
-          "segments": {
-            "items": {
-              "$ref": "#/components/schemas/BookingSegment"
-            },
-            "type": "array"
-          }
-        },
-        "required": [
-          "segments"
-        ],
-        "type": "object",
-        "additionalProperties": false
-      },
-      "SuccessResponseType_BookingResponse_": {
-        "description": "Wrapper de éxito JSend (aplicado por el middleware global).",
-        "properties": {
-          "status": {
-            "type": "string",
-            "enum": [
-              "success"
-            ],
-            "nullable": false
-          },
-          "data": {
-            "$ref": "#/components/schemas/BookingResponse"
-          }
-        },
-        "required": [
-          "status",
-          "data"
-        ],
-        "type": "object",
-        "additionalProperties": false
-      },
-      "BookingTokenData": {
-        "properties": {
-          "token": {
-            "type": "string"
-          },
-          "origin": {
-            "type": "string"
-          },
-          "destination": {
-            "type": "string"
-          },
-          "departure_date": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "token",
-          "origin",
-          "destination",
-          "departure_date"
-        ],
-        "type": "object",
-        "additionalProperties": false
-      },
-      "BookingRequest": {
-        "properties": {
-          "tokens": {
-            "items": {
-              "$ref": "#/components/schemas/BookingTokenData"
-            },
-            "type": "array",
-            "minItems": 1
-          }
-        },
-        "required": [
-          "tokens"
         ],
         "type": "object",
         "additionalProperties": false
@@ -4703,6 +4807,108 @@
         "required": [
           "status",
           "data"
+        ],
+        "type": "object",
+        "additionalProperties": false
+      },
+      "SuccessResponseType_MessageResponseData_": {
+        "description": "Wrapper de éxito JSend (aplicado por el middleware global).",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "success"
+            ],
+            "nullable": false
+          },
+          "data": {
+            "$ref": "#/components/schemas/MessageResponseData"
+          }
+        },
+        "required": [
+          "status",
+          "data"
+        ],
+        "type": "object",
+        "additionalProperties": false
+      },
+      "ValidationDetails_PathPath__iata-string___": {
+        "properties": {
+          "path": {
+            "properties": {
+              "value": {},
+              "message": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "message"
+            ],
+            "type": "object"
+          },
+          "path.iata": {
+            "properties": {
+              "value": {},
+              "message": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "message"
+            ],
+            "type": "object"
+          }
+        },
+        "type": "object",
+        "description": "Generador de estructura de detalles.\r\nTransforma una unión de llaves ('body' | 'body.id') en el objeto que TSOA espera."
+      },
+      "RequestValidationFailResponse_ValidationDetails_PathPath__iata-string____": {
+        "properties": {
+          "data": {
+            "properties": {
+              "details": {
+                "$ref": "#/components/schemas/ValidationDetails_PathPath__iata-string___"
+              },
+              "message": {
+                "type": "string"
+              },
+              "code": {
+                "type": "string",
+                "enum": [
+                  "REQUEST_VALIDATION_ERROR"
+                ],
+                "nullable": false
+              }
+            },
+            "required": [
+              "details",
+              "message",
+              "code"
+            ],
+            "type": "object"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "fail"
+            ],
+            "nullable": false
+          }
+        },
+        "required": [
+          "data",
+          "status"
+        ],
+        "type": "object"
+      },
+      "AirportReportRequest": {
+        "properties": {
+          "reason": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "reason"
         ],
         "type": "object",
         "additionalProperties": false
@@ -6526,6 +6732,218 @@
         ]
       }
     },
+    "/conversations": {
+      "get": {
+        "operationId": "GetConversations",
+        "responses": {
+          "200": {
+            "description": "Ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse_PaginatedConversationsResponse_"
+                }
+              }
+            }
+          }
+        },
+        "description": "Get list of user's latest conversations",
+        "tags": [
+          "Conversations"
+        ],
+        "security": [
+          {
+            "jwt": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page",
+            "required": false,
+            "schema": {
+              "default": 1,
+              "format": "double",
+              "type": "number"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "format": "double",
+              "type": "number"
+            }
+          }
+        ]
+      }
+    },
+    "/conversations/{otherUserId}/messages": {
+      "get": {
+        "operationId": "GetMessages",
+        "responses": {
+          "200": {
+            "description": "Ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse_PaginatedMessagesResponse_"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "No son amigos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FailResponseFromError_NotFriendsError_"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Usuario no encontrado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FailResponseFromError_UserNotFoundError_"
+                }
+              }
+            }
+          }
+        },
+        "description": "Get messages history with another user",
+        "tags": [
+          "Conversations"
+        ],
+        "security": [
+          {
+            "jwt": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "otherUserId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "page",
+            "required": false,
+            "schema": {
+              "default": 1,
+              "format": "double",
+              "type": "number"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "format": "double",
+              "type": "number"
+            }
+          }
+        ]
+      },
+      "post": {
+        "operationId": "SendMessage",
+        "responses": {
+          "200": {
+            "description": "Ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse_MessageResponse_"
+                }
+              }
+            }
+          }
+        },
+        "description": "Send a message to a user (for sharing content)",
+        "tags": [
+          "Conversations"
+        ],
+        "security": [
+          {
+            "jwt": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "otherUserId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "content": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "content"
+                ],
+                "type": "object"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/conversations/{otherUserId}/read": {
+      "post": {
+        "operationId": "MarkConversationAsRead",
+        "responses": {
+          "200": {
+            "description": "Ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse_null_"
+                }
+              }
+            }
+          }
+        },
+        "description": "Mark all messages in conversation as read by user and notify this event to SocketService",
+        "tags": [
+          "Conversations"
+        ],
+        "security": [
+          {
+            "jwt": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "otherUserId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
     "/evaluation/results": {
       "post": {
         "operationId": "SubmitResults",
@@ -6564,43 +6982,6 @@
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/EvaluationPayload"
-              }
-            }
-          }
-        }
-      }
-    },
-    "/booking/prepare": {
-      "post": {
-        "operationId": "PrepareBooking",
-        "responses": {
-          "200": {
-            "description": "Opciones de reserva recuperadas",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/SuccessResponseType_BookingResponse_"
-                }
-              }
-            }
-          }
-        },
-        "description": "Prepara las opciones de reserva para un conjunto de tokens de vuelo.\nRecupera los enlaces de reserva y proveedores de SerpApi.",
-        "tags": [
-          "Booking"
-        ],
-        "security": [
-          {
-            "jwt-optional": []
-          }
-        ],
-        "parameters": [],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/BookingRequest"
               }
             }
           }
@@ -7082,6 +7463,62 @@
             }
           }
         ]
+      }
+    },
+    "/airports/{iata}/report": {
+      "post": {
+        "operationId": "ReportAirportError",
+        "responses": {
+          "200": {
+            "description": "Reporte enviado con éxito",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponseType_MessageResponseData_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Error de validación",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestValidationFailResponse_ValidationDetails_PathPath__iata-string____"
+                }
+              }
+            }
+          }
+        },
+        "description": "Reporta un error en los datos de un aeropuerto.",
+        "tags": [
+          "Airports"
+        ],
+        "security": [
+          {
+            "jwt-optional": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "iata",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AirportReportRequest"
+              }
+            }
+          }
+        }
       }
     },
     "/airlines": {

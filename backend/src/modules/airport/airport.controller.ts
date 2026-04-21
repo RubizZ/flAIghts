@@ -1,9 +1,9 @@
-
-import { Controller, Get, Route, Query, Tags, Response, SuccessResponse } from "tsoa";
+import { Controller, Get, Post, Route, Query, Path, Body, Tags, Response, SuccessResponse, Security, RequestProp } from "tsoa";
 import { injectable, inject } from "tsyringe";
 import { AirportService } from "./airport.service.js";
-import type { AirportResponse, AirportSearchPaginatedResult, GlobeAirportResponse } from "./airport.types.js";
-import type { SuccessResponse as SuccessResponseType, RequestValidationFailResponse, ValidationDetails, QueryPath } from "../../utils/responses.js";
+import type { AirportResponse, AirportSearchPaginatedResult, GlobeAirportResponse, AirportReportRequest } from "./airport.types.js";
+import type { SuccessResponse as SuccessResponseType, MessageResponseData, RequestValidationFailResponse, ValidationDetails, QueryPath, PathPath } from "../../utils/responses.js";
+import type { AuthenticatedUser } from "../auth/auth.types.js";
 
 @injectable()
 @Route("airports")
@@ -59,5 +59,21 @@ export class AirportController extends Controller {
             return { status: "fail", data: { message: "Aeropuerto no encontrado" } } as any;
         }
         return { status: "success", data: result as any };
+    }
+
+    /**
+     * Reporta un error en los datos de un aeropuerto.
+     */
+    @Post("/{iata}/report")
+    @Security('jwt-optional')
+    @Response<RequestValidationFailResponse<ValidationDetails<PathPath<{ iata: string }>>>>(422, "Error de validación")
+    @SuccessResponse(200, "Reporte enviado con éxito")
+    public async reportAirportError(
+        @Path() iata: string,
+        @Body() body: AirportReportRequest,
+        @RequestProp("user") user: AuthenticatedUser | null
+    ): Promise<SuccessResponseType<MessageResponseData>> {
+        const result = await this.airportService.reportError(iata, body.reason, user?._id);
+        return result as any;
     }
 }

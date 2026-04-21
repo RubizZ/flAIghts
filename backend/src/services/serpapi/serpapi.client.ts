@@ -37,24 +37,18 @@ export class SerpApiClient {
         const userId = explicitUserId || store?.userId;
         const ip = store?.ip || "unknown";
 
+<<<<<<< HEAD
         let isAdmin = false;
         if (userId && mongoose.Types.ObjectId.isValid(userId)) {
             const user = await User.findById(userId).select('role').lean();
             if (user && user.role === 'admin') {
                 isAdmin = true;
-            }
-        }
-
-        if (!isAdmin) {
-            const now = new Date();
-            const dateKey = now.toISOString().slice(0, 10);
-            const hourKey = `${dateKey}-${now.getHours()}`;
-
-            // Check and increment Global Daily Quota
-            const globalQuota = await SerpApiQuota.findOneAndUpdate(
-                { identifier: 'global', period: 'day', key: dateKey },
+=======
+        try {
+            RequestsPerDay.findOneAndUpdate(
+                { date: new Date().toISOString().slice(0, 10) },
                 { $inc: { count: 1 } },
-                { upsert: true, new: true }
+                { runValidators: true, upsert: true, returnDocument: 'after' }
             );
 
             if (globalQuota && globalQuota.count > this.globalDailyLimit) {
@@ -72,11 +66,8 @@ export class SerpApiClient {
             if (userQuota && userQuota.count > this.userHourlyLimit) {
                 throw new SerpapiQuotaExceededError(`Has excedido tu límite de 100 créditos de SerpApi por hora.`);
             }
+            throw error;
         }
-
-        const cleanParameters = Object.fromEntries(
-            Object.entries(parameters).filter(([_, v]) => v !== undefined && v !== null)
-        );
 
         const query = new URLSearchParams({
             engine: "google_flights",

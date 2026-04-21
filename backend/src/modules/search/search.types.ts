@@ -51,6 +51,8 @@ export interface GeneticTripRequest {
      * @minimum 1
      */
     daysPerCity: number;
+    layover_days?: number[];
+    source?: "manual" | "agent";
 }
 
 export interface LegResponse {
@@ -144,7 +146,6 @@ export interface EnrichedFlightEdge extends DijkstraFlightEdge {
     travel_class: string;
     departure_token?: string;
     extensions?: string[];
-    segments?: FlightSegment[];
 }
 
 export interface SearchProgressEvent {

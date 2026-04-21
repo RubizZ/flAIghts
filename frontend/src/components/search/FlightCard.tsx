@@ -12,6 +12,7 @@ interface FlightCardProps {
     airportsMap: Map<string, GlobeAirportResponse>,
     onHover: (it: ItineraryResponse | null) => void,
     onExpandChange?: (it: ItineraryResponse | null) => void,
+    onExpandChange?: (it: ItineraryResponse | null) => void,
     onSelect?: (itinerary: ItineraryResponse) => void,
     showSelectButton?: boolean
 }
@@ -119,9 +120,10 @@ export default function FlightCard({ itinerary, formatTime, formatDuration, airp
                         ))}
 
                         {/* Final arrival summary notice */}
-                        <div className="flex items-center gap-3 px-6 py-3 bg-brand/5 border-t border-b border-brand/10">
-                            <div className="w-8 h-8 rounded-full bg-brand/10 flex items-center justify-center">
-                                <CalendarClock size={16} className="text-brand" />
+                        <div className="mt-4 border-t border-line flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-content-muted bg-surface/20 -mx-5 px-5 py-4">
+                            <div className="flex items-center gap-2">
+                                <Clock size={16} className="text-brand" />
+                                <span>Llegada final a <strong>{lastArrivalLeg?.destination}</strong>:</span>
                             </div>
                             <span className="text-xs font-bold text-content leading-none">
                                 {t('flightCard.finalArrival', { airport: lastArrivalLeg?.destination })}
@@ -146,11 +148,18 @@ interface StopoverDetailsPropsWithParams extends StopoverDetailsProps {
 function StopoverDetails({ leg, formatDuration, airportsMap, index, totalSteps, previousLeg }: StopoverDetailsPropsWithParams) {
     const { t } = useTranslation();
     const airport = airportsMap.get(leg.origin);
-    const tVal = index / (totalSteps + 1);
-    const stopoverColor = `color-mix(in srgb, var(--color-origin), var(--color-destination) ${tVal * 100}%)`;
+    const time = index / (totalSteps + 1);
+    const stopoverColor = `color-mix(in srgb, var(--color-origin), var(--color-destination) ${time * 100}%)`;
 
-    const isOvernight = (leg.wait_time || 0) > 480;
-    const isShortLayover = (leg.wait_time || 0) < 60;
+    const isOvernight = useMemo(() => {
+        const arrivalDate = new Date(previousLeg.arrival_time).getDate();
+        const departureDate = new Date(leg.departure_time).getDate();
+        const isLongLayover = (leg.wait_time || 0) > 240; // > 4 hours
+
+        return (isLongLayover && arrivalDate !== departureDate);
+    }, [leg, previousLeg]);
+
+    const isShortLayover = (leg.wait_time || 0) < 70; // Escada < 1h 10m
 
     return (
         <div

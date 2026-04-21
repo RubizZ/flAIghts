@@ -38,8 +38,6 @@
     "@tanstack/react-query": "^5.96.2",
     "axios": "^1.14.0",
     "concurrently": "^9.2.1",
-    "i18next": "^25.8.17",
-    "i18next-browser-languagedetector": "^8.2.1",
     "gsap": "^3.14.2",
     "lucide-react": "^0.563.0",
     "nprogress": "^0.2.0",
@@ -47,8 +45,8 @@
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
     "react-markdown": "^10.1.0",
-    "react-i18next": "^16.5.6",
     "react-router-dom": "^7.14.0",
+    "react-textarea-autosize": "^8.5.9",
     "sonner": "^2.0.7",
     "tailwind-animations": "^1.0.1",
     "three": "^0.182.0"

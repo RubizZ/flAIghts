@@ -1,5 +1,6 @@
 import 'reflect-metadata'
 import express from 'express';
+import expressWs from 'express-ws';
 import cors from 'cors';
 import { container } from 'tsyringe';
 import { ServerConfig } from './config/server.config.js';
@@ -44,7 +45,7 @@ const config = container.resolve(ServerConfig);
 
 const PORT = config.PORT;
 
-const app = express();
+const { app } = expressWs(express());
 app.use(compression());
 
 const origins = config.ALLOWED_ORIGINS || [];
@@ -135,6 +136,11 @@ app.get('/health', (req, res) => {
     res.status(200).send('OK');
 });
 
+// Health check endpoint
+app.get('/health', (req, res) => {
+    res.status(200).send('OK');
+});
+
 
 // Authentication endpoints rate limiter (5 req/min)
 app.post('/auth/login', authLimiter);
@@ -159,8 +165,8 @@ app.post('/booking/prepare', bookingLimiter);
 app.use(globalApiLimiter);
 
 // Register routes from tsoa and asyncapi
-RegisterRoutes(app)
-RegisterAsyncRoutes(app)
+RegisterRoutes(app as any)
+RegisterAsyncRoutes(app as any)
 
 // Error handling middleware for validation request errors, business logic errors and unhandled errors
 app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction): express.Response | void => {

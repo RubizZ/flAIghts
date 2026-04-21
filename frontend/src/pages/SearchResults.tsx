@@ -1,21 +1,26 @@
 import { useState, useMemo, useEffect, useCallback } from "react";
-import { useParams, useNavigate } from "react-router-dom";
-import { useSearchResult } from "@/api/generated/openapi/search";
+import { useParams, useNavigate, Link } from "react-router-dom";
 import { useGetGlobeAirports } from "@/api/generated/openapi/airports";
-import { AlertCircle, Loader2, Plane, ArrowLeft, ArrowRight, DollarSign, Clock, Calendar, Star } from "lucide-react";
-import type { ItineraryResponse, GlobeAirportResponse, AirportResponse } from "@/api/generated/openapi/model";
+import { AlertCircle, Loader2, Plane, ArrowLeft, ArrowRight, DollarSign, Clock, Calendar, Share2 } from "lucide-react";
+import { useSearchResult } from "@/api/generated/openapi/search";
+import type { ItineraryResponse, GlobeAirportResponse, AirportResponse, FriendUser } from "@/api/generated/openapi/model";
+import { useSendMessage } from "@/api/generated/openapi/conversations";
+import { useAuth } from "@/context/AuthContext";
 import StarsBackground from "@/components/ui/StarsBackground";
-import { toast } from "sonner";
 import Globe from "@/components/Globe";
 import FlightCard from "@/components/search/FlightCard";
 import SelectedFlightSummary from "@/components/search/SelectedFlightSummary";
 import BookingModal from "@/components/search/BookingModal";
 import { usePrepareBooking } from "@/api/generated/openapi/booking";
 import { useTranslation } from "react-i18next";
+import SmartPopover from "@/components/ui/SmartPopover";
+import UserAvatar from "@/components/ui/UserAvatar";
+import { toast } from "sonner";
 
 export default function SearchResults() {
     const { t } = useTranslation();
     const { id } = useParams<{ id: string }>();
+    const { user, isAuthenticated } = useAuth();
     const navigate = useNavigate();
     const [sortBy, setSortBy] = useState<'price' | 'duration' | 'personalized'>('personalized');
     const [hoveredItinerary, setHoveredItinerary] = useState<ItineraryResponse | null>(null);
@@ -27,6 +32,7 @@ export default function SearchResults() {
     const [isLargeScreen, setIsLargeScreen] = useState(window.innerWidth >= 1024);
     const [isGlobeReady, setIsGlobeReady] = useState(false);
     const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
+    const [isSharing, setIsSharing] = useState(false);
 
     useEffect(() => {
         const handleResize = () => {
@@ -56,11 +62,18 @@ export default function SearchResults() {
         }
     );
 
+    const { mutate: sendMessage } = useSendMessage({
+        mutation: {
+            onSuccess: () => { toast.success("Vuelo compartido"); setIsSharing(false); },
+            onError: () => toast.error("Error al compartir")
+        }
+    });
+
     const { mutate: prepareBooking, isPending: isPreparingBooking, error: prepareError, data: bookingData } = usePrepareBooking();
 
     const handleReserve = () => {
         const tokens: { token: string; origin: string; destination: string; departure_date: string }[] = [];
-        
+
         const collectTokens = (legs: any[]) => {
             legs.forEach(leg => {
                 if (leg.booking_token) {
@@ -321,10 +334,48 @@ export default function SearchResults() {
 
             {/* Left Column: Results List */}
             {searchData && (
-                <div className="relative z-10 w-full lg:w-[65%] xl:w-[60%]">
-                    <div className="relative w-full">
-                        <div className="max-w-3xl mx-auto px-4 pt-24 pb-6 lg:pt-24 lg:pb-10 min-h-full flex flex-col gap-6 lg:gap-8">
-
+                <div className="relative z-10 w-full lg:w-[65%] xl:w-[60%] h-full">
+                    <div className="relative w-full h-full overflow-y-auto overflow-x-hidden scroll-smooth [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+                        <div className="max-w-3xl mx-auto px-4 pt-[4.5rem] lg:pt-24 pb-6 lg:pb-10 min-h-full flex flex-col gap-6 lg:gap-8">
+                            {isAuthenticated && user && data && (
+                                <div className="-mt-1 lg:-mt-4 -mb-3 lg:-mb-5 self-end">
+                                    <SmartPopover
+                                        isOpen={isSharing}
+                                        setIsOpen={setIsSharing}
+                                        preferredAlign="right"
+                                        trigger={
+                                            <button
+                                                onClick={(e) => {
+                                                    e.preventDefault();
+                                                    e.stopPropagation();
+                                                    setIsSharing(!isSharing);
+                                                }}
+                                                className="flex items-center gap-2 px-4 py-2 bg-brand text-white rounded-full font-bold shadow-lg hover:scale-105 active:scale-95 transition-all"
+                                            >
+                                                <Share2 size={18} />
+                                                <span>Compartir</span>
+                                            </button>
+                                        }
+                                    >
+                                        <div className="p-2 flex flex-col gap-1 min-w-[220px]">
+                                            <p className="px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-content-muted border-b border-line mb-1">Compartir con amigo</p>
+                                            {user.friends.filter((f): f is FriendUser => typeof f !== 'string').map(friend => (
+                                                <button
+                                                    key={friend._id}
+                                                    onClick={() => sendMessage({
+                                                        otherUserId: friend._id,
+                                                        data: { content: `SHARE_SEARCH:${id}:${data.origins[0]}:${data.destinations[0]}` }
+                                                    })}
+                                                    className="flex items-center gap-2 p-2 hover:bg-surface rounded-xl transition-all text-left w-full"
+                                                >
+                                                    <UserAvatar user={friend} size={28} />
+                                                    <span className="text-sm font-bold">{friend.username}</span>
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </SmartPopover>
+                                </div>
+                            )}
                             {/* Header Card */}
                             <div className="sticky top-6 lg:top-8 z-20 backdrop-blur-2xl bg-main/80 dark:bg-main/70 border border-line p-4 rounded-2xl shadow-2xl flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4 animate-in fade-in slide-in-from-top-4 duration-700">
                                 <div className="flex items-center gap-4">

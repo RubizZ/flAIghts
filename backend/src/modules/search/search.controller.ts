@@ -10,11 +10,14 @@ import { AsyncAPIChannel, AsyncAPIController, AsyncAPIMessage } from "../../util
 import type { SearchProgressEvent } from "./search.types.js";
 
 
+
 @injectable()
 @Route("search")
 @Tags("Search")
 @AsyncAPIController("Search")
+@AsyncAPIController("Search")
 export class SearchController extends Controller {
+
 
 
     constructor(
@@ -135,4 +138,6 @@ export class SearchController extends Controller {
         return searches satisfies { items: SearchResponseData[], total: number, page: number, totalPages: number } as any;
     }
 }
+
+
 

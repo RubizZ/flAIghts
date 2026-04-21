@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
-import { Compass, Menu, Users, X, Sparkles, Zap } from "lucide-react";
+import { Compass, Menu, Users, X, Sparkles, Zap, MessageSquare } from "lucide-react";
 import NavIconButton from "../ui/NavIconButton";
 import { useTranslation } from "react-i18next";
 
@@ -41,6 +41,12 @@ export default function Sidebar({ isOpen, onClose, onToggle, variant = 'classic'
             path: "/",
             icon: <Compass size={20} />,
             show: true,
+        },
+        {
+            label: "Chats",
+            path: "/chats",
+            icon: <MessageSquare size={20} />,
+            show: isAuthenticated,
         },
         {
             label: t("sidebar.geneticTrip"),
@@ -101,6 +107,7 @@ export default function Sidebar({ isOpen, onClose, onToggle, variant = 'classic'
                         onClick={onToggle}
                         aria-label={isOpen ? t("sidebar.closeMenu") : t("sidebar.openMenu")}
                         className={`transition-all duration-200 cursor-pointer rounded-2xl
+                            text-content-muted hover:text-content active:scale-95 flex items-center group
                             text-content-muted hover:text-content active:scale-95 flex items-center group
                             ${isFloating
                                 ? 'p-2.5 hover:bg-white/10 hover:backdrop-blur-md w-full gap-3'

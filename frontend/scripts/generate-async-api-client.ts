@@ -38,7 +38,7 @@ async function generate() {
     // 2. GENERAR HOOKS
     let hooksOutput = `/** ESTE ARCHIVO HA SIDO GENERADO AUTOMÁTICAMENTE. NO EDITAR. */
 import { useMutation } from '@tanstack/react-query';
-import { useEffect, useRef, useState, useCallback } from 'react';
+import { useRef, useState, useCallback } from 'react';
 import type { AxiosProgressEvent } from 'axios';
 import * as Models from './models';
 import { customInstance } from '../../axios-instance';
@@ -74,43 +74,77 @@ import { customInstance } from '../../axios-instance';
 export const use${baseName}WS = (onMessage?: (data: Models.${typeOut}) => void) => {
     const [status, setStatus] = useState<'connecting' | 'open' | 'closed'>('closed');
     const ws = useRef<WebSocket | null>(null);
+    const isExplicitlyClosed = useRef(false);
+    const reconnectTimeout = useRef<NodeJS.Timeout | null>(null);
+    const onMessageRef = useRef(onMessage);
+
+    // Sincronizar el ref con el callback más reciente sin disparar reconexiones
+    onMessageRef.current = onMessage;
 
     const connect = useCallback(() => {
-        if (ws.current?.readyState === WebSocket.OPEN) return;
+        // Guard against already-open OR already-connecting sockets to avoid duplicate connections
+        if (ws.current?.readyState === WebSocket.OPEN || ws.current?.readyState === WebSocket.CONNECTING) return;
+        isExplicitlyClosed.current = false;
         
-        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-        const host = window.location.host; 
-        const url = \`\${protocol}//\${host}${channelPath}\`;
-        
-        ws.current = new WebSocket(url);
+        const baseUrl = import.meta.env.VITE_BACKEND_API_BASE_URL || window.location.origin;
+        const apiHost = baseUrl.startsWith('/')
+            ? \`\${window.location.host}\${baseUrl}\` 
+            : baseUrl.replace(/^http(s?):\\/\\//, '');
+        const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        const socketUrl = \`\${wsProtocol}//\${apiHost.replace(/\\/$/, '')}${channelPath}\`;
+
+        const socket = new WebSocket(socketUrl);
+        ws.current = socket;
         setStatus('connecting');
 
-        ws.current.onopen = () => setStatus('open');
-        ws.current.onclose = () => setStatus('closed');
-        ws.current.onmessage = (event) => {
-            if (onMessage) {
+        socket.onopen = () => {
+            if (ws.current === socket) setStatus('open');
+        };
+
+        socket.onclose = () => {
+            if (ws.current === socket) {
+                setStatus('closed');
+                if (!isExplicitlyClosed.current) {
+                    reconnectTimeout.current = setTimeout(connect, 3000);
+                }
+            }
+        };
+        socket.onmessage = (event) => {
+            if (onMessageRef.current) {
                 try {
-                    onMessage(JSON.parse(event.data));
+                    onMessageRef.current(JSON.parse(event.data));
                 } catch (e) {
                     console.error('Error parsing WS message:', e);
                 }
             }
         };
-    }, [onMessage]);
+    }, []); // Eliminamos onMessage de las dependencias
 
     const send = useCallback((data: Models.${typeIn}) => {
         if (ws.current?.readyState === WebSocket.OPEN) {
             ws.current.send(JSON.stringify(data));
+        } else {
+            console.warn('[WS] send() llamado pero el WebSocket no está abierto (readyState:', ws.current?.readyState, '). Mensaje descartado.');
         }
     }, []);
 
     const disconnect = useCallback(() => {
-        ws.current?.close();
+        isExplicitlyClosed.current = true;
+        if (reconnectTimeout.current) clearTimeout(reconnectTimeout.current);
+        if (ws.current) {
+            const socket = ws.current;
+            // Nullify handlers before closing to prevent stale state updates
+            socket.onopen = null;
+            socket.onmessage = null;
+            socket.onclose = null;
+            socket.onerror = null;
+            if (socket.readyState === WebSocket.OPEN || socket.readyState === WebSocket.CONNECTING) {
+                socket.close();
+            }
+            ws.current = null;
+            setStatus('closed');
+        }
     }, []);
-
-    useEffect(() => {
-        return () => disconnect();
-    }, [disconnect]);
 
     return { connect, disconnect, send, status };
 };

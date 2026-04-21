@@ -19,7 +19,7 @@ const FinalEvaluationModal: React.FC = () => {
     const handleSubmit = async () => {
         const nameToSubmit = isAnonymous ? 'Anónimo' : fullName.trim();
         if (!isAnonymous && !nameToSubmit) return;
-        
+
         setIsSubmitting(true);
         setIsClosing(true);
         await new Promise(resolve => setTimeout(resolve, 500));
@@ -71,12 +71,12 @@ const FinalEvaluationModal: React.FC = () => {
                                 placeholder={t('missions.finalEvaluation.namePlaceholder')}
                                 className={`w-full rounded-xl border p-4 text-white placeholder:text-gray-600 focus:outline-hidden transition-all ${isAnonymous ? 'bg-black/20 border-white/5 opacity-30 text-white/20 cursor-not-allowed' : 'bg-black/40 border-white/10 focus:border-blue-500'}`}
                             />
-                            
+
                             <div className="mt-4 flex items-center justify-between gap-4">
                                 <p className={`text-left text-[10px] italic transition-colors ${isAnonymous ? 'text-white/20' : 'text-gray-500'}`}>
                                     {t('missions.finalEvaluation.nameDisclaimer')}
                                 </p>
-                                
+
                                 <label className="flex items-center gap-2 cursor-pointer group">
                                     <div className="relative flex items-center">
                                         <input
