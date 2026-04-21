@@ -1,12 +1,11 @@
-import { Body, Controller, Get, Patch, Path, Post, Query, RequestProp, Response, Route, Security, SuccessResponse, Tags, Request } from "tsoa";
-import * as express from 'express';
+import { Body, Controller, Get, Patch, Path, Post, Query, RequestProp, Response, Route, Security, SuccessResponse, Tags } from "tsoa";
 import type { SearchRequest, SearchResponseData, SearchValidationFailResponse } from "./search.types.js";
 import { inject, injectable } from "tsyringe";
 import { SearchService } from "./search.service.js";
 import type { AuthenticatedUser } from "../auth/auth.types.js";
 import type { SuccessResponse as SuccessResponseType, FailResponseFromError, PathPath, QueryPath, ValidationDetails, RequestValidationFailResponse } from "../../utils/responses.js";
 import { SearchNotFoundError, SearchNotAuthorizedError } from "./search.errors.js";
-import { AsyncAPIChannel, AsyncAPIController, AsyncAPIMessage } from "../../utils/asyncapi.decorators.js";
+import { AsyncAPIChannel, AsyncAPIController } from "../../utils/asyncapi.decorators.js";
 import type { SearchProgressEvent } from "./search.types.js";
 
 

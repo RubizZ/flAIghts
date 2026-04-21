@@ -9,6 +9,7 @@ interface NavIconButtonProps {
     className?: string;
     variant?: 'floating' | 'flat';
     showBadge?: boolean;
+    badgeClassName?: string;
     isPill?: boolean;
     id?: string;
 }
@@ -22,6 +23,7 @@ const NavIconButton: React.FC<NavIconButtonProps> = ({
     variant = 'floating',
     isPill = false,
     showBadge = false,
+    badgeClassName = '',
     id
 }) => {
     const isFloating = variant === 'floating';
@@ -44,7 +46,7 @@ const NavIconButton: React.FC<NavIconButtonProps> = ({
         <>
             {children}
             {showBadge && (
-                <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-brand rounded-full animate-in fade-in scale-in duration-300 shadow-[0_0_8px_rgba(var(--color-brand),0.6)]" />
+                <span className={`absolute top-1.5 right-1.5 w-2 h-2 bg-brand rounded-full animate-in fade-in scale-in duration-300 shadow-[0_0_8px_rgba(var(--color-brand),0.6)] ${badgeClassName}`} />
             )}
         </>
     );

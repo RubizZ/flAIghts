@@ -24,6 +24,9 @@ export interface User {
     received_friend_requests: string[];
     pending_email?: string;
     profile_picture?: string;
+    google_id?: string;
+    google_email?: string;
+    is_password_set: boolean;
 }
 
 export interface PopulatedUser extends Omit<User, 'friends' | 'sent_friend_requests' | 'received_friend_requests'> {

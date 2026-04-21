@@ -5,6 +5,7 @@ import FloatingLabelInput from "@/components/ui/FloatingLabelInput";
 import { useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
+import Logo from "@/components/ui/Logo";
 
 export default function ResetPassword() {
     const navigate = useNavigate();
@@ -66,7 +67,12 @@ export default function ResetPassword() {
 
     return (
         <AuthLayout>
-            <AuthCard title="Reset Password">
+            <AuthCard title={
+                <>
+                    <Logo size={32} />
+                    <span>Restablecer contraseña</span>
+                </>
+            }>
                 <FloatingLabelInput
                     label="New Password"
                     type="password"

@@ -75,7 +75,7 @@ export default function AppLayout() {
 
                 <main
                     onClick={() => isSidebarOpen && closeSidebar()}
-                    className={`grow bg-surface overflow-auto relative transition-[padding] duration-300 ease-in-out min-h-0
+                    className={`grow bg-surface overflow-auto custom-scrollbar relative transition-[padding] duration-300 ease-in-out min-h-0
                         ${isGlobe
                             ? `w-full ${isSidebarOpen ? 'sm:pl-64' : ''}`
                             : 'w-full sm:pt-20'

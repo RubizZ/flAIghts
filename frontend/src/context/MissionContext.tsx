@@ -273,7 +273,7 @@ export const MissionProvider: React.FC<{ children: ReactNode }> = ({ children })
                     const newSteps = m.steps.map((s: MissionStep) => {
                         if (s.id === stepId) {
                             // Toast con ID único para deduplicación automática
-                            toast.success(`¡Paso completado de la misión ${m.title}: ${s.title}`, {
+                            toast.success(`¡Paso ${m.title}: ${s.title} completado!`, {
                                 id: `step-${missionId}-${stepId}`,
                                 icon: '✨',
                                 style: {

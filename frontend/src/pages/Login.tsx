@@ -1,4 +1,5 @@
-import { useLogin } from "@/api/generated/openapi/auth";
+import { useLogin, useLoginWithGoogle } from "@/api/generated/openapi/auth";
+import { GoogleLogin } from '@react-oauth/google';
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import AuthLayout from "@/components/layout/AuthLayout";
@@ -6,6 +7,7 @@ import AuthCard from "@/components/ui/AuthCard";
 import FloatingLabelInput from "@/components/ui/FloatingLabelInput";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
+import Logo from "@/components/ui/Logo";
 
 export default function Login() {
     const navigate = useNavigate();
@@ -64,6 +66,18 @@ export default function Login() {
         }
     });
 
+    const { mutate: performGoogleLogin, isPending: isGooglePending } = useLoginWithGoogle({
+        mutation: {
+            onSuccess: async () => {
+                await refetch();
+                navigate("/");
+            },
+            onError: () => {
+                toast.error("Error al iniciar sesión con Google");
+            }
+        }
+    });
+
     const login = () => {
         const newErrors = {
             identifier: !credentials.identifier ? "Introduce tu email o nombre de usuario" : "",
@@ -93,7 +107,12 @@ export default function Login() {
 
     return (
         <AuthLayout>
-            <AuthCard title="Inicio de sesión">
+            <AuthCard title={
+                <>
+                    <Logo size={32} />
+                    <span>Inicio de sesión</span>
+                </>
+            }>
                 <form onSubmit={(e) => e.preventDefault()} className="flex flex-col gap-6">
                     {/* Form Fields */}
                     <FloatingLabelInput
@@ -136,6 +155,33 @@ export default function Login() {
                     >
                         {isPending ? "Conectando..." : "Login"}
                     </button>
+
+                    <div className="relative flex py-2 items-center">
+                        <div className="flex-grow border-t border-content-muted/30"></div>
+                        <span className="flex-shrink-0 mx-4 text-content-muted text-sm">O continúa con</span>
+                        <div className="flex-grow border-t border-content-muted/30"></div>
+                    </div>
+
+                    <div className="flex justify-center">
+                        <GoogleLogin
+                            onSuccess={credentialResponse => {
+                                if (credentialResponse.credential) {
+                                    performGoogleLogin({
+                                        data: {
+                                            credential: credentialResponse.credential,
+                                            responseType: 'cookie'
+                                        }
+                                    });
+                                }
+                            }}
+                            onError={() => {
+                                toast.error('Error al conectar con Google');
+                            }}
+                            theme="filled_black"
+                            shape="circle"
+                            text="continue_with"
+                        />
+                    </div>
 
                     <span className="text-sm text-content text-center">
                         ¿No tienes cuenta? <a href="/register" className="text-brand font-bold hover:underline">Regístrate</a>

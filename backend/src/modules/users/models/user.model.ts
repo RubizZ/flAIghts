@@ -26,6 +26,9 @@ export interface IUserFields {
     expires: Date;
   };
   profile_picture?: string;
+  google_id?: string;
+  google_email?: string;
+  is_password_set: boolean;
 }
 
 export interface IFriendUnpopulated {
@@ -134,7 +137,10 @@ const UserSchema = new Schema<IUserDocument>({
     new_email_code: { type: String, select: false },
     expires: { type: Date, select: false }
   },
-  profile_picture: { type: String }
+  profile_picture: { type: String },
+  google_id: { type: String, index: true, sparse: true },
+  google_email: { type: String, lowercase: true },
+  is_password_set: { type: Boolean, default: true }
 });
 
 // Índice único case-insensitive para username

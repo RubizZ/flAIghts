@@ -24,11 +24,21 @@ import NavIconButton from "@/components/ui/NavIconButton";
 import { useMissions } from "@/context/MissionContext";
 import Logo from "@/components/ui/Logo";
 import type { LogoHandle } from "@/components/ui/Logo";
+import { useGetConversations } from "@/api/generated/openapi/conversations";
 
 export default function Navbar({ variant = 'floating', logoRef }: { variant?: 'floating' | 'flat', logoRef?: React.RefObject<LogoHandle | null> }) {
     const navigate = useNavigate();
     const { user, isAuthenticated, isLoading, logout } = useAuth();
     const { theme, setTheme } = useTheme();
+
+    const { data: conversationsData } = useGetConversations(undefined, {
+        query: {
+            enabled: isAuthenticated,
+            staleTime: 30000, // No necesitamos frescura absoluta en el navbar
+        }
+    });
+
+    const unreadMessagesCount = conversationsData?.items?.reduce((acc: number, conv: any) => acc + (conv.unreadCount || 0), 0) || 0;
 
     const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
     const [isOptionsMenuOpen, setIsOptionsMenuOpen] = useState(false);
@@ -49,14 +59,34 @@ export default function Navbar({ variant = 'floating', logoRef }: { variant?: 'f
     const { isEvaluationMode, hasConsented, setShowRoadmap, missions, isMissionRated, allCompleted, reopenConsent } = useMissions();
     const pendingSurveysCount = missions.filter(m => m.isCompleted && !isMissionRated(m.id)).length;
 
-    const NotificationsMainView = ({ user }: { user: PopulatedUser }) => {
-        const { pushMenu } = useDropdown();
+    const NotificationsMainView = ({ user, unreadMessagesCount }: { user: PopulatedUser, unreadMessagesCount: number }) => {
+        const { pushMenu, setIsOpen } = useDropdown();
+        const hasFriendRequests = user?.received_friend_requests && user.received_friend_requests.length > 0;
+        const hasUnreadMessages = unreadMessagesCount > 0;
+
         return (
-            <div className="p-2 min-w-70 max-w-sm whitespace-normal">
+            <div className="p-2 min-w-70 max-w-sm whitespace-normal flex flex-col gap-1">
                 <div className="p-2 border-b border-line mb-1">
                     <p className="text-[10px] uppercase tracking-widest text-content-muted font-bold opacity-50">Notificaciones</p>
                 </div>
-                {user?.received_friend_requests && user.received_friend_requests.length > 0 ? (
+
+                {hasUnreadMessages && (
+                    <button
+                        onClick={() => {
+                            setIsOpen(false);
+                            navigate('/chats');
+                        }}
+                        className="w-full flex items-center justify-between px-3 py-3 text-sm text-content hover:bg-surface/70 rounded-xl transition-all cursor-pointer group text-left font-medium bg-brand/5"
+                    >
+                        <div className="flex flex-col">
+                            <span className="text-brand font-bold">Mensajes no leídos</span>
+                            <span className="text-xs text-content-muted opacity-80">Tienes {unreadMessagesCount} mensaje{unreadMessagesCount > 1 ? 's' : ''} nuevo{unreadMessagesCount > 1 ? 's' : ''}</span>
+                        </div>
+                        <ChevronDown size={14} className="-rotate-90 group-hover:translate-x-1 transition-transform text-brand" />
+                    </button>
+                )}
+
+                {hasFriendRequests && (
                     <button
                         onClick={(e) => {
                             e.stopPropagation();
@@ -70,7 +100,9 @@ export default function Navbar({ variant = 'floating', logoRef }: { variant?: 'f
                         </div>
                         <ChevronDown size={14} className="-rotate-90 group-hover:translate-x-1 transition-transform text-brand" />
                     </button>
-                ) : (
+                )}
+
+                {!hasFriendRequests && !hasUnreadMessages && (
                     <div className="p-4 text-center text-content-muted opacity-50 text-sm">
                         No tienes notificaciones
                     </div>
@@ -108,8 +140,10 @@ export default function Navbar({ variant = 'floating', logoRef }: { variant?: 'f
         );
     };
 
-    const UserMainView = ({ user, logout, navigate, theme, themeLabels }: { user: PopulatedUser, logout: () => void, navigate: any, theme: string, themeLabels: Record<string, string> }) => {
+    const UserMainView = ({ user, logout, navigate, theme, themeLabels, unreadMessagesCount }: { user: PopulatedUser, logout: () => void, navigate: any, theme: Theme, themeLabels: Record<string, string>, unreadMessagesCount: number }) => {
         const { pushMenu, setIsOpen } = useDropdown();
+        const totalNotifications = (user?.received_friend_requests?.length || 0) + unreadMessagesCount;
+
         return (
             <div className="w-64">
                 {isEvaluationMode && (
@@ -158,9 +192,9 @@ export default function Navbar({ variant = 'floating', logoRef }: { variant?: 'f
                                 <span className="leading-none">Notificaciones</span>
                             </div>
                             <div className="flex items-center gap-1.5">
-                                {user?.received_friend_requests && user.received_friend_requests.length > 0 && (
+                                {totalNotifications > 0 && (
                                     <span className="text-[10px] text-brand font-bold bg-brand/10 px-1.5 py-0.5 rounded-full">
-                                        {user.received_friend_requests.length}
+                                        {totalNotifications}
                                     </span>
                                 )}
                                 <ChevronDown size={12} className="-rotate-90 opacity-60" />
@@ -278,7 +312,7 @@ export default function Navbar({ variant = 'floating', logoRef }: { variant?: 'f
         );
     };
 
-    const OptionsMainView = ({ theme, themeLabels, navigate }: { theme: string, themeLabels: Record<string, string>, navigate: any }) => {
+    const OptionsMainView = ({ theme, themeLabels, navigate }: { theme: Theme, themeLabels: Record<string, string>, navigate: any }) => {
         const { pushMenu, setIsOpen } = useDropdown();
         return (
             <div className="w-64 p-1">
@@ -349,7 +383,7 @@ export default function Navbar({ variant = 'floating', logoRef }: { variant?: 'f
         <>
             {/* CENTER LOGO */}
             <div className={variant === 'floating'
-                ? "fixed top-5 left-1/2 -translate-x-1/2 z-50 pointer-events-none"
+                ? "absolute top-4 left-1/2 -translate-x-1/2 h-12 flex items-center z-50 pointer-events-none"
                 : "absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-50 pointer-events-none"
             }>
                 <Logo ref={logoRef} className={variant === 'floating' ? "" : "scale-90 sm:scale-100"} />
@@ -357,7 +391,7 @@ export default function Navbar({ variant = 'floating', logoRef }: { variant?: 'f
 
             <nav className={variant === 'floating' ? "contents" : "contents"}>
                 <div className={variant === 'floating'
-                    ? "fixed top-4 right-4 flex items-center justify-end gap-2 sm:gap-4 z-10 pointer-events-auto"
+                    ? "absolute top-4 right-4 flex items-center justify-end gap-2 sm:gap-4 z-10 pointer-events-auto"
                     : "flex items-center gap-2 sm:gap-4 pointer-events-auto"
                 }>
                     {/* Mission Indicator Button (Evaluation Mode) */}
@@ -403,7 +437,7 @@ export default function Navbar({ variant = 'floating', logoRef }: { variant?: 'f
                                 trigger={
                                     <NavIconButton
                                         variant={variant}
-                                        showBadge={!!(user?.received_friend_requests && user.received_friend_requests.length > 0)}
+                                        showBadge={!!(user?.received_friend_requests && user.received_friend_requests.length > 0) || unreadMessagesCount > 0}
                                         className="hidden lg:flex"
                                     >
                                         <Bell size={20} className="text-content group-hover:text-brand transition-colors" />
@@ -413,6 +447,7 @@ export default function Navbar({ variant = 'floating', logoRef }: { variant?: 'f
                                     main: (
                                         <NotificationsMainView
                                             user={user!}
+                                            unreadMessagesCount={unreadMessagesCount}
                                         />
                                     ),
                                     friend_requests: (
@@ -436,7 +471,8 @@ export default function Navbar({ variant = 'floating', logoRef }: { variant?: 'f
                                     <NavIconButton
                                         id="nav-user-menu-trigger"
                                         variant={variant}
-                                        showBadge={!!(user?.received_friend_requests && user.received_friend_requests.length > 0)}
+                                        showBadge={!!(user?.received_friend_requests && user.received_friend_requests.length > 0) || unreadMessagesCount > 0}
+                                        badgeClassName="lg:hidden"
                                     >
                                         <UserAvatar user={user} size={32} />
                                     </NavIconButton>
@@ -449,6 +485,7 @@ export default function Navbar({ variant = 'floating', logoRef }: { variant?: 'f
                                             navigate={navigate}
                                             theme={theme}
                                             themeLabels={themeLabels}
+                                            unreadMessagesCount={unreadMessagesCount}
                                         />
                                     ),
                                     theme: (
@@ -460,6 +497,7 @@ export default function Navbar({ variant = 'floating', logoRef }: { variant?: 'f
                                     notifications: (
                                         <NotificationsMainView
                                             user={user!}
+                                            unreadMessagesCount={unreadMessagesCount}
                                         />
                                     ),
                                     friend_requests: (
@@ -499,8 +537,8 @@ export default function Navbar({ variant = 'floating', logoRef }: { variant?: 'f
                                 }
                             }}
                             trigger={
-                                <NavIconButton 
-                                    id="nav-options-menu-trigger" 
+                                <NavIconButton
+                                    id="nav-options-menu-trigger"
                                     variant={variant}
                                     className={variant === 'flat' ? 'bg-transparent! border-transparent! shadow-none' : ''}
                                 >

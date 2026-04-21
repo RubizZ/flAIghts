@@ -1,8 +1,8 @@
 import { useState, useMemo, useEffect, useCallback } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { useGetGlobeAirports } from "@/api/generated/openapi/airports";
-import { AlertCircle, Loader2, Plane, ArrowLeft, ArrowRight, DollarSign, Clock, Calendar, Share2 } from "lucide-react";
-import { useSearchResult } from "@/api/generated/openapi/search";
+import { AlertCircle, Loader2, Plane, ArrowLeft, ArrowRight, DollarSign, Clock, Calendar, Share2, Globe as GlobeIcon, Lock } from "lucide-react";
+import { useSearchResult, useShareSearch, usePrivatizeSearch } from "@/api/generated/openapi/search";
 import type { ItineraryResponse, GlobeAirportResponse, AirportResponse, FriendUser } from "@/api/generated/openapi/model";
 import { useSendMessage } from "@/api/generated/openapi/conversations";
 import { useAuth } from "@/context/AuthContext";
@@ -13,10 +13,12 @@ import SelectedFlightSummary from "@/components/search/SelectedFlightSummary";
 import SmartPopover from "@/components/ui/SmartPopover";
 import UserAvatar from "@/components/ui/UserAvatar";
 import { toast } from "sonner";
+import { useQueryClient } from "@tanstack/react-query";
 
 export default function SearchResults() {
     const { id } = useParams<{ id: string }>();
     const { user, isAuthenticated } = useAuth();
+    const queryClient = useQueryClient();
     const navigate = useNavigate();
     const [sortBy, setSortBy] = useState<'price' | 'duration'>('price');
     const [hoveredItinerary, setHoveredItinerary] = useState<ItineraryResponse | null>(null);
@@ -60,7 +62,7 @@ export default function SearchResults() {
     const { mutate: sendMessage } = useSendMessage({
         mutation: {
             onSuccess: () => {
-                toast.success("Vuelo compartido con éxito");
+                toast.success("Busqueda compartida con exito");
                 window.dispatchEvent(new CustomEvent('send_message'));
                 window.dispatchEvent(new CustomEvent('share_from_results'));
                 setIsSharing(false);
@@ -68,6 +70,38 @@ export default function SearchResults() {
             onError: () => toast.error("Error al compartir")
         }
     });
+
+    // Hooks de compartir/privatizar
+    const { mutateAsync: shareSearch, isPending: isSharingPublic } = useShareSearch({
+        mutation: {
+            onSuccess: () => {
+                queryClient.invalidateQueries({ queryKey: [`/search/${id}`] });
+                queryClient.invalidateQueries({ queryKey: ['infinite'] });
+                toast.success("La búsqueda ahora es pública");
+            },
+            onError: () => toast.error("Error al compartir la búsqueda")
+        }
+    });
+
+    const { mutateAsync: privatizeSearch, isPending: isPrivatizingPublic } = usePrivatizeSearch({
+        mutation: {
+            onSuccess: () => {
+                queryClient.invalidateQueries({ queryKey: [`/search/${id}`] });
+                queryClient.invalidateQueries({ queryKey: ['infinite'] });
+                toast.success("La búsqueda ahora es privada");
+            },
+            onError: () => toast.error("Error al privatizar la búsqueda")
+        }
+    });
+
+    const togglePublic = () => {
+        if (!data) return;
+        if (data.shared) {
+            privatizeSearch({ searchId: id! });
+        } else {
+            shareSearch({ searchId: id! });
+        }
+    };
 
     const searchData = data;
 
@@ -354,8 +388,32 @@ export default function SearchResults() {
                                         </div>
                                     </div>
 
-                                    {/* Share Button - Now in the top row */}
-                                    <div className="shrink-0">
+                                    {/* Actions: Privacy Toggle & Share Button */}
+                                    <div className="shrink-0 flex items-center gap-2">
+                                        {isAuthenticated && user?._id === data?.user_id && (
+                                            <button
+                                                onClick={(e) => {
+                                                    e.preventDefault();
+                                                    e.stopPropagation();
+                                                    togglePublic();
+                                                }}
+                                                disabled={isSharingPublic || isPrivatizingPublic}
+                                                className={`p-2.5 border rounded-xl transition-all group active:scale-95 cursor-pointer ${data?.shared
+                                                    ? 'bg-amber-500/10 text-amber-500 border-amber-500/20 hover:bg-amber-500/20'
+                                                    : 'bg-surface/50 hover:bg-surface border-line/30 text-content-muted hover:text-brand'
+                                                    }`}
+                                                title={data?.shared ? "Hacer privada" : "Hacer pública"}
+                                            >
+                                                {isSharingPublic || isPrivatizingPublic ? (
+                                                    <Loader2 size={18} className="animate-spin" />
+                                                ) : data?.shared ? (
+                                                    <GlobeIcon size={18} />
+                                                ) : (
+                                                    <Lock size={18} />
+                                                )}
+                                            </button>
+                                        )}
+
                                         <SmartPopover
                                             isOpen={isSharing}
                                             setIsOpen={setIsSharing}
@@ -382,10 +440,27 @@ export default function SearchResults() {
                                                             {user.friends.filter((f): f is FriendUser => typeof f !== 'string').map(friend => (
                                                                 <button
                                                                     key={friend._id}
-                                                                    onClick={() => sendMessage({
-                                                                        otherUserId: friend._id,
-                                                                        data: { content: `SHARE_SEARCH:${id}:${data!.origins[0]}:${data!.destinations[0]}` }
-                                                                    })}
+                                                                    onClick={async () => {
+                                                                        // Si es privada y soy el dueño, la hacemos pública antes de compartir
+                                                                        if (!data?.shared && user._id === data?.user_id) {
+                                                                            try {
+                                                                                await shareSearch({ searchId: id! });
+                                                                            } catch (err) {
+                                                                                return; // No compartimos si falla al hacerla pública
+                                                                            }
+                                                                        }
+                                                                        
+                                                                        // Si sigue siendo privada (no soy el dueño), no dejamos compartir
+                                                                        if (!data?.shared && user._id !== data?.user_id) {
+                                                                            toast.error("No puedes compartir una búsqueda privada");
+                                                                            return;
+                                                                        }
+
+                                                                        sendMessage({
+                                                                            otherUserId: friend._id,
+                                                                            data: { content: `SHARE_SEARCH:${id}:${data!.origins[0]}:${data!.destinations[0]}` }
+                                                                        });
+                                                                    }}
                                                                     className="flex items-center gap-2 p-2 hover:bg-surface rounded-xl transition-all text-left w-full group/friend cursor-pointer"
                                                                 >
                                                                     <UserAvatar user={friend} size={32} />

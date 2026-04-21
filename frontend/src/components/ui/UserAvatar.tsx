@@ -9,7 +9,9 @@ interface UserAvatarProps {
 export default function UserAvatar({ user, className = "", size }: UserAvatarProps) {
     const baseUrl = import.meta.env.VITE_BACKEND_API_BASE_URL || "";
     const avatarUrl = user?.profile_picture
-        ? `${baseUrl.replace(/\/$/, '')}${user.profile_picture}`
+        ? (user.profile_picture.startsWith('http') 
+            ? user.profile_picture 
+            : `${baseUrl.replace(/\/$/, '')}${user.profile_picture}`)
         : `https://api.dicebear.com/7.x/avataaars/svg?seed=${user?._id || 'default'}`;
 
     return (

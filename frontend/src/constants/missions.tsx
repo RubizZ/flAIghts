@@ -115,6 +115,46 @@ const ShareFromChatListener: React.FC = () => {
     return null;
 };
 
+const OpenAirportCardListener: React.FC = () => {
+    const { completeStep } = useMissions();
+    useEffect(() => {
+        const handle = () => completeStep('manual_search_mission', 'open_airport_card');
+        window.addEventListener('app:open-airport-card', handle);
+        return () => window.removeEventListener('app:open-airport-card', handle);
+    }, [completeStep]);
+    return null;
+};
+
+const AddAirportListener: React.FC = () => {
+    const { completeStep } = useMissions();
+    useEffect(() => {
+        const handle = () => completeStep('manual_search_mission', 'add_airport');
+        window.addEventListener('app:add-airport', handle);
+        return () => window.removeEventListener('app:add-airport', handle);
+    }, [completeStep]);
+    return null;
+};
+
+const OpenMapListener: React.FC = () => {
+    const { completeStep } = useMissions();
+    useEffect(() => {
+        const handle = () => completeStep('manual_search_mission', 'open_map');
+        window.addEventListener('app:open-map', handle);
+        return () => window.removeEventListener('app:open-map', handle);
+    }, [completeStep]);
+    return null;
+};
+
+const SelectOnMapListener: React.FC = () => {
+    const { completeStep } = useMissions();
+    useEffect(() => {
+        const handle = () => completeStep('manual_search_mission', 'select_on_map');
+        window.addEventListener('app:select-on-map', handle);
+        return () => window.removeEventListener('app:select-on-map', handle);
+    }, [completeStep]);
+    return null;
+};
+
 const ManualSearchStepListener: React.FC = () => {
     const { completeStep } = useMissions();
     const searchMutations = useMutationState({
@@ -166,33 +206,23 @@ const AIFlightsReturnedListener: React.FC = () => {
     return null;
 };
 
-const AIHistoryStepListener: React.FC = () => {
+const AIGetUserInfoListener: React.FC = () => {
     const { completeStep } = useMissions();
-
-    const chatMutations = useMutationState({
-        filters: {
-            predicate: (mutation) =>
-                [agentChatKey, agentStreamKey].includes(mutation.options.mutationKey?.[0] as string) &&
-                mutation.state.status === 'success'
-        },
-        select: (mutation) => mutation.state.variables as any,
-    });
-
     useEffect(() => {
-        const hasRequestedHistory = chatMutations.some(vars => {
-            // Normalizar acceso a mensajes (openapi usa 'data', asyncapi usa 'body')
-            const messages = vars?.data?.messages || vars?.body?.messages;
-            return messages?.some((m: any) =>
-                m.content?.toLowerCase().includes('historial') ||
-                m.content?.toLowerCase().includes('pasado')
-            );
-        });
+        const handle = () => completeStep('ai_mission', 'get_user_info');
+        window.addEventListener('app:agent-get-user-info', handle);
+        return () => window.removeEventListener('app:agent-get-user-info', handle);
+    }, [completeStep]);
+    return null;
+};
 
-        if (hasRequestedHistory) {
-            completeStep('ai_mission', 'perform_ai_search_2');
-        }
-    }, [chatMutations, completeStep]);
-
+const AIGetSearchHistoryListener: React.FC = () => {
+    const { completeStep } = useMissions();
+    useEffect(() => {
+        const handle = () => completeStep('ai_mission', 'get_search_history');
+        window.addEventListener('app:agent-get-user-search-history', handle);
+        return () => window.removeEventListener('app:agent-get-user-search-history', handle);
+    }, [completeStep]);
     return null;
 };
 
@@ -299,9 +329,33 @@ export const MISSIONS: BaseMission[] = [
         dependsOn: ['profile_mission'],
         steps: [
             {
+                id: 'open_airport_card',
+                title: 'Abre el selector de aeropuertos',
+                description: 'Haz clic en el campo de Origen o Destino para abrir el buscador.',
+                listener: OpenAirportCardListener
+            },
+            {
+                id: 'add_airport',
+                title: 'Selecciona un aeropuerto',
+                description: 'Escribe el nombre de una ciudad o aeropuerto y selecciónalo de la lista.',
+                listener: AddAirportListener
+            },
+            {
+                id: 'open_map',
+                title: 'Abre el mapa interactivo',
+                description: 'Usa el botón de mapa en los inputs o haz clic directamente en el globo para entrar en modo interacción.',
+                listener: OpenMapListener
+            },
+            {
+                id: 'select_on_map',
+                title: 'Selecciona desde el mapa',
+                description: 'Busca un aeropuerto en el globo y selecciónalo como origen o destino usando el menú contextual o la tarjeta de información.',
+                listener: SelectOnMapListener
+            },
+            {
                 id: 'perform_manual_search',
                 title: 'Búsqueda manual',
-                description: 'Realiza una busqueda rellenando los campos necesarios.',
+                description: 'Completa los campos restantes y realiza la búsqueda pulsando en "Explorar vuelos".',
                 listener: ManualSearchStepListener
             },
             {
@@ -357,6 +411,18 @@ export const MISSIONS: BaseMission[] = [
                 title: 'Usa la IA',
                 description: 'Escribe un mensaje al agente.',
                 listener: AIChatStepListener
+            },
+            {
+                id: 'get_user_info',
+                title: 'Tus preferencias',
+                description: 'Pregúntale al agente qué sabe sobre tus gustos.',
+                listener: AIGetUserInfoListener
+            },
+            {
+                id: 'get_search_history',
+                title: 'Tu historial',
+                description: 'Pídele al agente que consulte tus búsquedas anteriores.',
+                listener: AIGetSearchHistoryListener
             },
             {
                 id: 'receive_ai_flights',

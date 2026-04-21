@@ -273,6 +273,15 @@
           },
           "profile_picture": {
             "type": "string"
+          },
+          "google_id": {
+            "type": "string"
+          },
+          "google_email": {
+            "type": "string"
+          },
+          "is_password_set": {
+            "type": "boolean"
           }
         },
         "required": [
@@ -288,7 +297,8 @@
           "auth_version",
           "friends",
           "sent_friend_requests",
-          "received_friend_requests"
+          "received_friend_requests",
+          "is_password_set"
         ],
         "type": "object",
         "additionalProperties": false
@@ -860,6 +870,15 @@
           },
           "profile_picture": {
             "type": "string"
+          },
+          "google_id": {
+            "type": "string"
+          },
+          "google_email": {
+            "type": "string"
+          },
+          "is_password_set": {
+            "type": "boolean"
           }
         },
         "required": [
@@ -875,7 +894,8 @@
           "role",
           "created_at",
           "last_seen_at",
-          "auth_version"
+          "auth_version",
+          "is_password_set"
         ],
         "type": "object",
         "description": "From T, pick a set of properties whose keys are in the union K"
@@ -968,6 +988,15 @@
           },
           "profile_picture": {
             "type": "string"
+          },
+          "google_id": {
+            "type": "string"
+          },
+          "google_email": {
+            "type": "string"
+          },
+          "is_password_set": {
+            "type": "boolean"
           }
         },
         "required": [
@@ -983,7 +1012,8 @@
           "role",
           "created_at",
           "last_seen_at",
-          "auth_version"
+          "auth_version",
+          "is_password_set"
         ],
         "type": "object",
         "additionalProperties": false
@@ -3888,11 +3918,8 @@
         ],
         "type": "object"
       },
-      "LoginRequestValidationFailResponse": {
-        "$ref": "#/components/schemas/RequestValidationFailResponse_ValidationDetails_BodyPath_LoginRequest___"
-      },
       "LoginValidationFailResponse": {
-        "$ref": "#/components/schemas/LoginRequestValidationFailResponse"
+        "$ref": "#/components/schemas/RequestValidationFailResponse_ValidationDetails_BodyPath_LoginRequest___"
       },
       "FailResponse_INVALID_CREDENTIALS._identifier-string__": {
         "properties": {
@@ -3973,6 +4000,119 @@
         "type": "object",
         "additionalProperties": false
       },
+      "ValidationDetails_BodyPath_GoogleLoginRequest__": {
+        "properties": {
+          "body": {
+            "properties": {
+              "value": {},
+              "message": {
+                "type": "string",
+                "enum": [
+                  "'body' is required",
+                  "invalid object"
+                ]
+              }
+            },
+            "required": [
+              "message"
+            ],
+            "type": "object"
+          },
+          "body.responseType": {
+            "properties": {
+              "value": {},
+              "message": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "message"
+            ],
+            "type": "object"
+          },
+          "body.credential": {
+            "properties": {
+              "value": {},
+              "message": {
+                "type": "string",
+                "enum": [
+                  "'credential' is required",
+                  "invalid string value"
+                ]
+              }
+            },
+            "required": [
+              "message"
+            ],
+            "type": "object"
+          }
+        },
+        "type": "object",
+        "description": "Generador de estructura de detalles.\r\nTransforma una unión de llaves ('body' | 'body.id') en el objeto que TSOA espera."
+      },
+      "RequestValidationFailResponse_ValidationDetails_BodyPath_GoogleLoginRequest___": {
+        "properties": {
+          "data": {
+            "properties": {
+              "details": {
+                "$ref": "#/components/schemas/ValidationDetails_BodyPath_GoogleLoginRequest__"
+              },
+              "message": {
+                "type": "string"
+              },
+              "code": {
+                "type": "string",
+                "enum": [
+                  "REQUEST_VALIDATION_ERROR"
+                ],
+                "nullable": false
+              }
+            },
+            "required": [
+              "details",
+              "message",
+              "code"
+            ],
+            "type": "object"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "fail"
+            ],
+            "nullable": false
+          }
+        },
+        "required": [
+          "data",
+          "status"
+        ],
+        "type": "object"
+      },
+      "GoogleLoginValidationFailResponse": {
+        "$ref": "#/components/schemas/RequestValidationFailResponse_ValidationDetails_BodyPath_GoogleLoginRequest___"
+      },
+      "GoogleLoginRequest": {
+        "properties": {
+          "credential": {
+            "type": "string"
+          },
+          "responseType": {
+            "type": "string",
+            "enum": [
+              "cookie",
+              "json"
+            ],
+            "description": "Indicates how the token should be returned.",
+            "default": "json"
+          }
+        },
+        "required": [
+          "credential"
+        ],
+        "type": "object",
+        "additionalProperties": false
+      },
       "MessageResponseData": {
         "description": "Respuesta de éxito solo con mensaje (sin datos).\r\nEl wrapper global lo convertirá en: { status: 'success', data: { message: string } }",
         "properties": {
@@ -4006,6 +4146,191 @@
         ],
         "type": "object",
         "additionalProperties": false
+      },
+      "ValidationDetails_BodyPath_GoogleConnectRequest__": {
+        "properties": {
+          "body": {
+            "properties": {
+              "value": {},
+              "message": {
+                "type": "string",
+                "enum": [
+                  "'body' is required",
+                  "invalid object"
+                ]
+              }
+            },
+            "required": [
+              "message"
+            ],
+            "type": "object"
+          },
+          "body.credential": {
+            "properties": {
+              "value": {},
+              "message": {
+                "type": "string",
+                "enum": [
+                  "'credential' is required",
+                  "invalid string value"
+                ]
+              }
+            },
+            "required": [
+              "message"
+            ],
+            "type": "object"
+          }
+        },
+        "type": "object",
+        "description": "Generador de estructura de detalles.\r\nTransforma una unión de llaves ('body' | 'body.id') en el objeto que TSOA espera."
+      },
+      "RequestValidationFailResponse_ValidationDetails_BodyPath_GoogleConnectRequest___": {
+        "properties": {
+          "data": {
+            "properties": {
+              "details": {
+                "$ref": "#/components/schemas/ValidationDetails_BodyPath_GoogleConnectRequest__"
+              },
+              "message": {
+                "type": "string"
+              },
+              "code": {
+                "type": "string",
+                "enum": [
+                  "REQUEST_VALIDATION_ERROR"
+                ],
+                "nullable": false
+              }
+            },
+            "required": [
+              "details",
+              "message",
+              "code"
+            ],
+            "type": "object"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "fail"
+            ],
+            "nullable": false
+          }
+        },
+        "required": [
+          "data",
+          "status"
+        ],
+        "type": "object"
+      },
+      "GoogleConnectValidationFailResponse": {
+        "$ref": "#/components/schemas/RequestValidationFailResponse_ValidationDetails_BodyPath_GoogleConnectRequest___"
+      },
+      "FailResponse_GOOGLE_ACCOUNT_ALREADY_LINKED._email-string__": {
+        "properties": {
+          "data": {
+            "properties": {
+              "details": {
+                "properties": {
+                  "email": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "email"
+                ],
+                "type": "object"
+              },
+              "message": {
+                "type": "string"
+              },
+              "code": {
+                "type": "string",
+                "enum": [
+                  "GOOGLE_ACCOUNT_ALREADY_LINKED"
+                ],
+                "nullable": false
+              }
+            },
+            "required": [
+              "details",
+              "message",
+              "code"
+            ],
+            "type": "object"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "fail"
+            ],
+            "nullable": false
+          }
+        },
+        "required": [
+          "data",
+          "status"
+        ],
+        "type": "object",
+        "description": "Tipo genérico base para respuestas de error con código y detalles opcionales."
+      },
+      "FailResponseFromError_GoogleAccountAlreadyLinkedError_": {
+        "$ref": "#/components/schemas/FailResponse_GOOGLE_ACCOUNT_ALREADY_LINKED._email-string__",
+        "description": "Extrae automáticamente code y details de una clase AppError.\r\n\r\nEjemplo:\r\n- FailResponseFromError<UserAlreadyExistsError> → { status: 'fail', data: { code: 'CONFLICT', message: string, details: { field, value } } }\r\n- FailResponseFromError<UserNotFoundError> → { status: 'fail', data: { code: 'NOT_FOUND', message: string, details: { userId } } }"
+      },
+      "GoogleConnectRequest": {
+        "properties": {
+          "credential": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "credential"
+        ],
+        "type": "object",
+        "additionalProperties": false
+      },
+      "FailResponse_CANNOT_DISCONNECT_GOOGLE_WITHOUT_PASSWORD.undefined_": {
+        "properties": {
+          "data": {
+            "properties": {
+              "details": {},
+              "message": {
+                "type": "string"
+              },
+              "code": {
+                "type": "string",
+                "enum": [
+                  "CANNOT_DISCONNECT_GOOGLE_WITHOUT_PASSWORD"
+                ],
+                "nullable": false
+              }
+            },
+            "required": [
+              "message",
+              "code"
+            ],
+            "type": "object"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "fail"
+            ],
+            "nullable": false
+          }
+        },
+        "required": [
+          "data",
+          "status"
+        ],
+        "type": "object",
+        "description": "Tipo genérico base para respuestas de error con código y detalles opcionales."
+      },
+      "FailResponseFromError_CannotDisconnectGoogleWithoutPasswordError_": {
+        "$ref": "#/components/schemas/FailResponse_CANNOT_DISCONNECT_GOOGLE_WITHOUT_PASSWORD.undefined_",
+        "description": "Extrae automáticamente code y details de una clase AppError.\r\n\r\nEjemplo:\r\n- FailResponseFromError<UserAlreadyExistsError> → { status: 'fail', data: { code: 'CONFLICT', message: string, details: { field, value } } }\r\n- FailResponseFromError<UserNotFoundError> → { status: 'fail', data: { code: 'NOT_FOUND', message: string, details: { userId } } }"
       },
       "ValidationDetails_BodyPath_ChangePasswordRequest__": {
         "properties": {
@@ -4284,6 +4609,151 @@
         "required": [
           "oldPassword",
           "newPassword"
+        ],
+        "type": "object",
+        "additionalProperties": false
+      },
+      "ValidationDetails_BodyPath_SetPasswordRequest__": {
+        "properties": {
+          "body": {
+            "properties": {
+              "value": {},
+              "message": {
+                "type": "string",
+                "enum": [
+                  "'body' is required",
+                  "invalid object"
+                ]
+              }
+            },
+            "required": [
+              "message"
+            ],
+            "type": "object"
+          },
+          "body.password": {
+            "properties": {
+              "value": {},
+              "message": {
+                "type": "string",
+                "enum": [
+                  "'password' is required",
+                  "invalid string value",
+                  "minLength 8"
+                ]
+              }
+            },
+            "required": [
+              "message"
+            ],
+            "type": "object"
+          }
+        },
+        "type": "object",
+        "description": "Generador de estructura de detalles.\r\nTransforma una unión de llaves ('body' | 'body.id') en el objeto que TSOA espera."
+      },
+      "RequestValidationFailResponse_ValidationDetails_BodyPath_SetPasswordRequest___": {
+        "properties": {
+          "data": {
+            "properties": {
+              "details": {
+                "$ref": "#/components/schemas/ValidationDetails_BodyPath_SetPasswordRequest__"
+              },
+              "message": {
+                "type": "string"
+              },
+              "code": {
+                "type": "string",
+                "enum": [
+                  "REQUEST_VALIDATION_ERROR"
+                ],
+                "nullable": false
+              }
+            },
+            "required": [
+              "details",
+              "message",
+              "code"
+            ],
+            "type": "object"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "fail"
+            ],
+            "nullable": false
+          }
+        },
+        "required": [
+          "data",
+          "status"
+        ],
+        "type": "object"
+      },
+      "SetPasswordRequestValidationFailResponse": {
+        "$ref": "#/components/schemas/RequestValidationFailResponse_ValidationDetails_BodyPath_SetPasswordRequest___"
+      },
+      "SetPasswordValidationFailResponse": {
+        "anyOf": [
+          {
+            "$ref": "#/components/schemas/SetPasswordRequestValidationFailResponse"
+          },
+          {
+            "$ref": "#/components/schemas/DatabaseValidationFailResponse"
+          }
+        ]
+      },
+      "FailResponse_PASSWORD_ALREADY_SET.undefined_": {
+        "properties": {
+          "data": {
+            "properties": {
+              "details": {},
+              "message": {
+                "type": "string"
+              },
+              "code": {
+                "type": "string",
+                "enum": [
+                  "PASSWORD_ALREADY_SET"
+                ],
+                "nullable": false
+              }
+            },
+            "required": [
+              "message",
+              "code"
+            ],
+            "type": "object"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "fail"
+            ],
+            "nullable": false
+          }
+        },
+        "required": [
+          "data",
+          "status"
+        ],
+        "type": "object",
+        "description": "Tipo genérico base para respuestas de error con código y detalles opcionales."
+      },
+      "FailResponseFromError_PasswordAlreadySetError_": {
+        "$ref": "#/components/schemas/FailResponse_PASSWORD_ALREADY_SET.undefined_",
+        "description": "Extrae automáticamente code y details de una clase AppError.\r\n\r\nEjemplo:\r\n- FailResponseFromError<UserAlreadyExistsError> → { status: 'fail', data: { code: 'CONFLICT', message: string, details: { field, value } } }\r\n- FailResponseFromError<UserNotFoundError> → { status: 'fail', data: { code: 'NOT_FOUND', message: string, details: { userId } } }"
+      },
+      "SetPasswordRequest": {
+        "properties": {
+          "password": {
+            "type": "string",
+            "minLength": 8
+          }
+        },
+        "required": [
+          "password"
         ],
         "type": "object",
         "additionalProperties": false
@@ -7132,6 +7602,173 @@
         }
       }
     },
+    "/auth/login/google": {
+      "post": {
+        "operationId": "LoginWithGoogle",
+        "responses": {
+          "200": {
+            "description": "Ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse_LoginResponseData_"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token de Google inválido",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FailResponseFromError_InvalidTokenError_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Error de validación",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GoogleLoginValidationFailResponse"
+                }
+              }
+            }
+          }
+        },
+        "description": "Inicia sesión o registra usuario mediante Google OAuth.",
+        "tags": [
+          "Auth"
+        ],
+        "security": [],
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GoogleLoginRequest"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/google/connect": {
+      "post": {
+        "operationId": "ConnectGoogle",
+        "responses": {
+          "200": {
+            "description": "Ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse_MessageResponseData_"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No autenticado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthFailResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Cuenta de Google ya vinculada",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FailResponseFromError_GoogleAccountAlreadyLinkedError_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Error de validación",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GoogleConnectValidationFailResponse"
+                }
+              }
+            }
+          }
+        },
+        "description": "Vincula la cuenta de Google al usuario actual.",
+        "tags": [
+          "Auth"
+        ],
+        "security": [
+          {
+            "jwt": []
+          }
+        ],
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GoogleConnectRequest"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/google/disconnect": {
+      "post": {
+        "operationId": "DisconnectGoogle",
+        "responses": {
+          "200": {
+            "description": "Ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse_MessageResponseData_"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Debe establecer una contraseña primero",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FailResponseFromError_CannotDisconnectGoogleWithoutPasswordError_"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No autenticado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthFailResponse"
+                }
+              }
+            }
+          }
+        },
+        "description": "Desvincula la cuenta de Google del usuario actual.",
+        "tags": [
+          "Auth"
+        ],
+        "security": [
+          {
+            "jwt": []
+          }
+        ],
+        "parameters": []
+      }
+    },
     "/auth/logout": {
       "post": {
         "operationId": "Logout",
@@ -7263,6 +7900,73 @@
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/ChangePasswordRequest"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/set-password": {
+      "post": {
+        "operationId": "SetPassword",
+        "responses": {
+          "200": {
+            "description": "Ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse_MessageResponseData_"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Contraseña ya establecida",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FailResponseFromError_PasswordAlreadySetError_"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No autenticado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthFailResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Error de validación",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SetPasswordValidationFailResponse"
+                }
+              }
+            }
+          }
+        },
+        "description": "Establece la contraseña por primera vez para el usuario autenticado (si no tiene una).",
+        "tags": [
+          "Auth"
+        ],
+        "security": [
+          {
+            "jwt": []
+          }
+        ],
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetPasswordRequest"
               }
             }
           }

@@ -6,7 +6,6 @@ import type { SuccessResponse, FailResponseFromError } from "../../utils/respons
 import type { PaginatedMessagesResponse, PaginatedConversationsResponse, MessageResponse, ChatClientMessage, ChatServerMessage } from "./message.types.js";
 import { NotFriendsError, UserNotFoundError } from "../users/user.errors.js";
 import { UserService } from "../users/user.service.js";
-import { SearchService } from "../search/search.service.js";
 import { AsyncAPIChannel, AsyncAPIController } from "../../utils/asyncapi.decorators.js";
 import type { TypedWebSocket } from "../../utils/asyncapi.utils.js";
 
@@ -19,8 +18,7 @@ export class ConversationController extends Controller {
 
     constructor(
         @inject(MessageService) private readonly messageService: MessageService,
-        @inject(UserService) private readonly userService: UserService,
-        @inject(SearchService) private readonly searchService: SearchService
+        @inject(UserService) private readonly userService: UserService
     ) {
         super();
     }
@@ -74,14 +72,6 @@ export class ConversationController extends Controller {
         const message = await this.messageService.createMessage(user._id, otherUserId, body.content);
         const formatted = this.messageService.formatMessageResponse(message);
 
-        // Make search public if shared
-        if (body.content.startsWith("SHARE_SEARCH:")) {
-            const searchId = body.content.split(":")[1];
-            if (searchId) {
-                await this.searchService.shareSearch(searchId, user._id).catch(() => { });
-            }
-        }
-
         // Notify via Sockets for real-time delivery
         this.messageService.emitToUser(otherUserId, { type: 'receiveMessage', message: formatted });
         this.messageService.emitToUser(user._id, { type: 'receiveMessage', message: formatted });
@@ -117,13 +107,6 @@ export class ConversationController extends Controller {
                 if (data.type === 'sendMessage') {
                     const message = await this.messageService.createMessage(user._id, data.receiverId, data.content);
                     const formatted = this.messageService.formatMessageResponse(message);
-
-                    if (data.content.startsWith("SHARE_SEARCH:")) {
-                        const searchId = data.content.split(":")[1];
-                        if (searchId) {
-                            await this.searchService.shareSearch(searchId, user._id).catch(() => { });
-                        }
-                    }
 
                     const receiveEvent: ChatServerMessage = { type: 'receiveMessage', message: formatted };
                     typedWs.send(JSON.stringify(receiveEvent) as any);
