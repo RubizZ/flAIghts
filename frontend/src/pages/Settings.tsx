@@ -332,12 +332,12 @@ export default function Settings() {
                                 </div>
                             </div>
 
-                            <nav className="flex flex-col gap-1">
+                            <nav className="flex flex-col gap-1 w-full">
                                 {tabs.map((tab) => (
                                     <button
                                         key={tab.id}
                                         onClick={() => setActiveTab(tab.id)}
-                                        className={`flex items-center gap-3 p-3 rounded-2xl font-bold transition-all cursor-pointer ${activeTab === tab.id
+                                        className={`w-full flex items-center gap-3 p-3 rounded-2xl font-bold transition-all cursor-pointer ${activeTab === tab.id
                                             ? 'bg-brand/10 text-brand'
                                             : 'bg-main text-content-muted font-medium hover:bg-surface'
                                             }`}
@@ -348,7 +348,7 @@ export default function Settings() {
                                                 <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-brand border-2 border-white dark:border-slate-900 rounded-full animate-pulse shadow-sm" />
                                             )}
                                         </div>
-                                        {tab.label}
+                                        <span>{tab.label}</span>
                                     </button>
                                 ))}
                             </nav>

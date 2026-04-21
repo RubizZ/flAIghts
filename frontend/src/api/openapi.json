@@ -2649,6 +2649,9 @@
             },
             "type": "array"
           },
+          "shared": {
+            "type": "boolean"
+          },
           "created_at": {
             "type": "string"
           }
@@ -2661,6 +2664,7 @@
           "criteria",
           "status",
           "source",
+          "shared",
           "created_at"
         ],
         "type": "object",
@@ -3190,7 +3194,7 @@
         "type": "object",
         "additionalProperties": false
       },
-      "ValidationDetails_PathPath__userId-string__-or-QueryPath__page-number--limit-number___": {
+      "ValidationDetails_PathPath__userId-string__-or-QueryPath__page-number--limit-number--origin_63_-string--destination_63_-string--status_63_-string--minPrice_63_-number--maxPrice_63_-number--startDate_63_-string--endDate_63_-string--sharedOnly_63_-boolean___": {
         "properties": {
           "query": {
             "properties": {
@@ -3251,17 +3255,113 @@
               "message"
             ],
             "type": "object"
+          },
+          "query.origin": {
+            "properties": {
+              "value": {},
+              "message": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "message"
+            ],
+            "type": "object"
+          },
+          "query.destination": {
+            "properties": {
+              "value": {},
+              "message": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "message"
+            ],
+            "type": "object"
+          },
+          "query.status": {
+            "properties": {
+              "value": {},
+              "message": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "message"
+            ],
+            "type": "object"
+          },
+          "query.minPrice": {
+            "properties": {
+              "value": {},
+              "message": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "message"
+            ],
+            "type": "object"
+          },
+          "query.maxPrice": {
+            "properties": {
+              "value": {},
+              "message": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "message"
+            ],
+            "type": "object"
+          },
+          "query.startDate": {
+            "properties": {
+              "value": {},
+              "message": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "message"
+            ],
+            "type": "object"
+          },
+          "query.endDate": {
+            "properties": {
+              "value": {},
+              "message": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "message"
+            ],
+            "type": "object"
+          },
+          "query.sharedOnly": {
+            "properties": {
+              "value": {},
+              "message": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "message"
+            ],
+            "type": "object"
           }
         },
         "type": "object",
         "description": "Generador de estructura de detalles.\r\nTransforma una unión de llaves ('body' | 'body.id') en el objeto que TSOA espera."
       },
-      "RequestValidationFailResponse_ValidationDetails_PathPath__userId-string__-or-QueryPath__page-number--limit-number____": {
+      "RequestValidationFailResponse_ValidationDetails_PathPath__userId-string__-or-QueryPath__page-number--limit-number--origin_63_-string--destination_63_-string--status_63_-string--minPrice_63_-number--maxPrice_63_-number--startDate_63_-string--endDate_63_-string--sharedOnly_63_-boolean____": {
         "properties": {
           "data": {
             "properties": {
               "details": {
-                "$ref": "#/components/schemas/ValidationDetails_PathPath__userId-string__-or-QueryPath__page-number--limit-number___"
+                "$ref": "#/components/schemas/ValidationDetails_PathPath__userId-string__-or-QueryPath__page-number--limit-number--origin_63_-string--destination_63_-string--status_63_-string--minPrice_63_-number--maxPrice_63_-number--startDate_63_-string--endDate_63_-string--sharedOnly_63_-boolean___"
               },
               "message": {
                 "type": "string"
@@ -5844,9 +5944,6 @@
             "type": "string",
             "format": "date-time"
           },
-          "reason": {
-            "type": "string"
-          },
           "status": {
             "type": "string",
             "enum": [
@@ -5855,6 +5952,9 @@
               "rejected"
             ]
           },
+          "reason": {
+            "type": "string"
+          },
           "updated_at": {
             "type": "string",
             "format": "date-time"
@@ -5862,8 +5962,8 @@
         },
         "required": [
           "created_at",
-          "reason",
           "status",
+          "reason",
           "updated_at"
         ],
         "type": "object",
@@ -5875,9 +5975,6 @@
             "type": "string",
             "format": "date-time"
           },
-          "reason": {
-            "type": "string"
-          },
           "status": {
             "type": "string",
             "enum": [
@@ -5885,6 +5982,9 @@
               "resolved",
               "rejected"
             ]
+          },
+          "reason": {
+            "type": "string"
           },
           "updated_at": {
             "type": "string",
@@ -5899,8 +5999,8 @@
         },
         "required": [
           "created_at",
-          "reason",
           "status",
+          "reason",
           "updated_at",
           "airport_iata"
         ],
@@ -6085,6 +6185,13 @@
             },
             "type": "array"
           },
+          "susResults": {
+            "items": {
+              "type": "number",
+              "format": "double"
+            },
+            "type": "array"
+          },
           "timestamp": {
             "type": "string",
             "format": "date-time"
@@ -6114,6 +6221,13 @@
           "results": {
             "items": {
               "$ref": "#/components/schemas/SurveyResult"
+            },
+            "type": "array"
+          },
+          "susResults": {
+            "items": {
+              "type": "number",
+              "format": "double"
             },
             "type": "array"
           },
@@ -7517,7 +7631,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/RequestValidationFailResponse_ValidationDetails_PathPath__userId-string__-or-QueryPath__page-number--limit-number____"
+                  "$ref": "#/components/schemas/RequestValidationFailResponse_ValidationDetails_PathPath__userId-string__-or-QueryPath__page-number--limit-number--origin_63_-string--destination_63_-string--status_63_-string--minPrice_63_-number--maxPrice_63_-number--startDate_63_-string--endDate_63_-string--sharedOnly_63_-boolean____"
                 }
               }
             }
@@ -7558,6 +7672,72 @@
               "default": 10,
               "format": "double",
               "type": "number"
+            }
+          },
+          {
+            "in": "query",
+            "name": "origin",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "destination",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "minPrice",
+            "required": false,
+            "schema": {
+              "format": "double",
+              "type": "number"
+            }
+          },
+          {
+            "in": "query",
+            "name": "maxPrice",
+            "required": false,
+            "schema": {
+              "format": "double",
+              "type": "number"
+            }
+          },
+          {
+            "in": "query",
+            "name": "startDate",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "endDate",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "sharedOnly",
+            "required": false,
+            "schema": {
+              "type": "boolean"
             }
           }
         ]

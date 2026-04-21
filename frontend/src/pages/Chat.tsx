@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, UIEvent, useCallback } from "react";
+import { useState, useEffect, useRef, UIEvent, useCallback, ChangeEvent } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { ArrowLeft, Send, Loader2, CheckCheck, Plane, X, History, Calendar, MapPin } from "lucide-react";
 import { useGetUserById } from "@/api/generated/openapi/users";
@@ -202,6 +202,8 @@ export default function Chat() {
             receiverId: userId!,
             content: `SHARE_SEARCH:${search._id}:${origins}:${destinations}`,
         });
+        window.dispatchEvent(new CustomEvent('send_message'));
+        window.dispatchEvent(new CustomEvent('share_search'));
         setIsShareModalOpen(false);
     };
 
@@ -214,6 +216,7 @@ export default function Chat() {
             receiverId: userId,
             content: newMessage.trim(),
         });
+        window.dispatchEvent(new CustomEvent('send_message'));
 
         setNewMessage("");
     };
@@ -252,7 +255,7 @@ export default function Chat() {
     }
 
     return (
-        <div className="h-full w-full px-2 py-4 sm:px-6 sm:py-6 sm:pt-20 flex justify-center">
+        <div className="h-full w-full px-2 py-4 sm:px-6 sm:py-6 flex justify-center">
             <div className="flex flex-col w-full h-[calc(100vh-5.5rem)] sm:h-full max-w-4xl bg-main rounded-3xl border border-line shadow-lg overflow-hidden animate-in fade-in duration-300">
 
                 <header className="flex items-center gap-4 p-4 border-b border-line shrink-0">
@@ -349,7 +352,7 @@ export default function Chat() {
                                 <h3 className="text-xs font-bold uppercase tracking-wider text-content-muted flex items-center gap-2">
                                     <History size={14} /> Tus búsquedas recientes
                                 </h3>
-                                <button onClick={() => setIsShareModalOpen(false)} className="text-content-muted hover:text-content">
+                                <button onClick={() => setIsShareModalOpen(false)} className="text-content-muted hover:text-content cursor-pointer">
                                     <X size={16} />
                                 </button>
                             </div>
@@ -363,7 +366,7 @@ export default function Chat() {
                                         <button
                                             key={search._id}
                                             onClick={() => handleShareSearch(search)}
-                                            className="flex flex-col gap-1 p-3 rounded-xl hover:bg-surface border border-transparent hover:border-line transition-all text-left group"
+                                            className="flex flex-col gap-1 p-3 rounded-xl hover:bg-surface border border-transparent hover:border-line transition-all text-left group cursor-pointer"
                                         >
                                             <div className="flex items-center justify-between">
                                                 <div className="font-bold text-sm text-content flex items-center gap-2">
@@ -395,7 +398,7 @@ export default function Chat() {
                         </button>
                         <TextareaAutosize
                             value={newMessage}
-                            onChange={(e) => setNewMessage(e.target.value)}
+                            onChange={(e: ChangeEvent<HTMLTextAreaElement>) => setNewMessage(e.target.value)}
                             onKeyDown={handleKeyDown}
                             placeholder="Escribe un mensaje..."
                             className="flex-1 bg-surface placeholder-content-muted outline-none px-4 pt-3 pb-3.5 rounded-xl font-medium border border-line focus:border-brand shadow-sm resize-none custom-scrollbar"
@@ -407,7 +410,7 @@ export default function Chat() {
                             type="submit"
                             disabled={newMessage.trim() === "" || wsStatus !== 'open'}
                             title={wsStatus !== 'open' ? 'Conectando al chat...' : 'Enviar mensaje'}
-                            className="p-3 bg-brand text-content-on-brand rounded-full hover:bg-brand/90 transition-all shadow-lg shadow-brand/20 active:scale-95 disabled:bg-brand/50 disabled:cursor-not-allowed disabled:scale-100"
+                            className="p-3 bg-brand text-content-on-brand rounded-full hover:bg-brand/90 transition-all shadow-lg shadow-brand/20 active:scale-95 disabled:bg-brand/50 disabled:cursor-not-allowed disabled:scale-100 cursor-pointer"
                             aria-label="Enviar mensaje"
                         >
                             <Send size={20} />

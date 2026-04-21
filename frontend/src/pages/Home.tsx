@@ -10,6 +10,7 @@ import ManualSearchForm from "../components/search/ManualSearchForm.tsx";
 import NavIconButton from "../components/ui/NavIconButton.tsx";
 import AirportReportModal from "../components/search/AirportReportModal.tsx";
 import HomeCard from "../components/home/HomeCard.tsx";
+import { useNavLogo } from "@/context/NavLogoContext";
 
 export default function Home() {
     const [origins, setOrigins] = useState<AirportResponse[]>([]);
@@ -54,6 +55,16 @@ export default function Home() {
     }, []);
 
     const navigate = useNavigate();
+    const { hideLogo, showLogo } = useNavLogo();
+
+    useEffect(() => {
+        if (isSelectingOnMap) {
+            hideLogo();
+        } else {
+            showLogo();
+        }
+        return () => showLogo(); // Restore on unmount
+    }, [isSelectingOnMap]);
 
     useEffect(() => {
         if (!isLargeScreen && isUserInteracting && isMobileCardExpanded) {

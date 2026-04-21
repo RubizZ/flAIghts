@@ -13,18 +13,19 @@ import { useNavigate, useParams, Link } from "react-router-dom";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/context/AuthContext";
-import { Lock, MessageCircle, UserMinus, Share2 } from "lucide-react";
+import { Lock, MessageCircle, UserMinus, Share2, History, Star, Users, Calendar } from "lucide-react";
 import { useEffect } from "react";
 import UserAvatar from "@/components/ui/UserAvatar";
 import { useSendMessage } from "@/api/generated/openapi/conversations";
 import SmartPopover from "@/components/ui/SmartPopover";
 import type { FriendUser } from "@/api/generated/openapi/model/friendUser";
+import SearchCard from "@/components/search/SearchCard";
 
 export default function UserProfile() {
     const { id } = useParams();
     const navigate = useNavigate();
     const [sharingSearchId, setSharingSearchId] = useState<string | null>(null);
-    const { isAuthenticated, isLoading: isAuthLoading } = useAuth();
+    const { isAuthenticated, user: authUser, isLoading: isAuthLoading } = useAuth();
 
     if (!id) {
         throw new Error("User ID is required");
@@ -48,7 +49,11 @@ export default function UserProfile() {
 
     const { mutate: sendMessage } = useSendMessage({
         mutation: {
-            onSuccess: () => toast.success("Vuelo compartido con éxito"),
+            onSuccess: () => {
+                toast.success("Vuelo compartido con éxito");
+                window.dispatchEvent(new CustomEvent('send_message'));
+                window.dispatchEvent(new CustomEvent('share_from_results'));
+            },
             onError: () => toast.error("Error al compartir el vuelo")
         }
     });
@@ -96,7 +101,11 @@ export default function UserProfile() {
         isFetchingNextPage,
         isLoading: isSearchesLoading
     } = useGetSearchesInfinite(
-        id, { limit: 10 },
+        id, 
+        { 
+            limit: 10,
+            sharedOnly: true // Siempre mostramos solo las destacadas en el perfil
+        },
         {
             query: {
                 enabled: !!id && !!user && (user.type !== "public" || user.public === true),
@@ -186,52 +195,86 @@ export default function UserProfile() {
                             <div className="absolute bottom-2 right-2 lg:bottom-6 lg:right-6 w-6 h-6 lg:w-8 lg:h-8 bg-red-500 rounded-full border-4 border-line shadow-sm" title="Offline"></div>
                         )}
                     </div>
-                    <div>
-                        <h1 className="text-3xl font-bold text-content">{user.username}</h1>
-                        {user.type === "friend" ? (
-                            <p className="text-content-muted text-sm">Amigo desde {new Date(user.friend_since).toLocaleDateString()}</p>
-                        ) : user.type === "public" && user.sent_friend_request ? (
-                            <p className="text-content-muted text-sm">Solicitud de amistad enviada</p>
-                        ) : user.type === "public" && user.received_friend_request ? (
-                            <p className="text-content-muted text-sm">Solicitud de amistad recibida</p>
-                        ) : null}
-                        <p className="text-content-muted text-sm">Miembro desde {new Date(user.created_at).toLocaleDateString()}</p>
+                    <div className="flex flex-col gap-3">
+                        <h1 className="text-3xl font-black text-content tracking-tight">{user.username}</h1>
+                        
+                        <div className="flex flex-col gap-2 items-center sm:items-start lg:items-center">
+                            {user.type === "friend" && 'friend_since' in user ? (
+                                <div className="flex items-center gap-2 px-3 py-1.5 bg-brand/5 border border-brand/10 rounded-xl">
+                                    <Users size={12} className="text-brand" />
+                                    <span className="text-[10px] font-black uppercase tracking-widest text-brand">Amigos desde {new Date(user.friend_since).toLocaleDateString()}</span>
+                                </div>
+                            ) : user.type === "public" && 'sent_friend_request' in user && user.sent_friend_request ? (
+                                <div className="flex items-center gap-2 px-3 py-1.5 bg-amber-500/5 border border-amber-500/10 rounded-xl">
+                                    <Users size={12} className="text-amber-500" />
+                                    <span className="text-[10px] font-black uppercase tracking-widest text-amber-500">Solicitud enviada</span>
+                                </div>
+                            ) : user.type === "public" && 'received_friend_request' in user && user.received_friend_request ? (
+                                <div className="flex items-center gap-2 px-3 py-1.5 bg-green-500/5 border border-green-500/10 rounded-xl">
+                                    <Users size={12} className="text-green-500" />
+                                    <span className="text-[10px] font-black uppercase tracking-widest text-green-500">Solicitud recibida</span>
+                                </div>
+                            ) : null}
+
+                            <div className="flex items-center gap-2 px-3 py-1.5 bg-surface border border-line rounded-xl">
+                                <Calendar size={12} className="text-content-muted opacity-60" />
+                                <span className="text-[10px] font-bold uppercase tracking-widest text-content-muted opacity-80">En flAIghts desde {new Date(user.created_at).toLocaleDateString(undefined, { month: 'short', year: 'numeric' })}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="flex flex-col gap-3 mt-4">
+                        {user.type === "self" ? (
+                            <button onClick={() => navigate("/settings")} className="w-full px-8 py-3 bg-brand text-content-on-brand rounded-full hover:bg-brand/90 transition-all shadow-xl active:scale-95 cursor-pointer font-bold hover:scale-[1.02]">
+                                Editar mi perfil
+                            </button>
+                        ) : user.type === "friend" ? (
+                            <div className="flex flex-col gap-3">
+                                <Link to={`/chats/${id}`} className="w-full justify-center flex items-center gap-2 px-8 py-3 bg-brand text-content-on-brand rounded-full transition-all shadow-xl active:scale-95 cursor-pointer font-bold hover:scale-[1.02]">
+                                    <MessageCircle size={18} />
+                                    Mensaje
+                                </Link>
+                                <button onClick={() => removeFriend({ id })} className="w-full justify-center flex items-center gap-2 px-8 py-3 bg-red-50 text-red-600 hover:bg-red-100 rounded-full transition-all shadow-xl active:scale-95 cursor-pointer font-bold hover:scale-[1.02]">
+                                    <UserMinus size={18} />
+                                    Eliminar
+                                </button>
+                            </div>
+                        ) : user.type === "public" && 'received_friend_request' in user && user.received_friend_request ? (
+                            <button onClick={() => acceptFriendRequest({ id })} className="w-full px-8 py-3 bg-green-500 text-content-on-brand rounded-full hover:bg-green-600 transition-all shadow-xl active:scale-95 cursor-pointer font-bold hover:scale-[1.02]">
+                                Aceptar solicitud de amistad
+                            </button>
+                        ) : user.type === "public" && 'sent_friend_request' in user && user.sent_friend_request ? (
+                            <button onClick={() => cancelFriendRequest({ id })} className="w-full px-8 py-3 bg-brand text-content-on-brand rounded-full hover:bg-brand/90 transition-all shadow-xl active:scale-95 cursor-pointer font-bold hover:scale-[1.02]">
+                                Cancelar solicitud de amistad
+                            </button>
+                        ) : (
+                            <button onClick={() => sendFriendRequest({ id })} className="w-full px-8 py-3 bg-brand text-content-on-brand rounded-full hover:bg-brand/90 transition-all shadow-xl active:scale-95 cursor-pointer font-bold hover:scale-[1.02]">
+                                Enviar solicitud de amistad
+                            </button>
+                        )}
                     </div>
                 </div>
-
-                {user.type === "self" ? (
-                    <button onClick={() => navigate("/settings")} className="px-8 py-3 bg-brand text-content-on-brand rounded-full hover:bg-brand/90 transition-all shadow-xl active:scale-95 cursor-pointer font-bold hover:scale-[1.02]">
-                        Editar mi perfil
-                    </button>
-                ) : user.type === "friend" ? (
-                    <div className="flex gap-4">
-                        <Link to={`/chats/${id}`} className="flex-1 justify-center flex items-center gap-2 px-8 py-3 bg-brand text-content-on-brand rounded-full transition-all shadow-xl active:scale-95 cursor-pointer font-bold hover:scale-[1.02]">
-                            <MessageCircle size={18} />
-                            Mensaje
-                        </Link>
-                        <button onClick={() => removeFriend({ id })} className="flex-1 justify-center flex items-center gap-2 px-8 py-3 bg-red-50 text-red-600 hover:bg-red-100 rounded-full transition-all shadow-xl active:scale-95 cursor-pointer font-bold hover:scale-[1.02]">
-                            <UserMinus size={18} />
-                            Eliminar
-                        </button>
-                    </div>
-                ) : user.type === "public" && user.received_friend_request ? (
-                    <button onClick={() => acceptFriendRequest({ id })} className="px-8 py-3 bg-green-500 text-content-on-brand rounded-full hover:bg-green-600 transition-all shadow-xl active:scale-95 cursor-pointer font-bold hover:scale-[1.02]">
-                        Aceptar solicitud de amistad
-                    </button>
-                ) : user.type === "public" && user.sent_friend_request ? (
-                    <button onClick={() => cancelFriendRequest({ id })} className="px-8 py-3 bg-brand text-content-on-brand rounded-full hover:bg-brand/90 transition-all shadow-xl active:scale-95 cursor-pointer font-bold hover:scale-[1.02]">
-                        Cancelar solicitud de amistad
-                    </button>
-                ) : (
-                    <button onClick={() => sendFriendRequest({ id })} className="px-8 py-3 bg-brand text-content-on-brand rounded-full hover:bg-brand/90 transition-all shadow-xl active:scale-95 cursor-pointer font-bold hover:scale-[1.02]">
-                        Enviar solicitud de amistad
-                    </button>
-                )}
-
             </div>
 
             <div className="flex-1 bg-main rounded-3xl border border-line shadow-sm p-6 lg:p-8 flex flex-col w-full lg:h-full lg:max-h-full">
-                <h1 className="text-2xl lg:text-3xl font-bold text-content mb-6">Últimas búsquedas</h1>
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+                    <div className="flex items-center gap-3">
+                        <div className="p-2 bg-amber-500/10 rounded-xl">
+                            <Star className="w-6 h-6 text-amber-500" fill="currentColor" />
+                        </div>
+                        <h1 className="text-2xl lg:text-3xl font-bold text-content tracking-tight">Búsquedas destacadas</h1>
+                    </div>
+                    
+                    {user.type === "self" && (
+                        <Link 
+                            to="/history" 
+                            className="flex items-center gap-2 px-4 py-2 bg-surface border border-line rounded-2xl text-sm font-bold text-content hover:border-brand hover:text-brand transition-all shadow-sm"
+                        >
+                            <History size={16} />
+                            Ver historial completo
+                        </Link>
+                    )}
+                </div>
 
                 {user.type === "public" && !user.public ? (
                     <div className="flex-1 flex flex-col items-center justify-center gap-4 text-content-muted opacity-70">
@@ -243,7 +286,7 @@ export default function UserProfile() {
                     </div>
                 ) : (
                     <div
-                        className="flex-1 lg:overflow-y-auto lg:pr-4 flex flex-col gap-4 custom-scrollbar"
+                        className="flex-1 lg:overflow-y-auto lg:pr-4 flex flex-col gap-6 custom-scrollbar"
                         onScroll={handleScroll}
                     >
                         {isSearchesLoading ? (
@@ -251,77 +294,49 @@ export default function UserProfile() {
                                 <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-brand"></div>
                             </div>
                         ) : searchesData?.pages[0]?.items?.length === 0 ? (
-                            <div className="text-center p-8 text-content-muted border-2 border-dashed border-line rounded-2xl">
-                                Este usuario aún no tiene búsquedas de vuelos guardadas.
+                            <div className="flex flex-col items-center justify-center p-12 text-center gap-4 border-2 border-dashed border-line rounded-[2.5rem] bg-surface/30">
+                                <div className="p-4 bg-surface border border-line rounded-full shadow-sm">
+                                    <Star className="w-8 h-8 text-content-muted opacity-20" />
+                                </div>
+                                <div className="flex flex-col gap-1">
+                                    <h3 className="text-lg font-bold text-content">Sin búsquedas destacadas</h3>
+                                    <p className="text-sm text-content-muted max-w-[250px]">
+                                        Este usuario aún no ha compartido ninguna de sus búsquedas de vuelos.
+                                    </p>
+                                </div>
                             </div>
                         ) : (
                             <>
                                 {searchesData?.pages.map((page, i) => (
-                                    <div key={i} className="flex flex-col gap-4">
+                                    <div key={i} className="flex flex-col gap-6">
                                         {page.items.map((search) => (
-                                            <div key={search._id} className="relative group/card">
-                                                <Link
-                                                    to={`/search/${search._id}`}
-                                                    className="p-5 border border-line rounded-3xl hover:border-brand hover:shadow-md cursor-pointer transition-all bg-surface flex flex-col gap-3 group"
-                                                >
-                                                    <div className="flex justify-between items-center">
-                                                        <div className="flex items-center gap-2 text-lg font-bold text-content">
-                                                            <span>{search.origins.join(', ')}</span>
-                                                            <span className="text-brand group-hover:px-1 transition-all">→</span>
-                                                            <span>{search.destinations.join(', ')}</span>
-                                                        </div>
-                                                        <div className="px-3 py-1 bg-brand/10 text-brand text-xs font-bold rounded-full uppercase tracking-wider">
-                                                            {search.criteria?.priority || 'Balanced'}
-                                                        </div>
-                                                    </div>
-
-                                                    <div className="flex items-center gap-6 text-sm text-content-muted font-medium">
-                                                        <div className="flex items-center gap-2">
-                                                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                                            </svg>
-                                                            <span>Salida: {new Date(search.departure_date).toLocaleDateString()}</span>
-                                                        </div>
-
-                                                        {search.return_date && (
-                                                            <div className="flex items-center gap-2">
-                                                                <svg className="w-4 h-4 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
-                                                                </svg>
-                                                                <span>Regreso: {new Date(search.return_date).toLocaleDateString()}</span>
-                                                            </div>
-                                                        )}
-
-                                                        {search.criteria?.max_price && (
-                                                            <div className="flex items-center gap-1 text-green-600 dark:text-green-400 ml-auto">
-                                                                <span>Max {search.criteria.max_price}€</span>
-                                                            </div>
-                                                        )}
-                                                    </div>
-                                                </Link>
-
-
+                                            <SearchCard 
+                                                key={search._id} 
+                                                search={search} 
+                                                isFeatured 
+                                            >
                                                 {user.type === "self" && (
-                                                    <div className="absolute right-4 bottom-4">
-                                                        <SmartPopover
-                                                            isOpen={sharingSearchId === search._id}
-                                                            setIsOpen={(open) => setSharingSearchId(open ? search._id : null)}
-                                                            preferredAlign="right"
-                                                            trigger={
-                                                                <button
-                                                                    onClick={(e) => {
-                                                                        e.preventDefault();
-                                                                        e.stopPropagation();
-                                                                        setSharingSearchId(sharingSearchId === search._id ? null : search._id);
-                                                                    }}
-                                                                    className="p-2 bg-main border border-line rounded-full text-content-muted hover:text-brand hover:border-brand transition-all shadow-sm">
-                                                                    <Share2 size={16} />
-                                                                </button>
-                                                            }
-                                                        >
-                                                            <div className="p-2 flex flex-col gap-1 min-w-[200px]">
-                                                                <p className="px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-content-muted border-b border-line mb-1">Compartir con amigo</p>
-                                                                {user.friends.filter((f): f is FriendUser => typeof f !== 'string').map(friend => (
+                                                    <SmartPopover
+                                                        isOpen={sharingSearchId === search._id}
+                                                        setIsOpen={(open) => setSharingSearchId(open ? search._id : null)}
+                                                        preferredAlign="right"
+                                                        trigger={
+                                                            <button
+                                                                onClick={(e) => {
+                                                                    e.preventDefault();
+                                                                    e.stopPropagation();
+                                                                    setSharingSearchId(sharingSearchId === search._id ? null : search._id);
+                                                                }}
+                                                                className="p-3 bg-surface border border-line rounded-full text-content-muted hover:text-brand hover:border-brand transition-all shadow-md cursor-pointer hover:scale-110 active:scale-95"
+                                                            >
+                                                                <Share2 size={18} />
+                                                            </button>
+                                                        }
+                                                    >
+                                                        <div className="p-3 flex flex-col gap-1 min-w-[220px]">
+                                                            <p className="px-3 py-2 text-[10px] font-black uppercase tracking-widest text-content-muted border-b border-line mb-2 opacity-50">Compartir con amigo</p>
+                                                            <div className="max-h-[300px] overflow-y-auto flex flex-col gap-1 pr-1 custom-scrollbar">
+                                                                {'friends' in user && user.friends && (user.friends as any[]).filter((f): f is FriendUser => typeof f !== 'string').map(friend => (
                                                                     <button
                                                                         key={friend._id}
                                                                         onClick={() => {
@@ -331,18 +346,20 @@ export default function UserProfile() {
                                                                             });
                                                                             setSharingSearchId(null);
                                                                         }}
-                                                                        className="flex items-center gap-2 p-2 hover:bg-surface rounded-xl transition-all text-left w-full"
+                                                                        className="flex items-center gap-3 p-2.5 hover:bg-surface-variant rounded-2xl transition-all text-left w-full cursor-pointer group"
                                                                     >
-                                                                        <UserAvatar user={friend} size={24} />
-                                                                        <span className="text-xs font-bold">{friend.username}</span>
+                                                                        <UserAvatar user={friend} size={32} className="group-hover:ring-2 ring-brand transition-all" />
+                                                                        <span className="text-xs font-bold text-content">{friend.username}</span>
                                                                     </button>
                                                                 ))}
+                                                                {'friends' in user && user.friends && user.friends.length === 0 && (
+                                                                    <p className="text-center py-4 text-xs text-content-muted">No tienes amigos añadidos</p>
+                                                                )}
                                                             </div>
-                                                        </SmartPopover>
-                                                    </div>
-                                                )
-                                                }
-                                            </div>
+                                                        </div>
+                                                    </SmartPopover>
+                                                )}
+                                            </SearchCard>
                                         ))}
                                     </div>
                                 ))}
@@ -354,8 +371,8 @@ export default function UserProfile() {
                                 )}
 
                                 {!hasNextPage && (searchesData?.pages[0]?.items?.length ?? 0) > 0 && (
-                                    <div className="text-center p-4 text-xs text-content-muted/60 uppercase tracking-widest font-bold">
-                                        No hay más búsquedas
+                                    <div className="text-center p-8 text-[10px] text-content-muted/40 uppercase tracking-[0.2em] font-black">
+                                        Fin de las búsquedas destacadas
                                     </div>
                                 )}
                             </>
