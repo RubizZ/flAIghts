@@ -159,10 +159,10 @@ export default function Navbar({ variant = 'floating', logoRef }: { variant?: 'f
                                     reopenConsent();
                                 }
                             }}
-                            className="w-full flex items-center justify-between px-3 py-2 text-sm text-content hover:bg-brand/10 rounded-xl transition-all cursor-pointer group text-left font-medium"
+                            className="w-full flex items-center justify-between px-4 py-3 text-sm text-content hover:bg-brand/10 rounded-xl transition-all cursor-pointer group text-left font-medium"
                         >
                             <div className="flex items-center gap-3">
-                                <Trophy size={16} className={`shrink-0 transition-colors ${pendingSurveysCount > 0 ? "text-amber-500 animate-pulse" : allCompleted ? "text-green-500" : "group-hover:text-brand"}`} />
+                                <Trophy size={20} className={`shrink-0 transition-colors ${pendingSurveysCount > 0 ? "text-amber-500 animate-pulse" : allCompleted ? "text-green-500" : "group-hover:text-brand"}`} />
                                 <span className="leading-none font-bold">Misiones</span>
                             </div>
                             {pendingSurveysCount > 0 && (
@@ -185,10 +185,10 @@ export default function Navbar({ variant = 'floating', logoRef }: { variant?: 'f
                                 e.stopPropagation();
                                 pushMenu('notifications');
                             }}
-                            className="w-full flex items-center justify-between px-3 py-2 text-sm text-content hover:bg-surface/70 rounded-xl transition-all cursor-pointer group text-left font-medium"
+                            className="w-full flex items-center justify-between px-4 py-3 text-sm text-content hover:bg-surface/70 rounded-xl transition-all cursor-pointer group text-left font-medium"
                         >
                             <div className="flex items-center gap-3">
-                                <Bell size={16} className="shrink-0 group-hover:text-brand transition-colors" />
+                                <Bell size={20} className="shrink-0 group-hover:text-brand transition-colors" />
                                 <span className="leading-none">Notificaciones</span>
                             </div>
                             <div className="flex items-center gap-1.5">
@@ -197,34 +197,34 @@ export default function Navbar({ variant = 'floating', logoRef }: { variant?: 'f
                                         {totalNotifications}
                                     </span>
                                 )}
-                                <ChevronDown size={12} className="-rotate-90 opacity-60" />
+                                <ChevronDown size={14} className="-rotate-90 opacity-60" />
                             </div>
                         </button>
                     </div>
 
 
-                    <button onClick={() => { setIsOpen(false); navigate(`/user/${user?._id}`) }} className="w-full flex items-center justify-between text-content px-3 py-2 text-sm rounded-xl transition-all group text-left hover:bg-surface/70 hover:cursor-pointer font-medium">
+                    <button onClick={() => { setIsOpen(false); navigate(`/user/${user?._id}`) }} className="w-full flex items-center justify-between text-content px-4 py-3 text-sm rounded-xl transition-all group text-left hover:bg-surface/70 hover:cursor-pointer font-medium">
                         <div className="flex items-center gap-3">
-                            <User size={16} className="shrink-0" />
+                            <User size={20} className="shrink-0" />
                             <span className="leading-none">Mi Perfil</span>
                         </div>
                     </button>
-                    <button onClick={() => { setIsOpen(false); navigate('/settings') }} className="w-full flex items-center justify-between text-content px-3 py-2 text-sm rounded-xl transition-all group text-left hover:bg-surface/70 hover:cursor-pointer font-medium">
+                    <button onClick={() => { setIsOpen(false); navigate('/settings') }} className="w-full flex items-center justify-between text-content px-4 py-3 text-sm rounded-xl transition-all group text-left hover:bg-surface/70 hover:cursor-pointer font-medium">
                         <div className="flex items-center gap-3">
-                            <Settings size={16} className="shrink-0" />
+                            <Settings size={20} className="shrink-0" />
                             <span className="leading-none">Ajustes</span>
                         </div>
                     </button>
-                    <button onClick={() => { setIsOpen(false); navigate('/history') }} className="w-full flex items-center justify-between text-content px-3 py-2 text-sm rounded-xl transition-all group text-left hover:bg-surface/70 hover:cursor-pointer font-medium">
+                    <button onClick={() => { setIsOpen(false); navigate('/history') }} className="w-full flex items-center justify-between text-content px-4 py-3 text-sm rounded-xl transition-all group text-left hover:bg-surface/70 hover:cursor-pointer font-medium">
                         <div className="flex items-center gap-3">
-                            <History size={16} className="shrink-0" />
+                            <History size={20} className="shrink-0" />
                             <span className="leading-none">Historial</span>
                         </div>
                     </button>
                     {user?.role === 'admin' && (
-                        <button className="w-full flex items-center justify-between px-3 py-2 text-sm rounded-xl transition-all cursor-not-allowed group text-left">
+                        <button className="w-full flex items-center justify-between px-4 py-3 text-sm rounded-xl transition-all cursor-not-allowed group text-left">
                             <div className="flex items-center gap-3 opacity-20 text-amber-500">
-                                <ShieldCheck size={16} />
+                                <ShieldCheck size={20} />
                                 Panel Admin
                             </div>
                             <span className="text-[8px] bg-amber-500/10 px-1.5 py-0.5 rounded uppercase tracking-tighter opacity-20 text-amber-500">Soon</span>
@@ -235,15 +235,15 @@ export default function Navbar({ variant = 'floating', logoRef }: { variant?: 'f
                             e.stopPropagation();
                             pushMenu('theme');
                         }}
-                        className="w-full flex items-center justify-between px-3 py-2 text-sm text-content hover:bg-surface/70 rounded-xl transition-all cursor-pointer group text-left font-medium"
+                        className="w-full flex items-center justify-between px-4 py-3 text-sm text-content hover:bg-surface/70 rounded-xl transition-all cursor-pointer group text-left font-medium"
                     >
                         <div className="flex items-center gap-3">
-                            <Palette size={16} className="shrink-0" />
+                            <Palette size={20} className="shrink-0" />
                             <span className="leading-none">Tema</span>
                         </div>
                         <div className="flex items-center gap-1.5 text-[10px] text-content opacity-60 font-bold transition-colors">
                             <span className="leading-none">{themeLabels[theme as keyof typeof themeLabels]}</span>
-                            <ChevronDown size={12} className="-rotate-90 group-hover:rotate-0 transition-transform shrink-0" />
+                            <ChevronDown size={14} className="-rotate-90 group-hover:rotate-0 transition-transform shrink-0" />
                         </div>
                     </button>
                 </div>
@@ -253,9 +253,9 @@ export default function Navbar({ variant = 'floating', logoRef }: { variant?: 'f
                             setIsOpen(false);
                             logout();
                         }}
-                        className="w-full flex items-center gap-3 px-3 py-2 text-sm text-red-500 hover:bg-red-500/10 rounded-xl transition-all cursor-pointer text-left font-bold"
+                        className="w-full flex items-center gap-3 px-4 py-3 text-sm text-red-500 hover:bg-red-500/10 rounded-xl transition-all cursor-pointer text-left font-bold"
                     >
-                        <LogOut size={16} />
+                        <LogOut size={20} />
                         Cerrar sesión
                     </button>
                 </div>
@@ -275,9 +275,9 @@ export default function Navbar({ variant = 'floating', logoRef }: { variant?: 'f
                         e.stopPropagation();
                         popMenu();
                     }}
-                    className="w-full flex items-center gap-3 text-content-muted px-3 py-2 text-sm rounded-xl transition-[background-color_300ms,border-color_150ms,color_300ms,transform_300ms,opacity_300ms,box-shadow_300ms] group text-left hover:bg-surface/70 hover:cursor-pointer font-medium mb-1"
+                    className="w-full flex items-center gap-3 text-content-muted px-4 py-3 text-sm rounded-xl transition-[background-color_300ms,border-color_150ms,color_300ms,transform_300ms,opacity_300ms,box-shadow_300ms] group text-left hover:bg-surface/70 hover:cursor-pointer font-medium mb-1"
                 >
-                    <ChevronDown size={16} className="rotate-90 shrink-0" />
+                    <ChevronDown size={20} className="rotate-90 shrink-0" />
                     <span className="leading-none">Volver</span>
                 </button>
                 <div className="flex flex-col">
@@ -285,7 +285,7 @@ export default function Navbar({ variant = 'floating', logoRef }: { variant?: 'f
                         <button
                             key={t}
                             onClick={() => setTheme(t)}
-                            className={`w-full flex items-center justify-between px-3 py-2 text-sm rounded-xl transition-all group text-left font-medium
+                            className={`w-full flex items-center justify-between px-4 py-3 text-sm rounded-xl transition-all group text-left font-medium
                                 ${theme === t
                                     ? 'bg-surface/70 text-content cursor-pointer'
                                     : 'text-content-muted hover:bg-surface/70 hover:cursor-pointer'
@@ -344,16 +344,16 @@ export default function Navbar({ variant = 'floating', logoRef }: { variant?: 'f
                     <p className="px-3 py-2 text-[10px] uppercase tracking-widest text-content-muted font-bold opacity-50">Autenticación</p>
                     <button
                         onClick={() => { setIsOpen(false); navigate('/login'); }}
-                        className="w-full flex items-center gap-3 px-3 py-2 text-sm text-content hover:bg-surface/70 rounded-xl transition-colors cursor-pointer font-medium"
+                        className="w-full flex items-center gap-3 px-4 py-3 text-sm text-content hover:bg-surface/70 rounded-xl transition-colors cursor-pointer font-medium"
                     >
-                        <User size={16} className="text-brand" />
+                        <User size={20} className="text-brand" />
                         Log in
                     </button>
                     <button
                         onClick={() => { setIsOpen(false); navigate('/register'); }}
-                        className="w-full flex items-center gap-3 px-3 py-2 text-sm text-content hover:bg-surface/70 rounded-xl transition-colors cursor-pointer font-medium"
+                        className="w-full flex items-center gap-3 px-4 py-3 text-sm text-content hover:bg-surface/70 rounded-xl transition-colors cursor-pointer font-medium"
                     >
-                        <ShieldCheck size={16} className="text-brand" />
+                        <ShieldCheck size={20} className="text-brand" />
                         Register
                     </button>
                 </div>
@@ -364,15 +364,15 @@ export default function Navbar({ variant = 'floating', logoRef }: { variant?: 'f
                         e.stopPropagation();
                         pushMenu('theme');
                     }}
-                    className="w-full flex items-center justify-between px-3 py-2 text-sm text-content hover:text-content hover:bg-surface/70 rounded-xl transition-colors cursor-pointer group text-left font-medium"
+                    className="w-full flex items-center justify-between px-4 py-3 text-sm text-content hover:text-content hover:bg-surface/70 rounded-xl transition-colors cursor-pointer group text-left font-medium"
                 >
                     <div className="flex items-center gap-3">
-                        <Palette size={16} className="group-hover:text-brand transition-colors" />
+                        <Palette size={20} className="group-hover:text-brand transition-colors" />
                         Tema
                     </div>
                     <div className="flex items-center gap-1 text-[10px] text-content-muted opacity-60 font-bold">
                         {themeLabels[theme as keyof typeof themeLabels]}
-                        <ChevronDown size={12} className="-rotate-90" />
+                        <ChevronDown size={14} className="-rotate-90" />
                     </div>
                 </button>
             </div>
@@ -383,15 +383,15 @@ export default function Navbar({ variant = 'floating', logoRef }: { variant?: 'f
         <>
             {/* CENTER LOGO */}
             <div className={variant === 'floating'
-                ? "absolute top-4 left-1/2 -translate-x-1/2 h-12 flex items-center z-50 pointer-events-none"
-                : "absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-50 pointer-events-none"
+                ? "absolute top-4 left-1/2 -translate-x-1/2 h-12 flex items-center z-header pointer-events-none"
+                : "absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-header pointer-events-none"
             }>
                 <Logo ref={logoRef} className={variant === 'floating' ? "" : "scale-90 sm:scale-100"} />
             </div>
 
             <nav className={variant === 'floating' ? "contents" : "contents"}>
                 <div className={variant === 'floating'
-                    ? "absolute top-4 right-4 flex items-center justify-end gap-2 sm:gap-4 z-10 pointer-events-auto"
+                    ? "absolute top-4 right-4 flex items-center justify-end gap-2 sm:gap-4 z-content pointer-events-auto"
                     : "flex items-center gap-2 sm:gap-4 pointer-events-auto"
                 }>
                     {/* Mission Indicator Button (Evaluation Mode) */}

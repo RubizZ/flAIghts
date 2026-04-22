@@ -228,7 +228,7 @@ export default function SmartPopover({
                         left: pos.left,
                         right: pos.right,
                         transform: pos.transform,
-                        zIndex: 9999,
+                        zIndex: 70, // Matches z-popover
                         pointerEvents: 'none',
                         display: 'flex',
                         flexDirection: 'column',

@@ -308,7 +308,7 @@ const MissionOnboarding: React.FC = () => {
     const fullPath = `M 0,0 H ${viewport.w} V ${viewport.h} H 0 Z ${holePath}`;
 
     return (
-        <div className={`fixed inset-0 z-10000 animate-fade-in animate-duration-500 overflow-hidden ${isTransitioning ? 'pointer-events-auto' : 'pointer-events-none'}`}>
+        <div className={`fixed inset-0 z-max animate-fade-in animate-duration-500 overflow-hidden ${isTransitioning ? 'pointer-events-auto' : 'pointer-events-none'}`}>
             <style dangerouslySetInnerHTML={{
                 __html: `
                 @keyframes float-vertical { 0%, 100% { transform: translate(-50%, 0px); } 50% { transform: translate(-50%, -10px); } }
@@ -328,7 +328,7 @@ const MissionOnboarding: React.FC = () => {
                 </svg>
 
                 <div
-                    className={`absolute z-10010 flex flex-col pointer-events-none ${isTransitioning ? 'transition-none' : 'transition-all duration-500'}`}
+                    className={`absolute z-max flex flex-col pointer-events-none ${isTransitioning ? 'transition-none' : 'transition-all duration-500'}`}
                     style={tooltipStyle}
                 >
                     <div

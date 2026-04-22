@@ -222,7 +222,7 @@ export class UserService {
             const existing = await User.findOne({ username: data.username, _id: { $ne: userId } });
             if (existing) throw new UsernameAlreadyInUseError(data.username);
         }
-        const user = await User.findByIdAndUpdate(userId, data, { returnDocument: 'after' });
+        const user = await User.findByIdAndUpdate(userId, data, { returnDocument: 'after', runValidators: true });
         if (!user) throw new UserNotFoundError(userId);
 
         this.auditService.register({
@@ -264,6 +264,58 @@ export class UserService {
     public async sendFriendRequest(requesterId: string, targetId: string): Promise<void> {
         if (requesterId === targetId) throw new SelfFriendRequestError();
 
+        // Check if target is "flights" for auto-acceptance
+        const target = await User.findById(targetId);
+        if (!target) throw new UserNotFoundError(targetId);
+
+        if (target.username.toLowerCase() === 'flaights') {
+            // Auto-accept: check if already friends first
+            if (target.friends.some(f => (typeof f.user === 'string' ? f.user : f.user._id) === requesterId)) {
+                throw new AlreadyFriendsError();
+            }
+
+            const now = new Date();
+            // Add to both friends lists and clean up any existing requests
+            await Promise.all([
+                User.updateOne(
+                    { _id: requesterId },
+                    {
+                        $push: { friends: { user: targetId, friend_since: now } },
+                        $pull: { sent_friend_requests: targetId, received_friend_requests: targetId }
+                    }
+                ),
+                User.updateOne(
+                    { _id: targetId },
+                    {
+                        $push: { friends: { user: requesterId, friend_since: now } },
+                        $pull: { sent_friend_requests: requesterId, received_friend_requests: requesterId }
+                    }
+                )
+            ]);
+
+            this.auditService.register({
+                resource: "USER",
+                action: "SEND_FRIEND_REQUEST",
+                details: {
+                    userId: targetId
+                }
+            });
+
+            this.auditService.register({
+                resource: "USER",
+                action: "ACCEPT_FRIEND_REQUEST",
+                details: {
+                    userId: requesterId
+                },
+                user: {
+                    id: targetId,
+                    ip: "system",
+                    userAgent: "system"
+                }
+            });
+            return;
+        }
+
         const bulkResult = await User.bulkWrite([
             {
                 updateOne: {
@@ -280,13 +332,10 @@ export class UserService {
         ]);
 
         if (bulkResult.modifiedCount < 2) {
-            const [requester, target] = await Promise.all([
-                User.findById(requesterId),
-                User.findById(targetId)
-            ]);
-
+            const requester = await User.findById(requesterId);
             if (!requester) throw new UserNotFoundError(requesterId);
-            if (!target) throw new UserNotFoundError(targetId);
+
+            // target was already fetched above
 
             if (target.friends.some(f => (typeof f.user === 'string' ? f.user : f.user._id) === requesterId) || requester.friends.some(f => (typeof f.user === 'string' ? f.user : f.user._id) === targetId)) throw new AlreadyFriendsError();
             if (requester.sent_friend_requests.some(id => (typeof id === 'string' ? id : id._id) === targetId)) throw new FriendRequestAlreadySentError();

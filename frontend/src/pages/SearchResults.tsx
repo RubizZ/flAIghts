@@ -77,6 +77,7 @@ export default function SearchResults() {
             onSuccess: () => {
                 queryClient.invalidateQueries({ queryKey: [`/search/${id}`] });
                 queryClient.invalidateQueries({ queryKey: ['infinite'] });
+                queryClient.invalidateQueries({ queryKey: ['/search/user'] });
                 toast.success("La búsqueda ahora es pública");
             },
             onError: () => toast.error("Error al compartir la búsqueda")
@@ -88,6 +89,7 @@ export default function SearchResults() {
             onSuccess: () => {
                 queryClient.invalidateQueries({ queryKey: [`/search/${id}`] });
                 queryClient.invalidateQueries({ queryKey: ['infinite'] });
+                queryClient.invalidateQueries({ queryKey: ['/search/user'] });
                 toast.success("La búsqueda ahora es privada");
             },
             onError: () => toast.error("Error al privatizar la búsqueda")
@@ -310,13 +312,13 @@ export default function SearchResults() {
     return (
         <div className="relative min-h-screen w-full overflow-y-auto overflow-x-hidden bg-main lg:bg-black text-content flex lg:block">
             {/* Loading Overlay */}
-            <div className={`fixed inset-0 z-50 bg-main flex flex-col items-center justify-center gap-6 transition-opacity duration-700 pointer-events-none ${showLoading ? 'opacity-100' : 'opacity-0'}`}>
+            <div className={`fixed inset-0 z-loading bg-main flex flex-col items-center justify-center gap-6 transition-opacity duration-700 pointer-events-none ${showLoading ? 'opacity-100' : 'opacity-0'}`}>
                 <div className="relative flex items-center justify-center">
                     {/* Radar rings — staggered expanding pulses using brand color */}
                     <div className="absolute w-20 h-20 rounded-full border border-brand/40 animate-radar" style={{ animationDelay: '0s' }} />
                     <div className="absolute w-20 h-20 rounded-full border border-brand/25 animate-radar" style={{ animationDelay: '0.8s' }} />
                     <div className="absolute w-20 h-20 rounded-full border border-brand/15 animate-radar" style={{ animationDelay: '1.6s' }} />
-                    <svg className="w-10 h-10 text-brand relative z-10" viewBox="0 0 24 24" fill="currentColor">
+                    <svg className="w-10 h-10 text-brand relative z-content" viewBox="0 0 24 24" fill="currentColor">
                         <path d="M21 16v-2l-8-5V3.5A1.5 1.5 0 0 0 11.5 2A1.5 1.5 0 0 0 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1l3.5 1v-1.5L13 19v-5.5l8 2.5z" />
                     </svg>
                 </div>
@@ -331,17 +333,17 @@ export default function SearchResults() {
             </div>
 
             {/* Mobile Background Globe (Full screen) */}
-            <div className="fixed inset-0 z-0 lg:hidden">
+            <div className="fixed inset-0 z-behind lg:hidden">
                 <StarsBackground className="opacity-30" />
             </div>
 
             {/* Left Column: Results List */}
             {searchData && (
-                <div className="relative z-10 w-full lg:w-[65%] xl:w-[60%] h-full">
+                <div className="relative z-content w-full lg:w-[65%] xl:w-[60%] h-full">
                     <div className="relative w-full h-full overflow-y-auto overflow-x-hidden scroll-smooth [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
                         <div className="max-w-3xl mx-auto px-4 pt-18 lg:pt-24 pb-6 lg:pb-10 min-h-full flex flex-col gap-6 lg:gap-8">
                             {/* Header Card */}
-                            <div className="sticky top-6 lg:top-8 z-20 backdrop-blur-2xl bg-main/80 dark:bg-main/70 border border-line p-4 rounded-2xl shadow-2xl flex flex-col gap-4 animate-in fade-in slide-in-from-top-4 duration-700">
+                            <div className="sticky top-6 lg:top-8 z-overlay backdrop-blur-2xl bg-main/80 dark:bg-main/70 border border-line p-4 rounded-2xl shadow-2xl flex flex-col gap-4 animate-in fade-in slide-in-from-top-4 duration-700">
                                 <div className="flex items-center justify-between w-full gap-4">
                                     <div className="flex items-center gap-4 overflow-hidden">
                                         <button
@@ -433,9 +435,17 @@ export default function SearchResults() {
                                             }
                                         >
                                             <div className="p-2 flex flex-col gap-1 min-w-[240px]">
+                                                {!data?.shared && user?._id === data?.user_id && (
+                                                    <div className="px-3 py-2 border-b border-line mb-1">
+                                                        <p className="text-[10px] text-amber-500 font-bold leading-tight">
+                                                            Al compartir, la búsqueda se hará pública automáticamente.
+                                                        </p>
+                                                    </div>
+                                                )}
+
                                                 {isAuthenticated && user && user.friends.length > 0 && (
                                                     <>
-                                                        <p className="px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-content-muted border-b border-line mb-1">Compartir con amigos</p>
+                                                        <p className="px-3 py-1.5 text-[9px] font-black uppercase tracking-widest text-content-muted/40">Enviar a amigos</p>
                                                         <div className="max-h-60 overflow-y-auto custom-scrollbar flex flex-col gap-1">
                                                             {user.friends.filter((f): f is FriendUser => typeof f !== 'string').map(friend => (
                                                                 <button
@@ -449,7 +459,7 @@ export default function SearchResults() {
                                                                                 return; // No compartimos si falla al hacerla pública
                                                                             }
                                                                         }
-                                                                        
+
                                                                         // Si sigue siendo privada (no soy el dueño), no dejamos compartir
                                                                         if (!data?.shared && user._id !== data?.user_id) {
                                                                             toast.error("No puedes compartir una búsqueda privada");
@@ -475,6 +485,16 @@ export default function SearchResults() {
                                                 <button
                                                     onClick={async () => {
                                                         window.dispatchEvent(new CustomEvent('share_from_results'));
+
+                                                        // Si es privada y soy el dueño, la hacemos pública antes de compartir
+                                                        if (!data?.shared && user?._id === data?.user_id) {
+                                                            try {
+                                                                await shareSearch({ searchId: id! });
+                                                            } catch (err) {
+                                                                return; // No compartimos si falla al hacerla pública
+                                                            }
+                                                        }
+
                                                         const url = window.location.href;
                                                         const shareData = {
                                                             title: 'flAIghts - Búsqueda de vuelos',
@@ -675,7 +695,7 @@ export default function SearchResults() {
             )}
 
             {/* Desktop Globe (Fixed Full Screen with Offset) */}
-            <div className={`fixed inset-0 z-0 transition-opacity duration-700 pointer-events-none ${!isLargeScreen ? 'opacity-0' : 'opacity-100'}`}>
+            <div className={`fixed inset-0 z-behind transition-opacity duration-700 pointer-events-none ${!isLargeScreen ? 'opacity-0' : 'opacity-100'}`}>
                 <Globe
                     selectedAirports={selectedAirports}
                     origins={currentOrigins}

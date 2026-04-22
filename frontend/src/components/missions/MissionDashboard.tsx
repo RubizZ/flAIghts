@@ -59,15 +59,15 @@ const MissionDashboard: React.FC<MissionDashboardProps> = ({
                             <>
                                 <button
                                     onClick={onPrev}
-                                    className="p-1.5 sm:p-2 rounded-lg bg-white/5 border border-white/10 text-white/40 hover:text-white hover:bg-white/10 transition-all cursor-pointer"
+                                    className="p-3 sm:p-2 rounded-lg bg-white/5 border border-white/10 text-white/40 hover:text-white hover:bg-white/10 transition-all cursor-pointer"
                                 >
-                                    <ChevronLeft size={16} />
+                                    <ChevronLeft size={20} className="sm:size-4" />
                                 </button>
 
-                                <div className="px-3 sm:px-5 py-1.5 sm:py-2 rounded-xl bg-blue-500/10 border border-blue-500/20 backdrop-blur-md flex-1 sm:flex-initial">
+                                <div className="px-4 sm:px-5 py-2.5 sm:py-2 rounded-xl bg-blue-500/10 border border-blue-500/20 backdrop-blur-md flex-1 sm:flex-initial">
                                     <div className="flex items-center gap-2 sm:gap-3 justify-center">
-                                        <span className="text-xs">{mission.icon}</span>
-                                        <span className="text-[8px] sm:text-[9px] font-black uppercase tracking-[0.15em] sm:tracking-[0.2em] text-white truncate max-w-30 sm:max-w-none">
+                                        <span className="text-sm sm:text-xs">{mission.icon}</span>
+                                        <span className="text-[10px] sm:text-[9px] font-black uppercase tracking-[0.15em] sm:tracking-[0.2em] text-white truncate max-w-30 sm:max-w-none">
                                             {mission.title}
                                         </span>
                                         <span className="text-[8px] sm:text-[9px] font-bold text-white/20 ml-1 sm:ml-2">
@@ -78,9 +78,9 @@ const MissionDashboard: React.FC<MissionDashboardProps> = ({
 
                                 <button
                                     onClick={onNext}
-                                    className="p-1.5 sm:p-2 rounded-lg bg-white/5 border border-white/10 text-white/40 hover:text-white hover:bg-white/10 transition-all cursor-pointer"
+                                    className="p-3 sm:p-2 rounded-lg bg-white/5 border border-white/10 text-white/40 hover:text-white hover:bg-white/10 transition-all cursor-pointer"
                                 >
-                                    <ChevronRight size={16} />
+                                    <ChevronRight size={20} className="sm:size-4" />
                                 </button>
                             </>
                         )}
@@ -91,17 +91,17 @@ const MissionDashboard: React.FC<MissionDashboardProps> = ({
                         <button
                             id="dashboard-back-button"
                             onClick={handleBackToRoadmapWithAnim}
-                            className="flex-1 sm:flex-initial px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl bg-white/5 text-white/40 hover:text-white hover:bg-blue-500/20 hover:border-blue-500/30 transition-all flex items-center justify-center gap-2 group border border-white/10 shadow-lg backdrop-blur-md cursor-pointer"
+                            className="flex-1 sm:flex-initial px-5 py-3 sm:px-4 sm:py-2 rounded-xl bg-white/5 text-white/40 hover:text-white hover:bg-blue-500/20 hover:border-blue-500/30 transition-all flex items-center justify-center gap-2 group border border-white/10 shadow-lg backdrop-blur-md cursor-pointer"
                         >
-                            <Map size={16} className="group-hover:scale-110 transition-transform hidden sm:block" />
-                            <span className="text-[8px] sm:text-[9px] font-black uppercase tracking-[0.15em] sm:tracking-[0.2em]">Volver al Roadmap</span>
+                            <Map size={18} className="group-hover:scale-110 transition-transform sm:size-4" />
+                            <span className="text-[10px] sm:text-[9px] font-black uppercase tracking-[0.15em] sm:tracking-[0.2em]">Volver al Roadmap</span>
                         </button>
 
                         <button
                             onClick={handleClose}
-                            className="p-1.5 sm:p-2 rounded-xl bg-white/5 text-white/40 hover:text-rose-500 hover:bg-rose-500/10 hover:border-rose-500/20 transition-all border border-white/10 shadow-lg backdrop-blur-md cursor-pointer"
+                            className="p-3 sm:p-2 rounded-xl bg-white/5 text-white/40 hover:text-rose-500 hover:bg-rose-500/10 hover:border-rose-500/20 transition-all border border-white/10 shadow-lg backdrop-blur-md cursor-pointer"
                         >
-                            <X size={18} />
+                            <X size={22} className="sm:size-4.5" />
                         </button>
                     </div>
                 </div>

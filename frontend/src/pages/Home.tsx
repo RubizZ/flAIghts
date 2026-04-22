@@ -400,7 +400,7 @@ export default function Home() {
             <StarsBackground className={`transition-opacity duration-1000 ${!isLargeScreen && !isSelectingOnMap ? 'opacity-30' : 'opacity-0'}`} />
 
             {/* Globe Layer */}
-            <div className={`absolute inset-0 z-0 transition-opacity duration-700 ${!isLargeScreen && !isSelectingOnMap ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
+            <div className={`absolute inset-0 z-behind transition-opacity duration-700 ${!isLargeScreen && !isSelectingOnMap ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
                 <Globe
                     onAirportSelect={selectingType ? handleMapSelect : undefined}
                     selectedAirports={selectedAirports}
@@ -428,7 +428,7 @@ export default function Home() {
                         setIsSelectingOnMap(true);
                         window.dispatchEvent(new CustomEvent('app:open-map'));
                     }}
-                    className={`absolute top-1/2 left-1/2 -translate-y-1/2 z-5 cursor-pointer group flex items-center justify-center overflow-hidden w-[100vh] h-[100vh] rounded-[4rem] transition-all duration-700 ${isLargeScreen ? '-translate-x-[calc(50%-306px)]' : '-translate-x-1/2'}`}
+                    className={`absolute top-1/2 left-1/2 -translate-y-1/2 z-base cursor-pointer group flex items-center justify-center overflow-hidden w-[100vh] h-screen rounded-[4rem] transition-all duration-700 ${isLargeScreen ? '-translate-x-[calc(50%-306px)]' : '-translate-x-1/2'}`}
                 >
                     <div className={`flex flex-col items-center gap-3 opacity-0 group-hover:opacity-100 transition-all duration-500 scale-95 group-hover:scale-100 bg-black/10 backdrop-blur-sm px-10 py-8 rounded-[2.5rem] border border-white/5 shadow-2xl`}>
                         <div className="w-16 h-16 rounded-full bg-brand/20 border border-brand/40 flex items-center justify-center shadow-[0_0_30px_rgba(var(--brand-rgb),0.3)] animate-radar-slow">
@@ -444,7 +444,7 @@ export default function Home() {
             )}
 
             {/* Loading Screen */}
-            <div className={`absolute inset-0 z-50 bg-main flex flex-col items-center justify-center gap-6 transition-opacity duration-700 pointer-events-none ${globeReady ? 'opacity-0' : 'opacity-100'}`}>
+            <div className={`absolute inset-0 z-loading bg-main flex flex-col items-center justify-center gap-6 transition-opacity duration-700 pointer-events-none ${globeReady ? 'opacity-0' : 'opacity-100'}`}>
                 <div className="relative flex items-center justify-center">
                     <div className="absolute w-20 h-20 rounded-full border border-brand/40 animate-radar" style={{ animationDelay: '0s' }} />
                     <div className="absolute w-20 h-20 rounded-full border border-brand/25 animate-radar" style={{ animationDelay: '0.8s' }} />
@@ -460,7 +460,7 @@ export default function Home() {
 
             {/* Floating Selection Controls */}
             <div
-                className={`absolute bottom-8 left-1/2 -translate-x-1/2 z-20 flex flex-col items-center gap-4 w-[min(90vw,fit-content)] transition-all duration-500 ease-out
+                className={`absolute bottom-8 left-1/2 -translate-x-1/2 z-sticky flex flex-col items-center gap-4 w-[min(90vw,fit-content)] transition-all duration-500 ease-out
                     ${isSelectingOnMap
                         ? 'opacity-100 translate-y-0 scale-100'
                         : 'opacity-0 translate-y-12 scale-90 pointer-events-none'}`}
@@ -516,7 +516,7 @@ export default function Home() {
             </div>
 
             {/* Main Search Card */}
-            <div className={`absolute inset-0 z-10 transition-all duration-700 cubic-bezier(0.16, 1, 0.3, 1) flex flex-col items-center lg:items-start justify-center pointer-events-none p-4 lg:p-12
+            <div className={`absolute inset-0 z-content transition-all duration-700 cubic-bezier(0.16, 1, 0.3, 1) flex flex-col items-center lg:items-start justify-center pointer-events-none p-4 lg:p-12
                 ${!isSelectingOnMap
                     ? 'opacity-100 pt-24 pb-24 lg:py-0'
                     : `opacity-0 ${isLargeScreen ? '-translate-x-[150%]' : '-translate-y-[150%]'} scale-95`
@@ -552,7 +552,7 @@ export default function Home() {
             </div>
 
             {/* Horizontal/Top Card (Only when general map expanded) */}
-            <div className={`absolute left-1/2 -translate-x-1/2 z-10 transition-all duration-700 cubic-bezier(0.16, 1, 0.3, 1) ${isSelectingOnMap && !selectingType
+            <div className={`absolute left-1/2 -translate-x-1/2 z-content transition-all duration-700 cubic-bezier(0.16, 1, 0.3, 1) ${isSelectingOnMap && !selectingType
                 ? (isXXLScreen
                     ? 'top-6 w-[min(calc(100%-400px),1200px)] scale-100'
                     : isLargeScreen
@@ -630,7 +630,7 @@ export default function Home() {
                                 e.stopPropagation();
                                 setIsMobileCardExpanded(false);
                             }}
-                            className="absolute -bottom-5 left-1/2 -translate-x-1/2 bg-surface/90 backdrop-blur-2xl border border-line px-5 py-2.5 rounded-full shadow-2xl flex items-center gap-2.5 group hover:bg-surface transition-all active:scale-95 cursor-pointer z-30 whitespace-nowrap animate-fade-in"
+                            className="absolute -bottom-5 left-1/2 -translate-x-1/2 bg-surface/90 backdrop-blur-2xl border border-line px-5 py-2.5 rounded-full shadow-2xl flex items-center gap-2.5 group hover:bg-surface transition-all active:scale-95 cursor-pointer z-sticky whitespace-nowrap animate-fade-in"
                         >
                             <ChevronDown size={14} className="text-brand rotate-180 transition-transform group-active:-translate-y-1" />
                             <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-content/90">Plegar búsqueda</span>
@@ -640,7 +640,7 @@ export default function Home() {
 
                 {/* Floating validation bubble attached to the card summary ONLY ON MOBILE */}
                 {origins.length > 0 && destinations.length > 0 && !departureDate && !isMobileCardExpanded && !isLargeScreen && (
-                    <div className="absolute top-full mt-3 left-1/2 -translate-x-1/2 bg-red-500/90 backdrop-blur-md text-white text-[9px] font-black uppercase tracking-widest px-3 py-1.5 rounded-lg shadow-2xl border border-white/20 animate-bounce flex items-center gap-1.5 whitespace-nowrap z-50">
+                    <div className="absolute top-full mt-3 left-1/2 -translate-x-1/2 bg-red-500/90 backdrop-blur-md text-white text-[9px] font-black uppercase tracking-widest px-3 py-1.5 rounded-lg shadow-2xl border border-white/20 animate-bounce flex items-center gap-1.5 whitespace-nowrap z-popover">
                         <CalendarIcon size={10} />
                         <span>Falta fecha de salida</span>
                         <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-red-500 rotate-45" />
@@ -650,13 +650,13 @@ export default function Home() {
 
             {!isLargeScreen && isCardVisible && (
                 <div
-                    className="absolute inset-0 z-25 cursor-default bg-black/5 backdrop-blur-[1px] animate-fade-in"
+                    className="absolute inset-0 z-overlay cursor-default bg-black/5 backdrop-blur-[1px] animate-fade-in"
                     onClick={() => setInspectedAirport(null)}
                 />
             )}
 
             {/* Airport Info Card */}
-            <div className={`absolute z-30 w-[min(90vw,320px)] transition-all duration-700 cubic-bezier(0.16, 1, 0.3, 1) ${!isLargeScreen
+            <div className={`absolute z-sticky w-[min(90vw,320px)] transition-all duration-700 cubic-bezier(0.16, 1, 0.3, 1) ${!isLargeScreen
                 ? `left-1/2 top-1/2 -translate-y-1/2 ${isCardVisible
                     ? '-translate-x-1/2 opacity-100'
                     : 'translate-x-[100vw] opacity-100 pointer-events-none'
