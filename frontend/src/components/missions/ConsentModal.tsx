@@ -63,13 +63,23 @@ const ConsentModal: React.FC<ConsentModalProps> = ({ onAccept }) => {
                                 </ul>
                             </div>
 
-                            <div className="flex items-center gap-4 rounded-xl border border-amber-500/20 bg-amber-500/5 p-4 animate-pulse-slow">
+                            <div className="flex items-center gap-4 rounded-xl border border-amber-500/20 bg-amber-500/5 p-4">
                                 <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-amber-500/20 text-amber-400">
                                     <Sparkles size={20} />
                                 </div>
                                 <div className="text-left">
                                     <p className="text-[12px] font-black uppercase tracking-wider text-amber-400">Tutorial Recomendado</p>
                                     <p className="text-[11px] text-gray-400 leading-tight">Al aceptar, comenzará una <strong>guía interactiva</strong>. Te recomendamos seguirla para no perderte ningún detalle del sistema de misiones.</p>
+                                </div>
+                            </div>
+
+                            <div className="flex items-center gap-4 rounded-xl border border-blue-500/20 bg-blue-500/5 p-4 animate-in fade-in slide-in-from-bottom-2 duration-1000">
+                                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-500/20 text-blue-400 animate-bounce-slow">
+                                    <span className="text-xl">🎯</span>
+                                </div>
+                                <div className="text-left">
+                                    <p className="text-[12px] font-black uppercase tracking-wider text-blue-400">Recompensa de Logro</p>
+                                    <p className="text-[11px] text-gray-400 leading-tight">Al completar las misiones y la encuesta final, desbloquearás la insignia exclusiva <strong>"Evaluador flAIghts"</strong> en tu perfil.</p>
                                 </div>
                             </div>
 

@@ -283,6 +283,32 @@
           },
           "is_password_set": {
             "type": "boolean"
+          },
+          "badges": {
+            "items": {
+              "properties": {
+                "earned_at": {
+                  "type": "string"
+                },
+                "icon": {
+                  "type": "string"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "id": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "earned_at",
+                "icon",
+                "name",
+                "id"
+              ],
+              "type": "object"
+            },
+            "type": "array"
           }
         },
         "required": [
@@ -715,6 +741,32 @@
           },
           "profile_picture": {
             "type": "string"
+          },
+          "badges": {
+            "items": {
+              "properties": {
+                "earned_at": {
+                  "type": "string"
+                },
+                "icon": {
+                  "type": "string"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "id": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "earned_at",
+                "icon",
+                "name",
+                "id"
+              ],
+              "type": "object"
+            },
+            "type": "array"
           }
         },
         "required": [
@@ -769,6 +821,32 @@
           },
           "profile_picture": {
             "type": "string"
+          },
+          "badges": {
+            "items": {
+              "properties": {
+                "earned_at": {
+                  "type": "string"
+                },
+                "icon": {
+                  "type": "string"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "id": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "earned_at",
+                "icon",
+                "name",
+                "id"
+              ],
+              "type": "object"
+            },
+            "type": "array"
           }
         },
         "required": [
@@ -883,6 +961,32 @@
           },
           "is_password_set": {
             "type": "boolean"
+          },
+          "badges": {
+            "items": {
+              "properties": {
+                "earned_at": {
+                  "type": "string"
+                },
+                "icon": {
+                  "type": "string"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "id": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "earned_at",
+                "icon",
+                "name",
+                "id"
+              ],
+              "type": "object"
+            },
+            "type": "array"
           }
         },
         "required": [
@@ -1002,6 +1106,32 @@
           },
           "is_password_set": {
             "type": "boolean"
+          },
+          "badges": {
+            "items": {
+              "properties": {
+                "earned_at": {
+                  "type": "string"
+                },
+                "icon": {
+                  "type": "string"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "id": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "earned_at",
+                "icon",
+                "name",
+                "id"
+              ],
+              "type": "object"
+            },
+            "type": "array"
           }
         },
         "required": [

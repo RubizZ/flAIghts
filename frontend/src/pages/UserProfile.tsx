@@ -253,6 +253,38 @@ export default function UserProfile() {
                             </button>
                         )}
                     </div>
+
+                    {/* Expositor de Badges */}
+                    {user.badges && user.badges.length > 0 && (
+                        <div className="mt-6 pt-6 border-t border-line">
+                            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-content-muted mb-4 opacity-50">Expositor de Logros</p>
+                            <div className="flex flex-wrap gap-3 justify-center bg-surface/50 p-4 rounded-2xl border border-line/50 shadow-inner">
+                                {user.badges.map((badge) => {
+                                    const earnedDate = new Date(badge.earned_at);
+                                    const formattedDate = !isNaN(earnedDate.getTime()) 
+                                        ? earnedDate.toLocaleDateString() 
+                                        : 'Fecha desconocida';
+                                        
+                                    return (
+                                        <div 
+                                            key={badge.id}
+                                            className="group relative flex items-center justify-center w-12 h-12 bg-main border border-line rounded-xl shadow-sm hover:shadow-md active:scale-95 hover:-translate-y-1 transition-all cursor-pointer hover:border-brand/30 focus-within:border-brand/30 outline-hidden"
+                                            tabIndex={0}
+                                        >
+                                            <span className="text-2xl drop-shadow-sm select-none">{badge.icon}</span>
+                                            
+                                            {/* Tooltip Detallado (Hover & Focus) */}
+                                            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 px-3 py-2 bg-content text-main text-[10px] rounded-xl opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-all scale-90 group-hover:scale-100 group-focus-within:scale-100 whitespace-nowrap pointer-events-none z-50 shadow-2xl border border-line flex flex-col gap-0.5 items-center">
+                                                <span className="font-black uppercase tracking-tight text-brand">{badge.name}</span>
+                                                <span className="opacity-60 font-bold italic">Obtenida el {formattedDate}</span>
+                                                <div className="absolute top-full left-1/2 -translate-x-1/2 border-8 border-transparent border-t-content"></div>
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    )}
                 </div>
             </div>
 
