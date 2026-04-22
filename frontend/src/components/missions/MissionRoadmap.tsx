@@ -77,7 +77,7 @@ const MissionRoadmap: React.FC<MissionRoadmapProps> = ({ onClose, onMissionClick
             }
         });
         setConnections(newConnections);
-        if (newConnections.length > 0) {
+        if (missions.length > 0) {
             setIsGraphReady(true);
         }
     }, [missions, isMissionCompleted, isMissionUnlocked]);
@@ -172,6 +172,23 @@ const MissionRoadmap: React.FC<MissionRoadmapProps> = ({ onClose, onMissionClick
         };
     }, [isGrabbing, handleWindowMouseMove, handleWindowMouseUp]);
 
+    // Auto-scroll to center on the most relevant mission
+    React.useEffect(() => {
+        // Wait for graph to be ready so positions are calculated
+        if (!isGraphReady || !scrollContainerRef.current) return;
+
+        // Priority: 1. Mission needing feedback, 2. Next available mission
+        const missionToFocus = missionsWithLevels.find(m => isMissionCompleted(m.id) && !isMissionRated(m.id))
+            || missionsWithLevels.find(m => isMissionUnlocked(m.id) && !isMissionCompleted(m.id));
+
+        if (missionToFocus) {
+            const element = document.getElementById(`roadmap-mission-${missionToFocus.id}`);
+            if (element) {
+                element.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' });
+            }
+        }
+    }, [isGraphReady]);
+
     const handleMissionClick = (id: string) => {
         setIsClosing(true);
         setTimeout(() => onMissionClick?.(id), 300);
@@ -262,10 +279,24 @@ const MissionRoadmap: React.FC<MissionRoadmapProps> = ({ onClose, onMissionClick
                             {connections.map((conn, i) => {
                                 // Bezier points para una curva más orgánica y fluida
                                 const distY = conn.y2 - conn.y1;
-                                // Reducimos la tensión para evitar que la curva "abombe" hacia los lados y choque con otros nodos
                                 const tension = distY * 0.4;
-                                const d = `M ${conn.x1},${conn.y1} 
-                                           C ${conn.x1},${conn.y1 + tension} ${conn.x2},${conn.y2 - tension} ${conn.x2},${conn.y2 - 8}`;
+                                // Routing condicional:
+                                // - Niveles adyacentes: Curva suave directa
+                                // - Saltos largos: Pasillo lateral para esquivar cards
+                                const isLongJump = conn.levelDiff > 1;
+                                let d = "";
+                                
+                                if (!isLongJump) {
+                                    const tension = distY * 0.4;
+                                    d = `M ${conn.x1},${conn.y1} 
+                                         C ${conn.x1},${conn.y1 + tension} ${conn.x2},${conn.y2 - tension} ${conn.x2},${conn.y2 - 8}`;
+                                } else {
+                                    const railX = Math.max(conn.x1, conn.x2) + 280;
+                                    const midY = conn.y1 + (distY / 2);
+                                    d = `M ${conn.x1},${conn.y1} 
+                                         C ${conn.x1},${conn.y1 + 60} ${railX},${conn.y1 + 30} ${railX},${midY}
+                                         C ${railX},${conn.y2 - 30} ${conn.x2},${conn.y2 - 60} ${conn.x2},${conn.y2 - 8}`;
+                                }
 
                                 const colorClass = conn.completed
                                     ? 'text-green-500'
@@ -302,9 +333,7 @@ const MissionRoadmap: React.FC<MissionRoadmapProps> = ({ onClose, onMissionClick
                             return (
                                 <div
                                     key={level}
-                                    className={`flex flex-row gap-10 items-center justify-start relative w-max z-content
-                                        ${level === 0 ? 'pl-20 sm:pl-48' : level % 2 === 0 ? 'pl-40 sm:pl-96' : 'pl-0'}
-                                    `}
+                                    className="flex flex-row gap-10 items-center justify-start relative w-max z-content pl-10 sm:pl-20"
                                 >
                                     {levelMissions.map(mission => {
                                         const unlocked = isMissionUnlocked(mission.id);
@@ -330,7 +359,7 @@ const MissionRoadmap: React.FC<MissionRoadmapProps> = ({ onClose, onMissionClick
                                                             ? 'bg-gray-950 border-blue-500/30 shadow-blue-500/5'
                                                             : 'bg-gray-950/50 border-white/10 grayscale opacity-40'
                                                         } ${needsRating ? 'animate-pulse border-amber-500/50 shadow-amber-500/20' : ''}`}>
-                                                    
+
                                                     {/* Background overlay for color without losing opacity */}
                                                     <div className={`absolute inset-0 rounded-[inherit] -z-10 transition-colors duration-300 ${completed ? 'bg-green-500/5 group-hover:bg-green-500/10' : unlocked ? 'bg-blue-500/5 group-hover:bg-blue-500/10' : ''}`} />
                                                     <div className="flex items-center gap-4 mb-4">
