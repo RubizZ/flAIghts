@@ -491,9 +491,7 @@ const AgentChat = forwardRef<any, AgentChatProps>(({
                     } else if (event.type === 'tool_call' || event.type === 'tool_result' || event.type === 'tool_progress' || event.type === 'iteration') {
                         // Sync UI state for searches
                         if (event.type === 'tool_call') {
-                            if (event.name === 'getUserInfo') {
-                                window.dispatchEvent(new CustomEvent('app:agent-get-user-info'));
-                            } else if (event.name === 'getUserSearchHistory') {
+                            if (event.name === 'getUserSearchHistory') {
                                 window.dispatchEvent(new CustomEvent('app:agent-get-user-search-history'));
                             }
 
@@ -546,7 +544,7 @@ const AgentChat = forwardRef<any, AgentChatProps>(({
                         });
                     } else if (event.type === 'final_result') {
                         hasFinalResult = true;
-                        
+
                         if (event.data?.flights && event.data.flights.length > 0) {
                             window.dispatchEvent(new CustomEvent('ai_flights_returned'));
                         }
@@ -897,51 +895,51 @@ const AgentChat = forwardRef<any, AgentChatProps>(({
                             className="flex-1 bg-transparent py-2 text-sm focus:outline-none placeholder:text-content-muted/40 placeholder:italic font-medium min-w-0"
                         />
 
-                    <div className="flex items-center gap-1.5 shrink-0">
-                        {isStreaming ? (
-                            <button
-                                onClick={() => stopStream('user')}
-                                className="p-2 rounded-xl transition-all duration-300 bg-red-500 hover:bg-red-600 text-white shadow-lg scale-100 hover:scale-105 active:scale-95 cursor-pointer"
-                                title="Detener"
-                            >
-                                <Square size={16} className="fill-white" />
-                            </button>
-                        ) : (
-                            <>
-                                {/* Compact Model Selector Dropdown - Hidden on mobile, shown on desktop */}
-                                {availableModels.length > 0 && (
-                                    <div className="hidden lg:block relative group/model">
-                                        <select
-                                            value={selectedModel}
-                                            onChange={(e) => setSelectedModel(e.target.value)}
-                                            className="appearance-none bg-surface/80 hover:bg-white/10 border border-line/30 hover:border-brand/40 pl-2.5 pr-7 py-2 rounded-xl text-[9px] lg:text-[10px] font-bold uppercase tracking-widest text-content-muted hover:text-brand focus:outline-none transition-all cursor-pointer max-w-[120px] truncate"
-                                        >
-                                            {availableModels.map(model => (
-                                                <option key={model} value={model} className="bg-surface text-content text-xs">
-                                                    {(model as string).toUpperCase()}
-                                                </option>
-                                            ))}
-                                        </select>
-                                        <div className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none text-content-muted/50">
-                                            <ChevronDown size={10} />
-                                        </div>
-                                    </div>
-                                )}
-
+                        <div className="flex items-center gap-1.5 shrink-0">
+                            {isStreaming ? (
                                 <button
-                                    onClick={() => handleSend()}
-                                    disabled={!input.trim()}
-                                    className={`p-2 rounded-xl transition-all duration-300 cursor-pointer
-                                        ${input.trim()
-                                            ? 'bg-brand text-content-on-brand shadow-lg scale-100 ring-2 ring-brand/10'
-                                            : 'bg-line/20 text-content-muted scale-95 opacity-50'}`}
+                                    onClick={() => stopStream('user')}
+                                    className="p-2 rounded-xl transition-all duration-300 bg-red-500 hover:bg-red-600 text-white shadow-lg scale-100 hover:scale-105 active:scale-95 cursor-pointer"
+                                    title="Detener"
                                 >
-                                    <Send size={16} className={input.trim() ? 'animate-pulse' : ''} />
+                                    <Square size={16} className="fill-white" />
                                 </button>
-                            </>
-                        )}
+                            ) : (
+                                <>
+                                    {/* Compact Model Selector Dropdown - Hidden on mobile, shown on desktop */}
+                                    {availableModels.length > 0 && (
+                                        <div className="hidden lg:block relative group/model">
+                                            <select
+                                                value={selectedModel}
+                                                onChange={(e) => setSelectedModel(e.target.value)}
+                                                className="appearance-none bg-surface/80 hover:bg-white/10 border border-line/30 hover:border-brand/40 pl-2.5 pr-7 py-2 rounded-xl text-[9px] lg:text-[10px] font-bold uppercase tracking-widest text-content-muted hover:text-brand focus:outline-none transition-all cursor-pointer max-w-[120px] truncate"
+                                            >
+                                                {availableModels.map(model => (
+                                                    <option key={model} value={model} className="bg-surface text-content text-xs">
+                                                        {(model as string).toUpperCase()}
+                                                    </option>
+                                                ))}
+                                            </select>
+                                            <div className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none text-content-muted/50">
+                                                <ChevronDown size={10} />
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    <button
+                                        onClick={() => handleSend()}
+                                        disabled={!input.trim()}
+                                        className={`p-2 rounded-xl transition-all duration-300 cursor-pointer
+                                        ${input.trim()
+                                                ? 'bg-brand text-content-on-brand shadow-lg scale-100 ring-2 ring-brand/10'
+                                                : 'bg-line/20 text-content-muted scale-95 opacity-50'}`}
+                                    >
+                                        <Send size={16} className={input.trim() ? 'animate-pulse' : ''} />
+                                    </button>
+                                </>
+                            )}
+                        </div>
                     </div>
-                </div>
                 )}
                 <div className="mt-2.5 flex items-center justify-center">
                     <span className="text-[8px] font-bold uppercase tracking-widest text-content-muted/30 text-center">

@@ -34,6 +34,7 @@ export default function SearchHistory() {
             onSuccess: () => {
                 queryClient.invalidateQueries({ queryKey: ['infinite'] });
                 toast.success("Búsqueda ahora es pública");
+                window.dispatchEvent(new CustomEvent('share_from_results'));
             },
             onError: () => toast.error("Error al compartir la búsqueda")
         }

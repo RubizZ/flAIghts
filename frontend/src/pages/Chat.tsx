@@ -224,7 +224,7 @@ export default function Chat() {
             content: `SHARE_SEARCH:${search._id}:${origins}:${destinations}`,
         });
         window.dispatchEvent(new CustomEvent('send_message'));
-        window.dispatchEvent(new CustomEvent('share_search'));
+        window.dispatchEvent(new CustomEvent('share_from_chat'));
         setIsShareModalOpen(false);
     };
 
