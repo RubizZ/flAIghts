@@ -19,13 +19,13 @@ export default function GlobeLayout() {
         <div className="relative h-svh w-full bg-main text-content overflow-hidden theme-transition">
             <Sidebar variant="floating" isOpen={isSidebarOpen} onClose={closeSidebar} onToggle={toggleSidebar} />
 
-            <header className="absolute top-0 left-0 w-full z-40 pointer-events-none">
+            <header className="absolute top-0 left-0 w-full z-header pointer-events-none">
                 <Navbar variant="floating" />
             </header>
 
             {/* Backdrop when sidebar is open */}
             <div
-                className={`fixed inset-0 bg-black/40 z-30 transition-opacity duration-300 pointer-events-none
+                className={`fixed inset-0 bg-black/40 z-sticky transition-opacity duration-300 pointer-events-none
                     ${isSidebarOpen ? 'opacity-100' : 'opacity-0'}
                 `}
             />

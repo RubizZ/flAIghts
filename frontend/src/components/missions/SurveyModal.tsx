@@ -40,7 +40,7 @@ const SurveyModal: React.FC = () => {
 
     return (
         <div
-            className={`fixed inset-0 z-200 flex items-center justify-center p-6 sm:p-10 bg-black/60 backdrop-blur-md animate-duration-500 ${isClosing ? 'animate-fade-out' : 'animate-fade-in'}`}
+            className={`fixed inset-0 z-modal flex items-center justify-center p-6 sm:p-10 bg-black/60 backdrop-blur-md animate-duration-500 ${isClosing ? 'animate-fade-out' : 'animate-fade-in'}`}
             onMouseDown={(e) => {
                 if (e.target === e.currentTarget) backdropMouseDown.current = true;
             }}
@@ -61,12 +61,12 @@ const SurveyModal: React.FC = () => {
 
                 <button
                     onClick={handleClose}
-                    className="absolute top-6 right-6 p-2 rounded-full bg-white/5 text-white/50 hover:text-white hover:bg-white/10 transition-all cursor-pointer z-20"
+                    className="absolute top-6 right-6 p-2 rounded-full bg-white/5 text-white/50 hover:text-white hover:bg-white/10 transition-all cursor-pointer z-overlay"
                 >
                     <X size={20} />
                 </button>
 
-                <div className="overflow-y-auto custom-scrollbar flex-1 relative z-10 w-full">
+                <div className="overflow-y-auto custom-scrollbar flex-1 relative z-content w-full">
                     <div className="p-8 sm:p-10">
                         <div className="mb-6 flex h-14 w-14 items-center justify-center rounded-2xl bg-linear-to-br from-blue-500/20 to-indigo-500/20 text-blue-400 border border-blue-500/20 border-b-blue-500/40 shadow-lg shadow-blue-500/10">
                             <MessageSquare size={28} className="drop-shadow-[0_0_8px_rgba(96,165,250,0.5)]" />

@@ -6,6 +6,7 @@ import { AuthenticationVersionMismatchError, InvalidTokenError, NoTokenProvidedE
 import { container } from "tsyringe"
 import { ServerConfig } from "../../config/server.config.js"
 import { contextStorage } from "../../utils/context.js"
+import logger from "../../utils/logger.js"
 
 export async function expressAuthentication(request: Request, securityName: "jwt", _scopes?: string[]): Promise<AuthenticatedUser>;
 export async function expressAuthentication(request: Request, securityName: "jwt-optional", _scopes?: string[]): Promise<AuthenticatedUser | null>;
@@ -107,6 +108,7 @@ export async function expressAuthentication(
             throw err;
         }
         const message = err instanceof Error ? err.message : 'Unknown error';
+        logger.error({ error: err }, `Unexpected error during expressAuthentication: ${message}`);
         throw new InvalidTokenError(message);
     }
 

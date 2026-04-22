@@ -202,7 +202,7 @@ const MissionRoadmap: React.FC<MissionRoadmapProps> = ({ onClose, onMissionClick
 
     return (
         <div
-            className={`fixed inset-0 z-100 flex items-center justify-center backdrop-blur-sm animate-duration-500 p-4 ${isClosing ? 'animate-fade-out' : 'animate-fade-in'}`}
+            className={`fixed inset-0 z-modal flex items-center justify-center backdrop-blur-sm animate-duration-500 p-4 ${isClosing ? 'animate-fade-out' : 'animate-fade-in'}`}
             onMouseDown={(e) => {
                 if (e.target === e.currentTarget) backdropMouseDown.current = true;
             }}
@@ -217,7 +217,7 @@ const MissionRoadmap: React.FC<MissionRoadmapProps> = ({ onClose, onMissionClick
                 <button
                     id="roadmap-close-button"
                     onClick={handleClose}
-                    className="absolute top-4 right-4 sm:top-6 sm:right-6 p-2 rounded-full bg-white/5 text-white/50 hover:text-rose-500 hover:bg-rose-500/10 transition-all z-10 cursor-pointer"
+                    className="absolute top-4 right-4 sm:top-6 sm:right-6 p-2 rounded-full bg-white/5 text-white/50 hover:text-rose-500 hover:bg-rose-500/10 transition-all z-content cursor-pointer"
                 >
                     <X size={24} />
                 </button>
@@ -257,7 +257,7 @@ const MissionRoadmap: React.FC<MissionRoadmapProps> = ({ onClose, onMissionClick
                         {/* SVG Connections Overlay */}
                         {/* SVG Connections Overlay - Markers removed to allow smooth transitions */}
                         <svg
-                            className={`absolute inset-0 pointer-events-none z-0 w-full h-full min-w-full min-h-full overflow-visible transition-opacity duration-500 ${isGraphReady ? 'opacity-100' : 'opacity-0'}`}
+                            className={`absolute inset-0 pointer-events-none z-base w-full h-full min-w-full min-h-full overflow-visible transition-opacity duration-500 ${isGraphReady ? 'opacity-100' : 'opacity-0'}`}
                         >
                             {connections.map((conn, i) => {
                                 // Bezier points para una curva más orgánica y fluida
@@ -302,7 +302,7 @@ const MissionRoadmap: React.FC<MissionRoadmapProps> = ({ onClose, onMissionClick
                             return (
                                 <div
                                     key={level}
-                                    className={`flex flex-row gap-10 items-center justify-start relative w-max z-10
+                                    className={`flex flex-row gap-10 items-center justify-start relative w-max z-content
                                         ${level === 0 ? 'pl-20 sm:pl-48' : level % 2 === 0 ? 'pl-40 sm:pl-96' : 'pl-0'}
                                     `}
                                 >

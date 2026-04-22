@@ -49,7 +49,7 @@ export default function Sidebar({ isOpen, onClose, onToggle, variant = 'classic'
         <>
             {/* Mobile overlay */}
             <div
-                className={`sm:hidden fixed inset-0 bg-black/50 z-30 backdrop-blur-sm transition-opacity duration-300
+                className={`sm:hidden fixed inset-0 bg-black/50 z-sticky backdrop-blur-sm transition-opacity duration-200
                     ${isOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}
                 `}
                 onClick={onClose}
@@ -57,7 +57,7 @@ export default function Sidebar({ isOpen, onClose, onToggle, variant = 'classic'
 
             {/* ── EXTERNAL HAMBURGER BUTTON (Only for floating variant) ── */}
             {isFloating && (
-                <div className={`fixed left-4 top-4 z-50 transition-all duration-300 ${isOpen ? 'opacity-0 scale-75 pointer-events-none -translate-x-4' : 'opacity-100 scale-100 translate-x-0'}`}>
+                <div className={`fixed left-4 top-4 z-sidebar transition-all duration-200 ${isOpen ? 'opacity-0 scale-75 pointer-events-none -translate-x-4' : 'opacity-100 scale-100 translate-x-0'}`}>
                     <NavIconButton
                         onClick={onToggle}
                         variant={variant}
@@ -70,7 +70,7 @@ export default function Sidebar({ isOpen, onClose, onToggle, variant = 'classic'
 
             {/* ── SIDEBAR PANEL ── */}
             <aside
-                className={`fixed z-50 flex flex-col overflow-hidden transition-all duration-500 ease-in-out ${className}
+                className={`fixed z-sidebar flex flex-col overflow-hidden transition-all duration-300 ease-in-out ${className}
                     ${isFloating
                         ? `left-4 top-4 bottom-4 premium-glass rounded-3xl border border-white/10 shadow-2xl
                            ${isOpen
@@ -83,7 +83,7 @@ export default function Sidebar({ isOpen, onClose, onToggle, variant = 'classic'
                 `}
             >
                 {/* ── HEADER / TOGGLE BUTTON ── */}
-                <div className={`flex flex-col shrink-0 border-b border-line/40 transition-all duration-500 ${isFloating ? 'h-16' : 'h-20'}`}>
+                <div className={`flex flex-col shrink-0 border-b border-line/40 transition-all duration-300 ${isFloating ? 'h-16' : 'h-20'}`}>
                     {!isFloating && <div className="h-4 w-full shrink-0" />}
                     <div className="flex-1 flex items-center px-2">
                         <button
@@ -148,7 +148,7 @@ export default function Sidebar({ isOpen, onClose, onToggle, variant = 'classic'
                                     </div>
 
                                     {/* Label */}
-                                    <span className={`font-bold whitespace-nowrap overflow-hidden transition-all duration-500
+                                    <span className={`font-bold whitespace-nowrap overflow-hidden transition-all duration-300
                                         ${isOpen
                                             ? 'opacity-100 translate-x-0 w-auto ml-4'
                                             : 'opacity-0 -translate-x-2 w-0 ml-0 pointer-events-none'
@@ -178,7 +178,7 @@ export default function Sidebar({ isOpen, onClose, onToggle, variant = 'classic'
 
                 {/* ── MOBILE FOOTER LINKS ── */}
                 <div
-                    className={`sm:hidden px-6 py-4 flex flex-col gap-4 transition-all duration-500 delay-100
+                    className={`sm:hidden px-6 py-4 flex flex-col gap-4 transition-all duration-300 delay-100
                         ${isOpen ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10 pointer-events-none'}
                     `}
                 >

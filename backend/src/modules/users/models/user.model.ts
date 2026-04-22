@@ -74,7 +74,7 @@ const UserSchema = new Schema<IUserDocument>({
     required: true,
     minlength: [3, "El nombre de usuario debe tener al menos 3 caracteres"],
     maxlength: [50, "El nombre de usuario no puede exceder 50 caracteres"],
-    match: [/^[a-zA-Z0-9_-]+$/, "El nombre de usuario solo puede contener letras, números, guiones y guiones bajos"]
+    match: [/^[a-zA-Z0-9À-ÿ_-]+$/, "El nombre de usuario solo puede contener letras, números, guiones y guiones bajos"]
   },
   email: {
     type: String,

@@ -5966,6 +5966,15 @@
           "profile_picture": {
             "type": "string"
           },
+          "google_id": {
+            "type": "string"
+          },
+          "google_email": {
+            "type": "string"
+          },
+          "is_password_set": {
+            "type": "boolean"
+          },
           "password_reset_token": {
             "type": "string"
           },
@@ -6007,7 +6016,8 @@
           "role",
           "created_at",
           "last_seen_at",
-          "auth_version"
+          "auth_version",
+          "is_password_set"
         ],
         "type": "object",
         "description": "From T, pick a set of properties whose keys are in the union K"
@@ -6076,6 +6086,15 @@
           "profile_picture": {
             "type": "string"
           },
+          "google_id": {
+            "type": "string"
+          },
+          "google_email": {
+            "type": "string"
+          },
+          "is_password_set": {
+            "type": "boolean"
+          },
           "password_reset_token": {
             "type": "string"
           },
@@ -6136,6 +6155,7 @@
           "created_at",
           "last_seen_at",
           "auth_version",
+          "is_password_set",
           "friends",
           "sent_friend_requests",
           "received_friend_requests"

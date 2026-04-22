@@ -194,6 +194,7 @@ export default function Globe({
     const [isLoaded, setIsLoaded] = useState(false);
     const [modelLoaded, setModelLoaded] = useState(false);
     const [geoReady, setGeoReady] = useState(false);
+    const [initialTransitionDone, setInitialTransitionDone] = useState(false);
     const [clusterThreshold, setClusterThreshold] = useState(0.025);
     const [contextMenu, setContextMenu] = useState<{
         visible: boolean;
@@ -792,10 +793,10 @@ export default function Globe({
         }
     };
 
-    // Notify parent when globe is fully ready (geo + airports loaded)
+    // Notify parent when globe is fully ready (geo + airports loaded + initial move done)
     useEffect(() => {
-        if (geoReady && isLoaded && onReady) onReady();
-    }, [geoReady, isLoaded, onReady]);
+        if (geoReady && isLoaded && initialTransitionDone && onReady) onReady();
+    }, [geoReady, isLoaded, initialTransitionDone, onReady]);
 
     // Load Airplane Model
     useEffect(() => {
@@ -865,7 +866,6 @@ export default function Globe({
             const currentDist = camera.position.length();
 
             // Ensure we jump from a base aligned to ZOOM_STEP
-            // If we are between steps, we jump to the next/prev boundary
             let nextTarget = targetZoomDistRef.current;
             if (direction > 0) {
                 // Zoom OUT
@@ -879,19 +879,50 @@ export default function Globe({
             nextTarget = Math.max(controls.minDistance, Math.min(controls.maxDistance, nextTarget));
             targetZoomDistRef.current = nextTarget;
 
+            // --- ZOOM TOWARDS CURSOR LOGIC ---
+            const startDir = camera.position.clone().normalize();
+            let endDir = startDir.clone();
+
+            const rect = mount.getBoundingClientRect();
+            const mX = ((e.clientX - rect.left) / mount.clientWidth) * 2 - 1;
+            const mY = -((e.clientY - rect.top) / mount.clientHeight) * 2 + 1;
+
+            const wheelRaycaster = new THREE.Raycaster();
+            wheelRaycaster.setFromCamera(new THREE.Vector2(mX, mY), camera);
+            const hitPoint = new THREE.Vector3();
+            const globeSphere = new THREE.Sphere(new THREE.Vector3(0, 0, 0), 1);
+
+            if (wheelRaycaster.ray.intersectSphere(globeSphere, hitPoint)) {
+                const targetDir = hitPoint.normalize();
+                // Move the direction towards the cursor proportionally to the zoom step
+                // The factor (currentDist - nextTarget) / currentDist perfectly approximates
+                // the rotation needed to keep the point under the cursor on a sphere.
+                const lerpFactor = (currentDist - nextTarget) / currentDist;
+                endDir.lerp(targetDir, lerpFactor);
+            }
+            // ---------------------------------
+
             // Animate only the distance along the normalized direction vector to keep orientation stable
-            const zoomProxy = { distance: currentDist };
+            const zoomProxy = {
+                distance: currentDist,
+                dirX: startDir.x,
+                dirY: startDir.y,
+                dirZ: startDir.z
+            };
             if (zoomAnimationRef.current) zoomAnimationRef.current.kill();
 
             zoomAnimationRef.current = gsap.to(zoomProxy, {
                 distance: nextTarget,
+                dirX: endDir.x,
+                dirY: endDir.y,
+                dirZ: endDir.z,
                 duration: 0.8,
                 ease: "power2.out",
                 overwrite: "auto",
                 onUpdate: () => {
                     if (!cameraRef.current || !controlsRef.current) return;
-                    const dir = cameraRef.current.position.clone().normalize();
-                    cameraRef.current.position.copy(dir.multiplyScalar(zoomProxy.distance));
+                    const currentDir = new THREE.Vector3(zoomProxy.dirX, zoomProxy.dirY, zoomProxy.dirZ).normalize();
+                    cameraRef.current.position.copy(currentDir.multiplyScalar(zoomProxy.distance));
                     controlsRef.current.update();
                 }
             });
@@ -1545,7 +1576,7 @@ export default function Globe({
                             if (factor > 0) {
                                 targetOpacity = 0.4 * factor * globalZoomFade;
                             }
-                        } else if (!isMoving) {
+                        } else {
                             // Desktop: Show based on cursor hover distance
                             const distToRay = raycaster.ray.distanceSqToPoint(_vec1);
                             const countryThreshold = proximityBase * 4.0 * Math.min(1.5, customScale);
@@ -2173,7 +2204,7 @@ export default function Globe({
                 mesh.scale.setScalar(initialBaseScale * sFact * hitboxMult);
                 mesh.position.copy(item.v3).multiplyScalar(altitudeOffset);
                 mesh.userData = { ...item, isAirportObject: true, isSpecial, id: item.id };
-                mesh.renderOrder = isSpecial ? 10 : 1;
+                mesh.renderOrder = isSpecial ? 10 : 2;
                 airportGroupRef.current.add(mesh);
 
                 // Visual child
@@ -2276,7 +2307,7 @@ export default function Globe({
 
                 // Update properties
                 mesh.userData = { ...mesh.userData, ...item, isAirportObject: true, isSpecial, id: item.id, isFadingOut: false };
-                mesh.renderOrder = isSpecial ? 10 : 1;
+                mesh.renderOrder = isSpecial ? 10 : 2;
                 const mat = (mesh.userData.visualMesh ? (mesh.userData.visualMesh.material as THREE.MeshBasicMaterial) : (mesh.material as THREE.MeshBasicMaterial));
                 if (mat.color.getHex() !== meshColor) mat.color.setHex(meshColor);
             }
@@ -2786,9 +2817,12 @@ export default function Globe({
         } else if (interactiveChanged && !current.interactive) {
             // Map mode deactivated -> View current route or home
             autoTarget = getAutoTarget();
+        } else if (!initialTransitionDone && geoReady && isLoaded) {
+            // First time both geo and data are ready -> trigger initial placement
+            autoTarget = getAutoTarget();
         }
 
-        if (!autoTarget) return;
+        if (!autoTarget || !geoReady) return;
 
         const activeAirports = allActiveIatas
             .map(iata => airportsDataRef.current.find(a => a.iata === iata))
@@ -2807,6 +2841,9 @@ export default function Globe({
                     onUpdate: () => {
                         cameraRef.current?.lookAt(0, 0, 0);
                         if (cameraRef.current) targetZoomDistRef.current = cameraRef.current.position.length();
+                    },
+                    onComplete: () => {
+                        if (!initialTransitionDone) setInitialTransitionDone(true);
                     }
                 });
             }
@@ -2869,6 +2906,9 @@ export default function Globe({
                 onUpdate: () => {
                     cameraRef.current?.lookAt(0, 0, 0);
                     if (cameraRef.current) targetZoomDistRef.current = cameraRef.current.position.length();
+                },
+                onComplete: () => {
+                    if (!initialTransitionDone) setInitialTransitionDone(true);
                 }
             });
         } else if (autoTarget.type === 'home' && geoReady) {
@@ -2878,6 +2918,9 @@ export default function Globe({
                 onUpdate: () => {
                     cameraRef.current?.lookAt(0, 0, 0);
                     if (cameraRef.current) targetZoomDistRef.current = cameraRef.current.position.length();
+                },
+                onComplete: () => {
+                    if (!initialTransitionDone) setInitialTransitionDone(true);
                 }
             });
         }
@@ -2890,8 +2933,8 @@ export default function Globe({
             const dist = calculateDistance(width, height);
             const pos = latLonToVector3(location.latitude, location.longitude, dist);
 
-            cameraRef.current.position.copy(pos);
-            cameraRef.current.lookAt(0, 0, 0);
+            // We no longer snap cameraRef.current.position directly to allow GSAP to animate it smoothly
+            // on the camera effect that depends on geoReady
             if (controlsRef.current) controlsRef.current.update();
             homePositionRef.current.copy(pos);
             setGeoReady(true);
@@ -2905,11 +2948,11 @@ export default function Globe({
         <div className='w-full h-full relative overflow-hidden bg-black flex items-center justify-center'>
             <div
                 ref={mountRef}
-                className={`w-full h-full absolute inset-0 transition-opacity duration-700 ${geoReady ? 'opacity-100' : 'opacity-0'}`}
+                className={`w-full h-full absolute inset-0 transition-opacity duration-700 z-base ${geoReady ? 'opacity-100' : 'opacity-0'}`}
             />
             <div
                 ref={popupRef}
-                className="pointer-events-none absolute z-50 hidden rounded-md border border-white/20 bg-black/80 p-2 text-xs text-white backdrop-blur-sm transition-all shadow-xl"
+                className="pointer-events-none absolute z-popover hidden rounded-md border border-white/20 bg-black/80 p-2 text-xs text-white backdrop-blur-sm transition-all shadow-xl"
             />
 
 
@@ -2918,7 +2961,7 @@ export default function Globe({
                 <div
                     key={`origin-${origin.iata_code || idx}`}
                     ref={el => { originLabelRefs.current[idx] = el; }}
-                    className="pointer-events-none absolute z-40 hidden -translate-x-1/2 -translate-y-[calc(100%+12px)] flex-col items-center transition-opacity duration-300"
+                    className="pointer-events-none absolute z-overlay hidden -translate-x-1/2 -translate-y-[calc(100%+12px)] flex-col items-center transition-opacity duration-300"
                 >
                     <div className="bg-origin/10 backdrop-blur-md border border-origin/40 px-3 py-1 rounded-full text-[10px] font-bold text-origin shadow-[0_4px_12px_rgba(0,0,0,0.5)] whitespace-nowrap">
                         {origin.city || origin.name || origin.iata_code}
@@ -2932,7 +2975,7 @@ export default function Globe({
                 <div
                     key={`dest-${dest.iata_code || idx}`}
                     ref={el => { destLabelRefs.current[idx] = el; }}
-                    className="pointer-events-none absolute z-40 hidden -translate-x-1/2 -translate-y-[calc(100%+12px)] flex-col items-center transition-opacity duration-300"
+                    className="pointer-events-none absolute z-overlay hidden -translate-x-1/2 -translate-y-[calc(100%+12px)] flex-col items-center transition-opacity duration-300"
                 >
                     <div className="bg-destination/10 backdrop-blur-md border border-destination/40 px-3 py-1 rounded-full text-[10px] font-bold text-destination shadow-[0_4px_12px_rgba(0,0,0,0.5)] whitespace-nowrap">
                         {dest.city || dest.name || dest.iata_code}
@@ -2942,23 +2985,23 @@ export default function Globe({
             ))}
 
             {/* Hover Tag */}
-            {hoveredAirport && 
-             !originsIata.includes(hoveredAirport.iata_code) && 
-             !destinationsIata.includes(hoveredAirport.iata_code) &&
-             !allStepsIata.includes(hoveredAirport.iata_code) && (
-                <div
-                    ref={hoverLabelRef}
-                    className="pointer-events-none absolute z-40 hidden -translate-x-1/2 -translate-y-[calc(100%+12px)] flex-col items-center transition-opacity duration-300"
-                >
-                    <div className="bg-emerald-500/10 backdrop-blur-md border border-emerald-500/40 px-3 py-1 rounded-full text-[10px] font-bold text-emerald-400 shadow-[0_4px_12px_rgba(0,0,0,0.5)] whitespace-nowrap">
-                        {hoveredAirport.city || hoveredAirport.name || hoveredAirport.iata_code}
+            {hoveredAirport &&
+                !originsIata.includes(hoveredAirport.iata_code) &&
+                !destinationsIata.includes(hoveredAirport.iata_code) &&
+                !allStepsIata.includes(hoveredAirport.iata_code) && (
+                    <div
+                        ref={hoverLabelRef}
+                        className="pointer-events-none absolute z-overlay hidden -translate-x-1/2 -translate-y-[calc(100%+12px)] flex-col items-center transition-opacity duration-300"
+                    >
+                        <div className="bg-emerald-500/10 backdrop-blur-md border border-emerald-500/40 px-3 py-1 rounded-full text-[10px] font-bold text-emerald-400 shadow-[0_4px_12px_rgba(0,0,0,0.5)] whitespace-nowrap">
+                            {hoveredAirport.city || hoveredAirport.name || hoveredAirport.iata_code}
+                        </div>
+                        <div className="w-px h-6 bg-linear-to-b from-emerald-500/40 to-transparent" />
                     </div>
-                    <div className="w-px h-6 bg-linear-to-b from-emerald-500/40 to-transparent" />
-                </div>
-            )}
+                )}
 
             {!isLoaded && (
-                <div className="z-10 text-white animate-pulse font-medium">
+                <div className="z-content text-white animate-pulse font-medium">
                     Cargando globo terráqueo...
                 </div>
             )}
@@ -2967,7 +3010,7 @@ export default function Globe({
             {contextMenu.visible && (contextMenu.airport || contextMenu.clusterAirports) && (
                 <div
                     ref={contextMenuContainerRef}
-                    className="absolute z-100 min-w-48 bg-main/90 backdrop-blur-3xl border border-line rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200"
+                    className="absolute z-popover min-w-48 bg-main/90 backdrop-blur-3xl border border-line rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200"
                     style={{ left: contextMenu.x, top: contextMenu.y }}
                 >
                     {contextMenu.clusterAirports ? (
