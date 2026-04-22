@@ -295,7 +295,11 @@ export class UsersController extends Controller {
             profile_picture: this.getAvatarUrl(user),
             google_id: user.google_id,
             google_email: user.google_email,
-            is_password_set: user.is_password_set
+            is_password_set: user.is_password_set,
+            badges: user.badges?.map(b => ({
+                ...b,
+                earned_at: b.earned_at.toISOString()
+            }))
         };
     }
 
@@ -328,7 +332,11 @@ export class UsersController extends Controller {
             profile_picture: this.getAvatarUrl(user),
             google_id: user.google_id,
             google_email: user.google_email,
-            is_password_set: user.is_password_set
+            is_password_set: user.is_password_set,
+            badges: user.badges?.map(b => ({
+                ...b,
+                earned_at: b.earned_at.toISOString()
+            }))
         };
     }
 
@@ -343,7 +351,11 @@ export class UsersController extends Controller {
             last_seen_at: user.last_seen_at.toISOString(),
             sent_friend_request: sentFriendRequest,
             received_friend_request: receivedFriendRequest,
-            profile_picture: this.getAvatarUrl(user)
+            profile_picture: this.getAvatarUrl(user),
+            badges: user.badges?.map(b => ({
+                ...b,
+                earned_at: b.earned_at.toISOString()
+            }))
         };
     }
 
@@ -356,7 +368,11 @@ export class UsersController extends Controller {
             created_at: user.created_at.toISOString(),
             last_seen_at: user.last_seen_at.toISOString(),
             friend_since: friendSince ? friendSince.toISOString() : user.friends.find(f => f.user.toString() === user._id.toString())!.friend_since.toISOString(),
-            profile_picture: this.getAvatarUrl(user)
+            profile_picture: this.getAvatarUrl(user),
+            badges: user.badges?.map(b => ({
+                ...b,
+                earned_at: b.earned_at.toISOString()
+            }))
         };
     }
 

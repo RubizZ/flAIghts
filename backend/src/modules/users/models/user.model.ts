@@ -29,6 +29,12 @@ export interface IUserFields {
   google_id?: string;
   google_email?: string;
   is_password_set: boolean;
+  badges?: {
+    id: string;
+    name: string;
+    icon: string;
+    earned_at: Date;
+  }[];
 }
 
 export interface IFriendUnpopulated {
@@ -140,7 +146,13 @@ const UserSchema = new Schema<IUserDocument>({
   profile_picture: { type: String },
   google_id: { type: String, index: true, sparse: true },
   google_email: { type: String, lowercase: true },
-  is_password_set: { type: Boolean, default: true }
+  is_password_set: { type: Boolean, default: true },
+  badges: [{
+    id: { type: String, required: true },
+    name: { type: String, required: true },
+    icon: { type: String, required: true },
+    earned_at: { type: Date, default: Date.now }
+  }]
 });
 
 // Índice único case-insensitive para username

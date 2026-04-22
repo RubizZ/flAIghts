@@ -27,6 +27,12 @@ export interface User {
     google_id?: string;
     google_email?: string;
     is_password_set: boolean;
+    badges?: {
+        id: string;
+        name: string;
+        icon: string;
+        earned_at: string;
+    }[];
 }
 
 export interface PopulatedUser extends Omit<User, 'friends' | 'sent_friend_requests' | 'received_friend_requests'> {
@@ -53,6 +59,12 @@ export interface FriendUser {
      */
     friend_since: string;
     profile_picture?: string;
+    badges?: {
+        id: string;
+        name: string;
+        icon: string;
+        earned_at: string;
+    }[];
 }
 
 export interface PublicUser {
@@ -72,6 +84,12 @@ export interface PublicUser {
     sent_friend_request: boolean;
     received_friend_request: boolean;
     profile_picture?: string;
+    badges?: {
+        id: string;
+        name: string;
+        icon: string;
+        earned_at: string;
+    }[];
 }
 
 // ==================== TIPOS DE RESPUESTA POR ENDPOINT ====================

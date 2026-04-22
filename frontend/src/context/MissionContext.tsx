@@ -9,6 +9,8 @@ import SurveyModal from '@/components/missions/SurveyModal';
 import FinalEvaluationModal from '@/components/missions/FinalEvaluationModal';
 import MissionOnboarding from '@/components/missions/MissionOnboarding';
 import { useSubmitResults } from '@/api/generated/openapi/evaluation';
+import { getGetSelfUserQueryKey } from '@/api/generated/openapi/users';
+import queryClient from '@/api/query-client';
 
 interface SurveyAnswer {
     missionId: string;
@@ -374,6 +376,9 @@ export const MissionProvider: React.FC<{ children: ReactNode }> = ({ children })
 
             setEvaluationFinished(true);
             toast.success('¡Evaluación completada!');
+            
+            // Invalidad datos del usuario para mostrar la nueva insignia
+            queryClient.invalidateQueries({ queryKey: getGetSelfUserQueryKey() });
         } catch (error) {
             console.error('Error al finalizar:', error);
             setEvaluationFinished(true);
