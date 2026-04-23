@@ -129,6 +129,7 @@ export interface AuditDetails {
 
 export type AuditUser = {
     id: string | null
+    username?: string | null
     ip: string
     userAgent: string
 }

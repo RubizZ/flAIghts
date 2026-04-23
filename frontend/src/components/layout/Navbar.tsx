@@ -167,12 +167,12 @@ export default function Navbar({ variant = 'floating' }: { variant?: 'floating' 
                         </div>
                     </button>
                     {user?.role === 'admin' && (
-                        <button className="w-full flex items-center justify-between px-3 py-2 text-sm rounded-xl transition-all cursor-not-allowed group text-left">
-                            <div className="flex items-center gap-3 opacity-20 text-amber-500">
+                        <button onClick={() => { setIsOpen(false); navigate('/admin') }} className="w-full flex items-center justify-between px-3 py-2 text-sm rounded-xl transition-all group text-left hover:bg-surface/70 cursor-pointer font-medium">
+                            <div className="flex items-center gap-3 text-amber-500">
                                 <ShieldCheck size={16} />
                                 Panel Admin
                             </div>
-                            <span className="text-[8px] bg-amber-500/10 px-1.5 py-0.5 rounded uppercase tracking-tighter opacity-20 text-amber-500">Soon</span>
+                            <ChevronDown size={12} className="-rotate-90 opacity-60" />
                         </button>
                     )}
                     <button

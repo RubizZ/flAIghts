@@ -260,6 +260,35 @@ export class UserService {
         return usersDocs.map(userDoc => this.sanitizeUser(userDoc));
     }
 
+    public async getAllUsers(page: number, limit: number, q?: string, role?: string): Promise<{ users: IUserUnpopulated[], total: number, page: number, totalPages: number }> {
+        const filter: any = {};
+
+        if (q) {
+            filter.$or = [
+                { username: { $regex: q, $options: 'i' } },
+                { email: { $regex: q, $options: 'i' } }
+            ];
+        }
+
+        if (role) {
+            filter.role = role;
+        }
+
+        const [users, total] = await Promise.all([
+            User.find(filter)
+                .skip((page - 1) * limit)
+                .limit(limit)
+                .sort({ created_at: -1 }),
+            User.countDocuments(filter)
+        ]);
+        return {
+            users: users.map(u => this.sanitizeUser(u)),
+            total,
+            page,
+            totalPages: Math.ceil(total / limit)
+        };
+    }
+
     public async sendFriendRequest(requesterId: string, targetId: string): Promise<void> {
         if (requesterId === targetId) throw new SelfFriendRequestError();
 
@@ -445,6 +474,37 @@ export class UserService {
         const user = await User.findById(userId);
         if (!user || !user.profile_picture) throw new UserNotFoundError(userId);
         return await this.s3Service.getDownloadUrl(user.profile_picture);
+    }
+
+    /**
+     * Elimina un usuario y limpia todos sus datos relacionados (S3, amigos, solicitudes).
+     */
+    public async deleteUser(userId: string): Promise<void> {
+        const user = await User.findById(userId);
+        if (!user) throw new UserNotFoundError(userId);
+
+        // Eliminar avatar de S3 si existe
+        if (user.profile_picture) {
+            try {
+                await this.s3Service.delete(user.profile_picture);
+            } catch (error) {
+                // No bloqueamos el borrado si falla la limpieza de S3
+            }
+        }
+
+        // Limpieza de relaciones y el propio usuario
+        await Promise.all([
+            User.updateMany({ "friends.user": userId }, { $pull: { friends: { user: userId } } }),
+            User.updateMany({ sent_friend_requests: userId }, { $pull: { sent_friend_requests: userId } }),
+            User.updateMany({ received_friend_requests: userId }, { $pull: { received_friend_requests: userId } }),
+            User.deleteOne({ _id: userId })
+        ]);
+
+        this.auditService.register({
+            resource: "USER",
+            action: "DELETE",
+            details: { id: userId }
+        });
     }
 
     public async setProfilePicture(userId: string, data: Buffer): Promise<IUserDocument> {
