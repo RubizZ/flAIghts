@@ -62,8 +62,8 @@ export class AirportService {
                 const countryInfo = COUNTRY_NAMES[a.country];
                 const countryName = (countryInfo && countryInfo[1]) || a.country;
                 this.citiesCache.set(cityKey, {
-                    lat: a.location.coordinates[1],
-                    lon: a.location.coordinates[0],
+                    lat: a.location.coordinates[1]!,
+                    lon: a.location.coordinates[0]!,
                     display_name: `${a.city}, ${countryName}`,
                     country: countryName
                 });
@@ -115,7 +115,7 @@ export class AirportService {
 
             if (userLat !== undefined && userLon !== undefined) {
                 const [lon, lat] = airport.location.coordinates;
-                distance_km = this.haversine(userLat, userLon, lat, lon);
+                distance_km = this.haversine(userLat, userLon, lat!, lon!);
                 distanceScore = Math.max(0, 1 - (distance_km / 5000));
             }
 
@@ -343,8 +343,8 @@ export class AirportService {
             i: a.iata_code,
             n: a.name,
             ci: a.city || a.name,
-            la: a.location.coordinates[1],
-            lo: a.location.coordinates[0],
+            la: a.location.coordinates[1]!,
+            lo: a.location.coordinates[0]!,
             s: a.importance_score,
             c: a.country
         }));
@@ -444,10 +444,10 @@ export class AirportService {
             const [oLon, oLat] = origin.location.coordinates;
             const [dLon, dLat] = destination.location.coordinates;
 
-            const totalDistance = this.haversine(oLat, oLon, dLat, dLon);
+            const totalDistance = this.haversine(oLat!, oLon!, dLat!, dLon!);
             const radius = this.computeAdaptiveRadius(totalDistance);
-            const midLat = (oLat + dLat) / 2;
-            const midLon = (oLon + dLon) / 2;
+            const midLat = (oLat! + dLat!) / 2;
+            const midLon = (oLon! + dLon!) / 2;
 
             const candidates = await Airport.find({
                 iata_code: { $nin: [originIata, destinationIata] },
@@ -460,8 +460,8 @@ export class AirportService {
 
             const scored = candidates.map((a: IAirport): ScoredAirport => {
                 const [lon, lat] = a.location.coordinates;
-                const dOrigin = this.haversine(oLat, oLon, lat, lon);
-                const dDest = this.haversine(dLat, dLon, lat, lon);
+                const dOrigin = this.haversine(oLat!, oLon!, lat!, lon!);
+                const dDest = this.haversine(dLat!, dLon!, lat!, lon!);
 
                 return {
                     iata: a.iata_code,
