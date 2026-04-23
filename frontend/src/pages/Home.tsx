@@ -351,9 +351,9 @@ export default function Home() {
                             <Maximize2 size={24} className="text-white animate-pulse" />
                         </div>
                         <div className="flex flex-col items-center gap-1.5">
-                            <span className="text-white font-black uppercase tracking-[0.4em] text-[10px] text-center drop-shadow-lg">Interacción 3D</span>
+                            <span className="text-white font-black uppercase tracking-[0.4em] text-[10px] text-center drop-shadow-lg">{t("home.globe.interaction3d")}</span>
                             <div className="h-px w-8 bg-white/20" />
-                            <span className="text-white/60 text-[9px] font-bold uppercase tracking-widest text-center drop-shadow-sm">Haz clic para explorar el mapa</span>
+                            <span className="text-white/60 text-[9px] font-bold uppercase tracking-widest text-center drop-shadow-sm">{t("home.globe.clickToExplore")}</span>
                         </div>
                     </div>
                 </div>
@@ -401,7 +401,7 @@ export default function Home() {
                         <div className="flex items-center gap-3">
                             <X size={20} className="group-hover:rotate-90 transition-transform duration-300" />
                             <span className="text-[10px] font-bold uppercase tracking-[0.2em] whitespace-nowrap leading-none">
-                                {selectingType ? "Cancelar selección" : "Cerrar mapa"}
+                                {selectingType ? t("home.globe.cancelSelection") : t("home.globe.closeMap")}
                             </span>
                         </div>
                     </NavIconButton>
@@ -424,7 +424,7 @@ export default function Home() {
                             ) : (
                                 <>
                                     <Search size={18} className="group-hover:scale-110 transition-transform" />
-                                    <span className="text-sm">{t("searchFlight.search")}</span>
+                                    <span className="text-sm">{t("searchFlight.actions.search")}</span>
                                 </>
                             )}
                         </button>
@@ -491,7 +491,7 @@ export default function Home() {
                                     {isMobileCardExpanded ? (
                                         <div className="flex items-center gap-2">
                                             <Search size={16} className="text-brand shrink-0" />
-                                            <span>Configura tu búsqueda</span>
+                                            <span>{t("home.globe.configureSearch")}</span>
                                         </div>
                                     ) : (
                                         <div className="flex items-center gap-2">
@@ -499,7 +499,7 @@ export default function Home() {
                                             <span>
                                                 {origins.length > 0 && destinations.length > 0
                                                     ? `${origins[0]?.iata_code || '???'}${origins.length > 1 ? '...' : ''} → ${destinations[0]?.iata_code || '???'}${destinations.length > 1 ? '...' : ''}`
-                                                    : "Configuración del viaje"}
+                                                    : t("home.globe.tripConfiguration")}
                                             </span>
                                         </div>
                                     )}
@@ -507,9 +507,9 @@ export default function Home() {
                                 {!isMobileCardExpanded && (
                                     <div className="flex items-center gap-1.5 mt-0.5">
                                         <div className="flex items-center gap-1 overflow-hidden">
-                                            <span className="text-content-muted text-[10px] font-medium truncate">{origins.length > 0 ? (origins[0]?.city || origins[0]?.name || origins[0]?.iata_code || "Origen") + (origins.length > 1 ? ` +${origins.length - 1}` : '') : "Origen"}</span>
+                                            <span className="text-content-muted text-[10px] font-medium truncate">{origins.length > 0 ? (origins[0]?.city || origins[0]?.name || origins[0]?.iata_code || t("common.origin")) + (origins.length > 1 ? ` +${origins.length - 1}` : '') : t("common.origin")}</span>
                                             <ChevronRight size={8} className="text-content-muted/30 shrink-0" />
-                                            <span className="text-content-muted text-[10px] font-medium truncate">{destinations.length > 0 ? (destinations[0]?.city || destinations[0]?.name || destinations[0]?.iata_code || "Destino") + (destinations.length > 1 ? ` +${destinations.length - 1}` : '') : "Destino"}</span>
+                                            <span className="text-content-muted text-[10px] font-medium truncate">{destinations.length > 0 ? (destinations[0]?.city || destinations[0]?.name || destinations[0]?.iata_code || t("common.destination")) + (destinations.length > 1 ? ` +${destinations.length - 1}` : '') : t("common.destination")}</span>
                                         </div>
                                         {(departureDate || returnDate) && (
                                             <>
@@ -549,7 +549,7 @@ export default function Home() {
                             className="absolute -bottom-5 left-1/2 -translate-x-1/2 bg-surface/90 backdrop-blur-2xl border border-line px-5 py-2.5 rounded-full shadow-2xl flex items-center gap-2.5 group hover:bg-surface transition-all active:scale-95 cursor-pointer z-30 whitespace-nowrap animate-fade-in"
                         >
                             <ChevronDown size={14} className="text-brand rotate-180 transition-transform group-active:-translate-y-1" />
-                            <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-content/90">Plegar búsqueda</span>
+                            <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-content/90">{t("home.globe.collapseSearch")}</span>
                         </button>
                     )}
                 </div>
@@ -558,7 +558,7 @@ export default function Home() {
                 {origins.length > 0 && destinations.length > 0 && !departureDate && !isMobileCardExpanded && !isLargeScreen && (
                     <div className="absolute top-full mt-3 left-1/2 -translate-x-1/2 bg-red-500/90 backdrop-blur-md text-white text-[9px] font-black uppercase tracking-widest px-3 py-1.5 rounded-lg shadow-2xl border border-white/20 animate-bounce flex items-center gap-1.5 whitespace-nowrap z-50">
                         <CalendarIcon size={10} />
-                        <span>Falta fecha de salida</span>
+                        <span>{t("home.globe.missingDepartureDate")}</span>
                         <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-red-500 rotate-45" />
                     </div>
                 )}
@@ -641,7 +641,7 @@ export default function Home() {
                                 className="flex items-center justify-center gap-1.5 self-center mt-3 text-[9px] font-bold text-red-500/60 hover:text-red-500 transition-all cursor-pointer group/report"
                             >
                                 <AlertTriangle size={10} className="group-hover/report:animate-pulse" />
-                                <span className="italic underline-offset-2 hover:underline">Reportar error en los datos</span>
+                                <span className="italic underline-offset-2 hover:underline">{t("home.globe.reportDataError")}</span>
                             </button>
                         </div>
                     </div>

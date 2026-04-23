@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, UIEvent, useCallback } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { ArrowLeft, Send, Loader2, CheckCheck, Plane, X, History, Calendar, MapPin } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { useGetUserById } from "@/api/generated/openapi/users";
 import UserAvatar from "@/components/ui/UserAvatar";
 import { useAuth } from "@/context/AuthContext";
@@ -14,6 +15,7 @@ import TextareaAutosize from "react-textarea-autosize";
 import { toast } from "sonner";
 
 export default function Chat() {
+    const { t } = useTranslation();
     const { userId } = useParams<{ userId: string }>();
     const { user: selfUser, isAuthenticated } = useAuth();
     const navigate = useNavigate();
@@ -175,8 +177,8 @@ export default function Chat() {
         const yesterday = new Date(now);
         yesterday.setDate(yesterday.getDate() - 1);
 
-        if (date.toDateString() === now.toDateString()) return "Hoy";
-        if (date.toDateString() === yesterday.toDateString()) return "Ayer";
+        if (date.toDateString() === now.toDateString()) return t("chat.today");
+        if (date.toDateString() === yesterday.toDateString()) return t("chat.yesterday");
         return date.toLocaleDateString([], { day: 'numeric', month: 'long', year: 'numeric' });
     };
 
@@ -188,9 +190,9 @@ export default function Chat() {
         yesterday.setDate(yesterday.getDate() - 1);
         const time = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
-        if (date.toDateString() === now.toDateString()) return `hoy a las ${time}`;
-        if (date.toDateString() === yesterday.toDateString()) return `ayer a las ${time}`;
-        return `${date.toLocaleDateString()} a las ${time}`;
+        if (date.toDateString() === now.toDateString()) return t("chat.lastSeenToday", { time });
+        if (date.toDateString() === yesterday.toDateString()) return t("chat.lastSeenYesterday", { time });
+        return t("chat.lastSeenDate", { date: date.toLocaleDateString(), time });
     };
 
     const handleShareSearch = (search: any) => {
@@ -242,10 +244,10 @@ export default function Chat() {
     if (!otherUser || isHistoryError) {
         return (
             <div className="flex flex-col h-full items-center justify-center text-center p-8">
-                <h2 className="text-xl font-bold text-red-500">Error</h2>
-                <p className="text-content-muted mt-2">No se pudo cargar el chat.</p>
+                <h2 className="text-xl font-bold text-red-500">{t("chat.error")}</h2>
+                <p className="text-content-muted mt-2">{t("chat.loadError")}</p>
                 <Link to="/chats" className="mt-4 px-4 py-2 bg-brand text-content-on-brand rounded-full font-bold">
-                    Volver a Chats
+                    {t("chat.backToChats")}
                 </Link>
             </div>
         );
@@ -267,9 +269,9 @@ export default function Chat() {
                         <h1 className="text-lg font-bold text-content leading-none">{otherUser.username}</h1>
                         <span className="text-xs font-medium text-content-muted animate-in fade-in">
                             {isOnline ? (
-                                <span className="text-brand font-bold">En línea</span>
+                                <span className="text-brand font-bold">{t("chat.online")}</span>
                             ) : (
-                                `Últ. vez ${formatLastSeen(otherUser.last_seen_at)}`
+                                t("chat.lastSeen", { time: formatLastSeen(otherUser.last_seen_at) })
                             )}
                         </span>
                     </div>
@@ -299,7 +301,7 @@ export default function Chat() {
                                                     <div className="flex flex-col gap-3 min-w-[200px]">
                                                         <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider opacity-70">
                                                             <Plane size={14} className="rotate-45" />
-                                                            Vuelo compartido
+                                                            {t("share.flightShared")}
                                                         </div>
                                                         <div className="font-bold text-base">
                                                             {origin} → {destination}
@@ -308,7 +310,7 @@ export default function Chat() {
                                                             to={`/search/${searchId}`}
                                                             className={`text-center py-2 rounded-xl text-xs font-bold transition-all ${isSelf ? 'bg-white/20 hover:bg-white/30 text-white' : 'bg-brand text-white hover:opacity-90'}`}
                                                         >
-                                                            Ver detalles del viaje
+                                                            {t("share.viewTripDetails")}
                                                         </Link>
                                                     </div>
                                                 );
@@ -347,7 +349,7 @@ export default function Chat() {
                         <div className="absolute bottom-full left-4 right-4 mb-2 bg-main border border-line rounded-2xl shadow-2xl overflow-hidden animate-in slide-in-from-bottom-2 duration-200 z-50 max-h-80 flex flex-col">
                             <div className="p-3 border-b border-line bg-surface/50 flex justify-between items-center">
                                 <h3 className="text-xs font-bold uppercase tracking-wider text-content-muted flex items-center gap-2">
-                                    <History size={14} /> Tus búsquedas recientes
+                                    <History size={14} /> {t("chat.recentSearches")}
                                 </h3>
                                 <button onClick={() => setIsShareModalOpen(false)} className="text-content-muted hover:text-content">
                                     <X size={16} />
@@ -357,7 +359,7 @@ export default function Chat() {
                                 {isLoadingSearches ? (
                                     <div className="p-8 flex justify-center"><Loader2 className="animate-spin text-brand" /></div>
                                 ) : userSearches?.items.length === 0 ? (
-                                    <div className="p-8 text-center text-xs text-content-muted">No tienes búsquedas para compartir.</div>
+                                    <div className="p-8 text-center text-xs text-content-muted">{t("chat.noSearchesToShare")}</div>
                                 ) : (
                                     userSearches?.items.map((search: any) => (
                                         <button
@@ -375,7 +377,7 @@ export default function Chat() {
                                             </div>
                                             <div className="flex items-center gap-3 text-[10px] text-content-muted">
                                                 <span className="flex items-center gap-1"><Calendar size={10} /> {new Date(search.departure_date).toLocaleDateString()}</span>
-                                                <span className="flex items-center gap-1"><MapPin size={10} /> {search.origins.length + search.destinations.length} ciudades</span>
+                                                <span className="flex items-center gap-1"><MapPin size={10} /> {t("chat.cities", { count: search.origins.length + search.destinations.length })}</span>
                                             </div>
                                         </button>
                                     ))
@@ -389,7 +391,7 @@ export default function Chat() {
                             type="button"
                             onClick={() => setIsShareModalOpen(!isShareModalOpen)}
                             className={`p-3 rounded-full transition-all shadow-sm border border-line cursor-pointer ${isShareModalOpen ? 'bg-brand text-white' : 'bg-surface text-content-muted hover:text-brand'}`}
-                            title="Compartir búsqueda de vuelo"
+                            title={t("share.shareFlightSearch")}
                         >
                             <Plane size={20} className={isShareModalOpen ? '' : 'rotate-45'} />
                         </button>
@@ -397,7 +399,7 @@ export default function Chat() {
                             value={newMessage}
                             onChange={(e) => setNewMessage(e.target.value)}
                             onKeyDown={handleKeyDown}
-                            placeholder="Escribe un mensaje..."
+                            placeholder={t("chat.messagePlaceholder")}
                             className="flex-1 bg-surface placeholder-content-muted outline-none px-4 pt-3 pb-3.5 rounded-xl font-medium border border-line focus:border-brand shadow-sm resize-none custom-scrollbar"
                             autoComplete="off"
                             maxRows={4}
@@ -406,9 +408,9 @@ export default function Chat() {
                         <button
                             type="submit"
                             disabled={newMessage.trim() === "" || wsStatus !== 'open'}
-                            title={wsStatus !== 'open' ? 'Conectando al chat...' : 'Enviar mensaje'}
+                            title={wsStatus !== 'open' ? t("chat.connecting") : t("chat.sendMessage")}
                             className="p-3 bg-brand text-content-on-brand rounded-full hover:bg-brand/90 transition-all shadow-lg shadow-brand/20 active:scale-95 disabled:bg-brand/50 disabled:cursor-not-allowed disabled:scale-100"
-                            aria-label="Enviar mensaje"
+                            aria-label={t("chat.sendMessage")}
                         >
                             <Send size={20} />
                         </button>

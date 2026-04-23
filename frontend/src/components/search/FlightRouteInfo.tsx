@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 import { Plane } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import type { ItineraryResponse } from "@/api/generated/openapi/model";
 
 interface FlightRouteInfoProps {
@@ -9,6 +10,7 @@ interface FlightRouteInfoProps {
 }
 
 export default function FlightRouteInfo({ itinerary, formatTime, formatDuration }: FlightRouteInfoProps) {
+    const { t } = useTranslation();
     const firstLeg = itinerary.legs[0];
     const lastLeg = itinerary.legs[itinerary.legs.length - 1];
     const stopovers = itinerary.legs.length - 1;
@@ -77,7 +79,7 @@ export default function FlightRouteInfo({ itinerary, formatTime, formatDuration 
                         <div className="absolute w-1.5 h-1.5 rounded-full bg-line right-0" />
                     </div>
                     <span className={`text-[10px] font-bold mt-1.5 text-center ${stopovers > 0 ? 'text-orange-400' : 'text-emerald-400'}`}>
-                        {stopovers === 0 ? 'Directo' : `${stopovers} ${stopovers === 1 ? 'escala' : 'escalas'} (${stopoverAirports})`}
+                        {stopovers === 0 ? t("flightRoute.direct") : t("flightRoute.stopover", { count: stopovers, label: stopovers === 1 ? t("flightRoute.stopoverSingular") : t("flightRoute.stopoverPlural"), airports: stopoverAirports })}
                     </span>
                 </div>
 

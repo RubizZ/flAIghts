@@ -159,7 +159,8 @@
     "error": {
       "backToHome": "Volver al inicio",
       "noFlights": "No se han encontrado vuelos",
-      "tryAgain": "Inténtalo de nuevo"
+      "tryAgain": "Inténtalo de nuevo",
+      "fetch": "Error al obtener los resultados de búsqueda"
     },
     "toast": {
       "noBookingOptions": "No se han encontrado opciones de reserva para este vuelo"
@@ -809,11 +810,102 @@
     "outbound": "Ida",
     "return": "Vuelta",
     "outboundFlights": "Vuelos de Ida",
-    "returnFlights": "Vuelos de Vuelta"
+    "returnFlights": "Vuelos de Vuelta",
+    "origin": "Origen",
+    "destination": "Destino",
+    "airport": "Aeropuerto",
+    "direct": "Directo",
+    "stopover_one": "{{count}} escala",
+    "stopover_other": "{{count}} escalas",
+    "cities": "Ciudades",
+    "select": "Seleccionar",
+    "add": "Añadir..."
   },
   "home": {
     "toast": {
       "evaluationCompleted": "¡Evaluación completada!"
+    },
+    "globe": {
+      "interaction3d": "Interacción 3D",
+      "clickToExplore": "Haz clic para explorar el mapa",
+      "cancelSelection": "Cancelar selección",
+      "closeMap": "Cerrar mapa",
+      "configureSearch": "Configura tu búsqueda",
+      "tripConfiguration": "Configuración del viaje",
+      "collapseSearch": "Plegar búsqueda",
+      "missingDepartureDate": "Falta fecha de salida",
+      "reportDataError": "Reportar error en los datos",
+      "selectOnMap": "Seleccionar en el mapa",
+      "departure": "Salida",
+      "return": "Regreso"
+    }
+  },
+  "globe": {
+    "loading": "Cargando globo terráqueo...",
+    "airportsInZone": "Aeropuertos en zona",
+    "found": "{{count}} encontrados",
+    "setAsOrigin": "Definir como Origen",
+    "setAsDestination": "Definir como Destino"
+  },
+  "share": {
+    "share": "Compartir",
+    "shareWithFriend": "Compartir con amigo",
+    "flightShared": "Vuelo compartido",
+    "flightSharedSuccess": "Vuelo compartido con éxito",
+    "shareError": "Error al compartir",
+    "shareFlightError": "Error al compartir el vuelo",
+    "shareFlightSearch": "Compartir búsqueda de vuelo",
+    "viewTripDetails": "Ver detalles del viaje"
+  },
+  "chat": {
+    "error": "Error",
+    "loadError": "No se pudo cargar el chat.",
+    "backToChats": "Volver a Chats",
+    "online": "En línea",
+    "lastSeen": "Últ. vez {{time}}",
+    "lastSeenToday": "hoy a las {{time}}",
+    "lastSeenYesterday": "ayer a las {{time}}",
+    "lastSeenDate": "{{date}} a las {{time}}",
+    "today": "Hoy",
+    "yesterday": "Ayer",
+    "recentSearches": "Tus búsquedas recientes",
+    "noSearchesToShare": "No tienes búsquedas para compartir.",
+    "cities": "{{count}} ciudades",
+    "messagePlaceholder": "Escribe un mensaje...",
+    "connecting": "Conectando al chat...",
+    "sendMessage": "Enviar mensaje"
+  },
+  "flightRoute": {
+    "direct": "Directo",
+    "stopover": "{{count}} {{label}} ({{airports}})",
+    "stopoverSingular": "escala",
+    "stopoverPlural": "escalas"
+  },
+  "airportAutocomplete": {
+    "fromCity": "A {{distance}} km de la ciudad",
+    "seeMoreAirports": "Ver más aeropuertos",
+    "seeAllResults": "Ver todos los resultados",
+    "noMoreResults": "No hay más resultados",
+    "backToFeatured": "Volver a resultados destacados",
+    "noResults": "No hay resultados",
+    "tryOtherSearch": "Prueba con otro código o nombre de ciudad",
+    "fromWhere": "¿Desde dónde?",
+    "toWhere": "¿A dónde?"
+  },
+  "airportReport": {
+    "title": "Reportar error",
+    "description": "Ayúdanos a mejorar los datos de {{iata}}",
+    "selectedAirport": "Aeropuerto seleccionado",
+    "errorDescription": "Descripción del error",
+    "placeholder": "Ej: El nombre está mal escrito, la ubicación es incorrecta o es una base militar...",
+    "minimum": "mínimo {{min}}",
+    "cancel": "Cancelar",
+    "sending": "Enviando...",
+    "sendReport": "Enviar reporte",
+    "toast": {
+      "success": "¡Gracias! Tu reporte ha sido enviado.",
+      "error": "Error al enviar el reporte. Inténtalo de nuevo.",
+      "describeError": "Por favor, describe el error antes de enviar"
     }
   }
 }

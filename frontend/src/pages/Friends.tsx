@@ -240,7 +240,7 @@ export default function Friends() {
                                                         {req.username}
                                                     </Link>
                                                     <span className="text-xs text-content-muted flex items-center gap-1">
-                                                        <Clock size={12} /> {t("friends.requests.pending")}
+                                                        <Clock size={12} /> {t("friends.requests.waiting")}
                                                     </span>
                                                 </div>
                                             </div>

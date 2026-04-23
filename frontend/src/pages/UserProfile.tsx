@@ -49,8 +49,8 @@ export default function UserProfile() {
 
     const { mutate: sendMessage } = useSendMessage({
         mutation: {
-            onSuccess: () => toast.success("Vuelo compartido con éxito"),
-            onError: () => toast.error("Error al compartir el vuelo")
+            onSuccess: () => toast.success(t("share.flightSharedSuccess")),
+            onError: () => toast.error(t("share.shareFlightError"))
         }
     });
 
@@ -315,7 +315,7 @@ export default function UserProfile() {
                                                             }
                                                         >
                                                             <div className="p-2 flex flex-col gap-1 min-w-[200px]">
-                                                                <p className="px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-content-muted border-b border-line mb-1">Compartir con amigo</p>
+                                                                <p className="px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-content-muted border-b border-line mb-1">{t("share.shareWithFriend")}</p>
                                                                 {user.friends.filter((f): f is FriendUser => typeof f !== 'string').map(friend => (
                                                                     <button
                                                                         key={friend._id}

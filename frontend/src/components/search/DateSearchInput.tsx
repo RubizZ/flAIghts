@@ -3,6 +3,7 @@ import { Calendar as CalendarIcon, Plus } from "lucide-react";
 import Calendar from "../ui/Calendar";
 import Tooltip from "../ui/Tooltip";
 import PremiumInput from "../ui/PremiumInput";
+import { useTranslation } from "react-i18next";
 
 interface DateSearchInputProps {
     type: 'departure' | 'return';
@@ -31,14 +32,15 @@ const DateSearchInput: React.FC<DateSearchInputProps> = ({
     onClear,
     className = "",
 }) => {
+    const { t } = useTranslation();
     const isDeparture = type === 'departure';
-    const label = isDeparture ? "Salida" : "Regreso";
+    const label = isDeparture ? t("home.globe.departure") : t("home.globe.return");
     const iconColorClass = value
         ? (isDeparture ? "text-origin" : "text-destination")
         : "text-content-muted";
 
     const formatDate = (dateStr: string) => {
-        if (!dateStr) return "Seleccionar";
+        if (!dateStr) return t("common.select");
         const date = new Date(dateStr);
         const isCurrentYear = date.getFullYear() === new Date().getFullYear();
 

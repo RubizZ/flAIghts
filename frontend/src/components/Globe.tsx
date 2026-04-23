@@ -9,6 +9,7 @@ import { useGetGlobeAirports } from "@/api/generated/openapi/airports";
 import { COUNTRY_NAMES } from "@/constants/countries";
 import type { AirportResponse } from "@/api/generated/openapi/model";
 import { useUserLocation } from "@/context/UserLocationContext";
+import { useTranslation } from "react-i18next";
 
 interface AirportData {
     iata: string;
@@ -51,6 +52,7 @@ export default function Globe({
     hoveredAirport,
     steps = []
 }: GlobeProps) {
+    const { t } = useTranslation();
     const { location, isLoading: isLocLoading } = useUserLocation();
     const DEBUG_HITBOXES = false;
 
@@ -2962,7 +2964,7 @@ export default function Globe({
 
             {!isLoaded && (
                 <div className="z-10 text-white animate-pulse font-medium">
-                    Cargando globo terráqueo...
+                    {t("globe.loading")}
                 </div>
             )}
 
@@ -2976,9 +2978,9 @@ export default function Globe({
                     {contextMenu.clusterAirports ? (
                         <div className="flex flex-col w-64">
                             <div className="px-4 py-3 border-b border-line bg-surface/30">
-                                <div className="text-[10px] text-content-muted font-bold uppercase tracking-wider mb-0.5">Aeropuertos en zona</div>
+                                <div className="text-[10px] text-content-muted font-bold uppercase tracking-wider mb-0.5">{t("globe.airportsInZone")}</div>
                                 <div className="text-content text-xs font-semibold">
-                                    {contextMenu.clusterAirports.length} encontrados
+                                    {t("globe.found", { count: contextMenu.clusterAirports.length })}
                                 </div>
                             </div>
                             <div className="relative max-h-57.5 overflow-y-auto p-1.5 flex flex-col gap-1 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
@@ -3010,7 +3012,7 @@ export default function Globe({
                                                     className="flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg bg-origin/10 text-origin text-[9px] font-bold hover:bg-origin/20 transition-all cursor-pointer"
                                                 >
                                                     <PlaneTakeoff size={10} />
-                                                    Origen
+                                                    {t("common.origin")}
                                                 </button>
                                                 <button
                                                     onClick={(e) => {
@@ -3021,7 +3023,7 @@ export default function Globe({
                                                     className="flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg bg-destination/10 text-destination text-[9px] font-bold hover:bg-destination/20 transition-all cursor-pointer"
                                                 >
                                                     <PlaneLanding size={10} />
-                                                    Destino
+                                                    {t("common.destination")}
                                                 </button>
                                             </div>
                                         )}
@@ -3036,7 +3038,7 @@ export default function Globe({
                     ) : (
                         <>
                             <div className="px-4 py-3 border-b border-line bg-surface/30">
-                                <div className="text-[10px] text-content-muted font-bold uppercase tracking-wider mb-0.5">Aeropuerto</div>
+                                <div className="text-[10px] text-content-muted font-bold uppercase tracking-wider mb-0.5">{t("common.airport")}</div>
                                 <div className="text-content text-sm font-semibold truncate max-w-45">
                                     {contextMenu.airport!.city || contextMenu.airport!.name} ({contextMenu.airport!.iata})
                                 </div>
@@ -3053,7 +3055,7 @@ export default function Globe({
                                     className="flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-semibold text-content hover:bg-origin/20 hover:text-origin transition-all cursor-pointer group"
                                 >
                                     <PlaneTakeoff size={14} className="text-content-muted group-hover:text-origin transition-colors" />
-                                    <span>Definir como Origen</span>
+                                    <span>{t("globe.setAsOrigin")}</span>
                                 </button>
 
                                 <button
@@ -3066,7 +3068,7 @@ export default function Globe({
                                     className="flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-semibold text-content hover:bg-destination/20 hover:text-destination transition-all cursor-pointer group"
                                 >
                                     <PlaneLanding size={14} className="text-content-muted group-hover:text-destination transition-colors" />
-                                    <span>Definir como Destino</span>
+                                    <span>{t("globe.setAsDestination")}</span>
                                 </button>
                             </div>
                         </>

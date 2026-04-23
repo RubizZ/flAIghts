@@ -147,19 +147,20 @@
     "validation": {
       "passwordRequired": "Enter a password",
       "confirmPasswordMismatch": "Passwords do not match",
-      "correctErrors": "Please correct the errors",
       "tokenMissing": "Reset token not found"
     },
     "toast": {
       "success": "Password reset successfully",
-      "tokenInvalid": "The reset token is invalid or has expired"
+      "tokenInvalid": "The reset token is invalid or has expired",
+      "correctErrors": "Please correct the errors"
     }
   },
   "searchResults": {
     "error": {
       "backToHome": "Back to home",
       "noFlights": "No flights found",
-      "tryAgain": "Try again"
+      "tryAgain": "Try again",
+      "fetch": "Error fetching search results"
     },
     "toast": {
       "noBookingOptions": "No booking options found for this flight"
@@ -809,11 +810,102 @@
     "outbound": "Outbound",
     "return": "Return",
     "outboundFlights": "Outbound Flights",
-    "returnFlights": "Return Flights"
+    "returnFlights": "Return Flights",
+    "origin": "Origin",
+    "destination": "Destination",
+    "airport": "Airport",
+    "direct": "Direct",
+    "stopover_one": "{{count}} stopover",
+    "stopover_other": "{{count}} stopovers",
+    "cities": "Cities",
+    "select": "Select",
+    "add": "Add..."
   },
   "home": {
     "toast": {
       "evaluationCompleted": "Evaluation completed!"
+    },
+    "globe": {
+      "interaction3d": "3D Interaction",
+      "clickToExplore": "Click to explore the map",
+      "cancelSelection": "Cancel selection",
+      "closeMap": "Close map",
+      "configureSearch": "Configure your search",
+      "tripConfiguration": "Trip configuration",
+      "collapseSearch": "Collapse search",
+      "missingDepartureDate": "Missing departure date",
+      "reportDataError": "Report data error",
+      "selectOnMap": "Select on map",
+      "departure": "Departure",
+      "return": "Return"
+    }
+  },
+  "globe": {
+    "loading": "Loading globe...",
+    "airportsInZone": "Airports in zone",
+    "found": "{{count}} found",
+    "setAsOrigin": "Set as Origin",
+    "setAsDestination": "Set as Destination"
+  },
+  "share": {
+    "share": "Share",
+    "shareWithFriend": "Share with friend",
+    "flightShared": "Shared flight",
+    "flightSharedSuccess": "Flight shared successfully",
+    "shareError": "Error sharing",
+    "shareFlightError": "Error sharing flight",
+    "shareFlightSearch": "Share flight search",
+    "viewTripDetails": "View trip details"
+  },
+  "chat": {
+    "error": "Error",
+    "loadError": "Could not load chat.",
+    "backToChats": "Back to Chats",
+    "online": "Online",
+    "lastSeen": "Last seen {{time}}",
+    "lastSeenToday": "today at {{time}}",
+    "lastSeenYesterday": "yesterday at {{time}}",
+    "lastSeenDate": "{{date}} at {{time}}",
+    "today": "Today",
+    "yesterday": "Yesterday",
+    "recentSearches": "Your recent searches",
+    "noSearchesToShare": "You have no searches to share.",
+    "cities": "{{count}} cities",
+    "messagePlaceholder": "Write a message...",
+    "connecting": "Connecting to chat...",
+    "sendMessage": "Send message"
+  },
+  "flightRoute": {
+    "direct": "Direct",
+    "stopover": "{{count}} {{label}} ({{airports}})",
+    "stopoverSingular": "stopover",
+    "stopoverPlural": "stopovers"
+  },
+  "airportAutocomplete": {
+    "fromCity": "{{distance}} km from city",
+    "seeMoreAirports": "See more airports",
+    "seeAllResults": "See all results",
+    "noMoreResults": "No more results",
+    "backToFeatured": "Back to featured results",
+    "noResults": "No results",
+    "tryOtherSearch": "Try another code or city name",
+    "fromWhere": "From where?",
+    "toWhere": "Where to?"
+  },
+  "airportReport": {
+    "title": "Report error",
+    "description": "Help us improve the data for {{iata}}",
+    "selectedAirport": "Selected airport",
+    "errorDescription": "Error description",
+    "placeholder": "E.g.: The name is misspelled, the location is incorrect or it is a military base...",
+    "minimum": "minimum {{min}}",
+    "cancel": "Cancel",
+    "sending": "Sending...",
+    "sendReport": "Send report",
+    "toast": {
+      "success": "Thank you! Your report has been submitted.",
+      "error": "Error submitting report. Please try again.",
+      "describeError": "Please describe the error before submitting"
     }
   }
 }

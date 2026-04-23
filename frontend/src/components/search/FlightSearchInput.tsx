@@ -1,5 +1,6 @@
 import React from "react";
 import { MapPin, Search } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { AirportResponse } from "@/api/generated/openapi/model";
 import AirportAutocomplete from "../AirportAutocomplete";
 import PremiumInput from "../ui/PremiumInput";
@@ -27,8 +28,9 @@ const FlightSearchInput: React.FC<FlightSearchInputProps> = ({
     otherSelected = [],
     onHoverChange,
 }) => {
+    const { t } = useTranslation();
     const isOrigin = type === 'origin';
-    const label = isOrigin ? "Origen" : "Destino";
+    const label = isOrigin ? t("common.origin") : t("common.destination");
     const iconColorClass = value.length > 0
         ? (isOrigin ? "text-origin" : "text-destination")
         : "text-content-muted";
@@ -43,7 +45,7 @@ const FlightSearchInput: React.FC<FlightSearchInputProps> = ({
                 ? 'text-brand bg-brand/10'
                 : 'text-content-muted hover:bg-surface hover:text-brand'
                 }`}
-            title="Seleccionar en el mapa"
+            title={t("home.globe.selectOnMap")}
         >
             <Search size={isOrigin ? 16 : 14} />
         </button>
@@ -58,7 +60,7 @@ const FlightSearchInput: React.FC<FlightSearchInputProps> = ({
             className={className}
         >
             <AirportAutocomplete
-                placeholder={placeholder || (isOrigin ? "¿Desde dónde?" : "¿A dónde?")}
+                placeholder={placeholder || (isOrigin ? t("airportAutocomplete.fromWhere") : t("airportAutocomplete.toWhere"))}
                 className="bg-transparent border-none p-0 text-content placeholder:text-content-muted/60 focus:outline-none w-full text-base lg:text-base font-sans"
                 value={value}
                 onChange={onChange}

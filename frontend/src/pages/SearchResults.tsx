@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect, useCallback } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { useGetGlobeAirports } from "@/api/generated/openapi/airports";
-import { AlertCircle, Loader2, Plane, ArrowLeft, ArrowRight, DollarSign, Clock, Calendar, Share2 } from "lucide-react";
+import { AlertCircle, Loader2, Plane, ArrowLeft, ArrowRight, DollarSign, Clock, Calendar, Share2, Star } from "lucide-react";
 import { useSearchResult } from "@/api/generated/openapi/search";
 import type { ItineraryResponse, GlobeAirportResponse, AirportResponse, FriendUser } from "@/api/generated/openapi/model";
 import { useSendMessage } from "@/api/generated/openapi/conversations";
@@ -64,8 +64,8 @@ export default function SearchResults() {
 
     const { mutate: sendMessage } = useSendMessage({
         mutation: {
-            onSuccess: () => { toast.success("Vuelo compartido"); setIsSharing(false); },
-            onError: () => toast.error("Error al compartir")
+            onSuccess: () => { toast.success(t("share.flightShared")); setIsSharing(false); },
+            onError: () => toast.error(t("share.shareError"))
         }
     });
 
@@ -353,12 +353,12 @@ export default function SearchResults() {
                                                 className="flex items-center gap-2 px-4 py-2 bg-brand text-white rounded-full font-bold shadow-lg hover:scale-105 active:scale-95 transition-all"
                                             >
                                                 <Share2 size={18} />
-                                                <span>Compartir</span>
+                                                <span>{t("share.share")}</span>
                                             </button>
                                         }
                                     >
                                         <div className="p-2 flex flex-col gap-1 min-w-[220px]">
-                                            <p className="px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-content-muted border-b border-line mb-1">Compartir con amigo</p>
+                                            <p className="px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-content-muted border-b border-line mb-1">{t("share.shareWithFriend")}</p>
                                             {user.friends.filter((f): f is FriendUser => typeof f !== 'string').map(friend => (
                                                 <button
                                                     key={friend._id}
