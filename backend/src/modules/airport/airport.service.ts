@@ -97,7 +97,7 @@ export class AirportService {
         return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
     }
 
-    public async searchAirports(query: string, userLat?: number, userLon?: number, page: number = 1, limit: number = 10): Promise<AirportSearchPaginatedResult> {
+    public async searchAirports(query: string, userLat?: number, userLon?: number, page: number = 1, limit: number = 10, isDynamic: boolean = true): Promise<AirportSearchPaginatedResult> {
         let airports = this.isInitialized ? this.airportsCache : (await Airport.find({}).lean()).map(a => {
             const names = COUNTRY_NAMES[a.country] || [];
             return {
@@ -179,7 +179,7 @@ export class AirportService {
                 if (coordsResult) {
                     const countryName = coordsResult.country;
                     const countryCode = Object.entries(COUNTRY_NAMES).find(([_, names]) => names.includes(countryName))?.[0] || "";
-                    const near = await this.getNearAirports(coordsResult.lat, coordsResult.lon, 8, 200);
+                    const near = await this.getNearAirports(coordsResult.lat, coordsResult.lon, 8, 200, isDynamic);
                     const nearIatas = new Set(near.map(n => n.iata_code));
 
                     // Build the final subAirports list using data from fuzzyItems (for highlights) where possible
@@ -397,8 +397,8 @@ export class AirportService {
      * @param limit Cantidad máxima de resultados
      * @param maxDistanceKm Radio máximo en kilómetros
      */
-    public async getNearAirports(lat: number, lon: number, limit: number = 5, maxDistanceKm: number = 500): Promise<AirportResponse[]> {
-        const airports = await Airport.aggregate([
+    public async getNearAirports(lat: number, lon: number, limit: number = 8, maxDistanceKm: number = 500, isDynamic: boolean = true): Promise<AirportResponse[]> {
+        const rawAirports = await Airport.aggregate([
             {
                 $geoNear: {
                     near: { type: "Point", coordinates: [lon, lat] },
@@ -410,7 +410,49 @@ export class AirportService {
             { $limit: limit }
         ]);
 
-        return airports.map(a => {
+        if (!isDynamic) {
+            return rawAirports.map(a => {
+                return {
+                    ...this.toAirportResponse(a),
+                    distance_km_to_city: Math.round(a.distance_meters / 1000)
+                };
+            });
+        }
+
+        const filtered: any[] = [];
+        for (let i = 0; i < rawAirports.length; i++) {
+            const a = rawAirports[i];
+            const distKm = a.distance_meters / 1000;
+
+            // Always keep the closest one
+            if (i === 0) {
+                filtered.push(a);
+                continue;
+            }
+
+            // Gradual inclusion logic:
+            // 1. Always include airports within a 60km radius (local metro area / hubs)
+            if (distKm < 60) {
+                filtered.push(a);
+                continue;
+            }
+
+            // 2. If we already have at least 2 airports and the next one is far (> 120km), stop.
+            if (filtered.length >= 2 && distKm > 120) {
+                break;
+            }
+
+            // 3. If there's a huge jump in distance compared to the previous one (> 80km),
+            // it's likely a different region/city cluster, so stop.
+            const prevDistKm = rawAirports[i - 1].distance_meters / 1000;
+            if (distKm - prevDistKm > 80) {
+                break;
+            }
+
+            filtered.push(a);
+        }
+
+        return filtered.map(a => {
             return {
                 ...this.toAirportResponse(a),
                 distance_km_to_city: Math.round(a.distance_meters / 1000)

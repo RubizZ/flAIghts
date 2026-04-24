@@ -9,6 +9,7 @@ import type {
     ItineraryResponse,
     AirportResponse
 } from "@/api/generated/asyncapi/models";
+import { UnifiedSelection } from "@/types/selection";
 import { useAuth } from "@/context/AuthContext";
 import { useUserLocation } from "@/context/UserLocationContext";
 import { getAirportByIata } from "@/api/generated/openapi/airports";
@@ -43,12 +44,12 @@ type UIStep = AsyncAPIModels.AgentStreamEvent & {
 interface AgentChatProps {
     messages: ExtendedChatMessage[];
     setMessages: (messages: ExtendedChatMessage[] | ((prev: ExtendedChatMessage[]) => ExtendedChatMessage[])) => void;
-    origins?: AirportResponse[];
-    destinations?: AirportResponse[];
+    origins?: UnifiedSelection[];
+    destinations?: UnifiedSelection[];
     departureDate?: string;
     returnDate?: string;
-    setOrigins?: (airports: AirportResponse[]) => void;
-    setDestinations?: (airports: AirportResponse[]) => void;
+    setOrigins?: (selections: UnifiedSelection[]) => void;
+    setDestinations?: (selections: UnifiedSelection[]) => void;
     setDepartureDate?: (date: string) => void;
     setReturnDate?: (date: string) => void;
 }
@@ -459,8 +460,8 @@ const AgentChat = forwardRef<any, AgentChatProps>(({
                     model: selectedModel,
                     location: location ? location : undefined,
                     manual_state: {
-                        origins: origins?.map(o => o.iata_code),
-                        destinations: destinations?.map(d => d.iata_code),
+                        origins: origins?.flatMap(o => (o as AirportResponse).iata_code ? [(o as AirportResponse).iata_code] : (o as any).airports?.map((a: any) => a.iata_code) || []),
+                        destinations: destinations?.flatMap(d => (d as AirportResponse).iata_code ? [(d as AirportResponse).iata_code] : (d as any).airports?.map((a: any) => a.iata_code) || []),
                         departure_date: departureDate,
                         return_date: returnDate
                     }

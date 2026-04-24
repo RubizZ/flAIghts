@@ -1,21 +1,22 @@
 import { useState, useEffect, useRef, useMemo } from "react";
-import { Plane, Loader2, Search, X, Building2, MapPin, ChevronLeft } from "lucide-react";
+import { Plane, Loader2, Search, X, Building2, MapPin, ChevronLeft, Plus, Check } from "lucide-react";
 import type { AirportResponse, SearchResult, CityResponse } from "@/api/generated/openapi/model";
 import { COUNTRY_NAMES } from "@/constants/countries";
 import SmartPopover from "./ui/SmartPopover";
 import { useUserLocation } from "@/context/UserLocationContext";
 import { useSearchAirportsInfinite } from "@/api/generated/openapi/airports";
+import { UnifiedSelection, isAirport, isCity, getEntityId, getEntityName } from "@/types/selection";
 
 interface AirportAutocompleteProps {
-    value: AirportResponse[];
-    onChange: (airports: AirportResponse[]) => void;
+    value: UnifiedSelection[];
+    onChange: (selections: UnifiedSelection[]) => void;
     placeholder?: string;
     className?: string;
-    otherSelected?: AirportResponse[];
-    onHoverChange?: (airport: AirportResponse | null) => void;
+    otherSelected?: UnifiedSelection[];
+    onHoverChange?: (entity: UnifiedSelection | null) => void;
 }
 
-const getDisplay = (value: AirportResponse[]) => {
+const getDisplay = (value: UnifiedSelection[]) => {
     // Para multiselección con chips, el input suele estar vacío o mostrar un placeholder
     return "";
 };
@@ -56,9 +57,21 @@ export default function AirportAutocomplete({ value, onChange, placeholder, clas
     const scrollContainerRef = useRef<HTMLUListElement>(null);
     const chipsScrollRef = useRef<HTMLDivElement>(null);
 
-    // Selected IATAs for fast lookup and conflict check
-    const selectedIatas = useMemo(() => new Set(value.map(a => a.iata_code)), [value]);
-    const otherIatas = useMemo(() => new Set(otherSelected.map(a => a.iata_code)), [otherSelected]);
+    // Selected IDs for fast lookup and conflict check
+    const selectedIds = useMemo(() => new Set(value.map(getEntityId)), [value]);
+    const selectedIatas = useMemo(() => new Set(value.flatMap(v => isAirport(v) ? [v.iata_code] : v.airports.map(a => a.iata_code))), [value]);
+    const otherIatas = useMemo(() => new Set(otherSelected.flatMap(v => isAirport(v) ? [v.iata_code] : v.airports.map(a => a.iata_code))), [otherSelected]);
+
+    // Group selected airports by city for visual display
+    const groupedValue = useMemo(() => {
+        const groups: Map<string, UnifiedSelection[]> = new Map();
+        value.forEach(v => {
+            const key = isCity(v) ? v.name : (v.city || v.iata_code);
+            if (!groups.has(key)) groups.set(key, []);
+            groups.get(key)!.push(v);
+        });
+        return Array.from(groups.entries());
+    }, [value]);
 
     const { location } = useUserLocation();
 
@@ -187,10 +200,32 @@ export default function AirportAutocomplete({ value, onChange, placeholder, clas
         setIsOpen(false);
     };
 
-    const removeAirport = (iata: string | undefined) => {
-        if (!iata) return;
-        onChange(value.filter(a => a.iata_code !== iata));
+    const handleSelectCity = (city: CityResponse) => {
+        const cityId = getEntityId(city);
+
+        // If already selected as a city entity, remove it
+        if (selectedIds.has(cityId)) {
+            onChange(value.filter(v => getEntityId(v) !== cityId));
+            return;
+        }
+
+        // If we select a city, we should remove individual airports from that city if they were already selected
+        const cityIatas = new Set(city.airports.map(a => a.iata_code));
+        const newValue = value.filter(v => !isAirport(v) || !cityIatas.has(v.iata_code));
+
+        onChange([...newValue, city]);
+
+        city.airports.forEach(airport => {
+            window.dispatchEvent(new CustomEvent('app:add-airport', { detail: { airport } }));
+        });
+
+        onHoverChange?.(null);
+        setQuery("");
+        setDebouncedQuery("");
+        setIsOpen(false);
     };
+
+
 
     return (
         <SmartPopover
@@ -214,18 +249,25 @@ export default function AirportAutocomplete({ value, onChange, placeholder, clas
                     }}
                     className="flex items-center gap-1.5 w-full h-7 lg:h-8 overflow-x-auto overflow-y-hidden custom-scrollbar py-0 pb-1"
                 >
-                    {value.map((airport) => (
+                    {value.map((item, idx) => (
                         <div
-                            key={airport.iata_code}
-                            className="flex items-center gap-1 bg-brand/10 border border-brand/20 px-1.5 py-0.5 rounded-lg animate-in zoom-in-95 duration-200 shrink-0"
+                            key={`${getEntityId(item)}-${idx}`}
+                            className="flex items-center gap-1.5 bg-brand/10 border border-brand/20 px-2.5 py-0.5 rounded-lg shrink-0 animate-in zoom-in-95 duration-200"
                         >
-                            <span className="text-[10px] font-bold text-brand">{airport.iata_code}</span>
+                            <span className="text-[10px] font-bold text-brand whitespace-nowrap">
+                                {isCity(item) ? item.name : (item.iata_code || getEntityName(item))}
+                            </span>
+                            <div className="w-[1px] h-3 bg-brand/20 ml-0.5" />
                             <button
+                                type="button"
                                 onClick={(e) => {
                                     e.stopPropagation();
-                                    removeAirport(airport.iata_code);
+                                    const newValue = [...value];
+                                    newValue.splice(idx, 1);
+                                    onChange(newValue);
                                 }}
-                                className="text-brand hover:text-brand-dark transition-colors cursor-pointer"
+                                className="text-brand hover:text-brand-dark transition-colors cursor-pointer p-0.5"
+                                title="Eliminar"
                             >
                                 <X size={10} />
                             </button>
@@ -278,7 +320,7 @@ export default function AirportAutocomplete({ value, onChange, placeholder, clas
                         return (
                             <li
                                 key={`${airport.iata_code}-${isSub ? 'sub' : 'main'}`}
-                                className={`px-4 py-3 hover:bg-surface transition-all cursor-pointer flex items-center gap-3 border-b border-line/40 last:border-0 group/suggestion ${isSub ? 'pl-10' : ''} ${(airportIsSelected || airportIsConflict) ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                className={`px-4 py-3 transition-all flex items-center gap-3 border-b border-line/40 last:border-0 group/suggestion ${isSub ? 'pl-10' : ''} ${airportIsSelected || airportIsConflict ? 'bg-surface/50 opacity-40 cursor-not-allowed' : 'hover:bg-surface cursor-pointer'}`}
                                 onClick={() => !(airportIsSelected || airportIsConflict) && handleSelect(airport)}
                                 onMouseEnter={() => onHoverChange?.(airport)}
                             >
@@ -319,21 +361,56 @@ export default function AirportAutocomplete({ value, onChange, placeholder, clas
                         );
                     };
 
-                    const renderCity = (city: CityResponse, suffix: string = "") => (
-                        <div key={`city-${city.name}-${suffix}`} className="flex flex-col bg-surface/5">
-                            <div className="px-4 py-2 flex items-center gap-3 bg-surface/95 border-b border-line/30 sticky top-0 z-10 backdrop-blur-md transition-all">
-                                <div className="bg-brand/10 p-1.5 rounded-lg shrink-0">
-                                    <Building2 size={14} className="text-brand" />
+                    const renderCity = (city: CityResponse, suffix: string = "") => {
+                        const cityId = getEntityId(city);
+                        const isSelectedAsEntity = selectedIds.has(cityId);
+                        const cityIatas = city.airports.map(a => a.iata_code);
+                        const allAirportsSelected = city.airports.every(a => selectedIatas.has(a.iata_code));
+                        const isFullySelected = isSelectedAsEntity || allAirportsSelected;
+
+                        const hasOtherConflicts = city.airports.some(a => otherIatas.has(a.iata_code));
+                        const hasSameSelected = city.airports.some(a => selectedIatas.has(a.iata_code));
+
+                        // We can select if not already an entity AND no conflicts in OTHER list
+                        const canSelect = !isSelectedAsEntity && !hasOtherConflicts;
+
+                        return (
+                            <div key={`city-${city.name}-${suffix}`} className="flex flex-col bg-surface/5">
+                                <div
+                                    className={`px-4 py-2.5 flex items-center justify-between bg-surface/95 border-b border-line/30 sticky top-0 z-10 backdrop-blur-md transition-all group/city ${isSelectedAsEntity || hasOtherConflicts ? 'bg-surface/50 opacity-40 cursor-not-allowed' : (canSelect ? 'cursor-pointer hover:bg-surface' : '')}`}
+                                    onClick={() => !isSelectedAsEntity && canSelect && handleSelectCity(city)}
+                                    onMouseEnter={() => !isSelectedAsEntity && onHoverChange?.(city)}
+                                >
+                                    <div className="flex items-center gap-3 overflow-hidden">
+                                        <div className={`p-1.5 rounded-lg shrink-0 transition-colors ${isFullySelected ? 'bg-brand/20' : 'bg-brand/10 group-hover/city:bg-brand/20'}`}>
+                                            <Building2 size={14} className={isFullySelected ? 'text-brand' : 'text-brand'} />
+                                        </div>
+                                        <div className="flex flex-col overflow-hidden">
+                                            <span className={`text-sm font-bold truncate leading-tight transition-colors ${isFullySelected ? 'text-brand' : 'text-brand'}`}>
+                                                <HighlightedText text={city.name} highlight={city.highlight?.name} query={debouncedQuery} />
+                                            </span>
+                                            <span className="text-[10px] text-content-muted font-medium uppercase tracking-wider opacity-60">
+                                                {city.airports.length} {city.airports.length === 1 ? 'aeropuerto' : 'aeropuertos'}
+                                            </span>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex items-center gap-2">
+                                        {isSelectedAsEntity ? (
+                                            <div className="p-1.5 bg-brand/10 border border-brand/20 rounded-xl flex items-center justify-center opacity-70">
+                                                <Check size={16} className="text-brand" />
+                                            </div>
+                                        ) : hasOtherConflicts ? null : (
+                                            <div className="p-1.5 bg-brand/10 border border-brand/20 rounded-xl group-hover/city:bg-brand/20 transition-all flex items-center justify-center">
+                                                <Plus size={16} className="text-brand" />
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
-                                <div className="flex flex-col overflow-hidden">
-                                    <span className="text-sm font-bold text-brand truncate leading-tight">
-                                        <HighlightedText text={city.name} highlight={city.highlight?.name} query={debouncedQuery} />
-                                    </span>
-                                </div>
+                                {city.airports.map((sub: AirportResponse) => renderAirport(sub, true))}
                             </div>
-                            {city.airports.map((sub: AirportResponse) => renderAirport(sub, true))}
-                        </div>
-                    );
+                        );
+                    };
 
                     if (!showFlatList && groupedSuggestions.length > 0) {
                         return (

@@ -7,7 +7,8 @@ import { gsap } from "gsap";
 import { PlaneTakeoff, PlaneLanding, X } from "lucide-react";
 import { useGetGlobeAirports } from "@/api/generated/openapi/airports";
 import { COUNTRY_NAMES } from "@/constants/countries";
-import type { AirportResponse } from "@/api/generated/openapi/model";
+import type { AirportResponse, CityResponse } from "@/api/generated/openapi/model";
+import { UnifiedSelection, isAirport, isCity, getEntityId, getEntityLocation, getEntityName, getAllIatas } from "@/types/selection";
 import { useUserLocation } from "@/context/UserLocationContext";
 
 interface AirportData {
@@ -16,22 +17,25 @@ interface AirportData {
     lon: number;
     name: string;
     city: string;
+    country?: string;
 }
 
 interface GlobeProps {
     onAirportSelect?: (airport: AirportResponse) => void;
     selectedAirports?: string[];
-    origins?: AirportResponse[];
-    destinations?: AirportResponse[];
+    origins?: UnifiedSelection[];
+    destinations?: UnifiedSelection[];
     interactive?: boolean;
     horizontalOffset?: number;
     onReady?: () => void;
-    onSetOrigin?: (airport: AirportResponse) => void;
-    onSetDestination?: (airport: AirportResponse) => void;
+    onSetOrigin?: (entity: UnifiedSelection) => void;
+    onSetDestination?: (entity: UnifiedSelection) => void;
+    onRemoveEntity?: (entity: UnifiedSelection) => void;
     onAirportClick?: (airport: AirportResponse | null) => void;
     onMovementChange?: (isMoving: boolean, isUserInteracting: boolean) => void;
     focusIata?: string;
-    hoveredAirport?: AirportResponse;
+    hoveredEntity?: UnifiedSelection | null;
+    hoveredType?: 'origin' | 'destination' | null;
     steps?: AirportResponse[][];
 }
 
@@ -45,10 +49,11 @@ export default function Globe({
     onReady,
     onSetOrigin,
     onSetDestination,
+    onRemoveEntity,
     onAirportClick,
     onMovementChange,
     focusIata,
-    hoveredAirport,
+    hoveredEntity,
     steps = []
 }: GlobeProps) {
     const { location, isLoading: isLocLoading } = useUserLocation();
@@ -59,13 +64,13 @@ export default function Globe({
 
     useEffect(() => {
         const timer = setTimeout(() => {
-            setDebouncedHoveredIata(hoveredAirport?.iata_code || null);
+            setDebouncedHoveredIata(hoveredEntity && isAirport(hoveredEntity) ? hoveredEntity.iata_code : null);
         }, 500); // 500ms debounce for camera movement ONLY
         return () => clearTimeout(timer);
-    }, [hoveredAirport?.iata_code]);
+    }, [hoveredEntity]);
 
-    const originsIata = useMemo(() => origins.map(o => o.iata_code).filter(Boolean) as string[], [origins]);
-    const destinationsIata = useMemo(() => destinations.map(d => d.iata_code).filter(Boolean) as string[], [destinations]);
+    const originsIata = useMemo(() => getAllIatas(origins), [origins]);
+    const destinationsIata = useMemo(() => getAllIatas(destinations), [destinations]);
     const stepsIata = useMemo(() => (steps || []).map((step: AirportResponse[]) => step.map((s: AirportResponse) => s.iata_code).filter(Boolean) as string[]), [steps]);
     const allStepsIata = useMemo(() => stepsIata.flat(), [stepsIata]);
 
@@ -73,6 +78,7 @@ export default function Globe({
         iata_code: ad.iata,
         name: ad.name,
         city: ad.city,
+        country: ad.country,
         location: {
             coordinates: [ad.lon, ad.lat],
             type: "Point"
@@ -96,6 +102,7 @@ export default function Globe({
     const airportsMap = useRef<Record<string, THREE.Mesh>>({});
     const lastItineraryKeyRef = useRef<string>("");
     const sharedAirportGeo = useRef(new THREE.SphereGeometry(0.0004, 12, 12));
+    const sharedCityGeo = useRef(new THREE.SphereGeometry(0.0012, 12, 12));
     const sharedClusterGeo = useRef(new THREE.BoxGeometry(0.002, 0.002, 0.002));
     const arcsGroupRef = useRef<THREE.Group>(new THREE.Group());
     const planesRef = useRef<{
@@ -147,6 +154,8 @@ export default function Globe({
     const controlsRef = useRef<OrbitControls | null>(null);
     const activeOriginsRef = useRef<string[]>([]);
     const activeDestsRef = useRef<string[]>([]);
+    const activeOriginsEntitiesRef = useRef<UnifiedSelection[]>([]);
+    const activeDestsEntitiesRef = useRef<UnifiedSelection[]>([]);
     const stepsIataRef = useRef<string[][]>([]);
 
     // Zoom control state for smooth stepped interaction
@@ -157,8 +166,10 @@ export default function Globe({
     useEffect(() => {
         activeOriginsRef.current = originsIata;
         activeDestsRef.current = destinationsIata;
+        activeOriginsEntitiesRef.current = origins;
+        activeDestsEntitiesRef.current = destinations;
         stepsIataRef.current = stepsIata;
-    }, [originsIata, destinationsIata, stepsIata]);
+    }, [originsIata, destinationsIata, origins, destinations, stepsIata]);
     const mousePosRef = useRef<THREE.Vector2>(new THREE.Vector2(-999, -999));
     const onSelectRef = useRef(onAirportSelect);
     const selectedAirportsRef = useRef(selectedAirports);
@@ -167,16 +178,28 @@ export default function Globe({
     const onAirportClickRef = useRef(onAirportClick);
     const onMovementChangeRef = useRef(onMovementChange);
     useEffect(() => { onMovementChangeRef.current = onMovementChange; }, [onMovementChange]);
-    const hoveredAirportRef = useRef(hoveredAirport);
+    const hoveredEntityRef = useRef(hoveredEntity);
+    useEffect(() => { hoveredEntityRef.current = hoveredEntity; }, [hoveredEntity]);
     const lastCamPosRef = useRef(new THREE.Vector3());
 
     // Stable key for airports that must NOT be clustered (sorted to ignore order in swaps)
     const forcedAirportsKey = useMemo(() => {
-        return [...originsIata, ...destinationsIata, ...allStepsIata, ...selectedAirports, hoveredAirport?.iata_code]
+        return [...originsIata, ...destinationsIata, ...allStepsIata, ...selectedAirports, hoveredEntity && isAirport(hoveredEntity) ? hoveredEntity.iata_code : null]
             .filter(Boolean)
             .sort()
             .join(',');
-    }, [originsIata, destinationsIata, allStepsIata, selectedAirports, hoveredAirport?.iata_code]);
+    }, [originsIata, destinationsIata, allStepsIata, selectedAirports, hoveredEntity]);
+
+    const forcedCitiesKey = useMemo(() => {
+        return [...origins, ...destinations]
+            .filter(isCity)
+            .map(getEntityId)
+            .sort()
+            .join(',');
+    }, [origins, destinations]);
+
+    const hoveredEntityId = hoveredEntity ? getEntityId(hoveredEntity) : null;
+    const forcedEntitiesKey = `${forcedAirportsKey}|${forcedCitiesKey}|${hoveredEntityId}`;
     const lastCamQuatRef = useRef<THREE.Quaternion>(new THREE.Quaternion());
     const lastMoveTimeRef = useRef(0);
     const isUserInteractingRef = useRef(false);
@@ -203,7 +226,8 @@ export default function Globe({
         worldPos: THREE.Vector3 | null;
         airport: AirportData | null;
         clusterAirports: AirportData[] | null;
-    }>({ visible: false, x: 0, y: 0, worldPos: null, airport: null, clusterAirports: null });
+        city: any | null;
+    }>({ visible: false, x: 0, y: 0, worldPos: null, airport: null, clusterAirports: null, city: null });
     const contextMenuRefData = useRef(contextMenu);
     useEffect(() => {
         contextMenuRefData.current = contextMenu;
@@ -242,7 +266,9 @@ export default function Globe({
         city: string;
         lat: number;
         lon: number;
+        country: string;
         airports: any[];
+        isCity?: boolean;
         isSpecial: boolean;
         isCluster: boolean;
         stepIdx?: number;
@@ -255,17 +281,21 @@ export default function Globe({
             this.iata = data.iata || '';
             this.name = data.name || '';
             this.city = data.city || '';
+            this.country = data.country || '';
             this.lat = data.lat;
             this.lon = data.lon;
             this.threshold = threshold;
             this.hM = hM;
             this.airports = data.airports || [];
-            this.isSpecial = forcedSet.has(this.iata);
+            this.isCity = !!data.isCity;
+            this.isSpecial = forcedSet.has(this.isCity ? data.id : this.iata);
             this.isCluster = !!data.isCluster;
             this.stepIdx = data.stepIdx;
             if (this.isCluster) {
                 const sortedIatas = [...this.airports].map(a => a.iata).sort();
                 this.id = `c-${sortedIatas.join('-')}`;
+            } else if (this.isCity) {
+                this.id = data.id;
             } else {
                 this.id = this.iata;
             }
@@ -283,7 +313,8 @@ export default function Globe({
         threshold: number,
         forcedSet: Set<string>,
         hM: number,
-        stepsIata: string[][]
+        stepsIata: string[][],
+        forcedCities: CityResponse[] = []
     ): GlobeItem[] => {
         // 2. Spatial Grid Class
         class SpatialGrid {
@@ -318,16 +349,37 @@ export default function Globe({
             }
         }
 
-        let items = [...globeAirports]
+        const cityAirportIatas = new Set(forcedCities.flatMap(c => c.airports.map(a => a.iata_code)));
+
+        let items = globeAirports
+            .filter(a => !cityAirportIatas.has(a.i))
             .sort((a, b) => (a.i || '').localeCompare(b.i || ''))
             .map(a => {
                 const sIdx = stepsIata.findIndex(step => step.includes(a.i));
                 return new GlobeItem({
-                    iata: a.i, lat: a.la, lon: a.lo, name: a.n, city: a.ci,
+                    iata: a.i, lat: a.la, lon: a.lo, name: a.n, city: a.ci, country: a.c,
                     v3: latLonToVector3(a.la, a.lo),
                     stepIdx: sIdx !== -1 ? sIdx : undefined
                 }, forcedSet, threshold, hM);
             });
+
+        // Add forced cities to the items list
+        const cityItems = forcedCities.map(city => {
+            const id = getEntityId(city);
+            return new GlobeItem({
+                id,
+                name: city.name,
+                city: city.name,
+                lat: city.location.coordinates[1]!,
+                lon: city.location.coordinates[0]!,
+                country: city.country,
+                v3: latLonToVector3(city.location.coordinates[1]!, city.location.coordinates[0]!),
+                isCity: true,
+                airports: city.airports.map(a => ({ iata: a.iata_code, lat: a.location.coordinates[1], lon: a.location.coordinates[0], name: a.name, city: a.city, country: a.country }))
+            }, forcedSet, threshold, hM);
+        });
+
+        items = [...items, ...cityItems];
 
         const assigned = new Set<string>();
         const resultItems: GlobeItem[] = [];
@@ -530,11 +582,12 @@ export default function Globe({
         onSelectRef.current = onAirportSelect;
         onAirportClickRef.current = onAirportClick;
         selectedAirportsRef.current = selectedAirports;
-        hoveredAirportRef.current = hoveredAirport;
+        hoveredEntityRef.current = hoveredEntity;
         const set = new Set(selectedAirports);
-        if (hoveredAirport?.iata_code) set.add(hoveredAirport.iata_code);
+        const hoveredIata = hoveredEntity && isAirport(hoveredEntity) ? hoveredEntity.iata_code : null;
+        if (hoveredIata) set.add(hoveredIata);
         selectedAirportsSetRef.current = set;
-    }, [originsIata, destinationsIata, onAirportSelect, onAirportClick, selectedAirports, hoveredAirport]);
+    }, [originsIata, destinationsIata, onAirportSelect, onAirportClick, selectedAirports, hoveredEntity]);
 
     useEffect(() => {
         interactiveRef.current = interactive;
@@ -1217,7 +1270,18 @@ export default function Globe({
                         y: e.clientY - rect.top,
                         worldPos: pos,
                         airport: null,
-                        clusterAirports: item.airports
+                        clusterAirports: item.airports,
+                        city: null
+                    });
+                } else if (item.isCity) {
+                    setContextMenu({
+                        visible: true,
+                        x: e.clientX - rect.left,
+                        y: e.clientY - rect.top,
+                        worldPos: pos,
+                        airport: null,
+                        clusterAirports: null,
+                        city: item
                     });
                 } else {
                     const a = item as AirportData;
@@ -1255,7 +1319,18 @@ export default function Globe({
                         y: e.clientY - rect.top,
                         worldPos: pos,
                         airport: null,
-                        clusterAirports: item.airports
+                        clusterAirports: item.airports,
+                        city: null
+                    });
+                } else if (item.isCity) {
+                    setContextMenu({
+                        visible: true,
+                        x: e.clientX - rect.left,
+                        y: e.clientY - rect.top,
+                        worldPos: pos,
+                        airport: null,
+                        clusterAirports: null,
+                        city: item
                     });
                 } else {
                     const a = item as AirportData;
@@ -1265,7 +1340,8 @@ export default function Globe({
                         y: e.clientY - rect.top,
                         worldPos: pos,
                         airport: a,
-                        clusterAirports: null
+                        clusterAirports: null,
+                        city: null
                     });
                 }
             } else {
@@ -1311,11 +1387,49 @@ export default function Globe({
                         popupRef.current.style.left = x + "px";
                         popupRef.current.style.top = y + "px";
                         if (item.isCluster) {
-                            popupRef.current.innerHTML = `<b>${item.airports.length} aeropuertos</b> en esta zona`;
+                            popupRef.current.innerHTML = `
+                                <div class="flex flex-col gap-1 min-w-[140px]">
+                                    <div class="text-[10px] text-white/50 font-bold uppercase tracking-wider">Zona de aeropuertos</div>
+                                    <div class="flex items-center gap-2">
+                                        <div class="w-1.5 h-1.5 rounded-full bg-indigo-500 shadow-[0_0_8px_rgba(99,102,241,0.6)]"></div>
+                                        <span class="text-xs font-bold">${item.airports.length} ubicaciones</span>
+                                    </div>
+                                    <div class="text-[9px] text-white/40 italic">Haz clic para ver la lista</div>
+                                </div>
+                            `;
+                        } else if (item.isCity) {
+                            popupRef.current.innerHTML = `
+                                <div class="flex flex-col gap-1.5 min-w-[160px]">
+                                    <div class="text-[10px] text-white/50 font-bold uppercase tracking-wider">Ciudad</div>
+                                    <div class="flex items-center gap-2">
+                                        <div class="w-2 h-2 rounded-full bg-indigo-400 shadow-[0_0_8px_rgba(129,140,248,0.6)]"></div>
+                                        <span class="text-sm font-bold tracking-tight">${item.name}</span>
+                                    </div>
+                                    ${item.country ? `<div class="text-[10px] text-white/60 font-medium flex items-center gap-1.5 opacity-80">
+                                        <span>${item.country}</span>
+                                    </div>` : ''}
+                                    <div class="h-px bg-white/10 my-0.5"></div>
+                                    <div class="flex flex-col gap-1">
+                                        <div class="text-[9px] text-white/40 font-bold uppercase tracking-tighter">Aeropuertos vinculados</div>
+                                        <div class="flex flex-wrap gap-1">
+                                            ${item.airports.map((a: any) => `<span class="px-1.5 py-0.5 rounded bg-white/10 text-[9px] font-black tracking-tighter text-indigo-200">${a.iata}</span>`).join('')}
+                                        </div>
+                                    </div>
+                                </div>
+                            `;
                         } else {
                             const a = item as AirportData;
                             const displayName = a.name || a.city || "Ubicación desconocida";
-                            popupRef.current.innerHTML = `<b>${displayName}</b> (${a.iata || 'N/A'})`;
+                            popupRef.current.innerHTML = `
+                                <div class="flex flex-col gap-1 min-w-[140px]">
+                                    <div class="text-[10px] text-white/50 font-bold uppercase tracking-wider">${a.iata || 'N/A'}</div>
+                                    <div class="flex items-center gap-2">
+                                        <div class="w-1.5 h-1.5 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.6)]"></div>
+                                        <span class="text-xs font-bold">${displayName}</span>
+                                    </div>
+                                    ${a.country ? `<div class="text-[9px] text-white/40 font-medium">${a.country}</div>` : ''}
+                                </div>
+                            `;
                         }
                         popupRef.current.style.display = "block";
                     }
@@ -1398,6 +1512,7 @@ export default function Globe({
 
                 const isMobile = isMobileRef.current;
                 const hitboxMultiplier = isMobile ? 2.5 : 1.0;
+                const cityHitboxExpansion = 1.5; // Extra boost for city hitboxes
                 const invHitboxMultiplier = 1 / hitboxMultiplier;
 
                 const baseScale = 2.0 * scaleFactor;
@@ -1423,6 +1538,8 @@ export default function Globe({
                                 break;
                             }
                         }
+                    } else if (item.isCity) {
+                        isSpecial = item.isSpecial; // Cities are only rendered if special/forced
                     } else {
                         isSpecial = activeOrigins.includes(item.iata) || activeDests.includes(item.iata) || selSet.has(item.iata);
                     }
@@ -1461,7 +1578,8 @@ export default function Globe({
                     // Apply to Mesh (Hitbox is the parent)
                     // We apply the 'hitboxMultiplier' to the parent but the inverse to the visual child
                     // so things still FEEL correct but interact from further out.
-                    const finalHitboxScale = targetScale * hitboxMultiplier;
+                    const expansion = item.isCity ? cityHitboxExpansion : 1.0;
+                    const finalHitboxScale = targetScale * hitboxMultiplier * expansion;
 
                     // Opacity continues to fade smoothly
                     if (Math.abs(mat.opacity - targetOpacity) > 0.001) {
@@ -1475,7 +1593,7 @@ export default function Globe({
 
                     // Always enforce visual scale compensation every frame to prevent 'stuck' large sizes on mobile
                     if (visual) {
-                        visual.scale.setScalar(invHitboxMultiplier);
+                        visual.scale.setScalar(invHitboxMultiplier / expansion);
                     }
 
                     if (item.isCluster) {
@@ -1754,8 +1872,8 @@ export default function Globe({
                 }
             });
 
-            const updateLabel = (iata: string | undefined, labelEl: HTMLElement | null) => {
-                const mesh = iata ? airportsMap.current[iata] : null;
+            const updateLabel = (id: string | undefined, labelEl: HTMLElement | null) => {
+                const mesh = id ? airportsMap.current[id] : null;
                 if (mesh && labelEl && cameraRef.current && mountRef.current) {
                     mesh.getWorldPosition(_vec1);
                     _vec2.copy(cameraRef.current.position).normalize();
@@ -1769,7 +1887,7 @@ export default function Globe({
                     _vec1.copy(mesh.position).project(cameraRef.current);
                     labelEl.style.display = "flex";
                     labelEl.style.opacity = "1";
-                    labelEl.style.pointerEvents = "auto";
+                    labelEl.style.pointerEvents = "none";
                     labelEl.style.left = `${(_vec1.x * 0.5 + 0.5) * mountRef.current.clientWidth}px`;
                     labelEl.style.top = `${(-_vec1.y * 0.5 + 0.5) * mountRef.current.clientHeight}px`;
                 } else if (labelEl) {
@@ -1779,13 +1897,13 @@ export default function Globe({
                     }
                 }
             };
-            activeOriginsRef.current.forEach((iata, idx) => {
-                updateLabel(iata, originLabelRefs.current[idx] || null);
+            activeOriginsEntitiesRef.current.forEach((origin, idx) => {
+                updateLabel(getEntityId(origin), originLabelRefs.current[idx] || null);
             });
-            activeDestsRef.current.forEach((iata, idx) => {
-                updateLabel(iata, destLabelRefs.current[idx] || null);
+            activeDestsEntitiesRef.current.forEach((dest, idx) => {
+                updateLabel(getEntityId(dest), destLabelRefs.current[idx] || null);
             });
-            updateLabel(hoveredAirportRef.current?.iata_code, hoverLabelRef.current);
+            updateLabel(hoveredEntity ? getEntityId(hoveredEntity) : undefined, hoverLabelRef.current);
 
             // Integrated Cluster labels into the airport group loop above for performance
 
@@ -2118,13 +2236,27 @@ export default function Globe({
         if (!isAirportsLoaded || !globeAirports) return;
 
         const hM = isMobileRef.current ? 1.4 : 1.0;
-        const forcedSet = new Set([...selectedAirports, ...originsIata, ...allStepsIata, ...destinationsIata, hoveredAirport?.iata_code].filter(Boolean) as string[]);
+        const forcedSet = new Set([
+            ...selectedAirports,
+            ...originsIata,
+            ...allStepsIata,
+            ...destinationsIata,
+            hoveredEntityId,
+            ...origins.filter(isCity).map(getEntityId),
+            ...destinations.filter(isCity).map(getEntityId)
+        ].filter(Boolean) as string[]);
 
         // 1. Calculate items first for differential update logic
-        const cacheKey = `${clusterThreshold.toFixed(4)}_${forcedAirportsKey}`;
+        const cacheKey = `${clusterThreshold.toFixed(4)}_${forcedEntitiesKey}`;
         let items: GlobeItem[] = clusteredDataCacheRef.current[cacheKey];
         if (!items) {
-            items = getClusteredAirports(globeAirports!, clusterThreshold, forcedSet, hM, stepsIata);
+            const forcedCitiesRaw = [...origins, ...destinations].filter(isCity);
+            if (hoveredEntity && isCity(hoveredEntity)) {
+                forcedCitiesRaw.push(hoveredEntity);
+            }
+            // Deduplicate cities by ID to prevent multiple skylines at the same spot
+            const forcedCities = Array.from(new Map(forcedCitiesRaw.map(c => [getEntityId(c), c])).values());
+            items = getClusteredAirports(globeAirports!, clusterThreshold, forcedSet, hM, stepsIata, forcedCities);
             clusteredDataCacheRef.current[cacheKey] = items;
         }
 
@@ -2164,11 +2296,11 @@ export default function Globe({
         const invHitboxMult = 1 / hitboxMult;
 
         items.forEach(item => {
-            const isOrigin = originsIata.includes(item.iata);
-            const isDest = destinationsIata.includes(item.iata);
-            const stepIdx = stepsIata.findIndex(step => step.includes(item.iata));
+            const isOrigin = item.isCity ? origins.some(o => isCity(o) && getEntityId(o) === item.id) : originsIata.includes(item.iata);
+            const isDest = item.isCity ? destinations.some(d => isCity(d) && getEntityId(d) === item.id) : destinationsIata.includes(item.iata);
+            const stepIdx = item.isCity ? -1 : stepsIata.findIndex(step => step.includes(item.iata));
             const isStep = stepIdx !== -1;
-            const isSelected = selectedAirports.includes(item.iata) || hoveredAirport?.iata_code === item.iata;
+            const isSelected = item.isCity ? (hoveredEntityId === item.id) : (selectedAirports.includes(item.iata) || (hoveredEntity && isAirport(hoveredEntity) && hoveredEntity.iata_code === item.iata));
             const isSpecial = isOrigin || isDest || isStep || isSelected;
 
             let meshColor = getThemeColorHex('--color-brand', 0x4f46e5);
@@ -2187,7 +2319,7 @@ export default function Globe({
 
             if (!mesh) {
                 mesh = new THREE.Mesh(
-                    item.isCluster ? sharedClusterGeo.current : sharedAirportGeo.current,
+                    item.isCluster ? sharedClusterGeo.current : (item.isCity ? sharedCityGeo.current : sharedAirportGeo.current),
                     new THREE.MeshBasicMaterial({
                         color: meshColor,
                         transparent: true,
@@ -2208,8 +2340,15 @@ export default function Globe({
                 airportGroupRef.current.add(mesh);
 
                 // Visual child
+                let visualGeo: THREE.BufferGeometry = item.isCluster ? sharedClusterGeo.current : sharedAirportGeo.current;
+                if (item.isCity) {
+                    // Skyscraper visual: Match airport base width (0.0004) so they scale the same
+                    visualGeo = new THREE.BoxGeometry(0.0004, 0.0004, 0.002);
+                    visualGeo.translate(0, 0, 0.001);
+                }
+
                 const visual = new THREE.Mesh(
-                    item.isCluster ? sharedClusterGeo.current : sharedAirportGeo.current,
+                    visualGeo,
                     new THREE.MeshBasicMaterial({
                         color: meshColor,
                         transparent: true,
@@ -2217,6 +2356,35 @@ export default function Globe({
                         depthWrite: false,
                     })
                 );
+                visual.raycast = () => { }; // Disable individual raycasting on the visual mesh
+
+                if (item.isCity) {
+                    // Skyline: add secondary buildings around the main one sharing the same material
+                    const b2Geo = new THREE.BoxGeometry(0.0004, 0.0004, 0.0016);
+                    b2Geo.translate(0, 0, 0.0008);
+                    const b2 = new THREE.Mesh(b2Geo, visual.material);
+                    b2.raycast = () => { };
+                    b2.position.set(0.0006, 0.0003, 0);
+                    visual.add(b2);
+
+                    const b3Geo = new THREE.BoxGeometry(0.00035, 0.00035, 0.0012);
+                    b3Geo.translate(0, 0, 0.0006);
+                    const b3 = new THREE.Mesh(b3Geo, visual.material);
+                    b3.raycast = () => { };
+                    b3.position.set(-0.0005, -0.0004, 0);
+                    visual.add(b3);
+
+                    const b4Geo = new THREE.BoxGeometry(0.0003, 0.0003, 0.0008);
+                    b4Geo.translate(0, 0, 0.0004);
+                    const b4 = new THREE.Mesh(b4Geo, visual.material);
+                    b4.raycast = () => { };
+                    b4.position.set(0.0002, -0.0007, 0);
+                    visual.add(b4);
+
+                    // Point skyline outwards from center
+                    _vec1.copy(mesh.position).multiplyScalar(2);
+                    visual.lookAt(_vec1);
+                }
                 visual.scale.setScalar(invHitboxMult);
                 mesh.add(visual);
                 mesh.userData.visualMesh = visual;
@@ -2317,6 +2485,8 @@ export default function Globe({
                 item.airports.forEach((a: any) => {
                     if (a && a.iata) airportsMap.current[a.iata] = mesh!;
                 });
+            } else if (item.isCity) {
+                airportsMap.current[item.id] = mesh!;
             } else {
                 airportsMap.current[item.iata] = mesh!;
             }
@@ -2325,7 +2495,7 @@ export default function Globe({
         const airDataMapped = globeAirports.map(a => ({ iata: a.i, lat: a.la, lon: a.lo, name: a.n, city: a.ci, v3: latLonToVector3(a.la, a.lo) }));
         airportsDataRef.current = airDataMapped;
         setIsLoaded(true);
-    }, [isAirportsLoaded, globeAirports, clusterThreshold, forcedAirportsKey]);
+    }, [isAirportsLoaded, globeAirports, clusterThreshold, forcedEntitiesKey]);
 
     // 2.5 Style Update Effect (Updates marker visual state WITHOUT rebuilding scene)
     useEffect(() => {
@@ -2335,7 +2505,8 @@ export default function Globe({
         const destColor = getThemeColorHex('--color-destination', 0xc026d3);
 
         const selSet = new Set(selectedAirports);
-        if (hoveredAirport?.iata_code) selSet.add(hoveredAirport.iata_code);
+        const hoveredIata = hoveredEntity && isAirport(hoveredEntity) ? hoveredEntity.iata_code : null;
+        if (hoveredIata) selSet.add(hoveredIata);
 
         airportGroupRef.current.children.forEach(child => {
             const mesh = child as THREE.Mesh;
@@ -2344,9 +2515,9 @@ export default function Globe({
             const mat = (visual ? visual.material : mesh.material) as THREE.MeshBasicMaterial;
 
             if (!item.isCluster) {
-                const isOrigin = originsIata.includes(item.iata);
-                const isDest = destinationsIata.includes(item.iata);
-                const stepIdx = stepsIata.findIndex(step => step.includes(item.iata));
+                const isOrigin = item.isCity ? origins.some(o => isCity(o) && getEntityId(o) === item.id) : originsIata.includes(item.iata);
+                const isDest = item.isCity ? destinations.some(d => isCity(d) && getEntityId(d) === item.id) : destinationsIata.includes(item.iata);
+                const stepIdx = item.isCity ? -1 : stepsIata.findIndex(step => step.includes(item.iata));
                 const isStep = stepIdx !== -1;
 
                 if (isOrigin || isDest || isStep) {
@@ -2356,6 +2527,8 @@ export default function Globe({
                         meshColor = new THREE.Color(originColor).lerp(new THREE.Color(destColor), t).getHex();
                     }
                     mat.color.setHex(meshColor);
+                } else if (item.isCity) {
+                    mat.color.setHex(brandColor);
                 } else if (selSet.has(item.iata)) {
                     mat.color.setHex(0x34d399); // Emerald 400
                 } else {
@@ -2381,7 +2554,7 @@ export default function Globe({
                 mat.wireframe = DEBUG_HITBOXES;
             }
         });
-    }, [isLoaded, originsIata, destinationsIata, selectedAirports.join(','), stepsIata, hoveredAirport?.iata_code]);
+    }, [isLoaded, originsIata, destinationsIata, selectedAirports.join(','), stepsIata, hoveredEntity && getEntityId(hoveredEntity)]);
     // 3. Update Interactive State
     useEffect(() => {
         if (controlsRef.current) controlsRef.current.enabled = interactive;
@@ -2462,12 +2635,14 @@ export default function Globe({
         });
 
         // Draw Arcs for consecutive legs: Origins -> Step 1 -> ... -> Destinations
-        const layers = [originsIata, ...stepsIata, destinationsIata];
+        const representativeOrigins = origins.map(o => isCity(o) ? o.airports[0]?.iata_code : o.iata_code).filter(Boolean) as string[];
+        const representativeDestinations = destinations.map(d => isCity(d) ? d.airports[0]?.iata_code : d.iata_code).filter(Boolean) as string[];
+        const layers = [representativeOrigins, ...stepsIata, representativeDestinations];
         const brandColorHex = getThemeColorHex('--color-brand', 0x4f46e5);
         const brandColor = new THREE.Color(brandColorHex);
 
         // Instead of redundant planes per route, we use exactly one logical plane 
-        // per starting origin, capped at 3 to keep the map clean.
+        // per starting origin entity (city or airport), capped at 3 to keep the map clean.
         const startingOrigins = layers[0] || [];
         const numPlanesToSpawn = Math.min(3, startingOrigins.length);
 
@@ -2952,19 +3127,19 @@ export default function Globe({
             />
             <div
                 ref={popupRef}
-                className="pointer-events-none absolute z-popover hidden rounded-md border border-white/20 bg-black/80 p-2 text-xs text-white backdrop-blur-sm transition-all shadow-xl"
+                className="pointer-events-none absolute z-popover hidden rounded-xl border border-white/20 bg-black/90 p-3 text-xs text-white backdrop-blur-xl transition-all shadow-[0_20px_50px_rgba(0,0,0,0.5)] ring-1 ring-white/10"
             />
 
 
             {/* Origin Tags */}
             {origins.map((origin, idx) => (
                 <div
-                    key={`origin-${origin.iata_code || idx}`}
+                    key={`origin-${getEntityId(origin)}`}
                     ref={el => { originLabelRefs.current[idx] = el; }}
                     className="pointer-events-none absolute z-overlay hidden -translate-x-1/2 -translate-y-[calc(100%+12px)] flex-col items-center transition-opacity duration-300"
                 >
                     <div className="bg-origin/10 backdrop-blur-md border border-origin/40 px-3 py-1 rounded-full text-[10px] font-bold text-origin shadow-[0_4px_12px_rgba(0,0,0,0.5)] whitespace-nowrap">
-                        {origin.city || origin.name || origin.iata_code}
+                        {isAirport(origin) ? `${origin.city || origin.name} (${origin.iata_code})` : origin.name}
                     </div>
                     <div className="w-px h-6 bg-linear-to-b from-origin/40 to-transparent" />
                 </div>
@@ -2973,28 +3148,28 @@ export default function Globe({
             {/* Destination Tags */}
             {destinations.map((dest, idx) => (
                 <div
-                    key={`dest-${dest.iata_code || idx}`}
+                    key={`dest-${getEntityId(dest)}`}
                     ref={el => { destLabelRefs.current[idx] = el; }}
                     className="pointer-events-none absolute z-overlay hidden -translate-x-1/2 -translate-y-[calc(100%+12px)] flex-col items-center transition-opacity duration-300"
                 >
                     <div className="bg-destination/10 backdrop-blur-md border border-destination/40 px-3 py-1 rounded-full text-[10px] font-bold text-destination shadow-[0_4px_12px_rgba(0,0,0,0.5)] whitespace-nowrap">
-                        {dest.city || dest.name || dest.iata_code}
+                        {isAirport(dest) ? `${dest.city || dest.name} (${dest.iata_code})` : dest.name}
                     </div>
                     <div className="w-px h-6 bg-linear-to-b from-destination/40 to-transparent" />
                 </div>
             ))}
 
             {/* Hover Tag */}
-            {hoveredAirport &&
-                !originsIata.includes(hoveredAirport.iata_code) &&
-                !destinationsIata.includes(hoveredAirport.iata_code) &&
-                !allStepsIata.includes(hoveredAirport.iata_code) && (
+            {hoveredEntity && isAirport(hoveredEntity) &&
+                !originsIata.includes(hoveredEntity.iata_code) &&
+                !destinationsIata.includes(hoveredEntity.iata_code) &&
+                !allStepsIata.includes(hoveredEntity.iata_code) && (
                     <div
                         ref={hoverLabelRef}
                         className="pointer-events-none absolute z-overlay hidden -translate-x-1/2 -translate-y-[calc(100%+12px)] flex-col items-center transition-opacity duration-300"
                     >
                         <div className="bg-emerald-500/10 backdrop-blur-md border border-emerald-500/40 px-3 py-1 rounded-full text-[10px] font-bold text-emerald-400 shadow-[0_4px_12px_rgba(0,0,0,0.5)] whitespace-nowrap">
-                            {hoveredAirport.city || hoveredAirport.name || hoveredAirport.iata_code}
+                            {hoveredEntity.city || hoveredEntity.name} ({hoveredEntity.iata_code})
                         </div>
                         <div className="w-px h-6 bg-linear-to-b from-emerald-500/40 to-transparent" />
                     </div>
@@ -3007,7 +3182,7 @@ export default function Globe({
             )}
 
             {/* Context Menu / Cluster Picker */}
-            {contextMenu.visible && (contextMenu.airport || contextMenu.clusterAirports) && (
+            {contextMenu.visible && (contextMenu.airport || contextMenu.clusterAirports || contextMenu.city) && (
                 <div
                     ref={contextMenuContainerRef}
                     className="absolute z-popover min-w-48 bg-main/90 backdrop-blur-3xl border border-line rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200"
@@ -3036,8 +3211,8 @@ export default function Globe({
                                             }}
                                             className="flex flex-col items-start min-w-0 px-1 cursor-pointer hover:opacity-80 transition-opacity w-full text-left"
                                         >
-                                            <span className="text-[11px] font-bold text-content truncate w-full">{a.city || a.name}</span>
-                                            <span className="text-[9px] text-content-muted">{a.iata} - {a.name}</span>
+                                            <span className="text-[11px] font-bold text-content truncate w-full">{a.city || a.name} ({a.iata})</span>
+                                            <span className="text-[9px] text-content-muted">{a.name}</span>
                                         </button>
                                         {!onSelectRef.current && (
                                             <div className="flex gap-1 mt-1">
@@ -3071,6 +3246,38 @@ export default function Globe({
                                 {contextMenu.clusterAirports.length > 3 && (
                                     <div className="sticky bottom-0 left-0 right-0 h-8 bg-linear-to-t from-main/90 to-transparent pointer-events-none -mt-8" />
                                 )}
+                            </div>
+                        </div>
+                    ) : contextMenu.city ? (
+                        <div className="flex flex-col w-52">
+                            <div className="px-4 py-3 border-b border-line bg-surface/30">
+                                <div className="text-[10px] text-content-muted font-bold uppercase tracking-wider mb-0.5">Ciudad</div>
+                                <div className="text-content text-sm font-semibold truncate">
+                                    {contextMenu.city.name}
+                                </div>
+                            </div>
+                            <div className="p-1.5">
+                                <button
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        // We need to find the actual entity in origins/destinations to remove it correctly
+                                        const entity = origins.find(o => getEntityId(o) === contextMenu.city.id) ||
+                                            destinations.find(d => getEntityId(d) === contextMenu.city.id);
+
+                                        if (entity) {
+                                            onRemoveEntity?.(entity);
+                                        } else {
+                                            // Fallback if it was just a hover-selected city from search
+                                            // creating a dummy entity to match ID
+                                            onRemoveEntity?.({ name: contextMenu.city.name, id: contextMenu.city.id } as any);
+                                        }
+                                        setContextMenu(prev => ({ ...prev, visible: false }));
+                                    }}
+                                    className="flex items-center gap-3 w-full px-3 py-2.5 rounded-xl text-xs font-semibold text-red-500 hover:bg-red-500/10 transition-all cursor-pointer group"
+                                >
+                                    <X size={14} className="text-red-500/70 group-hover:text-red-500 transition-colors" />
+                                    <span>Deseleccionar ciudad</span>
+                                </button>
                             </div>
                         </div>
                     ) : (

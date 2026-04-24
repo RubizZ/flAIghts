@@ -9214,6 +9214,15 @@
               "format": "double",
               "type": "number"
             }
+          },
+          {
+            "in": "query",
+            "name": "isDynamic",
+            "required": false,
+            "schema": {
+              "default": true,
+              "type": "boolean"
+            }
           }
         ]
       }
@@ -9272,6 +9281,15 @@
             "schema": {
               "format": "double",
               "type": "number"
+            }
+          },
+          {
+            "in": "query",
+            "name": "isDynamic",
+            "required": false,
+            "schema": {
+              "default": true,
+              "type": "boolean"
             }
           }
         ]

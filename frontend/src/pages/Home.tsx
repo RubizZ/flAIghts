@@ -5,6 +5,7 @@ import { useSearchRequest } from "@/api/generated/openapi/search";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
 import { AirportResponse } from "@/api/generated/openapi/model";
+import { UnifiedSelection, getAllIatas, isAirport, isCity, getEntityId, getEntityName, serializeSelection, deserializeSelection } from "@/types/selection";
 import { useGetGlobeAirports } from "@/api/generated/openapi/airports";
 import StarsBackground from "../components/ui/StarsBackground.tsx";
 import ManualSearchForm from "../components/search/ManualSearchForm.tsx";
@@ -14,8 +15,8 @@ import HomeCard from "../components/home/HomeCard.tsx";
 import { useNavLogo } from "@/context/NavLogoContext";
 
 export default function Home() {
-    const [origins, setOrigins] = useState<AirportResponse[]>([]);
-    const [destinations, setDestinations] = useState<AirportResponse[]>([]);
+    const [origins, setOrigins] = useState<UnifiedSelection[]>([]);
+    const [destinations, setDestinations] = useState<UnifiedSelection[]>([]);
     const [departureDate, setDepartureDate] = useState("");
     const [activeDeparturePopover, setActiveDeparturePopover] = useState<'main' | 'map' | null>(null);
     const [returnDate, setReturnDate] = useState("");
@@ -37,7 +38,8 @@ export default function Home() {
         const saved = localStorage.getItem('searchMode');
         return (saved === 'manual' || saved === 'ai') ? saved : 'manual';
     });
-    const [hoveredAirport, setHoveredAirport] = useState<AirportResponse | null>(null);
+    const [hoveredEntity, setHoveredEntity] = useState<UnifiedSelection | null>(null);
+    const [hoveredType, setHoveredType] = useState<'origin' | 'destination' | null>(null);
 
     useEffect(() => {
         localStorage.setItem('searchMode', searchMode);
@@ -60,32 +62,14 @@ export default function Home() {
         const m = searchParams.get('m');
 
         if (o) {
-            const iatas = o.split(',');
-            const found = iatas.map(iata => {
-                const a = globeAirports.find(ga => ga.i === iata);
-                if (!a) return null;
-                return {
-                    iata_code: a.i,
-                    name: a.n,
-                    city: a.ci,
-                    location: { coordinates: [a.lo, a.la], type: "Point" }
-                } as AirportResponse;
-            }).filter(Boolean) as AirportResponse[];
+            const parts = o.split(',');
+            const found = parts.map(p => deserializeSelection(p, globeAirports)).filter(Boolean) as UnifiedSelection[];
             setOrigins(found);
         }
 
         if (d) {
-            const iatas = d.split(',');
-            const found = iatas.map(iata => {
-                const a = globeAirports.find(ga => ga.i === iata);
-                if (!a) return null;
-                return {
-                    iata_code: a.i,
-                    name: a.n,
-                    city: a.ci,
-                    location: { coordinates: [a.lo, a.la], type: "Point" }
-                } as AirportResponse;
-            }).filter(Boolean) as AirportResponse[];
+            const parts = d.split(',');
+            const found = parts.map(p => deserializeSelection(p, globeAirports)).filter(Boolean) as UnifiedSelection[];
             setDestinations(found);
         }
 
@@ -102,10 +86,10 @@ export default function Home() {
 
         const params = new URLSearchParams(searchParams);
 
-        if (origins.length > 0) params.set('o', origins.map(o => o.iata_code).join(','));
+        if (origins.length > 0) params.set('o', origins.map(serializeSelection).join(','));
         else params.delete('o');
 
-        if (destinations.length > 0) params.set('d', destinations.map(d => d.iata_code).join(','));
+        if (destinations.length > 0) params.set('d', destinations.map(serializeSelection).join(','));
         else params.delete('d');
 
         if (departureDate) params.set('date', departureDate);
@@ -120,7 +104,7 @@ export default function Home() {
         if (params.toString() !== searchParams.toString()) {
             setSearchParams(params, { replace: true });
         }
-    }, [origins, destinations, departureDate, returnDate, searchMode, setSearchParams]);
+    }, [origins, destinations, departureDate, returnDate, searchMode, setSearchParams, searchParams]);
 
 
 
@@ -178,21 +162,21 @@ export default function Home() {
 
     const handleMapSelect = (airport: AirportResponse) => {
         if (selectingType === 'origin') {
-            if (destinations.some(d => d.iata_code === airport.iata_code)) {
+            if (getAllIatas(destinations).includes(airport.iata_code)) {
                 toast.error("El origen y el destino no pueden ser el mismo");
                 return;
             }
-            if (origins.some(o => o.iata_code === airport.iata_code)) {
+            if (getAllIatas(origins).includes(airport.iata_code)) {
                 toast.error("Ese aeropuerto ya está seleccionado como origen");
                 return;
             }
             setOrigins([...origins, airport]);
         } else if (selectingType === 'destination') {
-            if (origins.some(o => o.iata_code === airport.iata_code)) {
+            if (getAllIatas(origins).includes(airport.iata_code)) {
                 toast.error("El origen y el destino no pueden ser el mismo");
                 return;
             }
-            if (destinations.some(d => d.iata_code === airport.iata_code)) {
+            if (getAllIatas(destinations).includes(airport.iata_code)) {
                 toast.error("Ese aeropuerto ya está seleccionado como destino");
                 return;
             }
@@ -200,12 +184,12 @@ export default function Home() {
         } else {
             // Default logic if not specifically selecting for one side (e.g. from general map click)
             if (origins.length === 0) {
-                if (destinations.some(d => d.iata_code === airport.iata_code)) return;
+                if (getAllIatas(destinations).includes(airport.iata_code)) return;
                 setOrigins([airport]);
-            } else if (destinations.length === 0 && !origins.some(o => o.iata_code === airport.iata_code)) {
+            } else if (destinations.length === 0 && !getAllIatas(origins).includes(airport.iata_code)) {
                 setDestinations([airport]);
             } else {
-                if (destinations.some(d => d.iata_code === airport.iata_code)) return;
+                if (getAllIatas(destinations).includes(airport.iata_code)) return;
                 setOrigins([airport]);
                 setDestinations([]);
             }
@@ -298,17 +282,19 @@ export default function Home() {
         }
     }, [isSelectingOnMap]);
 
-    const handleSetOrigin = (airport: AirportResponse) => {
-        if (destinations.some(d => d.iata_code === airport.iata_code)) {
+    const handleSetOrigin = (entity: UnifiedSelection) => {
+        if (getAllIatas(destinations).includes(isAirport(entity) ? entity.iata_code : '')) {
             toast.error("El origen y el destino no pueden ser el mismo");
             return;
         }
-        if (origins.some(o => o.iata_code === airport.iata_code)) {
-            toast.error("Ese aeropuerto ya está seleccionado como origen");
+        if (origins.some(o => getEntityId(o) === getEntityId(entity))) {
+            toast.error("Esa ubicación ya está seleccionada como origen");
             return;
         }
-        setOrigins([...origins, airport]);
-        window.dispatchEvent(new CustomEvent('app:select-on-map', { detail: { airport } }));
+        setOrigins([...origins, entity]);
+        if (isAirport(entity)) {
+            window.dispatchEvent(new CustomEvent('app:select-on-map', { detail: { airport: entity } }));
+        }
         setInspectedAirport(null);
         setSearchMode('manual');
 
@@ -319,17 +305,19 @@ export default function Home() {
         setSelectingType(null);
     }
 
-    const handleSetDestination = (airport: AirportResponse) => {
-        if (origins.some(o => o.iata_code === airport.iata_code)) {
+    const handleSetDestination = (entity: UnifiedSelection) => {
+        if (getAllIatas(origins).includes(isAirport(entity) ? entity.iata_code : '')) {
             toast.error("El origen y el destino no pueden ser el mismo");
             return;
         }
-        if (destinations.some(d => d.iata_code === airport.iata_code)) {
-            toast.error("Ese aeropuerto ya está seleccionado como destino");
+        if (destinations.some(d => getEntityId(d) === getEntityId(entity))) {
+            toast.error("Esa ubicación ya está seleccionada como destino");
             return;
         }
-        setDestinations([...destinations, airport]);
-        window.dispatchEvent(new CustomEvent('app:select-on-map', { detail: { airport } }));
+        setDestinations([...destinations, entity]);
+        if (isAirport(entity)) {
+            window.dispatchEvent(new CustomEvent('app:select-on-map', { detail: { airport: entity } }));
+        }
         setInspectedAirport(null);
         setSearchMode('manual');
 
@@ -339,6 +327,11 @@ export default function Home() {
         }
         setSelectingType(null);
     }
+
+    const handleRemoveEntity = (entity: UnifiedSelection) => {
+        setOrigins(prev => prev.filter(o => getEntityId(o) !== getEntityId(entity)));
+        setDestinations(prev => prev.filter(d => getEntityId(d) !== getEntityId(entity)));
+    };
 
     const handleSearch = () => {
         if (origins.length === 0 || destinations.length === 0 || !departureDate) {
@@ -347,8 +340,8 @@ export default function Home() {
         }
 
         const requestData = {
-            origins: origins.map(o => o.iata_code),
-            destinations: destinations.map(d => d.iata_code),
+            origins: getAllIatas(origins),
+            destinations: getAllIatas(destinations),
             criteria: {
                 priority: "balanced" as const,
             },
@@ -384,14 +377,17 @@ export default function Home() {
                 isHorizontal={isMapMode && isLargeScreen}
                 isMapMode={isMapMode}
                 today={today}
-                onHoverChange={setHoveredAirport}
+                onHoverChange={(entity, type) => {
+                    setHoveredEntity(entity);
+                    setHoveredType(type || null);
+                }}
             />
         );
     }
 
     const selectedAirports = useMemo(() => [
-        ...origins.map(o => o.iata_code),
-        ...destinations.map(d => d.iata_code),
+        ...getAllIatas(origins),
+        ...getAllIatas(destinations),
         inspectedAirport?.iata_code,
     ].filter(Boolean) as string[], [origins, destinations, inspectedAirport]);
 
@@ -411,13 +407,19 @@ export default function Home() {
                     onReady={() => setGlobeReady(true)}
                     onSetOrigin={handleSetOrigin}
                     onSetDestination={handleSetDestination}
-                    onAirportClick={setInspectedAirport}
+                    onRemoveEntity={handleRemoveEntity}
+                    onAirportClick={(airport) => {
+                        setInspectedAirport(airport);
+                        setHoveredEntity(null);
+                        setHoveredType(null);
+                    }}
                     onMovementChange={(moving, interacting) => {
                         setIsGlobeMoving(moving);
                         setIsUserInteracting(interacting);
                     }}
                     focusIata={inspectedAirport?.iata_code}
-                    hoveredAirport={hoveredAirport || undefined}
+                    hoveredEntity={hoveredEntity || undefined}
+                    hoveredType={hoveredType || undefined}
                 />
             </div>
 
@@ -546,7 +548,10 @@ export default function Home() {
                         }}
                         searchMode={searchMode}
                         onSearchModeChange={setSearchMode}
-                        onHoverChange={setHoveredAirport}
+                        onHoverChange={(entity, type) => {
+                            setHoveredEntity(entity);
+                            setHoveredType(type || null);
+                        }}
                     />
                 </div>
             </div>
@@ -582,7 +587,7 @@ export default function Home() {
                                             <Plane size={14} className="text-brand rotate-45 shrink-0" />
                                             <span>
                                                 {origins.length > 0 && destinations.length > 0
-                                                    ? `${origins[0]?.iata_code || '???'}${origins.length > 1 ? '...' : ''} → ${destinations[0]?.iata_code || '???'}${destinations.length > 1 ? '...' : ''}`
+                                                    ? `${isAirport(origins[0]!) ? origins[0].iata_code : origins[0]!.name.substring(0, 3).toUpperCase()}${origins.length > 1 ? '...' : ''} → ${isAirport(destinations[0]!) ? destinations[0].iata_code : destinations[0]!.name.substring(0, 3).toUpperCase()}${destinations.length > 1 ? '...' : ''}`
                                                     : "Configuración del viaje"}
                                             </span>
                                         </div>
@@ -591,9 +596,9 @@ export default function Home() {
                                 {!isMobileCardExpanded && (
                                     <div className="flex items-center gap-1.5 mt-0.5">
                                         <div className="flex items-center gap-1 overflow-hidden">
-                                            <span className="text-content-muted text-[10px] font-medium truncate">{origins.length > 0 ? (origins[0]?.city || origins[0]?.name || origins[0]?.iata_code || "Origen") + (origins.length > 1 ? ` +${origins.length - 1}` : '') : "Origen"}</span>
+                                            <span className="text-content-muted text-[10px] font-medium truncate">{origins.length > 0 ? (getEntityName(origins[0]!) || "Origen") + (origins.length > 1 ? ` +${origins.length - 1}` : '') : "Origen"}</span>
                                             <ChevronRight size={8} className="text-content-muted/30 shrink-0" />
-                                            <span className="text-content-muted text-[10px] font-medium truncate">{destinations.length > 0 ? (destinations[0]?.city || destinations[0]?.name || destinations[0]?.iata_code || "Destino") + (destinations.length > 1 ? ` +${destinations.length - 1}` : '') : "Destino"}</span>
+                                            <span className="text-content-muted text-[10px] font-medium truncate">{destinations.length > 0 ? (getEntityName(destinations[0]!) || "Destino") + (destinations.length > 1 ? ` +${destinations.length - 1}` : '') : "Destino"}</span>
                                         </div>
                                         {(departureDate || returnDate) && (
                                             <>
