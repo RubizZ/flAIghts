@@ -255,7 +255,7 @@ export default function Register() {
                                     onError={() => {
                                         toast.error('Error al conectar con Google');
                                     }}
-                                    theme="filled_black"
+                                    theme='filled_blue'
                                     shape="circle"
                                     text="continue_with"
                                 />
