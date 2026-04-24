@@ -21,7 +21,7 @@ export interface AuthenticatedUser {
     _id: string;
     username: string;
     email: string;
-    role: "user" | "admin";
+    role: "user" | "admin" | "superadmin";
     auth_version: number;
     token: string;
 }

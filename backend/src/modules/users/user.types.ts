@@ -9,7 +9,7 @@ export interface User {
     username: string;
     public: boolean;
     email: string;
-    role: "user" | "admin";
+    role: "user" | "admin" | "superadmin";
     preferences: {
         price_weight: number;
         duration_weight: number;
@@ -36,7 +36,7 @@ export interface FriendUser {
     _id: string;
     type: 'friend';
     username: string;
-    role: "user" | "admin";
+    role: "user" | "admin" | "superadmin";
     /**
      * @isDateTime
      */
@@ -57,7 +57,7 @@ export interface PublicUser {
     type: 'public';
     username: string;
     public: boolean;
-    role: "user" | "admin";
+    role: "user" | "admin" | "superadmin";
     /**
      * @isDateTime
      */
