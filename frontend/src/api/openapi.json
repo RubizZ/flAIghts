@@ -3805,16 +3805,12 @@
           },
           "completedAt": {
             "type": "string"
-          },
-          "userAgent": {
-            "type": "string"
           }
         },
         "required": [
           "id",
           "title",
-          "completedAt",
-          "userAgent"
+          "completedAt"
         ],
         "type": "object",
         "additionalProperties": false
@@ -3828,9 +3824,6 @@
             "type": "string"
           },
           "completedAt": {
-            "type": "string"
-          },
-          "userAgent": {
             "type": "string"
           },
           "steps": {
@@ -3859,9 +3852,41 @@
         "required": [
           "missionId",
           "completedAt",
-          "userAgent",
           "steps",
           "answer"
+        ],
+        "type": "object",
+        "additionalProperties": false
+      },
+      "ScreenInfo": {
+        "properties": {
+          "width": {
+            "type": "number",
+            "format": "double"
+          },
+          "height": {
+            "type": "number",
+            "format": "double"
+          },
+          "innerWidth": {
+            "type": "number",
+            "format": "double"
+          },
+          "innerHeight": {
+            "type": "number",
+            "format": "double"
+          },
+          "devicePixelRatio": {
+            "type": "number",
+            "format": "double"
+          }
+        },
+        "required": [
+          "width",
+          "height",
+          "innerWidth",
+          "innerHeight",
+          "devicePixelRatio"
         ],
         "type": "object",
         "additionalProperties": false
@@ -3889,11 +3914,28 @@
           },
           "fullName": {
             "type": "string"
+          },
+          "age": {
+            "type": "number",
+            "format": "double"
+          },
+          "gender": {
+            "type": "string"
+          },
+          "educationLevel": {
+            "type": "string"
+          },
+          "screenInfo": {
+            "$ref": "#/components/schemas/ScreenInfo"
+          },
+          "userAgent": {
+            "type": "string"
           }
         },
         "required": [
           "results",
-          "timestamp"
+          "timestamp",
+          "userAgent"
         ],
         "type": "object",
         "additionalProperties": false

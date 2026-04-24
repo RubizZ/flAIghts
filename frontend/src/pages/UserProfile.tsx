@@ -13,18 +13,15 @@ import { useNavigate, useParams, Link } from "react-router-dom";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/context/AuthContext";
-import { Lock, MessageCircle, UserMinus, Share2, History, Star, Users, Calendar } from "lucide-react";
+import { Lock, MessageCircle, UserMinus, History, Star, Users, Calendar, ShieldCheck } from "lucide-react";
 import { useEffect } from "react";
 import UserAvatar from "@/components/ui/UserAvatar";
 import { useSendMessage } from "@/api/generated/openapi/conversations";
-import SmartPopover from "@/components/ui/SmartPopover";
-import type { FriendUser } from "@/api/generated/openapi/model/friendUser";
 import SearchCard from "@/components/search/SearchCard";
 
 export default function UserProfile() {
     const { id } = useParams();
     const navigate = useNavigate();
-    const [sharingSearchId, setSharingSearchId] = useState<string | null>(null);
     const { isAuthenticated, user: authUser, isLoading: isAuthLoading } = useAuth();
 
     if (!id) {
@@ -51,8 +48,8 @@ export default function UserProfile() {
         mutation: {
             onSuccess: () => {
                 toast.success("Vuelo compartido con éxito");
-                window.dispatchEvent(new CustomEvent('send_message'));
-                window.dispatchEvent(new CustomEvent('share_from_results'));
+                window.dispatchEvent(new CustomEvent('flaights:mission:send-message'));
+                window.dispatchEvent(new CustomEvent('flaights:mission:share-from-results'));
             },
             onError: () => toast.error("Error al compartir el vuelo")
         }
@@ -101,8 +98,8 @@ export default function UserProfile() {
         isFetchingNextPage,
         isLoading: isSearchesLoading
     } = useGetSearchesInfinite(
-        id, 
-        { 
+        id,
+        {
             limit: 10,
             sharedOnly: true // Siempre mostramos solo las destacadas en el perfil
         },
@@ -123,7 +120,7 @@ export default function UserProfile() {
 
     useEffect(() => {
         if (user && user.type !== "self") {
-            window.dispatchEvent(new CustomEvent('view_user_profile'));
+            window.dispatchEvent(new CustomEvent('flaights:mission:view-user-profile'));
         }
     }, [user]);
 
@@ -196,9 +193,17 @@ export default function UserProfile() {
                         )}
                     </div>
                     <div className="flex flex-col gap-3">
-                        <h1 className="text-3xl font-black text-content tracking-tight">{user.username}</h1>
-                        
-                        <div className="flex flex-col gap-2 items-center sm:items-start lg:items-center">
+                        <div className="flex items-center justify-center gap-2">
+                            <h1 className="text-3xl font-black text-content tracking-tight leading-none">{user.username}</h1>
+                            {user.role === 'admin' && (
+                                <div className="flex items-center gap-1 px-2 py-0.5 bg-amber-500/10 border border-amber-500/20 rounded-full text-amber-600 shadow-sm" title="Administrador de flAIghts">
+                                    <ShieldCheck size={12} className="fill-amber-500/10" />
+                                    <span className="text-[10px] font-black uppercase tracking-wider">Admin</span>
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="flex flex-row flex-wrap lg:flex-col gap-2 justify-center items-center">
                             {user.type === "friend" && 'friend_since' in user ? (
                                 <div className="flex items-center gap-2 px-3 py-1.5 bg-brand/5 border border-brand/10 rounded-xl">
                                     <Users size={12} className="text-brand" />
@@ -258,21 +263,21 @@ export default function UserProfile() {
                     {user.badges && user.badges.length > 0 && (
                         <div className="mt-6 pt-6 border-t border-line">
                             <p className="text-[10px] font-black uppercase tracking-[0.2em] text-content-muted mb-4 opacity-50">Expositor de Logros</p>
-                            <div className="flex flex-wrap gap-3 justify-center bg-surface/50 p-4 rounded-2xl border border-line/50 shadow-inner">
+                            <div className="flex flex-wrap lg:flex-col gap-3 justify-center lg:items-center bg-surface/50 p-4 rounded-2xl border border-line/50 shadow-inner">
                                 {user.badges.map((badge) => {
                                     const earnedDate = new Date(badge.earned_at);
-                                    const formattedDate = !isNaN(earnedDate.getTime()) 
-                                        ? earnedDate.toLocaleDateString() 
+                                    const formattedDate = !isNaN(earnedDate.getTime())
+                                        ? earnedDate.toLocaleDateString()
                                         : 'Fecha desconocida';
-                                        
+
                                     return (
-                                        <div 
+                                        <div
                                             key={badge.id}
                                             className="group relative flex items-center justify-center w-12 h-12 bg-main border border-line rounded-xl shadow-sm hover:shadow-md active:scale-95 hover:-translate-y-1 transition-all cursor-pointer hover:border-brand/30 focus-within:border-brand/30 outline-hidden"
                                             tabIndex={0}
                                         >
                                             <span className="text-2xl drop-shadow-sm select-none">{badge.icon}</span>
-                                            
+
                                             {/* Tooltip Detallado (Hover & Focus) */}
                                             <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 px-3 py-2 bg-content text-main text-[10px] rounded-xl opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-all scale-90 group-hover:scale-100 group-focus-within:scale-100 whitespace-nowrap pointer-events-none z-50 shadow-2xl border border-line flex flex-col gap-0.5 items-center">
                                                 <span className="font-black uppercase tracking-tight text-brand">{badge.name}</span>
@@ -296,11 +301,12 @@ export default function UserProfile() {
                         </div>
                         <h1 className="text-2xl lg:text-3xl font-bold text-content tracking-tight">Búsquedas destacadas</h1>
                     </div>
-                    
+
                     {user.type === "self" && (
-                        <Link 
-                            to="/history" 
+                        <Link
+                            to="/history"
                             className="flex items-center gap-2 px-4 py-2 bg-surface border border-line rounded-2xl text-sm font-bold text-content hover:border-brand hover:text-brand transition-all shadow-sm"
+                            onClick={() => window.dispatchEvent(new CustomEvent('flaights:mission:access-search-history'))}
                         >
                             <History size={16} />
                             Ver historial completo
@@ -342,55 +348,11 @@ export default function UserProfile() {
                                 {searchesData?.pages.map((page, i) => (
                                     <div key={i} className="flex flex-col gap-6">
                                         {page.items.map((search) => (
-                                            <SearchCard 
-                                                key={search._id} 
-                                                search={search} 
-                                                isFeatured 
+                                            <SearchCard
+                                                key={search._id}
+                                                search={search}
+                                                isFeatured
                                             >
-                                                {user.type === "self" && (
-                                                    <SmartPopover
-                                                        isOpen={sharingSearchId === search._id}
-                                                        setIsOpen={(open) => setSharingSearchId(open ? search._id : null)}
-                                                        preferredAlign="right"
-                                                        trigger={
-                                                            <button
-                                                                onClick={(e) => {
-                                                                    e.preventDefault();
-                                                                    e.stopPropagation();
-                                                                    setSharingSearchId(sharingSearchId === search._id ? null : search._id);
-                                                                }}
-                                                                className="p-3 bg-surface border border-line rounded-full text-content-muted hover:text-brand hover:border-brand transition-all shadow-md cursor-pointer hover:scale-110 active:scale-95"
-                                                            >
-                                                                <Share2 size={18} />
-                                                            </button>
-                                                        }
-                                                    >
-                                                        <div className="p-3 flex flex-col gap-1 min-w-[220px]">
-                                                            <p className="px-3 py-2 text-[10px] font-black uppercase tracking-widest text-content-muted border-b border-line mb-2 opacity-50">Compartir con amigo</p>
-                                                            <div className="max-h-[300px] overflow-y-auto flex flex-col gap-1 pr-1 custom-scrollbar">
-                                                                {'friends' in user && user.friends && (user.friends as any[]).filter((f): f is FriendUser => typeof f !== 'string').map(friend => (
-                                                                    <button
-                                                                        key={friend._id}
-                                                                        onClick={() => {
-                                                                            sendMessage({
-                                                                                otherUserId: friend._id,
-                                                                                data: { content: `SHARE_SEARCH:${search._id}:${search.origins[0]}:${search.destinations[0]}` }
-                                                                            });
-                                                                            setSharingSearchId(null);
-                                                                        }}
-                                                                        className="flex items-center gap-3 p-2.5 hover:bg-surface-variant rounded-2xl transition-all text-left w-full cursor-pointer group"
-                                                                    >
-                                                                        <UserAvatar user={friend} size={32} className="group-hover:ring-2 ring-brand transition-all" />
-                                                                        <span className="text-xs font-bold text-content">{friend.username}</span>
-                                                                    </button>
-                                                                ))}
-                                                                {'friends' in user && user.friends && user.friends.length === 0 && (
-                                                                    <p className="text-center py-4 text-xs text-content-muted">No tienes amigos añadidos</p>
-                                                                )}
-                                                            </div>
-                                                        </div>
-                                                    </SmartPopover>
-                                                )}
                                             </SearchCard>
                                         ))}
                                     </div>

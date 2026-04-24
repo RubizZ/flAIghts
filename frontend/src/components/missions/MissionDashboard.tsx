@@ -177,17 +177,26 @@ const MissionDashboard: React.FC<MissionDashboardProps> = ({
 
                         {/* Right Side: Checklist */}
                         <div id="dashboard-right-checklist" className="w-full lg:w-3/5 space-y-3 sm:space-y-4">
-                            <h4 className="text-[8px] sm:text-[9px] font-black uppercase tracking-[0.3em] sm:tracking-[0.5em] text-white/10 mb-4 sm:mb-6">Estatus de Tareas</h4>
+                            <h4 className="text-[8px] sm:text-[9px] font-black uppercase tracking-[0.3em] sm:tracking-[0.5em] text-white/10 mb-4 sm:mb-6">Tareas a realizar</h4>
                             <div className="flex flex-col gap-2 sm:gap-3">
                                 {mission.steps.map((step) => (
                                     <div key={step.id} className={`group flex items-start sm:items-center gap-3 sm:gap-6 p-4 sm:p-5 rounded-xl sm:rounded-2xl border transition-all duration-300 ${step.isCompleted
                                         ? 'bg-green-500/5 border-green-500/10 opacity-40'
                                         : 'bg-white/5 border-white/5 hover:border-blue-500/30'
                                         }`}>
-                                        <div className={`shrink-0 h-8 w-8 sm:h-10 sm:w-10 flex items-center justify-center rounded-lg sm:rounded-xl transition-all ${step.isCompleted ? 'bg-green-500/20 text-green-400 shadow-[0_0_15px_rgba(34,197,94,0.2)]' : 'bg-white/5 text-white/10 group-hover:bg-blue-500/20 group-hover:text-blue-400'
-                                            }`}>
-                                            {step.isCompleted ? <CheckCircle2 size={16} className="sm:size-5" /> : <Circle size={14} className="sm:size-5" />}
+                                        <div className="relative group/tooltip shrink-0">
+                                            <div className={`h-8 w-8 sm:h-10 sm:w-10 flex items-center justify-center rounded-lg sm:rounded-xl transition-all ${step.isCompleted ? 'bg-green-500/20 text-green-400 shadow-[0_0_15px_rgba(34,197,94,0.2)]' : 'bg-white/5 text-white/10 group-hover:bg-blue-500/20 group-hover:text-blue-400'}`}>
+                                                {step.isCompleted ? <CheckCircle2 size={16} className="sm:size-5" /> : <Circle size={14} className="sm:size-5" />}
+                                            </div>
+
+                                            {/* Tooltip Detallado */}
+                                            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 px-4 py-2 bg-gray-900 text-white text-[10px] rounded-xl opacity-0 group-hover/tooltip:opacity-100 transition-all scale-90 group-hover/tooltip:scale-100 whitespace-nowrap pointer-events-none z-50 shadow-2xl border border-white/10 flex flex-col items-center gap-0.5">
+                                                <span className="font-black uppercase tracking-widest text-blue-400 text-[8px]">Detección Automática</span>
+                                                <span className="font-medium opacity-80">El sistema detectará automáticamente cuando completes esta tarea</span>
+                                                <div className="absolute top-full left-1/2 -translate-x-1/2 border-8 border-transparent border-t-gray-900"></div>
+                                            </div>
                                         </div>
+
                                         <div className="flex-1 min-w-0">
                                             <p className={`text-sm sm:text-base lg:text-lg font-bold mb-0.5 sm:mb-1 transition-all truncate ${step.isCompleted ? 'text-white/30 line-through' : 'text-white'}`}>
                                                 {step.title}
@@ -207,7 +216,7 @@ const MissionDashboard: React.FC<MissionDashboardProps> = ({
                 <div className="shrink-0 p-4 sm:p-6 border-t border-white/5 bg-gray-950 flex flex-col sm:flex-row justify-between items-center gap-3 text-center sm:text-left">
                     <div className="flex items-center gap-3 text-white/20">
                         <LayoutGrid size={14} className="sm:size-4" />
-                        <span className="text-[7px] sm:text-[9px] font-black uppercase tracking-[0.2em] sm:tracking-[0.3em]">Investigación TFG flAIghts</span>
+                        <span className="text-[7px] sm:text-[9px] font-black uppercase tracking-[0.2em] sm:tracking-[0.3em]">flAIghts</span>
                     </div>
                     <div className="flex items-center gap-3 text-white/40 text-[7px] sm:text-[9px] font-bold italic">
                         🚀 Explorando el futuro del viaje con IA

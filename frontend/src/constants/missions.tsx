@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { BaseMission, Mission } from '@/types/missions';
 import { useAuth } from '@/context/AuthContext';
 import { useMissions } from '@/context/MissionContext';
@@ -12,7 +12,6 @@ import { getUpdateUserMutationOptions, getSetProfilePictureMutationOptions, getS
 const agentStreamKey = getAgentStreamMutationKey()[0];
 const agentChatKey = getAgentChatMutationOptions().mutationKey?.[0] as string;
 const searchRequestKey = getSearchRequestMutationOptions().mutationKey?.[0] as string;
-const updateUserKey = getUpdateUserMutationOptions().mutationKey?.[0] as string;
 const setProfilePictureKey = getSetProfilePictureMutationOptions().mutationKey?.[0] as string;
 const sendFriendRequestKey = getSendFriendRequestMutationOptions().mutationKey?.[0] as string;
 
@@ -31,16 +30,15 @@ const RegistrationStepListener: React.FC = () => {
 
 const ProfileUpdatedListener: React.FC = () => {
     const { completeStep } = useMissions();
-    const updateMutations = useMutationState({
-        filters: { mutationKey: [updateUserKey], status: 'success' },
-        select: (mutation) => mutation.state.status,
-    });
 
     useEffect(() => {
-        if (updateMutations.length > 0) {
+        const handleEvent = () => {
             completeStep('profile_mission', 'edit_preferences');
-        }
-    }, [updateMutations.length, completeStep]);
+        };
+
+        window.addEventListener('flaights:preferences-updated', handleEvent);
+        return () => window.removeEventListener('flaights:preferences-updated', handleEvent);
+    }, [completeStep]);
 
     return null;
 };
@@ -51,9 +49,10 @@ const AvatarUploadedListener: React.FC = () => {
         filters: { mutationKey: [setProfilePictureKey], status: 'success' },
         select: (mutation) => mutation.state.status,
     });
+    const initialCount = useRef(avatarMutations.length);
 
     useEffect(() => {
-        if (avatarMutations.length > 0) {
+        if (avatarMutations.length > initialCount.current) {
             completeStep('profile_mission', 'upload_avatar');
         }
     }, [avatarMutations.length, completeStep]);
@@ -65,8 +64,8 @@ const ViewUserProfileListener: React.FC = () => {
     const { completeStep } = useMissions();
     useEffect(() => {
         const handle = () => completeStep('social_mission', 'view_user_profile');
-        window.addEventListener('view_user_profile', handle);
-        return () => window.removeEventListener('view_user_profile', handle);
+        window.addEventListener('flaights:mission:view-user-profile', handle);
+        return () => window.removeEventListener('flaights:mission:view-user-profile', handle);
     }, [completeStep]);
     return null;
 };
@@ -77,8 +76,10 @@ const SendFriendRequestListener: React.FC = () => {
         filters: { mutationKey: [sendFriendRequestKey], status: 'success' },
         select: (mutation) => mutation.state.status,
     });
+    const initialCount = useRef(friendMutations.length);
+
     useEffect(() => {
-        if (friendMutations.length > 0) {
+        if (friendMutations.length > initialCount.current) {
             completeStep('social_mission', 'send_friend_request');
         }
     }, [friendMutations.length, completeStep]);
@@ -89,8 +90,8 @@ const SendMessageListener: React.FC = () => {
     const { completeStep } = useMissions();
     useEffect(() => {
         const handle = () => completeStep('social_mission', 'send_message');
-        window.addEventListener('send_message', handle);
-        return () => window.removeEventListener('send_message', handle);
+        window.addEventListener('flaights:mission:send-message', handle);
+        return () => window.removeEventListener('flaights:mission:send-message', handle);
     }, [completeStep]);
     return null;
 };
@@ -99,8 +100,8 @@ const ShareFromResultsListener: React.FC = () => {
     const { completeStep } = useMissions();
     useEffect(() => {
         const handle = () => completeStep('share_mission', 'share_from_results');
-        window.addEventListener('share_from_results', handle);
-        return () => window.removeEventListener('share_from_results', handle);
+        window.addEventListener('flaights:mission:share-from-results', handle);
+        return () => window.removeEventListener('flaights:mission:share-from-results', handle);
     }, [completeStep]);
     return null;
 };
@@ -109,8 +110,8 @@ const ShareFromChatListener: React.FC = () => {
     const { completeStep } = useMissions();
     useEffect(() => {
         const handle = () => completeStep('share_mission', 'share_from_chat');
-        window.addEventListener('share_from_chat', handle);
-        return () => window.removeEventListener('share_from_chat', handle);
+        window.addEventListener('flaights:mission:share-from-chat', handle);
+        return () => window.removeEventListener('flaights:mission:share-from-chat', handle);
     }, [completeStep]);
     return null;
 };
@@ -119,8 +120,8 @@ const OpenAirportCardListener: React.FC = () => {
     const { completeStep } = useMissions();
     useEffect(() => {
         const handle = () => completeStep('manual_search_mission', 'open_airport_card');
-        window.addEventListener('app:open-airport-card', handle);
-        return () => window.removeEventListener('app:open-airport-card', handle);
+        window.addEventListener('flaights:mission:open-airport-card', handle);
+        return () => window.removeEventListener('flaights:mission:open-airport-card', handle);
     }, [completeStep]);
     return null;
 };
@@ -129,8 +130,8 @@ const AddAirportListener: React.FC = () => {
     const { completeStep } = useMissions();
     useEffect(() => {
         const handle = () => completeStep('manual_search_mission', 'add_airport');
-        window.addEventListener('app:add-airport', handle);
-        return () => window.removeEventListener('app:add-airport', handle);
+        window.addEventListener('flaights:mission:add-airport', handle);
+        return () => window.removeEventListener('flaights:mission:add-airport', handle);
     }, [completeStep]);
     return null;
 };
@@ -138,9 +139,9 @@ const AddAirportListener: React.FC = () => {
 const OpenMapListener: React.FC = () => {
     const { completeStep } = useMissions();
     useEffect(() => {
-        const handle = () => completeStep('manual_search_mission', 'open_map');
-        window.addEventListener('app:open-map', handle);
-        return () => window.removeEventListener('app:open-map', handle);
+        const handle = () => completeStep('map_search_mission', 'open_map');
+        window.addEventListener('flaights:mission:open-map', handle);
+        return () => window.removeEventListener('flaights:mission:open-map', handle);
     }, [completeStep]);
     return null;
 };
@@ -148,9 +149,9 @@ const OpenMapListener: React.FC = () => {
 const SelectOnMapListener: React.FC = () => {
     const { completeStep } = useMissions();
     useEffect(() => {
-        const handle = () => completeStep('manual_search_mission', 'select_on_map');
-        window.addEventListener('app:select-on-map', handle);
-        return () => window.removeEventListener('app:select-on-map', handle);
+        const handle = () => completeStep('map_search_mission', 'select_on_map');
+        window.addEventListener('flaights:mission:select-on-map', handle);
+        return () => window.removeEventListener('flaights:mission:select-on-map', handle);
     }, [completeStep]);
     return null;
 };
@@ -161,10 +162,12 @@ const ManualSearchStepListener: React.FC = () => {
         filters: { mutationKey: [searchRequestKey], status: 'success' },
         select: (mutation) => mutation.state.status,
     });
+    const initialCount = useRef(searchMutations.length);
 
     useEffect(() => {
-        if (searchMutations.length > 0) {
+        if (searchMutations.length > initialCount.current) {
             completeStep('manual_search_mission', 'perform_manual_search');
+            completeStep('map_search_mission', 'perform_map_search');
         }
     }, [searchMutations.length, completeStep]);
 
@@ -182,9 +185,10 @@ const AIChatStepListener: React.FC = () => {
         },
         select: (mutation) => mutation.state.status,
     });
+    const initialCount = useRef(chatMutations.length);
 
     useEffect(() => {
-        if (chatMutations.length > 0) {
+        if (chatMutations.length > initialCount.current) {
             completeStep('ai_mission', 'use_ai');
         }
     }, [chatMutations.length, completeStep]);
@@ -199,8 +203,8 @@ const AIFlightsReturnedListener: React.FC = () => {
         const handleFlightsReturned = () => {
             completeStep('ai_mission', 'receive_ai_flights');
         };
-        window.addEventListener('ai_flights_returned', handleFlightsReturned);
-        return () => window.removeEventListener('ai_flights_returned', handleFlightsReturned);
+        window.addEventListener('flaights:mission:ai-flights-returned', handleFlightsReturned);
+        return () => window.removeEventListener('flaights:mission:ai-flights-returned', handleFlightsReturned);
     }, [completeStep]);
 
     return null;
@@ -210,8 +214,8 @@ const AIGetSearchHistoryListener: React.FC = () => {
     const { completeStep } = useMissions();
     useEffect(() => {
         const handle = () => completeStep('ai_mission', 'get_search_history');
-        window.addEventListener('app:agent-get-user-search-history', handle);
-        return () => window.removeEventListener('app:agent-get-user-search-history', handle);
+        window.addEventListener('flaights:mission:agent-get-user-search-history', handle);
+        return () => window.removeEventListener('flaights:mission:agent-get-user-search-history', handle);
     }, [completeStep]);
     return null;
 };
@@ -220,8 +224,8 @@ const ViewFlightDetailsListener: React.FC = () => {
     const { completeStep } = useMissions();
     useEffect(() => {
         const handler = () => completeStep('flight_results_mission', 'view_flight_details');
-        window.addEventListener('app:view-flight-details', handler);
-        return () => window.removeEventListener('app:view-flight-details', handler);
+        window.addEventListener('flaights:mission:view-flight-details', handler);
+        return () => window.removeEventListener('flaights:mission:view-flight-details', handler);
     }, [completeStep]);
     return null;
 };
@@ -230,8 +234,8 @@ const SelectFlightListener: React.FC = () => {
     const { completeStep } = useMissions();
     useEffect(() => {
         const handler = () => completeStep('flight_results_mission', 'select_flight');
-        window.addEventListener('app:select-flight', handler);
-        return () => window.removeEventListener('app:select-flight', handler);
+        window.addEventListener('flaights:mission:select-flight', handler);
+        return () => window.removeEventListener('flaights:mission:select-flight', handler);
     }, [completeStep]);
     return null;
 };
@@ -240,8 +244,28 @@ const BuyFlightListener: React.FC = () => {
     const { completeStep } = useMissions();
     useEffect(() => {
         const handler = () => completeStep('flight_results_mission', 'buy_flight');
-        window.addEventListener('app:buy-flight', handler);
-        return () => window.removeEventListener('app:buy-flight', handler);
+        window.addEventListener('flaights:mission:buy-flight', handler);
+        return () => window.removeEventListener('flaights:mission:buy-flight', handler);
+    }, [completeStep]);
+    return null;
+};
+
+const AccessSearchHistoryListener: React.FC = () => {
+    const { completeStep } = useMissions();
+    useEffect(() => {
+        const handler = () => completeStep('flight_results_mission', 'access_search_history');
+        window.addEventListener('flaights:mission:access-search-history', handler);
+        return () => window.removeEventListener('flaights:mission:access-search-history', handler);
+    }, [completeStep]);
+    return null;
+};
+
+const OpenSearchFromHistoryListener: React.FC = () => {
+    const { completeStep } = useMissions();
+    useEffect(() => {
+        const handler = () => completeStep('flight_results_mission', 'open_search_from_history');
+        window.addEventListener('flaights:mission:open-search-from-history', handler);
+        return () => window.removeEventListener('flaights:mission:open-search-from-history', handler);
     }, [completeStep]);
     return null;
 };
@@ -251,7 +275,7 @@ const BuyFlightListener: React.FC = () => {
 export const MISSIONS: BaseMission[] = [
     {
         id: 'registration_mission',
-        title: 'Empieza con flAIghts',
+        title: 'Regístrate en flAIghts',
         description: 'Regístrate en la plataforma.',
         icon: '🚀',
         steps: [
@@ -278,8 +302,8 @@ export const MISSIONS: BaseMission[] = [
             },
             {
                 id: 'edit_preferences',
-                title: 'Personaliza tus preferencias',
-                description: 'Edita tu perfil y ajusta los pesos de búsqueda o cambia la visibilidad de tu perfil.',
+                title: 'Personaliza tus busquedas de vuelos',
+                description: 'Edita tu perfil y ajusta los pesos de búsqueda para que se adapten mejor a tus preferencias.',
                 listener: ProfileUpdatedListener
             }
         ]
@@ -313,38 +337,53 @@ export const MISSIONS: BaseMission[] = [
     },
     {
         id: 'manual_search_mission',
-        title: 'Haz una búsqueda de vuelos',
-        description: 'Realiza una búsqueda manual de vuelos para ver las opciones disponibles.',
+        title: 'Usa el buscador de vuelos',
+        description: 'Realiza una búsqueda manual de vuelos usando el selector de aeropuertos.',
         icon: '🔍',
         dependsOn: ['profile_mission'],
         steps: [
             {
                 id: 'open_airport_card',
-                title: 'Abre el selector de aeropuertos',
+                title: 'Abre el buscador de aeropuertos',
                 description: 'Haz clic en el campo de Origen o Destino para abrir el buscador.',
                 listener: OpenAirportCardListener
             },
             {
                 id: 'add_airport',
                 title: 'Selecciona un aeropuerto',
-                description: 'Escribe el nombre de una ciudad o aeropuerto y selecciónalo de la lista.',
+                description: 'Escribe el nombre de una ciudad o aeropuerto de tu gusto y selecciónalo de la lista.',
                 listener: AddAirportListener
             },
             {
+                id: 'perform_manual_search',
+                title: 'Búsqueda manual',
+                description: 'Completa los campos restantes y realiza la búsqueda pulsando en "Explorar vuelos".',
+                listener: ManualSearchStepListener
+            }
+        ]
+    },
+    {
+        id: 'map_search_mission',
+        title: 'Usa el mapa interactivo',
+        description: 'Realiza una búsqueda interactiva usando el globo terráqueo.',
+        icon: '🌍',
+        dependsOn: ['flight_results_mission'],
+        steps: [
+            {
                 id: 'open_map',
                 title: 'Abre el mapa interactivo',
-                description: 'Usa el botón de mapa en los inputs o haz clic directamente en el globo para entrar en modo interacción.',
+                description: 'Usa el botón de mapa en los inputs o haz clic directamente en el globo terráqueo para entrar en modo interacción.',
                 listener: OpenMapListener
             },
             {
                 id: 'select_on_map',
                 title: 'Selecciona desde el mapa',
-                description: 'Busca un aeropuerto en el globo y selecciónalo como origen o destino usando el menú contextual o la tarjeta de información.',
+                description: 'Busca un aeropuerto en el globo terráqueo y selecciónalo como origen o destino usando el menú o la tarjeta de información.',
                 listener: SelectOnMapListener
             },
             {
-                id: 'perform_manual_search',
-                title: 'Búsqueda manual',
+                id: 'perform_map_search',
+                title: 'Búsqueda desde el mapa',
                 description: 'Completa los campos restantes y realiza la búsqueda pulsando en "Explorar vuelos".',
                 listener: ManualSearchStepListener
             }
@@ -366,13 +405,13 @@ export const MISSIONS: BaseMission[] = [
             {
                 id: 'select_flight',
                 title: 'Selecciona un vuelo como vuelo de ida',
-                description: 'Selecciona este vuelo como si fuese a ser tu vuelo de ida.',
+                description: 'Selecciona un vuelo como si fuese a ser tu vuelo de ida.',
                 listener: SelectFlightListener
             },
             {
                 id: 'buy_flight',
                 title: '"Compra" el vuelo',
-                description: 'Abre el provedor externo para comprar el vuelo seleccionado. No te preocupes, no tienes que pagar nada ni comprarlo.',
+                description: 'Abre el provedor externo para comprar el vuelo seleccionado y cierra la ventana del proveedor. No te preocupes, no tienes que pagar nada ni comprarlo.',
                 listener: BuyFlightListener
             }
         ]
@@ -387,13 +426,13 @@ export const MISSIONS: BaseMission[] = [
             {
                 id: 'share_from_results',
                 title: 'Comparte desde resultados',
-                description: 'Usa el botón de compartir en la página de resultados de búsqueda.',
+                description: 'Usa el botón de compartir en la página de resultados de búsqueda y compártelo con alguien. Puedes enviarselo al usuario "flAIghts".',
                 listener: ShareFromResultsListener
             },
             {
                 id: 'share_from_chat',
                 title: 'Comparte desde el chat',
-                description: 'Comparte una búsqueda directamente en una conversación con un amigo.',
+                description: 'Comparte una búsqueda directamente en una conversación con un amigo. Puedes enviarsela al usuario "flAIghts".',
                 listener: ShareFromChatListener
             }
         ]
@@ -403,7 +442,7 @@ export const MISSIONS: BaseMission[] = [
         title: 'Prueba la Inteligencia Artificial',
         description: 'Usa el agente de IA para planificar un viaje complejo mediante lenguaje natural.',
         icon: '🤖',
-        dependsOn: ['registration_mission'],
+        dependsOn: ['map_search_mission'],
         steps: [
             {
                 id: 'use_ai',
@@ -420,7 +459,7 @@ export const MISSIONS: BaseMission[] = [
             {
                 id: 'receive_ai_flights',
                 title: 'Recibe vuelos de la IA',
-                description: 'Pídele al agente que te busque vuelos y espera su respuesta.',
+                description: 'Pídele al agente que te busque vuelos y haz que te recomiende uno de ellos.',
                 listener: AIFlightsReturnedListener
             }
         ]

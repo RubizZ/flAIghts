@@ -242,7 +242,7 @@ const MissionRoadmap: React.FC<MissionRoadmapProps> = ({ onClose, onMissionClick
                 <div className="mb-4 sm:mb-8 flex flex-col sm:flex-row items-center sm:items-end justify-between gap-4 px-4 pr-12 sm:px-0 sm:pr-20">
                     <div className="text-center sm:text-left">
                         <h2 className="text-2xl sm:text-4xl font-black mb-1 sm:mb-2 tracking-tight bg-linear-to-r from-blue-400 to-indigo-400 bg-clip-text text-transparent">Roadmap de Evaluación</h2>
-                        <p className="text-[10px] sm:text-sm text-gray-400 font-medium italic">Progreso de los retos de usabilidad.</p>
+                        <p className="text-[10px] sm:text-sm text-gray-400 font-medium italic">Progreso de los retos de usabilidad. Completa todas las misiones y responde a los cuestionarios para terminar la evaluación</p>
                     </div>
 
                     <div className="flex items-center gap-3 px-5 py-2 rounded-2xl bg-white/5 border border-white/10 shadow-xl backdrop-blur-md">
@@ -285,7 +285,7 @@ const MissionRoadmap: React.FC<MissionRoadmapProps> = ({ onClose, onMissionClick
                                 // - Saltos largos: Pasillo lateral para esquivar cards
                                 const isLongJump = conn.levelDiff > 1;
                                 let d = "";
-                                
+
                                 if (!isLongJump) {
                                     const tension = distY * 0.4;
                                     d = `M ${conn.x1},${conn.y1} 

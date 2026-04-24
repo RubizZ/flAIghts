@@ -63,8 +63,8 @@ export default function SearchResults() {
         mutation: {
             onSuccess: () => {
                 toast.success("Busqueda compartida con exito");
-                window.dispatchEvent(new CustomEvent('send_message'));
-                window.dispatchEvent(new CustomEvent('share_from_results'));
+                window.dispatchEvent(new CustomEvent('flaights:mission:send-message'));
+                window.dispatchEvent(new CustomEvent('flaights:mission:share-from-results'));
                 setIsSharing(false);
             },
             onError: () => toast.error("Error al compartir")
@@ -275,7 +275,7 @@ export default function SearchResults() {
 
     const handleSelectItinerary = (itinerary: ItineraryResponse, type: 'departure' | 'return') => {
         setExpandedItinerary(null);
-        window.dispatchEvent(new CustomEvent('app:select-flight'));
+        window.dispatchEvent(new CustomEvent('flaights:mission:select-flight'));
         if (type === 'departure') {
             setSelectedDeparture(itinerary);
             if (isOneWay) {
@@ -484,7 +484,7 @@ export default function SearchResults() {
 
                                                 <button
                                                     onClick={async () => {
-                                                        window.dispatchEvent(new CustomEvent('share_from_results'));
+                                                        window.dispatchEvent(new CustomEvent('flaights:mission:share-from-results'));
 
                                                         // Si es privada y soy el dueño, la hacemos pública antes de compartir
                                                         if (!data?.shared && user?._id === data?.user_id) {
@@ -598,7 +598,7 @@ export default function SearchResults() {
                                             </div>
                                             <button
                                                 onClick={() => {
-                                                    window.dispatchEvent(new CustomEvent('app:buy-flight'));
+                                                    window.dispatchEvent(new CustomEvent('flaights:mission:buy-flight'));
                                                     toast.info("Función no implementada", { description: "Esta acción te redirigirá a la web del vendedor." });
                                                 }}
                                                 className="w-full sm:w-auto px-8 py-4 bg-brand hover:bg-brand-hover text-white text-base font-bold rounded-2xl shadow-lg shadow-brand/20 transition-all hover:scale-105 active:scale-95 cursor-pointer"
@@ -683,8 +683,24 @@ export default function SearchResults() {
                                 {selectionStep === 'departure' && searchData.status === 'completed' && !departureItineraries?.length && (
                                     <div className="flex flex-col items-center justify-center py-20 bg-main/40 backdrop-blur-md rounded-3xl border border-line text-center text-content-muted mx-4">
                                         <AlertCircle size={48} className="mb-4 opacity-50 text-content" />
-                                        <h3 className="text-xl font-semibold text-content mb-2">No se encontraron vuelos</h3>
-                                        <p className="text-sm opacity-70">Intenta cambiar las fechas o los aeropuertos en la búsqueda.</p>
+                                        <h3 className="text-xl font-semibold text-content mb-2">No se han encontrado vuelos</h3>
+                                        <p className="text-sm opacity-70 px-4">No se han encontrado vuelos para esa búsqueda, vuelve a intentarlo con otros parámetros de búsqueda.</p>
+                                    </div>
+                                )}
+
+                                {selectionStep === 'return' && searchData.status === 'completed' && !returnItineraries?.length && (
+                                    <div className="flex flex-col items-center justify-center py-20 bg-main/40 backdrop-blur-md rounded-3xl border border-line text-center text-content-muted mx-4">
+                                        <AlertCircle size={48} className="mb-4 opacity-50 text-content" />
+                                        <h3 className="text-xl font-semibold text-content mb-2">No se han encontrado vuelos de vuelta</h3>
+                                        <p className="text-sm opacity-70 px-4">No se han encontrado vuelos de vuelta para esa búsqueda, vuelve a intentarlo con otros parámetros de búsqueda.</p>
+                                    </div>
+                                )}
+
+                                {searchData.status === 'failed' && (
+                                    <div className="flex flex-col items-center justify-center py-20 bg-red-500/5 backdrop-blur-md rounded-3xl border border-red-500/20 text-center text-red-500/70 mx-4">
+                                        <AlertCircle size={48} className="mb-4 opacity-50" />
+                                        <h3 className="text-xl font-semibold text-red-500 mb-2">Búsqueda fallida</h3>
+                                        <p className="text-sm px-4">Hubo un problema al procesar tu búsqueda. Por favor, intenta de nuevo más tarde o con otros parámetros.</p>
                                     </div>
                                 )}
 

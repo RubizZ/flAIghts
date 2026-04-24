@@ -197,7 +197,7 @@ export default function Home() {
 
         // Si el usuario selecciona algo del mapa, pasamos a modo manual para que lo vea en la tarjeta
         setSearchMode('manual');
-        window.dispatchEvent(new CustomEvent('app:select-on-map', { detail: { airport } }));
+        window.dispatchEvent(new CustomEvent('flaights:mission:select-on-map', { detail: { airport } }));
 
         if (shouldCloseOnSelect) {
             setIsSelectingOnMap(false);
@@ -209,7 +209,7 @@ export default function Home() {
     const startMapSelection = (type: 'origin' | 'destination', fromMainCard: boolean = false) => {
         setSelectingType(type);
         setIsSelectingOnMap(true);
-        window.dispatchEvent(new CustomEvent('app:open-map'));
+        window.dispatchEvent(new CustomEvent('flaights:mission:open-map'));
         setShouldCloseOnSelect(fromMainCard);
         if (!isLargeScreen) {
             setIsMobileCardExpanded(false);
@@ -293,7 +293,7 @@ export default function Home() {
         }
         setOrigins([...origins, entity]);
         if (isAirport(entity)) {
-            window.dispatchEvent(new CustomEvent('app:select-on-map', { detail: { airport: entity } }));
+            window.dispatchEvent(new CustomEvent('flaights:mission:select-on-map', { detail: { airport: entity } }));
         }
         setInspectedAirport(null);
         setSearchMode('manual');
@@ -316,7 +316,7 @@ export default function Home() {
         }
         setDestinations([...destinations, entity]);
         if (isAirport(entity)) {
-            window.dispatchEvent(new CustomEvent('app:select-on-map', { detail: { airport: entity } }));
+            window.dispatchEvent(new CustomEvent('flaights:mission:select-on-map', { detail: { airport: entity } }));
         }
         setInspectedAirport(null);
         setSearchMode('manual');
@@ -428,7 +428,7 @@ export default function Home() {
                 <div
                     onClick={() => {
                         setIsSelectingOnMap(true);
-                        window.dispatchEvent(new CustomEvent('app:open-map'));
+                        window.dispatchEvent(new CustomEvent('flaights:mission:open-map'));
                     }}
                     className={`absolute top-1/2 left-1/2 -translate-y-1/2 z-base cursor-pointer group flex items-center justify-center overflow-hidden w-[100vh] h-screen rounded-[4rem] transition-all duration-700 ${isLargeScreen ? '-translate-x-[calc(50%-306px)]' : '-translate-x-1/2'}`}
                 >
@@ -446,7 +446,7 @@ export default function Home() {
             )}
 
             {/* Loading Screen */}
-            <div className={`absolute inset-0 z-loading bg-main flex flex-col items-center justify-center gap-6 transition-opacity duration-700 pointer-events-none ${globeReady ? 'opacity-0' : 'opacity-100'}`}>
+            <div className={`absolute inset-0 z-app-loading bg-main flex flex-col items-center justify-center gap-6 transition-opacity duration-700 ${globeReady ? 'opacity-0 pointer-events-none' : 'opacity-100 pointer-events-auto'}`}>
                 <div className="relative flex items-center justify-center">
                     <div className="absolute w-20 h-20 rounded-full border border-brand/40 animate-radar" style={{ animationDelay: '0s' }} />
                     <div className="absolute w-20 h-20 rounded-full border border-brand/25 animate-radar" style={{ animationDelay: '0.8s' }} />
@@ -543,7 +543,7 @@ export default function Home() {
                         setActiveReturnPopover={setActiveReturnPopover}
                         onExploreGlobe={() => {
                             setIsSelectingOnMap(true);
-                            window.dispatchEvent(new CustomEvent('app:open-map'));
+                            window.dispatchEvent(new CustomEvent('flaights:mission:open-map'));
                             setIsMobileCardExpanded(false);
                         }}
                         searchMode={searchMode}

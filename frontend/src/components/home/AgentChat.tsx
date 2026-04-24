@@ -493,7 +493,7 @@ const AgentChat = forwardRef<any, AgentChatProps>(({
                         // Sync UI state for searches
                         if (event.type === 'tool_call') {
                             if (event.name === 'getUserSearchHistory') {
-                                window.dispatchEvent(new CustomEvent('app:agent-get-user-search-history'));
+                                window.dispatchEvent(new CustomEvent('flaights:mission:agent-get-user-search-history'));
                             }
 
                             if (event.name === 'performSearch') {
@@ -547,7 +547,7 @@ const AgentChat = forwardRef<any, AgentChatProps>(({
                         hasFinalResult = true;
 
                         if (event.data?.flights && event.data.flights.length > 0) {
-                            window.dispatchEvent(new CustomEvent('ai_flights_returned'));
+                            window.dispatchEvent(new CustomEvent('flaights:mission:ai-flights-returned'));
                         }
 
                         setMessages((prev: ExtendedChatMessage[]) => {

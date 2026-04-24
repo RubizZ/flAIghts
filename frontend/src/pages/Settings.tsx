@@ -103,13 +103,18 @@ export default function Settings() {
 
     const { mutate: updateProfile, isPending: isUpdating } = useUpdateUser({
         mutation: {
-            onSuccess: () => {
+            onSuccess: (_, variables) => {
                 toast.success("Perfil actualizado con éxito");
                 queryClient.invalidateQueries({ queryKey: getGetSelfUserQueryKey() });
                 if (user?._id) {
                     queryClient.invalidateQueries({ queryKey: getGetUserByIdQueryKey(user._id) });
                 }
                 refetch();
+
+                // Notificar cambio de preferencias para las misiones
+                if (variables?.data?.preferences) {
+                    window.dispatchEvent(new CustomEvent('flaights:preferences-updated'));
+                }
             },
             onError: (error) => {
                 toast.error(error.message || "Error al actualizar el perfil");
