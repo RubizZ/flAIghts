@@ -1,14 +1,15 @@
 import { useState, useRef, useEffect } from "react";
 import { Plus, Globe as GlobeIcon, Calendar as CalendarIcon, Sparkles, SlidersHorizontal, Trash2 } from "lucide-react";
 import { AirportResponse } from "@/api/generated/openapi/model";
+import { UnifiedSelection } from "@/types/selection";
 import ManualSearchForm from "../search/ManualSearchForm";
 import AgentChat, { ExtendedChatMessage } from "./AgentChat";
 
 interface HomeCardProps {
-    origins: AirportResponse[];
-    setOrigins: (airports: AirportResponse[]) => void;
-    destinations: AirportResponse[];
-    setDestinations: (airports: AirportResponse[]) => void;
+    origins: UnifiedSelection[];
+    setOrigins: (selections: UnifiedSelection[]) => void;
+    destinations: UnifiedSelection[];
+    setDestinations: (selections: UnifiedSelection[]) => void;
     departureDate: string;
     setDepartureDate: (date: string) => void;
     returnDate: string;
@@ -25,7 +26,7 @@ interface HomeCardProps {
     searchMode?: 'manual' | 'ai';
     onSearchModeChange?: (mode: 'manual' | 'ai') => void;
     className?: string;
-    onHoverChange?: (airport: AirportResponse | null) => void;
+    onHoverChange?: (entity: UnifiedSelection | null, type?: 'origin' | 'destination') => void;
 }
 
 export default function HomeCard({
