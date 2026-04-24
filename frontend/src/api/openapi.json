@@ -210,7 +210,8 @@
             "type": "string",
             "enum": [
               "user",
-              "admin"
+              "admin",
+              "superadmin"
             ]
           },
           "preferences": {
@@ -689,7 +690,8 @@
             "type": "string",
             "enum": [
               "user",
-              "admin"
+              "admin",
+              "superadmin"
             ]
           },
           "created_at": {
@@ -739,7 +741,8 @@
             "type": "string",
             "enum": [
               "user",
-              "admin"
+              "admin",
+              "superadmin"
             ]
           },
           "created_at": {
@@ -842,7 +845,8 @@
             "type": "string",
             "enum": [
               "user",
-              "admin"
+              "admin",
+              "superadmin"
             ]
           },
           "created_at": {
@@ -950,7 +954,8 @@
             "type": "string",
             "enum": [
               "user",
-              "admin"
+              "admin",
+              "superadmin"
             ]
           },
           "created_at": {
@@ -1252,7 +1257,8 @@
             "type": "string",
             "enum": [
               "user",
-              "admin"
+              "admin",
+              "superadmin"
             ]
           },
           "auth_version": {
@@ -5265,13 +5271,18 @@
           "airports": {
             "type": "number",
             "format": "double"
+          },
+          "audits": {
+            "type": "number",
+            "format": "double"
           }
         },
         "required": [
           "users",
           "pendingReports",
           "totalEvaluations",
-          "airports"
+          "airports",
+          "audits"
         ],
         "type": "object",
         "additionalProperties": false
@@ -5359,7 +5370,8 @@
             "type": "string",
             "enum": [
               "user",
-              "admin"
+              "admin",
+              "superadmin"
             ]
           },
           "created_at": {
@@ -5468,7 +5480,8 @@
             "type": "string",
             "enum": [
               "user",
-              "admin"
+              "admin",
+              "superadmin"
             ]
           },
           "created_at": {
@@ -8495,7 +8508,8 @@
         "security": [
           {
             "jwt": [
-              "admin"
+              "admin",
+              "superadmin"
             ]
           }
         ],
@@ -8524,7 +8538,8 @@
         "security": [
           {
             "jwt": [
-              "admin"
+              "admin",
+              "superadmin"
             ]
           }
         ],
@@ -8565,7 +8580,30 @@
               "type": "string",
               "enum": [
                 "user",
-                "admin"
+                "admin",
+                "superadmin"
+              ]
+            }
+          },
+          {
+            "in": "query",
+            "name": "sortBy",
+            "required": false,
+            "schema": {
+              "default": "created_at",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "sortOrder",
+            "required": false,
+            "schema": {
+              "default": "desc",
+              "type": "string",
+              "enum": [
+                "asc",
+                "desc"
               ]
             }
           }
@@ -8594,7 +8632,8 @@
         "security": [
           {
             "jwt": [
-              "admin"
+              "admin",
+              "superadmin"
             ]
           }
         ],
@@ -8626,6 +8665,28 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "in": "query",
+            "name": "sortBy",
+            "required": false,
+            "schema": {
+              "default": "importance_score",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "sortOrder",
+            "required": false,
+            "schema": {
+              "default": "desc",
+              "type": "string",
+              "enum": [
+                "asc",
+                "desc"
+              ]
+            }
           }
         ]
       }
@@ -8652,7 +8713,8 @@
         "security": [
           {
             "jwt": [
-              "admin"
+              "admin",
+              "superadmin"
             ]
           }
         ],
@@ -8724,7 +8786,8 @@
         "security": [
           {
             "jwt": [
-              "admin"
+              "admin",
+              "superadmin"
             ]
           }
         ],
@@ -8767,7 +8830,8 @@
         "security": [
           {
             "jwt": [
-              "admin"
+              "admin",
+              "superadmin"
             ]
           }
         ],
@@ -8820,7 +8884,8 @@
         "security": [
           {
             "jwt": [
-              "admin"
+              "admin",
+              "superadmin"
             ]
           }
         ],
@@ -8858,7 +8923,8 @@
         "security": [
           {
             "jwt": [
-              "admin"
+              "admin",
+              "superadmin"
             ]
           }
         ],
@@ -8882,7 +8948,8 @@
                     "type": "string",
                     "enum": [
                       "user",
-                      "admin"
+                      "admin",
+                      "superadmin"
                     ]
                   }
                 },
@@ -8918,7 +8985,8 @@
         "security": [
           {
             "jwt": [
-              "admin"
+              "admin",
+              "superadmin"
             ]
           }
         ],
@@ -8966,7 +9034,8 @@
         "security": [
           {
             "jwt": [
-              "admin"
+              "admin",
+              "superadmin"
             ]
           }
         ],

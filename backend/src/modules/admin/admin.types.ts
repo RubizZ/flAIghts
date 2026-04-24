@@ -12,6 +12,7 @@ export interface AdminStats {
     pendingReports: number;
     totalEvaluations: number;
     airports: number;
+    audits: number;
 }
 
 export interface UpdateAirportRequest {

@@ -166,7 +166,7 @@ export default function Navbar({ variant = 'floating' }: { variant?: 'floating' 
                             <span className="leading-none">Ajustes</span>
                         </div>
                     </button>
-                    {user?.role === 'admin' && (
+                    {(user?.role === 'admin' || user?.role === 'superadmin') && (
                         <button onClick={() => { setIsOpen(false); navigate('/admin') }} className="w-full flex items-center justify-between px-3 py-2 text-sm rounded-xl transition-all group text-left hover:bg-surface/70 cursor-pointer font-medium">
                             <div className="flex items-center gap-3 text-amber-500">
                                 <ShieldCheck size={16} />
