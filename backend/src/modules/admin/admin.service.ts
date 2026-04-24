@@ -3,12 +3,15 @@ import { User } from "../users/models/user.model.js";
 import { AirportReport } from "../airport/airport-report.model.js";
 import { Evaluation } from "../evaluation/evaluation.model.js";
 import { Airport } from "../airport/airport.model.js";
+import { Audit } from "../audit/audit.model.js";
 import type { AuditDetails } from "../audit/audit.types.js";
 import { AuditService } from "../audit/audit.service.js";
+import { AdminActionNotAuthorizedError } from "./admin.errors.js";
 import { UserService } from "../users/user.service.js";
 import type { AdminStats, UpdateAirportRequest, PopulatedAirportReport, PopulatedEvaluationDocument, PaginatedUsersResponse, PaginatedAuditsResponse, PopulatedUserRef, PaginatedAirportsResponse } from "./admin.types.js";
 import type { IUserUnpopulated } from "../users/models/user.model.js";
 import { AirportService } from "../airport/airport.service.js";
+import type { AuthenticatedUser } from "../auth/auth.types.js";
 
 @singleton()
 export class AdminService {
@@ -19,22 +22,23 @@ export class AdminService {
     ) { }
 
     public async getSystemStats(): Promise<AdminStats> {
-        const [users, pendingReports, totalEvaluations, airports] = await Promise.all([
+        const [users, pendingReports, totalEvaluations, airports, audits] = await Promise.all([
             User.countDocuments(),
             AirportReport.countDocuments({ status: 'pending' }),
             Evaluation.countDocuments(),
-            Airport.countDocuments()
+            Airport.countDocuments(),
+            Audit.countDocuments()
         ]);
 
-        return { users, pendingReports, totalEvaluations, airports };
+        return { users, pendingReports, totalEvaluations, airports, audits };
     }
 
-    public async getUsers(page: number, limit: number, q?: string, role?: string): Promise<PaginatedUsersResponse> {
-        return this.userService.getAllUsers(page, limit, q, role);
+    public async getUsers(page: number, limit: number, q?: string, role?: string, sortBy?: string, sortOrder?: 'asc' | 'desc'): Promise<PaginatedUsersResponse> {
+        return this.userService.getAllUsers(page, limit, q, role, sortBy, sortOrder);
     }
 
-    public async getAirports(page: number, limit: number, q?: string): Promise<PaginatedAirportsResponse> {
-        return this.airportService.listAirports(page, limit, q);
+    public async getAirports(page: number, limit: number, q?: string, sortBy?: string, sortOrder?: 'asc' | 'desc'): Promise<PaginatedAirportsResponse> {
+        return this.airportService.listAirports(page, limit, q, sortBy, sortOrder);
     }
 
     public async getAudits(page: number, limit: number, resource?: keyof AuditDetails, action?: string): Promise<PaginatedAuditsResponse> {
@@ -58,8 +62,22 @@ export class AdminService {
             }).lean<PopulatedAirportReport[]>();
     }
 
-    public async deleteUser(id: string) {
+    public async deleteUser(id: string, requester: AuthenticatedUser) {
+        const targetUser = await User.findById(id);
+        if (!targetUser) return;
+
+        // Solo superadmin puede borrar a otros admin/superadmin
+        if (targetUser.role !== 'user' && requester.role !== 'superadmin') {
+            throw new AdminActionNotAuthorizedError("Solo un Super Administrador puede eliminar cuentas administrativas.");
+        }
+
         await this.userService.deleteUser(id);
+
+        await this.auditService.register({
+            resource: "USER",
+            action: "DELETE",
+            details: { deletedUserId: id, deletedUsername: targetUser.username }
+        } as any);
     }
 
     public async updateReportStatus(id: string, status: 'resolved' | 'rejected') {
@@ -74,13 +92,24 @@ export class AdminService {
         return report;
     }
 
-    public async updateUserRole(id: string, role: 'user' | 'admin') {
+    public async updateUserRole(id: string, role: 'user' | 'admin' | 'superadmin', requester: AuthenticatedUser) {
+        const targetUser = await User.findById(id);
+
+        if (!targetUser) return null;
+
+        // Solo superAdmin puede cambiar roles de admin/superadmin, admin puede cambiar roles de usuarios
+        if ((role !== 'user' || targetUser.role !== 'user') && requester.role !== 'superadmin') {
+            throw new AdminActionNotAuthorizedError("Solo un Super Administrador puede gestionar roles administrativos.");
+        }
+
         const user = await User.findByIdAndUpdate(id, { role }, { new: true });
 
-        this.auditService.register({
+        if (!user) return null;
+
+        await this.auditService.register({
             resource: "USER",
             action: "UPDATE",
-            details: { userId: id, newRole: role }
+            details: { userId: id, role }
         } as any);
 
         return user;

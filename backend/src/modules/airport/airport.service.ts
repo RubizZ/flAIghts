@@ -222,7 +222,7 @@ export class AirportService {
         return { items, total, page, totalPages };
     }
 
-    public async listAirports(page: number = 1, limit: number = 10, query?: string): Promise<AirportSearchPaginatedResult> {
+    public async listAirports(page: number = 1, limit: number = 10, query?: string, sortBy: string = 'importance_score', sortOrder: 'asc' | 'desc' = 'desc'): Promise<AirportSearchPaginatedResult> {
         const airports = this.isInitialized ? this.airportsCache : (await Airport.find({}).lean() as any[]);
 
         let filtered = airports;
@@ -236,7 +236,11 @@ export class AirportService {
             );
         }
 
-        const sorted = filtered.sort((a, b) => (b.importance_score || 0) - (a.importance_score || 0));
+        const sorted = filtered.sort((a, b) => {
+            const valA = a[sortBy] ?? '';
+            const valB = b[sortBy] ?? '';
+            return sortOrder === 'asc' ? (valA > valB ? 1 : -1) : (valB > valA ? 1 : -1);
+        });
         const total = sorted.length;
         const start = (page - 1) * limit;
         const items = sorted.slice(start, start + limit).map(a => this.toAirportResponse(a));

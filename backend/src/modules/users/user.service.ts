@@ -260,7 +260,7 @@ export class UserService {
         return usersDocs.map(userDoc => this.sanitizeUser(userDoc));
     }
 
-    public async getAllUsers(page: number, limit: number, q?: string, role?: string): Promise<{ users: IUserUnpopulated[], total: number, page: number, totalPages: number }> {
+    public async getAllUsers(page: number, limit: number, q?: string, role?: string, sortBy: string = 'created_at', sortOrder: 'asc' | 'desc' = 'desc'): Promise<{ users: IUserUnpopulated[], total: number, page: number, totalPages: number }> {
         const filter: any = {};
 
         if (q) {
@@ -278,7 +278,7 @@ export class UserService {
             User.find(filter)
                 .skip((page - 1) * limit)
                 .limit(limit)
-                .sort({ created_at: -1 }),
+                .sort({ [sortBy]: sortOrder === 'asc' ? 1 : -1 }),
             User.countDocuments(filter)
         ]);
         return {
