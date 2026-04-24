@@ -1,4 +1,4 @@
-{
+﻿{
   "forgotPassword": {
     "title": "Olvidé mi contraseña",
     "description": "Introduce tu email y te enviaremos un enlace para restablecer tu contraseña.",
@@ -484,7 +484,8 @@
     "aboutUs": "Sobre nosotros",
     "contact": "Contacto",
     "privacyPolicy": "Política de Privacidad",
-    "termsOfService": "Términos de Servicio"
+    "termsOfService": "Términos de Servicio",
+    "acknowledgements": "Agradecimientos"
   },
   "errorBoundary": {
     "sessionExpired": "Sesión expirada",
@@ -907,5 +908,10 @@
       "error": "Error al enviar el reporte. Inténtalo de nuevo.",
       "describeError": "Por favor, describe el error antes de enviar"
     }
+  },
+  "acknowledgements": {
+    "title": "Agradecimientos",
+    "backToHome": "Volver al inicio",
+    "content": "Agradecemos a SerpApi el uso de su API para llevar a cabo este proyecto."
   }
 }

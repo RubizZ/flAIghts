@@ -23,8 +23,9 @@ export class BookingService {
         });
 
         const segments: BookingSegment[] = [];
+        const uniqueTokens = Array.from(new Map(data.tokens.map(t => [t.token, t])).values());
 
-        await Promise.all(data.tokens.map(async (tokenData) => {
+        await Promise.all(uniqueTokens.map(async (tokenData) => {
             const { token, origin, destination, departure_date } = tokenData;
             try {
                 const response = await this.serpApiClient.search({

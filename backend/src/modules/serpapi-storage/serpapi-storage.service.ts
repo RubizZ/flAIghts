@@ -51,6 +51,15 @@ export class SerpapiStorageService {
             };
 
             response = await this.serpApiClient.search(params, userId);
+
+            // LIMPIEZA: Eliminar vuelos sin precio antes de guardar (evita errores de esquema en MongoDB)
+            if (response.best_flights) {
+                response.best_flights = response.best_flights.filter((f: any) => f.price !== undefined && f.price !== null);
+            }
+            if (response.other_flights) {
+                response.other_flights = response.other_flights.filter((f: any) => f.price !== undefined && f.price !== null);
+            }
+
             try {
                 await SerpapiStorage.create(response);
             } catch (error: any) {
@@ -234,6 +243,64 @@ export class SerpapiStorageService {
 
         const results = await Promise.all(promises);
         return results.flat().sort((a, b) => a.price - b.price);
+    }
+
+    /**
+     * Pre-fetching inteligente para el Algoritmo Genético.
+     * Usa la estrategia de "Directed Pair Batching" para cubrir todos los pares (i, j)
+     * minimizando peticiones y evitando que un aeropuerto sea origen y destino a la vez.
+     */
+    public async getGeneticIntermediateEdges(
+        cities: string[],
+        date: string,
+        userId?: string
+    ): Promise<DijkstraFlightEdge[]> {
+        if (cities.length < 2) return [];
+
+        const allPairs: [string, string][] = [];
+        for (const from of cities) {
+            for (const to of cities) {
+                if (from !== to) allPairs.push([from, to]);
+            }
+        }
+
+        const batches: { origins: Set<string>; destinations: Set<string> }[] = [];
+        let remaining = [...allPairs];
+
+        while (remaining.length > 0) {
+            const origins = new Set<string>();
+            const destinations = new Set<string>();
+            const pairsInBatch: [string, string][] = [];
+
+            // Intentar llenar un batch (máximo 7x7 y disjuntos)
+            for (let i = 0; i < remaining.length; i++) {
+                const [u, v] = remaining[i]!;
+
+                const potentialOrigins = new Set(origins).add(u);
+                const potentialDestinations = new Set(destinations).add(v);
+
+                // Regla: No solapamiento (crucial para Google Flights)
+                const hasOverlap = [...potentialOrigins].some(o => potentialDestinations.has(o));
+
+                if (!hasOverlap && potentialOrigins.size <= 7 && potentialDestinations.size <= 7) {
+                    origins.add(u);
+                    destinations.add(v);
+                    pairsInBatch.push([u, v]);
+                }
+            }
+
+            batches.push({ origins, destinations });
+            // Filtrar los pares que ya cubrimos en este batch
+            remaining = remaining.filter(p => !pairsInBatch.some(pb => pb[0] === p[0] && pb[1] === p[1]));
+        }
+
+        const promises = batches.map(batch =>
+            this.getFlightEdges([...batch.origins], [...batch.destinations], date, userId)
+                .catch(() => [] as DijkstraFlightEdge[])
+        );
+
+        const results = await Promise.all(promises);
+        return results.flat();
     }
 
     private createApiParams(criteria: SearchRequest, overrides?: Partial<ApiRequestParameters>): ApiRequestParameters {

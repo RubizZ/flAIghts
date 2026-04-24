@@ -89,22 +89,46 @@ export class GeneticTripOptimizer {
             legDates.push(toDateString(addDays(startDate, daysPerCity * i)));
         }
 
-        // PRE-FETCHING OPTIMIZADO: Cargamos todos los vuelos potenciales en batches
-        const promises: Promise<unknown>[] = [];
+        // PRE-FETCHING OPTIMIZADO
+        const prefetchPromises: Promise<unknown>[] = [];
 
         // 1. Primera Leg: Origen -> Todas las ciudades
-        promises.push(this.storageService.getBatchedFlightEdges([origin], cities, legDates[0]!));
+        prefetchPromises.push(this.storageService.getBatchedFlightEdges([origin], cities, legDates[0]!));
 
         // 2. Última Leg: Todas las ciudades -> Origen
-        promises.push(this.storageService.getBatchedFlightEdges(cities, [origin], legDates[cities.length]!));
+        prefetchPromises.push(this.storageService.getBatchedFlightEdges(cities, [origin], legDates[cities.length]!));
 
-        // 3. Legs Intermedias: Todas las ciudades -> Todas las ciudades (para cada fecha intermedia)
+        // 3. Legs Intermedias: Todas las ciudades -> Todas las ciudades (con Greedy Pair Batching)
         for (let i = 1; i < cities.length; i++) {
-            promises.push(this.storageService.getBatchedFlightEdges(cities, cities, legDates[i]!));
+            prefetchPromises.push(this.storageService.getGeneticIntermediateEdges(cities, legDates[i]!));
         }
 
-        await Promise.all(promises);
+        await Promise.all(prefetchPromises);
 
+        // AUDITORÍA DE COBERTURA: Verificar si falta algún tramo crítico
+        const rescuePromises: Promise<unknown>[] = [];
+        for (let i = 0; i < legDates.length; i++) {
+            const date = legDates[i]!;
+            const fromList = (i === 0) ? [origin] : cities;
+            const toList = (i === legDates.length - 1) ? [origin] : cities;
+
+            for (const f of fromList) {
+                for (const t of toList) {
+                    if (f === t) continue;
+                    const price = this.storageService.getMinPrice(f, t, date);
+                    if (price === Infinity) {
+                        // Rescate puntual para este tramo que falta en el caché
+                        rescuePromises.push(this.storageService.getFlightEdges([f], [t], date));
+                    }
+                }
+            }
+        }
+
+        if (rescuePromises.length > 0) {
+            await Promise.all(rescuePromises);
+        }
+        // Repoblar minPriceCache desde MongoDB para todas las fechas del viaje
+        await Promise.all(legDates.map(date => this.storageService.warmUpCache(date)));
 
         for (let gen = 0; gen < generations; gen++) {
             const scored = await Promise.all(

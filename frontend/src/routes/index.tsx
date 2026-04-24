@@ -15,6 +15,7 @@ import Settings from "@/pages/Settings.tsx";
 import Home from "@/pages/Home.tsx";
 import TermsOfService from "@/pages/TermsOfService.tsx";
 import PrivacyPolicy from "@/pages/PrivacyPolicy.tsx";
+import Acknowledgements from "@/pages/Acknowledgements.tsx";
 import GeneticTrip from "@/pages/GeneticTrip.tsx";
 import Chats from "@/pages/Chats.tsx";
 import Chat from "@/pages/Chat.tsx";
@@ -47,6 +48,7 @@ export const routes: RouteObject[] = [
                     { path: "/genetic-trip", element: <GeneticTrip /> },
                     { path: "/terms", element: <TermsOfService /> },
                     { path: "/privacy", element: <PrivacyPolicy /> },
+                    { path: "/acknowledgements", element: <Acknowledgements /> },
                     { path: "*", element: <NotFound /> },
                 ]
             }

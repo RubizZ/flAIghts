@@ -9,7 +9,7 @@ import { User } from "../../modules/users/models/user.model.js";
 import { contextStorage } from "../../utils/context.js";
 
 const serpApiQuotaSchema = new Schema({
-    identifier: { type: String, required: true }, // userId, IP o 'global'
+    identifier: { type: String, required: true },
     period: { type: String, enum: ['hour', 'day'], required: true },
     key: { type: String, required: true },
     count: { type: Number, default: 0 }
@@ -26,37 +26,48 @@ export class SerpApiClient {
 
     constructor(@inject(ServerConfig) private config: ServerConfig) { }
 
-    private globalDailyLimit = 1000;
-    private userHourlyLimit = 100;
+    private globalDailyLimit = 10000;
+    private userHourlyLimit = 1000;
 
     public async search(
         parameters: ApiRequestParameters,
         explicitUserId?: string
     ): Promise<SerpApiResponse> {
+
         const store = contextStorage.getStore();
         const userId = explicitUserId || store?.userId;
         const ip = store?.ip || "unknown";
 
-<<<<<<< HEAD
         let isAdmin = false;
+
         if (userId && mongoose.Types.ObjectId.isValid(userId)) {
             const user = await User.findById(userId).select('role').lean();
             if (user && user.role === 'admin') {
                 isAdmin = true;
-=======
-        try {
-            RequestsPerDay.findOneAndUpdate(
-                { date: new Date().toISOString().slice(0, 10) },
+            }
+        }
+
+        if (!isAdmin) {
+            const now = new Date();
+            const dateKey = now.toISOString().slice(0, 10);
+            const hourKey = `${dateKey}-${now.getHours()}`;
+
+            // Global daily quota
+            const globalQuota = await SerpApiQuota.findOneAndUpdate(
+                { identifier: 'global', period: 'day', key: dateKey },
                 { $inc: { count: 1 } },
-                { runValidators: true, upsert: true, returnDocument: 'after' }
+                { upsert: true, new: true }
             );
 
             if (globalQuota && globalQuota.count > this.globalDailyLimit) {
-                throw new SerpapiQuotaExceededError("Límite diario global de SerpApi alcanzado.");
+                throw new SerpapiQuotaExceededError(
+                    "Límite diario global de SerpApi alcanzado."
+                );
             }
 
-            // Check and increment User Hourly Quota
+            // User hourly quota
             const userIdentifier = userId || ip;
+
             const userQuota = await SerpApiQuota.findOneAndUpdate(
                 { identifier: userIdentifier, period: 'hour', key: hourKey },
                 { $inc: { count: 1 } },
@@ -64,10 +75,15 @@ export class SerpApiClient {
             );
 
             if (userQuota && userQuota.count > this.userHourlyLimit) {
-                throw new SerpapiQuotaExceededError(`Has excedido tu límite de 100 créditos de SerpApi por hora.`);
+                throw new SerpapiQuotaExceededError(
+                    "Has excedido tu límite de 100 créditos de SerpApi por hora."
+                );
             }
-            throw error;
         }
+
+        const cleanParameters = Object.fromEntries(
+            Object.entries(parameters).filter(([_, v]) => v != null)
+        );
 
         const query = new URLSearchParams({
             engine: "google_flights",
@@ -84,7 +100,10 @@ export class SerpApiClient {
                 error: data.error || data,
                 parameters: { ...parameters, api_key: 'REDACTED' }
             }, 'SerpApi Request Failed');
-            throw new Error(`SerpApi error: ${response.status} - ${data.error || JSON.stringify(data)}`);
+
+            throw new Error(
+                `SerpApi error: ${response.status} - ${data.error || JSON.stringify(data)}`
+            );
         }
 
         return data;

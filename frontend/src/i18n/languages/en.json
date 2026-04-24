@@ -1,4 +1,4 @@
-{
+﻿{
   "forgotPassword": {
     "title": "Forgot Password",
     "description": "Enter your email and we will send you a password reset link.",
@@ -409,8 +409,8 @@
     },
     "chatbot": {
       "title": "flAIghts Assistant",
-      "comingSoon": "Coming soon — describe your ideal trip with AI",
-      "placeholder": "e.g. \"I want to go to Tokyo in summer for less than 600€\"",
+      "comingSoon": "Coming soon â€” describe your ideal trip with AI",
+      "placeholder": "e.g. \"I want to go to Tokyo in summer for less than 600â‚¬\"",
       "askAssistant": "Ask the assistant"
     },
     "additionalOptions": {
@@ -480,11 +480,12 @@
   },
   "footer": {
     "branding": "flAIghts",
-    "copyright": "© {{year}} flAIghts. Innovating the way you fly.",
+    "copyright": "Â© {{year}} flAIghts. Innovating the way you fly.",
     "aboutUs": "About us",
     "contact": "Contact",
     "privacyPolicy": "Privacy Policy",
-    "termsOfService": "Terms of Service"
+    "termsOfService": "Terms of Service",
+    "acknowledgements": "Acknowledgements"
   },
   "navbar": {
     "account": "Account",
@@ -584,7 +585,7 @@
     "select": "Select",
     "finalArrival": "Final arrival at {{airport}}:",
     "atTime": " at {{time}}",
-    "scale": "{{count}}ª Layover",
+    "scale": "{{count}}Âª Layover",
     "overnightScale": "Overnight layover",
     "shortScale": "Very short layover",
     "travelClassFallback": "Economy"
@@ -638,7 +639,7 @@
     "you": "You",
     "continueAnalyzing": "Continue analyzing",
     "inputPlaceholder": "Ask anything...",
-    "legalNotice": "Experimental AI • flAIghts can make errors. Verify important information."
+    "legalNotice": "Experimental AI â€¢ flAIghts can make errors. Verify important information."
   },
   "manualSearch": {
     "selectDepartureFirst": "Select departure date first",
@@ -697,7 +698,7 @@
       "progress": "Progress",
       "taskStatus": "Task Status",
       "branding": "Research TFG flAIghts",
-      "footerHero": "🚀 Exploring the future of travel with AI"
+      "footerHero": "ðŸš€ Exploring the future of travel with AI"
     },
     "roadmap": {
       "missions": "Missions"
@@ -798,7 +799,7 @@
     "subtitle": "Select the provider for each segment of your trip.",
     "segmentTitle": "Leg {{origin}} to {{destination}}",
     "bookWith": "Book with {{provider}}",
-    "atPrice": "for {{price}}€",
+    "atPrice": "for {{price}}â‚¬",
     "go": "Go to website",
     "loading": "Getting options...",
     "error": "Error getting booking options",
@@ -907,5 +908,10 @@
       "error": "Error submitting report. Please try again.",
       "describeError": "Please describe the error before submitting"
     }
+  },
+  "acknowledgements": {
+    "title": "Acknowledgements",
+    "backToHome": "Back to Home",
+    "content": "We would like to thank SerpApi for providing their API to carry out this project."
   }
 }

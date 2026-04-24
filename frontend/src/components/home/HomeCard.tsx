@@ -173,6 +173,7 @@ export default function HomeCard({
                             today={today}
                             onHoverChange={onHoverChange}
                         />
+                        {/*
                         <div className="flex items-center justify-center gap-4 text-xs text-content-muted">
                             <div className="flex items-center gap-1">
                                 <Plus size={12} className="text-brand" />
@@ -184,6 +185,7 @@ export default function HomeCard({
                                 <span>{t('homeCard.advancedFilters')}</span>
                             </div>
                         </div>
+                        */}
                     </div>
                 </div>
 

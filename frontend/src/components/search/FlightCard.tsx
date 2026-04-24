@@ -12,7 +12,6 @@ interface FlightCardProps {
     airportsMap: Map<string, GlobeAirportResponse>,
     onHover: (it: ItineraryResponse | null) => void,
     onExpandChange?: (it: ItineraryResponse | null) => void,
-    onExpandChange?: (it: ItineraryResponse | null) => void,
     onSelect?: (itinerary: ItineraryResponse) => void,
     showSelectButton?: boolean
 }

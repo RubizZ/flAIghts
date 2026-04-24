@@ -636,7 +636,9 @@ export class SearchService {
             };
         });
     }
+
     private async runGeneticTrip(searchId: string, data: { origin: string, cities: string[], startDate: Date, daysPerCity: number }, userId?: string) {
+        logger.info({ searchId, origin: data.origin, cities: data.cities, startDate: data.startDate, daysPerCity: data.daysPerCity }, `[Genetic] Iniciando runGeneticTrip`);
         try {
             const result = await this.geneticOptimizer.findBestTrip(
                 data.origin,
@@ -646,10 +648,19 @@ export class SearchService {
             );
 
             if (!result || !result.route || result.route.length === 0) {
+                logger.warn({ searchId }, `[Genetic] GA no devolvió ruta válida (resultado vacío)`);
                 await Search.updateOne({ _id: searchId }, { status: "failed" });
                 return;
             }
 
+            // Si el coste es Infinity, ningún cromosoma encontró ruta completa válida
+            if (result.cost === Infinity) {
+                logger.warn({ searchId, route: result.route }, `[Genetic] GA devolvió coste Infinity — no existe ruta completa con datos disponibles`);
+                await Search.updateOne({ _id: searchId }, { status: "failed" });
+                return;
+            }
+
+            logger.info({ searchId, route: result.route, cost: result.cost }, `[Genetic] Mejor ruta encontrada`);
 
             const legs: any[] = [];
             let currentPrice = 0;
@@ -661,14 +672,21 @@ export class SearchService {
                 const to = result.route[i + 1]!;
                 const date = addDays(data.startDate.toISOString().split("T")[0]!, data.daysPerCity * i);
 
+                logger.debug({ searchId, from, to, date, leg: i }, `[Genetic] Buscando vuelo para tramo`);
                 const edges = await this.storageService.getFlightEdges([from], [to], date, userId);
+
                 if (edges.length === 0) {
+                    logger.error({ searchId, from, to, date, leg: i }, `[Genetic] Sin vuelos para el tramo ${from}→${to}@${date}`);
                     await Search.updateOne({ _id: searchId }, { status: "failed" });
                     return;
                 }
+
                 const bestEdge = edges.reduce((min, cur) => cur.price < min.price ? cur : min, edges[0]!) as EnrichedFlightEdge;
+                logger.debug({ searchId, from, to, date, price: bestEdge.price, id: bestEdge.id }, `[Genetic] Tramo resuelto`);
 
                 currentPrice += bestEdge.price;
+                // La duración total del itinerario genético es la suma de las duraciones de los vuelos
+                // más el tiempo de estancia en las ciudades (daysPerCity).
                 currentDuration += bestEdge.duration;
 
                 const segments = bestEdge.segments;
@@ -681,6 +699,11 @@ export class SearchService {
                             const prevArrival = parseEdgeDateTime(prevSegment.arrival_airport.time);
                             const currDeparture = parseEdgeDateTime(seg.departure_airport.time);
                             wait_time = Math.max(0, Math.round((currDeparture.getTime() - prevArrival.getTime()) / 60000));
+                        } else if (i > 0) {
+                            // Este es el primer segmento de un vuelo intermedio.
+                            // El "tiempo de espera" aquí es en realidad la estancia en la ciudad anterior.
+                            // Lo ponemos en minutos para mantener consistencia, aunque sean días.
+                            wait_time = data.daysPerCity * 24 * 60;
                         }
 
                         legs.push({
@@ -703,6 +726,11 @@ export class SearchService {
                         });
                     }
                 } else {
+                    let wait_time = 0;
+                    if (i > 0) {
+                        wait_time = data.daysPerCity * 24 * 60;
+                    }
+
                     legs.push({
                         order: currentOrder++,
                         flight_id: bestEdge.id,
@@ -714,7 +742,7 @@ export class SearchService {
                         airline_logo: bestEdge.airline_logo ?? "",
                         departure_time: bestEdge.departure_time,
                         arrival_time: bestEdge.arrival_time,
-                        wait_time: 0,
+                        wait_time: wait_time,
                         airplane: bestEdge.airplane,
                         flight_number: bestEdge.flight_number,
                         travel_class: bestEdge.travel_class,
@@ -733,6 +761,8 @@ export class SearchService {
                 created_at: new Date()
             });
 
+            logger.info({ searchId, itineraryId: itinerary._id, totalPrice: currentPrice }, `[Genetic] Itinerario creado correctamente`);
+
             await Search.updateOne(
                 { _id: searchId },
                 {
@@ -741,10 +771,12 @@ export class SearchService {
                 }
             );
 
-        } catch (error) {
+        } catch (error: any) {
+            logger.error({ error, searchId, message: error?.message, stack: error?.stack }, `[Genetic] Error inesperado en runGeneticTrip`);
             await Search.updateOne({ _id: searchId }, { status: "failed" });
         }
     }
+
 }
 function addDays(date: string, days: number): string {
     const d = new Date(date);

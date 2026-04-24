@@ -69,6 +69,7 @@ export default function Footer() {
                             <Link to="/contact" onClick={() => setIsExpanded(false)} className="text-sm font-semibold hover:opacity-100 opacity-70 transition-all hover:-translate-y-px">{t("footer.contact")}</Link>
                             <Link to="/privacy" onClick={() => setIsExpanded(false)} className="text-sm font-semibold hover:opacity-100 opacity-70 transition-all hover:-translate-y-px">{t("footer.privacyPolicy")}</Link>
                             <Link to="/terms" onClick={() => setIsExpanded(false)} className="text-sm font-semibold hover:opacity-100 opacity-70 transition-all hover:-translate-y-px">{t("footer.termsOfService")}</Link>
+                            <Link to="/acknowledgements" onClick={() => setIsExpanded(false)} className="text-sm font-semibold hover:opacity-100 opacity-70 transition-all hover:-translate-y-px">{t("footer.acknowledgements")}</Link>
                         </div>
                     </div>
                 </div>

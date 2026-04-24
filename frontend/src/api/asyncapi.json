@@ -730,10 +730,10 @@
               "priority"
             ]
           },
-          "layover_days": {
+          "dates": {
             "type": "array",
             "items": {
-              "type": "number"
+              "type": "string"
             }
           },
           "source": {
@@ -976,6 +976,9 @@
             "type": "string"
           },
           "travel_class": {
+            "type": "string"
+          },
+          "booking_token": {
             "type": "string"
           },
           "extensions": {
