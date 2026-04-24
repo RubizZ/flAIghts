@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useRef } from 'react';
 import { useMissions } from '@/context/MissionContext';
-import { MessageSquare, Star, Send, X, Check, Sparkles } from 'lucide-react';
+import { MessageSquare, Star, X, Check, Sparkles, Save } from 'lucide-react';
 
 const SurveyModal: React.FC = () => {
     const { showSurveyMissionId, setShowSurveyMissionId, missions, addSurveyAnswer } = useMissions();
@@ -167,7 +167,7 @@ const SurveyModal: React.FC = () => {
                             >
                                 <div className="absolute inset-0 bg-linear-to-r from-white/0 via-white/10 to-white/0 -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
                                 {isClosing ? 'Guardando...' : 'Guardar feedback'}
-                                {!isClosing && <Send size={16} className="group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />}
+                                {!isClosing && <Save size={16} />}
                             </button>
                         </div>
                     </div>

@@ -43,6 +43,7 @@ export default function SearchCard({ search, isFeatured, children }: SearchCardP
             <Link
                 to={`/search/${search._id}`}
                 className="block p-5 sm:p-6 bg-surface border border-line rounded-[2rem] hover:border-brand hover:shadow-xl hover:shadow-brand/5 transition-all duration-300 group/card relative overflow-hidden"
+                onClick={() => window.dispatchEvent(new CustomEvent('flaights:mission:open-search-from-history'))}
             >
                 {/* Gradient Background Decoration */}
                 <div className="absolute top-0 right-0 w-32 h-32 bg-brand/5 blur-3xl rounded-full -mr-16 -mt-16 group-hover/card:bg-brand/10 transition-colors duration-500" />

@@ -16,12 +16,10 @@ interface SurveyAnswer {
     missionId: string;
     completedBy?: string;
     completedAt: string;
-    userAgent: string;
     steps: {
         id: string;
         title: string;
         completedAt: string;
-        userAgent: string;
     }[];
     answer: {
         rating: number;
@@ -43,7 +41,7 @@ interface MissionContextType {
     addSurveyAnswer: (missionId: string, answer: SurveyAnswer['answer']) => void;
     showSurveyMissionId: string | null;
     setShowSurveyMissionId: (id: string | null) => void;
-    finishEvaluation: (fullName: string, susResults: number[]) => Promise<void>;
+    finishEvaluation: (fullName: string, susResults: number[], additionalData?: { age?: number, gender?: string, educationLevel?: string }) => Promise<void>;
     evaluationFinished: boolean;
     isMissionRated: (missionId: string) => boolean;
     showRoadmap: boolean;
@@ -65,6 +63,39 @@ const ANSWERS_KEY = 'flaights_survey_answers';
 const FINISHED_KEY = 'flaights_eval_finished';
 const IS_EVAL_MODE = import.meta.env.VITE_EVALUATION_MODE === 'true';
 const ONBOARDING_KEY = 'flaights_onboarding_seen';
+
+/**
+ * Función auxiliar para detectar ciclos en el grafo de misiones.
+ * Lanza un error si encuentra una dependencia circular.
+ */
+function validateMissionCycles(missions: { id: string, dependsOn?: string[] }[]) {
+    const visited = new Set<string>();
+    const recStack = new Set<string>();
+
+    function hasCycle(id: string): boolean {
+        if (recStack.has(id)) return true;
+        if (visited.has(id)) return false;
+
+        visited.add(id);
+        recStack.add(id);
+
+        const mission = missions.find(m => m.id === id);
+        if (mission?.dependsOn) {
+            for (const depId of mission.dependsOn) {
+                if (hasCycle(depId)) return true;
+            }
+        }
+
+        recStack.delete(id);
+        return false;
+    }
+
+    for (const mission of missions) {
+        if (hasCycle(mission.id)) {
+            throw new Error(`Ciclo de dependencias detectado en el sistema de misiones: ${mission.id} forma parte de una referencia circular.`);
+        }
+    }
+}
 
 export const MissionProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     const { isAuthenticated, user } = useAuth();
@@ -120,8 +151,7 @@ export const MissionProvider: React.FC<{ children: ReactNode }> = ({ children })
                             ...s,
                             isCompleted: true,
                             completedBy: user?._id,
-                            completedAt: new Date().toISOString(),
-                            userAgent: navigator.userAgent
+                            completedAt: new Date().toISOString()
                         } : s
                     );
                     const allStepsCompleted = newSteps.every(s => s.isCompleted);
@@ -130,13 +160,15 @@ export const MissionProvider: React.FC<{ children: ReactNode }> = ({ children })
                         steps: newSteps,
                         isCompleted: allStepsCompleted,
                         completedBy: allStepsCompleted ? (user?._id || m.completedBy) : m.completedBy,
-                        completedAt: allStepsCompleted ? (new Date().toISOString() || m.completedAt) : m.completedAt,
-                        userAgent: allStepsCompleted ? (navigator.userAgent || m.userAgent) : m.userAgent
+                        completedAt: allStepsCompleted ? (new Date().toISOString() || m.completedAt) : m.completedAt
                     };
                 }
                 return m;
             });
         }
+
+        // Validar que no haya ciclos antes de retornar el estado inicial
+        validateMissionCycles(initialMissions);
 
         return initialMissions;
     });
@@ -207,7 +239,7 @@ export const MissionProvider: React.FC<{ children: ReactNode }> = ({ children })
     const nextSurveyOnboardingStep = useCallback(() => {
         setSurveyOnboardingStep(prev => {
             const next = prev + 1;
-            if (next > 3) {
+            if (next > 4) {
                 localStorage.setItem('onboarding_survey_seen', 'true');
                 setHasSeenSurveyOnboarding(true);
                 return 0;
@@ -241,12 +273,37 @@ export const MissionProvider: React.FC<{ children: ReactNode }> = ({ children })
         return missions.find(m => m.id === missionId)?.isCompleted || false;
     }, [missions]);
 
-    const isMissionUnlocked = useCallback((missionId: string) => {
-        const mission = missions.find(m => m.id === missionId);
-        if (!mission) return false;
-        if (!mission.dependsOn || mission.dependsOn.length === 0) return true;
-        return mission.dependsOn.every(depId => isMissionCompleted(depId));
-    }, [missions, isMissionCompleted]);
+    const isMissionUnlocked = useCallback((missionId: string): boolean => {
+        const memo = new Map<string, boolean>();
+        const check = (id: string, recStack: Set<string>): boolean => {
+            if (recStack.has(id)) {
+                throw new Error(`Ciclo detectado en tiempo de ejecución para la misión: ${id}`);
+            }
+            if (memo.has(id)) return memo.get(id)!;
+
+            const mission = missions.find(m => m.id === id);
+            if (!mission) return false;
+
+            recStack.add(id);
+
+            if (!mission.dependsOn || mission.dependsOn.length === 0) {
+                memo.set(id, true);
+                recStack.delete(id);
+                return true;
+            }
+
+            const isAllDepsMet = mission.dependsOn.every(depId => {
+                const depMission = missions.find(m => m.id === depId);
+                return !!(depMission && depMission.isCompleted && check(depId, recStack));
+            });
+
+            memo.set(id, isAllDepsMet);
+            recStack.delete(id);
+            return isAllDepsMet;
+        };
+
+        return check(missionId, new Set());
+    }, [missions]);
 
     const completeStep = useCallback((missionId: string, stepId: string) => {
         if (evaluationFinished) return;
@@ -289,8 +346,7 @@ export const MissionProvider: React.FC<{ children: ReactNode }> = ({ children })
                                 ...s,
                                 isCompleted: true,
                                 completedBy: user?._id,
-                                completedAt: new Date().toISOString(),
-                                userAgent: navigator.userAgent
+                                completedAt: new Date().toISOString()
                             };
                         }
                         return s;
@@ -321,15 +377,14 @@ export const MissionProvider: React.FC<{ children: ReactNode }> = ({ children })
                         steps: newSteps,
                         isCompleted: allStepsCompleted,
                         completedBy: allStepsCompleted ? (user?._id || m.completedBy) : m.completedBy,
-                        completedAt: allStepsCompleted ? (new Date().toISOString() || m.completedAt) : m.completedAt,
-                        userAgent: allStepsCompleted ? (navigator.userAgent || m.userAgent) : m.userAgent
+                        completedAt: allStepsCompleted ? (new Date().toISOString() || m.completedAt) : m.completedAt
                     };
                 });
 
                 return newMissions;
             });
         });
-    }, [user, evaluationFinished, hasSeenSurveyOnboarding, surveyOnboardingStep, isMissionUnlocked]);
+    }, [user, evaluationFinished, isMissionUnlocked, hasSeenSurveyOnboarding, surveyOnboardingStep]);
 
     const unlockedMissions = useMemo(() => {
         return missions.filter(m => isMissionUnlocked(m.id));
@@ -341,42 +396,55 @@ export const MissionProvider: React.FC<{ children: ReactNode }> = ({ children })
 
     const addSurveyAnswer = useCallback((missionId: string, answer: SurveyAnswer['answer']) => {
         const mission = missions.find(m => m.id === missionId)!;
+
+        // Si es el primer feedback y estamos en el tutorial, avanzamos al siguiente paso
+        if (surveyAnswers.length === 0 && surveyOnboardingStep === 3) {
+            nextSurveyOnboardingStep();
+        }
+
         setSurveyAnswers(prev => [
             ...prev.filter(a => a.missionId !== missionId),
             {
                 missionId,
                 answer,
-                completedBy: mission.completedBy!,
+                completedBy: mission.completedBy,
                 completedAt: mission.completedAt!,
-                userAgent: mission.userAgent!,
                 steps: mission.steps.map(s => ({
                     id: s.id,
                     title: s.title,
-                    completedAt: s.completedAt!,
-                    userAgent: s.userAgent!
-                })) || []
+                    completedAt: s.completedAt!
+                }))
             }
         ]);
-    }, [missions]);
+    }, [missions, surveyAnswers.length, surveyOnboardingStep, nextSurveyOnboardingStep]);
 
     const isMissionRated = useCallback((missionId: string) => {
         return surveyAnswers.some(a => a.missionId === missionId);
     }, [surveyAnswers]);
 
-    const finishEvaluation = async (fullName: string, susResults: number[]) => {
+    const finishEvaluation = async (fullName: string, susResults: number[], additionalData: { age?: number, gender?: string, educationLevel?: string } = {}) => {
         try {
             await submitResultsMutation.mutateAsync({
                 data: {
                     fullName,
                     results: surveyAnswers,
                     susResults,
-                    timestamp: new Date().toISOString()
+                    timestamp: new Date().toISOString(),
+                    screenInfo: {
+                        width: window.screen.width,
+                        height: window.screen.height,
+                        innerWidth: window.innerWidth,
+                        innerHeight: window.innerHeight,
+                        devicePixelRatio: window.devicePixelRatio
+                    },
+                    userAgent: navigator.userAgent,
+                    ...additionalData
                 }
             });
 
             setEvaluationFinished(true);
             toast.success('¡Evaluación completada!');
-            
+
             // Invalidad datos del usuario para mostrar la nueva insignia
             queryClient.invalidateQueries({ queryKey: getGetSelfUserQueryKey() });
         } catch (error) {

@@ -52,7 +52,7 @@ export default function FlightCard({ itinerary, formatTime, formatDuration, airp
                 const next = !isExpanded;
                 setIsExpanded(next);
                 if (next) {
-                    window.dispatchEvent(new CustomEvent('app:view-flight-details'));
+                    window.dispatchEvent(new CustomEvent('flaights:mission:view-flight-details'));
                 }
                 onExpandChange?.(next ? itinerary : null);
             }}

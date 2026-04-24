@@ -223,8 +223,8 @@ export default function Chat() {
             receiverId: userId!,
             content: `SHARE_SEARCH:${search._id}:${origins}:${destinations}`,
         });
-        window.dispatchEvent(new CustomEvent('send_message'));
-        window.dispatchEvent(new CustomEvent('share_from_chat'));
+        window.dispatchEvent(new CustomEvent('flaights:mission:send-message'));
+        window.dispatchEvent(new CustomEvent('flaights:mission:share-from-chat'));
         setIsShareModalOpen(false);
     };
 
@@ -237,7 +237,7 @@ export default function Chat() {
             receiverId: userId,
             content: newMessage.trim(),
         });
-        window.dispatchEvent(new CustomEvent('send_message'));
+        window.dispatchEvent(new CustomEvent('flaights:mission:send-message'));
 
         setNewMessage("");
         // Reset height after sending

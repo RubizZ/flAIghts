@@ -7,7 +7,8 @@ type TooltipPosition = 'top' | 'bottom' | 'left' | 'right';
 const MissionOnboarding: React.FC = () => {
     const {
         isEvaluationMode, hasConsented, onboardingStep, nextOnboardingStep,
-        surveyOnboardingStep, nextSurveyOnboardingStep, showRoadmap, skipOnboarding
+        surveyOnboardingStep, nextSurveyOnboardingStep, showRoadmap, skipOnboarding,
+        activeMission, showSurveyMissionId
     } = useMissions();
 
     const [spotlightRect, setSpotlightRect] = useState<DOMRect | null>(null);
@@ -83,6 +84,7 @@ const MissionOnboarding: React.FC = () => {
                             break;
                         case 2: currentId = 'onboarding-survey-mission'; break;
                         case 3: currentId = 'dashboard-survey-button'; break;
+                        case 4: currentId = 'dashboard-back-button'; break;
                     }
                 } else {
                     switch (displayState.onboardingStep) {
@@ -153,7 +155,7 @@ const MissionOnboarding: React.FC = () => {
 
     // Bloquear scroll del body cuando el tutorial está activo
     useEffect(() => {
-        if (isVisible && activeTourStep > 0) {
+        if (isVisible && activeTourStep > 0 && !showSurveyMissionId) {
             const originalOverflow = document.body.style.overflow;
             document.body.style.overflow = 'hidden';
 
@@ -161,17 +163,25 @@ const MissionOnboarding: React.FC = () => {
                 e.preventDefault();
             };
 
+            const preventMiddleClickScroll = (e: MouseEvent) => {
+                if (e.button === 1) {
+                    e.preventDefault();
+                }
+            };
+
             // Usar { passive: false } para poder llamar a preventDefault()
             window.addEventListener('wheel', preventScroll, { passive: false });
             window.addEventListener('touchmove', preventScroll, { passive: false });
+            window.addEventListener('mousedown', preventMiddleClickScroll);
 
             return () => {
                 document.body.style.overflow = originalOverflow;
                 window.removeEventListener('wheel', preventScroll);
                 window.removeEventListener('touchmove', preventScroll);
+                window.removeEventListener('mousedown', preventMiddleClickScroll);
             };
         }
-    }, [isVisible, activeTourStep]);
+    }, [isVisible, activeTourStep, showSurveyMissionId]);
 
     useEffect(() => {
         const handleGlobalClick = (e: MouseEvent) => {
@@ -180,7 +190,7 @@ const MissionOnboarding: React.FC = () => {
             // Definir qué pasos avanzan por clic directo
             let isDirectAction = false;
             if (isSurveyTour) {
-                isDirectAction = [1, 2, 3].includes(surveyOnboardingStep);
+                isDirectAction = [1, 2, 4].includes(surveyOnboardingStep);
             } else {
                 isDirectAction = [1, 2, 5, 7].includes(onboardingStep);
             }
@@ -284,7 +294,7 @@ const MissionOnboarding: React.FC = () => {
         return { tooltipStyle: style, arrowClasses: arrows, arrowStyle: arrowPosStyle };
     }, [spotlightRect, viewport]);
 
-    if (!isVisible || !spotlightRect || displayState.activeTourStep === 0) return null;
+    if (!isVisible || !spotlightRect || displayState.activeTourStep === 0 || showSurveyMissionId) return null;
 
     const isNextButtonStep = !displayState.isSurveyTour && [3, 4, 6].includes(displayState.onboardingStep);
     const cxSpot = spotlightRect.left + spotlightRect.width / 2;
@@ -308,7 +318,7 @@ const MissionOnboarding: React.FC = () => {
     const fullPath = `M 0,0 H ${viewport.w} V ${viewport.h} H 0 Z ${holePath}`;
 
     return (
-        <div className={`fixed inset-0 z-max animate-fade-in animate-duration-500 overflow-hidden ${isTransitioning ? 'pointer-events-auto' : 'pointer-events-none'}`}>
+        <div className={`fixed inset-0 z-tutorial animate-fade-in animate-duration-500 overflow-hidden ${isTransitioning ? 'pointer-events-auto' : 'pointer-events-none'}`}>
             <style dangerouslySetInnerHTML={{
                 __html: `
                 @keyframes float-vertical { 0%, 100% { transform: translate(-50%, 0px); } 50% { transform: translate(-50%, -10px); } }
@@ -345,6 +355,7 @@ const MissionOnboarding: React.FC = () => {
                                             {displayState.surveyOnboardingStep === 1 && <Trophy size={18} />}
                                             {displayState.surveyOnboardingStep === 2 && <Sparkles size={18} />}
                                             {displayState.surveyOnboardingStep === 3 && <MessageSquareQuote size={18} />}
+                                            {displayState.surveyOnboardingStep === 4 && <LayoutGrid size={18} />}
                                         </>
                                     ) : (
                                         <>
@@ -359,7 +370,7 @@ const MissionOnboarding: React.FC = () => {
                                     )}
                                 </div>
                                 <div className="flex flex-col">
-                                    <h3 className="text-white font-black uppercase tracking-widest text-[9px]">Paso {displayState.activeTourStep} de {displayState.isSurveyTour ? 3 : 7}</h3>
+                                    <h3 className="text-white font-black uppercase tracking-widest text-[9px]">Paso {displayState.activeTourStep} de {displayState.isSurveyTour ? 4 : 7}</h3>
                                     <p className={`text-[8px] font-bold uppercase tracking-widest ${displayState.isSurveyTour ? 'text-amber-500' : 'text-blue-400'}`}>
                                         {displayState.isSurveyTour ? 'Feedback de Misión' : 'Tutorial de la evaluación'}
                                     </p>
@@ -373,6 +384,7 @@ const MissionOnboarding: React.FC = () => {
                                             {displayState.surveyOnboardingStep === 1 && (isMobileTarget && displayState.subStep === 0 ? "Abre el Menú" : "¡Misión Cumplida!")}
                                             {displayState.surveyOnboardingStep === 2 && "Listo para evaluar"}
                                             {displayState.surveyOnboardingStep === 3 && "Tu Opinión Importa"}
+                                            {displayState.surveyOnboardingStep === 4 && "Siguiente Misión"}
                                         </>
                                     ) : (
                                         <>
@@ -391,18 +403,19 @@ const MissionOnboarding: React.FC = () => {
                                     {displayState.isSurveyTour ? (
                                         <>
                                             {displayState.surveyOnboardingStep === 1 && (isMobileTarget && displayState.subStep === 0 ? "Pulsa en tu avatar para abrir las opciones de cuenta." : "Has completado un reto. Pulsa el trofeo para abrir el mapa y darnos feedback.")}
-                                            {displayState.surveyOnboardingStep === 2 && "Esta misión brilla con un nuevo color. Pulsa en ella para completar la evaluación."}
-                                            {displayState.surveyOnboardingStep === 3 && "Pulsa el botón de feedback para compartir tu experiencia. Una vez completes el feedback de todas las misiones, habrás terminado la evaluación."}
+                                            {displayState.surveyOnboardingStep === 2 && "Esta misión brilla con un nuevo color. Pulsa en ella para completar la evaluación de la misión."}
+                                            {displayState.surveyOnboardingStep === 3 && "Pulsa el botón de feedback para compartir tu experiencia."}
+                                            {displayState.surveyOnboardingStep === 4 && "¡Buen trabajo! Ahora pulsa este botón para volver al mapa y ver las nuevas misiones disponibles."}
                                         </>
                                     ) : (
                                         <>
                                             {displayState.onboardingStep === 1 && (isMobileTarget && displayState.subStep === 0 ? "Pulsa en tu foto de perfil para abrir el menú de usuario." : "Haz clic en Misiones para ver el Roadmap de evaluación.")}
                                             {displayState.onboardingStep === 2 && "Esta es tu misión actual. Pulsa en la tarjeta para abrir los detalles."}
                                             {displayState.onboardingStep === 3 && (viewport.w < 1024 ? "En la parte superior encontrarás el objetivo principal y tu progreso actual." : "En la parte izquierda encontrarás el objetivo principal y tu progreso actual.")}
-                                            {displayState.onboardingStep === 4 && (viewport.w < 1024 ? "En la parte inferior tienes los pasos específicos. flAIghts los detectará automáticamente al completarlos." : "A la derecha tienes los pasos específicos. flAIghts los detectará automáticamente al completarlos.")}
+                                            {displayState.onboardingStep === 4 && (viewport.w < 1024 ? "En la parte inferior tienes los pasos específicos. No tienes que marcarlos como completados, flAIghts los detectará automáticamente al completarlos." : "A la derecha tienes los pasos específicos. No tienes que marcarlos como completados, flAIghts los detectará automáticamente al completarlos.")}
                                             {displayState.onboardingStep === 5 && "Pulsa aquí para volver a la vista general de todas las misiones."}
                                             {displayState.onboardingStep === 6 && "Algunas misiones están bloqueadas. Deberás completar sus misiones precedentes primero."}
-                                            {displayState.onboardingStep === 7 && "Finalmente, usa la X para cerrar el Roadmap y empezar a navegar libremente. Completa todas las misiones para finalizar la evaluación!"}
+                                            {displayState.onboardingStep === 7 && `Finalmente, usa la X para cerrar el Roadmap y empezar a navegar libremente. Tu primera misión es "${activeMission?.title || 'tu primer reto'}". ¡Completa todas las misiones para finalizar la evaluación!`}
                                         </>
                                     )}
                                 </p>
