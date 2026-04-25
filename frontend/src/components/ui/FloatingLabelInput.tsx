@@ -83,7 +83,7 @@ const FloatingLabelInput = forwardRef<HTMLInputElement, FloatingLabelInputProps>
                         peer-focus:scale-75
                         ${isError
                             ? 'text-red-500 peer-focus:text-red-500'
-                            : 'text-content-muted peer-hover:text-brand peer-focus:text-brand'
+                            : `text-content-muted ${!props.disabled ? 'peer-hover:text-brand peer-focus:text-brand' : ''}`
                         }
                     `}
                 >
