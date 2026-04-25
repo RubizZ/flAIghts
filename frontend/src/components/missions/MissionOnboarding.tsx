@@ -9,7 +9,8 @@ const MissionOnboarding: React.FC = () => {
     const { t } = useTranslation();
     const {
         isEvaluationMode, hasConsented, onboardingStep, nextOnboardingStep,
-        surveyOnboardingStep, nextSurveyOnboardingStep, showRoadmap, skipOnboarding
+        surveyOnboardingStep, nextSurveyOnboardingStep, showRoadmap, skipOnboarding,
+        activeMission, showSurveyMissionId
     } = useMissions();
 
     const [spotlightRect, setSpotlightRect] = useState<DOMRect | null>(null);
@@ -19,15 +20,38 @@ const MissionOnboarding: React.FC = () => {
 
     const [subStep, setSubStep] = useState(0);
 
-    // Determinar qué tour está activo
     const activeTourStep = onboardingStep > 0 ? onboardingStep : surveyOnboardingStep;
     const isSurveyTour = onboardingStep === 0 && surveyOnboardingStep > 0;
 
+    const [displayState, setDisplayState] = useState({
+        onboardingStep,
+        surveyOnboardingStep,
+        activeTourStep,
+        isSurveyTour,
+        subStep
+    });
+
     useEffect(() => {
         setIsTransitioning(true);
+
+        // Wait for the opacity-0 transition (300ms) before changing the text
+        const updateTimer = setTimeout(() => {
+            setDisplayState({
+                onboardingStep,
+                surveyOnboardingStep,
+                activeTourStep,
+                isSurveyTour,
+                subStep
+            });
+        }, 300);
+
         const timer = setTimeout(() => setIsTransitioning(false), 800);
-        return () => clearTimeout(timer);
-    }, [activeTourStep]);
+
+        return () => {
+            clearTimeout(updateTimer);
+            clearTimeout(timer);
+        };
+    }, [onboardingStep, surveyOnboardingStep, activeTourStep, isSurveyTour, subStep]);
 
     useEffect(() => {
         setSubStep(0);
@@ -43,33 +67,32 @@ const MissionOnboarding: React.FC = () => {
         const isStep1 = (isSurveyTour && surveyOnboardingStep === 1) || (!isSurveyTour && onboardingStep === 1);
         if (!isStep1) return false;
 
-        const desktopBtn = document.getElementById('nav-missions-button');
-        // Si no existe o no tiene ancho (está oculto por media query)
-        return !desktopBtn || desktopBtn.offsetWidth === 0;
+        return viewport.w < 1024;
     }, [onboardingStep, surveyOnboardingStep, isSurveyTour, viewport]);
 
     useEffect(() => {
-        if (isEvaluationMode && hasConsented && activeTourStep > 0) {
-            const findTarget = () => {
+        if (isEvaluationMode && hasConsented && displayState.activeTourStep > 0) {
+            const findTarget = (shouldScroll = false) => {
                 let currentId = '';
 
-                if (isSurveyTour) {
-                    switch (surveyOnboardingStep) {
+                if (displayState.isSurveyTour) {
+                    switch (displayState.surveyOnboardingStep) {
                         case 1:
                             if (isMobileTarget) {
-                                currentId = subStep === 0 ? (document.getElementById('nav-user-menu-trigger') ? 'nav-user-menu-trigger' : 'nav-options-menu-trigger') : (document.getElementById('nav-missions-button-mobile') ? 'nav-missions-button-mobile' : 'nav-missions-button-mobile-alt');
+                                currentId = displayState.subStep === 0 ? (document.getElementById('nav-user-menu-trigger') ? 'nav-user-menu-trigger' : 'nav-options-menu-trigger') : (document.getElementById('nav-missions-button-mobile') ? 'nav-missions-button-mobile' : 'nav-missions-button-mobile-alt');
                             } else {
                                 currentId = 'nav-missions-button';
                             }
                             break;
                         case 2: currentId = 'onboarding-survey-mission'; break;
                         case 3: currentId = 'dashboard-survey-button'; break;
+                        case 4: currentId = 'dashboard-back-button'; break;
                     }
                 } else {
-                    switch (onboardingStep) {
+                    switch (displayState.onboardingStep) {
                         case 1:
                             if (isMobileTarget) {
-                                currentId = subStep === 0 ? (document.getElementById('nav-user-menu-trigger') ? 'nav-user-menu-trigger' : 'nav-options-menu-trigger') : (document.getElementById('nav-missions-button-mobile') ? 'nav-missions-button-mobile' : 'nav-missions-button-mobile-alt');
+                                currentId = displayState.subStep === 0 ? (document.getElementById('nav-user-menu-trigger') ? 'nav-user-menu-trigger' : 'nav-options-menu-trigger') : (document.getElementById('nav-missions-button-mobile') ? 'nav-missions-button-mobile' : 'nav-missions-button-mobile-alt');
                             } else {
                                 currentId = 'nav-missions-button';
                             }
@@ -88,6 +111,14 @@ const MissionOnboarding: React.FC = () => {
                 if (element) {
                     setSpotlightRect(element.getBoundingClientRect());
                     setIsVisible(true);
+
+                    // Si el paso ha cambiado y el elemento es de los que pueden estar fuera de vista, scroll
+                    if (shouldScroll) {
+                        const isRoadmapElement = currentId.includes('roadmap') || currentId.includes('onboarding');
+                        if (isRoadmapElement) {
+                            element.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' });
+                        }
+                    }
                 } else {
                     // Si es el paso de misión bloqueada y no hay ninguna, saltamos
                     if (currentId === 'roadmap-locked-mission') {
@@ -99,19 +130,19 @@ const MissionOnboarding: React.FC = () => {
                 }
             };
 
-            findTarget();
+            findTarget(true); // Scroll solo en el primer montaje del paso
 
             // Listen to scroll in both containers
             const scrollContainer = document.getElementById('roadmap-scroll-container');
             const dashboardContainer = document.querySelector('.custom-scrollbar');
-            const handleUpdate = () => findTarget();
+            const handleUpdate = () => findTarget(false); // No scroll en actualizaciones de posición por scroll manual
 
             if (scrollContainer) scrollContainer.addEventListener('scroll', handleUpdate);
             if (dashboardContainer) dashboardContainer.addEventListener('scroll', handleUpdate);
 
             // Frequent check for dynamic transitions
-            const timer = setTimeout(findTarget, 400);
-            const interval = setInterval(findTarget, 800);
+            const timer = setTimeout(() => findTarget(false), 400);
+            const interval = setInterval(() => findTarget(false), 800);
 
             return () => {
                 clearTimeout(timer);
@@ -122,7 +153,37 @@ const MissionOnboarding: React.FC = () => {
         } else {
             setIsVisible(false);
         }
-    }, [isEvaluationMode, hasConsented, onboardingStep, surveyOnboardingStep, showRoadmap, isSurveyTour, isMobileTarget, subStep, nextOnboardingStep]);
+    }, [isEvaluationMode, hasConsented, displayState, showRoadmap, isMobileTarget, nextOnboardingStep]);
+
+    // Bloquear scroll del body cuando el tutorial está activo
+    useEffect(() => {
+        if (isVisible && activeTourStep > 0 && !showSurveyMissionId) {
+            const originalOverflow = document.body.style.overflow;
+            document.body.style.overflow = 'hidden';
+
+            const preventScroll = (e: Event) => {
+                e.preventDefault();
+            };
+
+            const preventMiddleClickScroll = (e: MouseEvent) => {
+                if (e.button === 1) {
+                    e.preventDefault();
+                }
+            };
+
+            // Usar { passive: false } para poder llamar a preventDefault()
+            window.addEventListener('wheel', preventScroll, { passive: false });
+            window.addEventListener('touchmove', preventScroll, { passive: false });
+            window.addEventListener('mousedown', preventMiddleClickScroll);
+
+            return () => {
+                document.body.style.overflow = originalOverflow;
+                window.removeEventListener('wheel', preventScroll);
+                window.removeEventListener('touchmove', preventScroll);
+                window.removeEventListener('mousedown', preventMiddleClickScroll);
+            };
+        }
+    }, [isVisible, activeTourStep, showSurveyMissionId]);
 
     useEffect(() => {
         const handleGlobalClick = (e: MouseEvent) => {
@@ -131,7 +192,7 @@ const MissionOnboarding: React.FC = () => {
             // Definir qué pasos avanzan por clic directo
             let isDirectAction = false;
             if (isSurveyTour) {
-                isDirectAction = [1, 2, 3].includes(surveyOnboardingStep);
+                isDirectAction = [1, 2, 4].includes(surveyOnboardingStep);
             } else {
                 isDirectAction = [1, 2, 5, 7].includes(onboardingStep);
             }
@@ -235,15 +296,15 @@ const MissionOnboarding: React.FC = () => {
         return { tooltipStyle: style, arrowClasses: arrows, arrowStyle: arrowPosStyle };
     }, [spotlightRect, viewport]);
 
-    if (!isVisible || !spotlightRect || activeTourStep === 0) return null;
+    if (!isVisible || !spotlightRect || displayState.activeTourStep === 0 || showSurveyMissionId) return null;
 
-    const isNextButtonStep = !isSurveyTour && [3, 4, 6].includes(onboardingStep);
+    const isNextButtonStep = !displayState.isSurveyTour && [3, 4, 6].includes(displayState.onboardingStep);
     const cxSpot = spotlightRect.left + spotlightRect.width / 2;
     const cySpot = spotlightRect.top + spotlightRect.height / 2;
     const rwSpot = spotlightRect.width / 2 + 8;
 
     let holePath = '';
-    const needsCircle = ((isSurveyTour && surveyOnboardingStep === 1) || (!isSurveyTour && [1, 7].includes(onboardingStep))) && !(isMobileTarget && subStep === 1);
+    const needsCircle = ((displayState.isSurveyTour && displayState.surveyOnboardingStep === 1) || (!displayState.isSurveyTour && [1, 7].includes(displayState.onboardingStep))) && !(isMobileTarget && displayState.subStep === 1);
     const r = 24;
 
     if (needsCircle) {
@@ -259,7 +320,7 @@ const MissionOnboarding: React.FC = () => {
     const fullPath = `M 0,0 H ${viewport.w} V ${viewport.h} H 0 Z ${holePath}`;
 
     return (
-        <div className={`absolute inset-0 z-10000 animate-fade-in animate-duration-500 overflow-hidden ${isTransitioning ? 'pointer-events-auto' : 'pointer-events-none'}`}>
+        <div className={`fixed inset-0 z-tutorial animate-fade-in animate-duration-500 overflow-hidden ${isTransitioning ? 'pointer-events-auto' : 'pointer-events-none'}`}>
             <style dangerouslySetInnerHTML={{
                 __html: `
                 @keyframes float-vertical { 0%, 100% { transform: translate(-50%, 0px); } 50% { transform: translate(-50%, -10px); } }
@@ -279,7 +340,7 @@ const MissionOnboarding: React.FC = () => {
                 </svg>
 
                 <div
-                    className="absolute z-10010 flex flex-col pointer-events-none transition-all duration-500"
+                    className={`absolute z-max flex flex-col pointer-events-none ${isTransitioning ? 'transition-none' : 'transition-all duration-500'}`}
                     style={tooltipStyle}
                 >
                     <div
@@ -290,70 +351,73 @@ const MissionOnboarding: React.FC = () => {
                     <div className="w-full bg-gray-950 border border-white/10 rounded-4xl p-6 shadow-[0_32px_64px_-16px_rgba(0,0,0,0.6)] pointer-events-auto backdrop-blur-2xl">
                         <div className="flex flex-col gap-5">
                             <div className="flex items-center gap-3">
-                                <div className={`h-10 w-10 rounded-xl flex items-center justify-center border ${isSurveyTour ? 'bg-amber-500/20 text-amber-500 border-amber-500/20' : 'bg-blue-500/20 text-blue-400 border-blue-500/20'}`}>
-                                    {isSurveyTour ? (
+                                <div className={`h-10 w-10 rounded-xl flex items-center justify-center border ${displayState.isSurveyTour ? 'bg-amber-500/20 text-amber-500 border-amber-500/20' : 'bg-blue-500/20 text-blue-400 border-blue-500/20'}`}>
+                                    {displayState.isSurveyTour ? (
                                         <>
-                                            {surveyOnboardingStep === 1 && <Trophy size={18} />}
-                                            {surveyOnboardingStep === 2 && <Sparkles size={18} />}
-                                            {surveyOnboardingStep === 3 && <MessageSquareQuote size={18} />}
+                                            {displayState.surveyOnboardingStep === 1 && <Trophy size={18} />}
+                                            {displayState.surveyOnboardingStep === 2 && <Sparkles size={18} />}
+                                            {displayState.surveyOnboardingStep === 3 && <MessageSquareQuote size={18} />}
+                                            {displayState.surveyOnboardingStep === 4 && <LayoutGrid size={18} />}
                                         </>
                                     ) : (
                                         <>
-                                            {onboardingStep === 1 && <Trophy size={18} />}
-                                            {onboardingStep === 2 && <Target size={18} />}
-                                            {onboardingStep === 3 && <LayoutGrid size={18} />}
-                                            {onboardingStep === 4 && <ListChecks size={18} />}
-                                            {onboardingStep === 5 && <Map size={18} />}
-                                            {onboardingStep === 6 && <Lock size={18} />}
-                                            {onboardingStep === 7 && <CloseIcon size={18} />}
+                                            {displayState.onboardingStep === 1 && <Trophy size={18} />}
+                                            {displayState.onboardingStep === 2 && <Target size={18} />}
+                                            {displayState.onboardingStep === 3 && <LayoutGrid size={18} />}
+                                            {displayState.onboardingStep === 4 && <ListChecks size={18} />}
+                                            {displayState.onboardingStep === 5 && <Map size={18} />}
+                                            {displayState.onboardingStep === 6 && <Lock size={18} />}
+                                            {displayState.onboardingStep === 7 && <CloseIcon size={18} />}
                                         </>
                                     )}
                                 </div>
                                 <div className="flex flex-col">
-                                    <h3 className="text-white font-black uppercase tracking-widest text-[9px]">{t('missions.onboarding.stepLabel', { current: activeTourStep, total: isSurveyTour ? 3 : 7 })}</h3>
-                                    <p className={`text-[8px] font-bold uppercase tracking-widest ${isSurveyTour ? 'text-amber-500' : 'text-blue-400'}`}>
-                                        {isSurveyTour ? t('missions.onboarding.surveyTour') : t('missions.onboarding.evaluationTour')}
+                                    <h3 className="text-white font-black uppercase tracking-widest text-[9px]">Paso {displayState.activeTourStep} de {displayState.isSurveyTour ? 4 : 7}</h3>
+                                    <p className={`text-[8px] font-bold uppercase tracking-widest ${displayState.isSurveyTour ? 'text-amber-500' : 'text-blue-400'}`}>
+                                        {displayState.isSurveyTour ? t('missions.onboarding.surveyTour') : t('missions.onboarding.evaluationTour')}
                                     </p>
                                 </div>
                             </div>
 
                             <div className="space-y-1.5">
                                 <p className="text-white text-base font-bold leading-tight flex items-center gap-2">
-                                    {isSurveyTour ? (
+                                    {displayState.isSurveyTour ? (
                                         <>
-                                            {surveyOnboardingStep === 1 && (isMobileTarget && subStep === 0 ? t('missions.onboarding.steps.openMenu') : t('missions.onboarding.steps.missionComplete'))}
-                                            {surveyOnboardingStep === 2 && t('missions.onboarding.steps.readyToEvaluate')}
-                                            {surveyOnboardingStep === 3 && t('missions.onboarding.steps.yourOpinionMatters')}
+                                            {displayState.surveyOnboardingStep === 1 && (isMobileTarget && displayState.subStep === 0 ? t('missions.onboarding.steps.openMenu') : t('missions.onboarding.steps.missionComplete'))}
+                                            {displayState.surveyOnboardingStep === 2 && t('missions.onboarding.steps.readyToEvaluate')}
+                                            {displayState.surveyOnboardingStep === 3 && t('missions.onboarding.steps.yourOpinionMatters')}
+                                            {displayState.surveyOnboardingStep === 4 && t('missions.onboarding.steps.nextMission')}
                                         </>
                                     ) : (
                                         <>
-                                            {onboardingStep === 1 && (isMobileTarget && subStep === 0 ? t('missions.onboarding.steps.openMenu') : t('missions.onboarding.steps.openMissions'))}
-                                            {onboardingStep === 2 && t('missions.onboarding.steps.selectChallenge')}
-                                            {onboardingStep === 3 && t('missions.onboarding.steps.missionSummary')}
-                                            {onboardingStep === 4 && t('missions.onboarding.steps.checklist')}
-                                            {onboardingStep === 5 && t('missions.onboarding.steps.backToMap')}
-                                            {onboardingStep === 6 && t('missions.onboarding.steps.lockedRoute')}
-                                            {onboardingStep === 7 && t('missions.onboarding.steps.closePanel')}
+                                            {displayState.onboardingStep === 1 && (isMobileTarget && displayState.subStep === 0 ? t('missions.onboarding.steps.openMenu') : t('missions.onboarding.steps.openMissions'))}
+                                            {displayState.onboardingStep === 2 && t('missions.onboarding.steps.selectChallenge')}
+                                            {displayState.onboardingStep === 3 && t('missions.onboarding.steps.missionSummary')}
+                                            {displayState.onboardingStep === 4 && t('missions.onboarding.steps.checklist')}
+                                            {displayState.onboardingStep === 5 && t('missions.onboarding.steps.backToMap')}
+                                            {displayState.onboardingStep === 6 && t('missions.onboarding.steps.lockedRoute')}
+                                            {displayState.onboardingStep === 7 && t('missions.onboarding.steps.closePanel')}
                                         </>
                                     )}
                                     <Sparkles size={14} className="text-amber-400" />
                                 </p>
                                 <p className="text-gray-400 text-[11px] leading-relaxed font-medium italic">
-                                    {isSurveyTour ? (
+                                    {displayState.isSurveyTour ? (
                                         <>
-                                            {surveyOnboardingStep === 1 && (isMobileTarget && subStep === 0 ? t('missions.onboarding.descriptions.openMenuMobile') : t('missions.onboarding.descriptions.missionComplete'))}
-                                            {surveyOnboardingStep === 2 && t('missions.onboarding.descriptions.readyToEvaluate')}
-                                            {surveyOnboardingStep === 3 && t('missions.onboarding.descriptions.yourOpinionMatters')}
+                                            {displayState.surveyOnboardingStep === 1 && (isMobileTarget && displayState.subStep === 0 ? t('missions.onboarding.descriptions.openMenuMobile') : t('missions.onboarding.descriptions.missionComplete'))}
+                                            {displayState.surveyOnboardingStep === 2 && t('missions.onboarding.descriptions.readyToEvaluate')}
+                                            {displayState.surveyOnboardingStep === 3 && "Pulsa el botón de feedback para compartir tu experiencia."}
+                                            {displayState.surveyOnboardingStep === 4 && "¡Buen trabajo! Ahora pulsa este botón para volver al mapa y ver las nuevas misiones disponibles."}
                                         </>
                                     ) : (
                                         <>
-                                            {onboardingStep === 1 && (isMobileTarget && subStep === 0 ? t('missions.onboarding.descriptions.openMenuMobile') : t('missions.onboarding.descriptions.openMissions'))}
-                                            {onboardingStep === 2 && t('missions.onboarding.descriptions.selectChallenge')}
-                                            {onboardingStep === 3 && (viewport.w < 1024 ? t('missions.onboarding.descriptions.missionSummaryMobile') : t('missions.onboarding.descriptions.missionSummaryDesktop'))}
-                                            {onboardingStep === 4 && (viewport.w < 1024 ? t('missions.onboarding.descriptions.checklistMobile') : t('missions.onboarding.descriptions.checklistDesktop'))}
-                                            {onboardingStep === 5 && t('missions.onboarding.descriptions.backToMap')}
-                                            {onboardingStep === 6 && t('missions.onboarding.descriptions.lockedRoute')}
-                                            {onboardingStep === 7 && t('missions.onboarding.descriptions.closePanel')}
+                                            {displayState.onboardingStep === 1 && (isMobileTarget && subStep === 0 ? t('missions.onboarding.descriptions.openMenuMobile') : t('missions.onboarding.descriptions.openMissions'))}
+                                            {displayState.onboardingStep === 2 && t('missions.onboarding.descriptions.selectChallenge')}
+                                            {displayState.onboardingStep === 3 && (viewport.w < 1024 ? t('missions.onboarding.descriptions.missionSummaryMobile') : t('missions.onboarding.descriptions.missionSummaryDesktop'))}
+                                            {displayState.onboardingStep === 4 && (viewport.w < 1024 ? t('missions.onboarding.descriptions.checklistMobile') : t('missions.onboarding.descriptions.checklistDesktop'))}
+                                            {displayState.onboardingStep === 5 && t('missions.onboarding.descriptions.backToMap')}
+                                            {displayState.onboardingStep === 6 && t('missions.onboarding.descriptions.lockedRoute')}
+                                            {displayState.onboardingStep === 7 && t('missions.onboarding.descriptions.closePanel')}
                                         </>
                                     )}
                                 </p>

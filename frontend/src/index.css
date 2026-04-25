@@ -34,6 +34,25 @@ body,
   --glass-bg: rgba(255, 255, 255, 0.85);
   --glass-border: rgba(0, 0, 0, 0.08);
   --glass-shadow: rgba(0, 0, 0, 0.08);
+
+  /* Z-Index System (Tailwind v4 Registration) */
+  --z-index-behind: 0;
+  --z-index-base: 10;
+  --z-index-content: 20;
+  --z-index-overlay: 30;
+  --z-index-sticky: 40;
+  --z-index-header: 50;
+  --z-index-sidebar: 60;
+  --z-index-dropdown: 70;
+  --z-index-popover: 80;
+  --z-index-modal-backdrop: 100;
+  --z-index-modal: 110;
+  --z-index-tooltip: 200;
+  --z-index-tutorial: 400;
+  --z-index-loading: 500;
+  --z-index-app-loading: 800;
+  --z-index-toast: 900;
+  --z-index-max: 9999;
 }
 
 /* Dark theme overrides */
@@ -129,7 +148,7 @@ body,
 #nprogress .bar {
   background: var(--color-loading) !important;
   height: 3px !important;
-  z-index: 10001 !important;
+  z-index: var(--z-max) !important;
 }
 
 #nprogress .peg {
@@ -221,7 +240,7 @@ body,
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb {
-  background-color: transparent;
+  background-color: rgba(128, 128, 128, 0.1);
   border-radius: 10px;
   border: 2px solid transparent;
   background-clip: content-box;
@@ -229,24 +248,24 @@ body,
 }
 
 .custom-scrollbar:hover::-webkit-scrollbar-thumb {
-  background-color: rgba(0, 0, 0, 0.4);
+  background-color: rgba(0, 0, 0, 0.3);
 }
 
 /* For Firefox */
 .custom-scrollbar {
   scrollbar-width: thin;
-  scrollbar-color: transparent transparent;
+  scrollbar-color: rgba(128, 128, 128, 0.1) transparent;
 }
 
 .custom-scrollbar:hover {
-  scrollbar-color: rgba(0, 0, 0, 0.4) transparent;
+  scrollbar-color: rgba(0, 0, 0, 0.3) transparent;
 }
 
 /* --- Dark mode --- */
 .dark .custom-scrollbar:hover::-webkit-scrollbar-thumb {
-  background-color: rgba(255, 255, 255, 0.4);
+  background-color: rgba(255, 255, 255, 0.3);
 }
 
 .dark .custom-scrollbar:hover {
-  scrollbar-color: rgba(255, 255, 255, 0.4) transparent;
+  scrollbar-color: rgba(255, 255, 255, 0.3) transparent;
 }

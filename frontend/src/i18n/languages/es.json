@@ -599,6 +599,8 @@
     "scales_one": "1 escala",
     "scales_other": "{{count}} escalas",
     "direct": "Directo",
+    "connecting": "Conectando...",
+    "unavailable": "Sin Servicio",
     "toolStatus": {
       "searchCompleted": "Búsqueda de vuelos completada",
       "searchFailed": "Error: {{message}}",
@@ -635,7 +637,6 @@
       "register": "¿No tienes cuenta? Únete aquí"
     },
     "header": "Agente flAIghts",
-    "connecting": "Conectando...",
     "welcome": "¡Hola, {{username}}!",
     "welcomeFallback": "explorador",
     "emptyDescription": "Soy fl**AI**ghts. No solo busco vuelos, aprendo de ti para sugerirte tu próximo destino.",
@@ -685,7 +686,7 @@
     "addStop": "Añadir escala",
     "advancedFilters": "Filtros avanzados",
     "manualTitle": "Vuela más allá.",
-    "manualSubtitle": "Explora destinos mundiales con flAIghts.",
+    "manualSubtitle": "Explora destinos mundiales con fl",
     "aiTitle": "Agente flAIghts",
     "aiSubtitle": "Tu copiloto inteligente para planificar viajes.",
     "clearChat": "Limpiar chat"

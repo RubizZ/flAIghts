@@ -314,10 +314,22 @@ export class SearchService {
         }
     }
 
-
-
-
-    public async getSearches(userId: string, requesterId: string | undefined, page: number = 1, limit: number = 10): Promise<{ items: SearchResponseData[], total: number, page: number, totalPages: number }> {
+    public async getSearches(
+        userId: string,
+        requesterId: string | undefined,
+        page: number = 1,
+        limit: number = 10,
+        filters: {
+            origin?: string,
+            destination?: string,
+            status?: string,
+            minPrice?: number,
+            maxPrice?: number,
+            startDate?: string,
+            endDate?: string,
+            sharedOnly?: boolean
+        } = {}
+    ): Promise<{ items: SearchResponseData[], total: number, page: number, totalPages: number }> {
         const targetUser = await this.userService.getUser(userId);
         if (!targetUser) throw new SearchNotFoundError(userId, requesterId ?? 'anonymous');
 
@@ -330,17 +342,47 @@ export class SearchService {
         }
 
         const skip = (page - 1) * limit;
-        const query = {
-            user_id: userId,
-            // Solo el dueño puede ver sus búsquedas NO compartidas. Todos los demás ven SOLO las compartidas.
-            ...(!isOwner ? { shared: true } : {})
-        };
+
+        // Construcción dinámica de la query
+        const query: any = { user_id: userId };
+
+        // Privacidad: Si no es el dueño, solo ve compartidas. Si es el dueño pero pide sharedOnly, solo ve compartidas.
+        if (!isOwner || filters.sharedOnly) {
+            query.shared = true;
+        }
+
+        if (filters.origin) {
+            query.origins = filters.origin.toUpperCase();
+        }
+        if (filters.destination) {
+            query.destinations = filters.destination.toUpperCase();
+        }
+        if (filters.status) {
+            query.status = filters.status;
+        }
+
+        // Filtros de precio (basados en criteria.max_price o tal vez en el precio del itinerario? 
+        // Usaremos criteria.max_price para coherencia con la intención del usuario al buscar)
+        if (filters.minPrice !== undefined || filters.maxPrice !== undefined) {
+            query["criteria.max_price"] = {};
+            if (filters.minPrice !== undefined) query["criteria.max_price"].$gte = filters.minPrice;
+            if (filters.maxPrice !== undefined) query["criteria.max_price"].$lte = filters.maxPrice;
+        }
+
+        // Filtros de fecha
+        if (filters.startDate || filters.endDate) {
+            query.departure_date = {};
+            if (filters.startDate) query.departure_date.$gte = new Date(filters.startDate);
+            if (filters.endDate) query.departure_date.$lte = new Date(filters.endDate);
+        }
 
         const [searches, total] = await Promise.all([
             Search.find(query)
                 .sort({ created_at: -1 })
                 .skip(skip)
-                .limit(limit),
+                .limit(limit)
+                .populate("departure_itineraries")
+                .populate("return_itineraries"),
             Search.countDocuments(query)
         ]);
 

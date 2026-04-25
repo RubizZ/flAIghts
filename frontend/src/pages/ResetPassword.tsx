@@ -5,6 +5,7 @@ import FloatingLabelInput from "@/components/ui/FloatingLabelInput";
 import { useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
+import Logo from "@/components/ui/Logo";
 import { useTranslation } from "react-i18next";
 
 
@@ -69,7 +70,12 @@ export default function ResetPassword() {
 
     return (
         <AuthLayout>
-            <AuthCard title={t("resetPassword.title")}>
+            <AuthCard title={
+                <>
+                    <Logo size={32} />
+                    <span>{t("resetPassword.title")}</span>
+                </>
+            }>
                 <FloatingLabelInput
                     label={t("resetPassword.labels.newPassword")}
                     type="password"
@@ -90,8 +96,8 @@ export default function ResetPassword() {
                 <button
                     type="button"
                     onClick={resetPassword}
-                    disabled={isPending}
-                    className={`mt-2 rounded-lg bg-brand p-3 text-content-on-brand font-bold hover:scale-[1.02] active:scale-95 transition-all shadow-lg shadow-brand/20 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed disabled:scale-100`}
+                    disabled={isPending || !password || !confirmPassword}
+                    className={`mt-2 rounded-lg bg-brand p-3 text-content-on-brand font-bold enabled:hover:scale-[1.02] enabled:active:scale-95 transition-all shadow-lg shadow-brand/20 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed`}
                 >
                     {isPending ? t("resetPassword.actions.resetting") : t("resetPassword.actions.reset")}
                 </button>

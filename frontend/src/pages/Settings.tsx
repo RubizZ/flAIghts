@@ -19,13 +19,16 @@ import {
     Mail,
     ShieldCheck,
     Camera,
-    Upload
+    Upload,
+    LayoutGrid,
+    X
 } from "lucide-react";
 import { useTheme } from "@/context/ThemeContext";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { useChangePassword } from "@/api/generated/openapi/auth";
+import { useChangePassword, useConnectGoogle, useDisconnectGoogle, useSetPassword, useRequestSecurityCode } from "@/api/generated/openapi/auth";
 import UserAvatar from "@/components/ui/UserAvatar";
 import { useTranslation } from "react-i18next";
+import { GoogleLogin } from "@react-oauth/google";
 
 export default function Settings() {
     const { t, i18n } = useTranslation();
@@ -36,9 +39,18 @@ export default function Settings() {
     const [searchParams, setSearchParams] = useSearchParams();
 
     const activeTab = searchParams.get("tab") || "perfil";
+    const mainContentRef = useRef<HTMLDivElement>(null);
 
     const setActiveTab = (tab: string) => {
         setSearchParams({ tab }, { replace: true });
+
+        if (window.innerWidth < 768) {
+            setTimeout(() => {
+                if (mainContentRef.current) {
+                    mainContentRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            }, 50);
+        }
     };
 
     useEffect(() => {
@@ -56,9 +68,16 @@ export default function Settings() {
     const [durationWeight, setDurationWeight] = useState(user?.preferences?.duration_weight || 0.2);
     const [stopsWeight, setStopsWeight] = useState(user?.preferences?.stops_weight || 0.2);
     const [airlineWeight, setAirlineWeight] = useState(user?.preferences?.airline_quality_weight || 0.2);
+    const [verificationStep, setVerificationStep] = useState<{
+        active: boolean;
+        action: 'change-password' | 'set-password' | 'connect-google' | 'disconnect-google' | null;
+        actionLabel: string;
+        data?: any;
+        code: string;
+        transactionId?: string;
+    }>({ active: false, action: null, actionLabel: "", code: "", transactionId: "" });
 
     // Security state
-    const [oldPassword, setOldPassword] = useState("");
     const [newPassword, setNewPassword] = useState("");
     const [confirmPassword, setConfirmPassword] = useState("");
     const [showPasswords, setShowPasswords] = useState(false);
@@ -93,13 +112,18 @@ export default function Settings() {
 
     const { mutate: updateProfile, isPending: isUpdating } = useUpdateUser({
         mutation: {
-            onSuccess: () => {
+            onSuccess: (_, variables) => {
                 toast.success(t("settings.toast.success"));
                 queryClient.invalidateQueries({ queryKey: getGetSelfUserQueryKey() });
                 if (user?._id) {
                     queryClient.invalidateQueries({ queryKey: getGetUserByIdQueryKey(user._id) });
                 }
                 refetch();
+
+                // Notificar cambio de preferencias para las misiones
+                if (variables?.data?.preferences) {
+                    window.dispatchEvent(new CustomEvent('flaights:preferences-updated'));
+                }
             },
             onError: (error) => {
                 toast.error(error.message || t("settings.toast.error"));
@@ -169,12 +193,53 @@ export default function Settings() {
         mutation: {
             onSuccess: () => {
                 toast.success(t("settings.toast.passwordUpdatedSuccess"));
-                setOldPassword("");
                 setNewPassword("");
                 setConfirmPassword("");
+                setVerificationStep({ active: false, action: null, actionLabel: "", code: "", transactionId: "" });
+                refetch();
             },
             onError: (error) => {
                 toast.error(error.message || t("settings.toast.passwordUpdateError"));
+            }
+        }
+    });
+
+    const { mutate: setPassword, isPending: isSettingPassword } = useSetPassword({
+        mutation: {
+            onSuccess: () => {
+                toast.success("Contraseña establecida correctamente");
+                setNewPassword("");
+                setConfirmPassword("");
+                setVerificationStep({ active: false, action: null, actionLabel: "", code: "", transactionId: "" });
+                refetch();
+            },
+            onError: (error: any) => {
+                toast.error(error.response?.data?.message || "Error al establecer la contraseña");
+            }
+        }
+    });
+
+    const { mutate: connectGoogle, isPending: isConnectingGoogle } = useConnectGoogle({
+        mutation: {
+            onSuccess: () => {
+                toast.success("Cuenta de Google vinculada correctamente");
+                setVerificationStep({ active: false, action: null, actionLabel: "", code: "", transactionId: "" });
+                refetch();
+            },
+            onError: (error: any) => {
+                toast.error(error.response?.data?.message || "Error al vincular la cuenta de Google");
+            }
+        }
+    });
+
+    const { mutate: requestCode, isPending: isRequestingCode } = useRequestSecurityCode({
+        mutation: {
+            onSuccess: (response) => {
+                toast.success("Código de seguridad enviado a tu email");
+                setVerificationStep(prev => ({ ...prev, active: true, transactionId: response.transactionId }));
+            },
+            onError: (err: any) => {
+                toast.error(err.response?.data?.message || "Error al solicitar el código");
             }
         }
     });
@@ -257,7 +322,7 @@ export default function Settings() {
     };
 
     const handleSavePassword = () => {
-        if (!oldPassword || !newPassword || !confirmPassword) {
+        if (!newPassword || !confirmPassword) {
             toast.error(t("settings.security.password.validation.allFieldsRequired"));
             return;
         }
@@ -265,21 +330,64 @@ export default function Settings() {
             toast.error(t("settings.security.password.validation.passwordMismatch"));
             return;
         }
-        if (newPassword === oldPassword) {
-            toast.error(t("settings.security.password.validation.sameAsOld"));
-            return;
-        }
         if (newPassword.length < 8) {
             toast.error(t("settings.security.password.validation.minLength"));
             return;
         }
 
-        changePassword({
-            data: {
-                oldPassword,
-                newPassword
-            }
+        const action = user?.is_password_set ? 'change-password' : 'set-password';
+        const actionLabel = user?.is_password_set ? 'Cambio de contraseña' : 'Establecer contraseña';
+
+        setVerificationStep({
+            active: false,
+            action,
+            actionLabel,
+            code: "",
+            transactionId: "",
+            data: { newPassword }
         });
+
+        requestCode({
+            data: { actionName: action }
+        });
+    };
+
+    const { mutate: disconnectGoogle, isPending: isDisconnectingGoogle } = useDisconnectGoogle({
+        mutation: {
+            onSuccess: () => {
+                toast.success('Cuenta de Google desvinculada correctamente');
+                setVerificationStep({ active: false, action: null, actionLabel: "", code: "", transactionId: "" });
+                refetch();
+            },
+            onError: (err: any) => {
+                const message = err.response?.data?.message || 'Error al desvincular Google';
+                toast.error(message);
+            }
+        }
+    });
+
+    const handleDisconnectGoogle = () => {
+        if (!user) return;
+
+        if (!user.is_password_set) {
+            toast.error('Debes establecer una contraseña antes de desconectar Google para no perder el acceso a tu cuenta.');
+            setActiveTab('seguridad');
+            return;
+        }
+
+        if (window.confirm('¿Estás seguro de que quieres desvincular tu cuenta de Google?')) {
+            const actionLabel = "Desvincular Google";
+            setVerificationStep({
+                active: false,
+                action: 'disconnect-google',
+                actionLabel,
+                code: "",
+                transactionId: ""
+            });
+            requestCode({
+                data: { actionName: 'disconnect-google' }
+            });
+        }
     };
 
     if (isLoading || !user) {
@@ -325,12 +433,12 @@ export default function Settings() {
                                 </div>
                             </div>
 
-                            <nav className="flex flex-col gap-1">
+                            <nav className="flex flex-col gap-1 w-full">
                                 {tabs.map((tab) => (
                                     <button
                                         key={tab.id}
                                         onClick={() => setActiveTab(tab.id)}
-                                        className={`flex items-center gap-3 p-3 rounded-2xl font-bold transition-all cursor-pointer ${activeTab === tab.id
+                                        className={`w-full flex items-center gap-3 p-3 rounded-2xl font-bold transition-all cursor-pointer ${activeTab === tab.id
                                             ? 'bg-brand/10 text-brand'
                                             : 'bg-main text-content-muted font-medium hover:bg-surface'
                                             }`}
@@ -341,7 +449,7 @@ export default function Settings() {
                                                 <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-brand border-2 border-white dark:border-slate-900 rounded-full animate-pulse shadow-sm" />
                                             )}
                                         </div>
-                                        {tab.label}
+                                        <span>{tab.label}</span>
                                     </button>
                                 ))}
                             </nav>
@@ -359,7 +467,7 @@ export default function Settings() {
                 </aside>
 
                 {/* Main Content */}
-                <div className="md:col-span-2 flex flex-col gap-8 min-h-[60vh] md:pt-15">
+                <div ref={mainContentRef} className="md:col-span-2 flex flex-col gap-8 min-h-[60vh] md:pt-15">
                     {/* Seccion Perfil */}
                     {activeTab === 'perfil' && (
                         <>
@@ -451,7 +559,7 @@ export default function Settings() {
                                                 checked={isPublic}
                                                 onChange={(e) => setIsPublic(e.target.checked)}
                                             />
-                                            <div className="w-11 h-6 bg-surface peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:start-0.5 after:bg-white after:border-line after:border after:rounded-full after:h-5 after:w-5 peer-checked:bg-brand"></div>
+                                            <div className="w-11 h-6 bg-surface peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:inset-s-0.5 after:bg-white after:border-line after:border after:rounded-full after:h-5 after:w-5 peer-checked:bg-brand"></div>
                                         </label>
                                     </div>
                                 </div>
@@ -503,7 +611,7 @@ export default function Settings() {
                                         label: t("settings.preferences.fields.price"),
                                         value: priceWeight,
                                         setter: setPriceWeight,
-                                        icon: "€",
+                                        icon: "💵",
                                         getDescription: (v: number) => {
                                             if (v === 0) return t("settings.preferences.descriptions.price.0");
                                             if (v < 0.3) return t("settings.preferences.descriptions.price.low");
@@ -624,7 +732,7 @@ export default function Settings() {
                                                     <Mail size={18} />
                                                 </div>
                                             </div>
-                                            <div className="mt-2 flex justify-end flex-wrap gap-2 animate-fade-in">
+                                            <div className="mt-2 flex justify-end flex-wrap gap-2">
                                                 <button
                                                     type="button"
                                                     onClick={() => initiateEmailChange({ data: { newEmail: email } })}
@@ -702,30 +810,16 @@ export default function Settings() {
                                     <div className="p-2 bg-brand/10 text-brand rounded-xl">
                                         <Shield size={20} />
                                     </div>
-                                    <h2 className="text-xl font-bold">{t("settings.security.password.title")}</h2>
+                                    <h2 className="text-xl font-bold">{user.is_password_set ? "Contraseña" : "Establecer contraseña"}</h2>
                                 </div>
 
                                 <p className="text-sm text-content-muted mb-8 opacity-70 border-b border-line pb-4">
-                                    {t("settings.security.password.description")}
+                                    {user.is_password_set
+                                        ? "Cambia tu contraseña periódicamente para mantener tu cuenta segura."
+                                        : "Aún no has establecido una contraseña manual. Te recomendamos hacerlo para poder acceder si pierdes el acceso a servicios externos."}
                                 </p>
 
                                 <div className="space-y-6">
-                                    <div className="space-y-2">
-                                        <label className="text-sm font-bold text-content-muted ml-1">{t("settings.security.password.current")}</label>
-                                        <div className="relative">
-                                            <input
-                                                type={showPasswords ? "text" : "password"}
-                                                value={oldPassword}
-                                                onChange={(e) => setOldPassword(e.target.value)}
-                                                className="w-full px-4 py-3 bg-main border border-line rounded-2xl focus:ring-2 focus:ring-brand focus:border-brand outline-none transition-all pl-11"
-                                                placeholder="••••••••"
-                                            />
-                                            <div className="absolute left-4 top-1/2 -translate-y-1/2 text-content-muted opacity-50 pointer-events-none">
-                                                <Lock size={18} />
-                                            </div>
-                                        </div>
-                                    </div>
-
                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                         <div className="space-y-2">
                                             <label className="text-sm font-bold text-content-muted ml-1">{t("settings.security.password.new")}</label>
@@ -759,7 +853,7 @@ export default function Settings() {
                                         </div>
                                     </div>
 
-                                    <div className="flex justify-between items-center">
+                                    <div className="flex justify-start items-center">
                                         <button
                                             type="button"
                                             onClick={() => setShowPasswords(!showPasswords)}
@@ -767,14 +861,6 @@ export default function Settings() {
                                         >
                                             {showPasswords ? <EyeOff size={14} /> : <Eye size={14} />}
                                             {showPasswords ? t("settings.security.password.hide") : t("settings.security.password.show")}
-                                        </button>
-
-                                        <button
-                                            type="button"
-                                            onClick={() => navigate("/forgot-password")}
-                                            className="text-xs font-bold text-content-muted hover:text-brand transition-colors underline decoration-dotted underline-offset-4 cursor-pointer"
-                                        >
-                                            {t("settings.security.password.forgot")}
                                         </button>
                                     </div>
 
@@ -790,11 +876,96 @@ export default function Settings() {
                                     <div className="mt-6 flex justify-end flex-wrap gap-2">
                                         <button
                                             onClick={handleSavePassword}
-                                            disabled={isChangingPassword || !oldPassword || !newPassword || !confirmPassword}
+                                            disabled={isChangingPassword || isSettingPassword || !newPassword || !confirmPassword}
                                             className="px-6 py-3 bg-brand text-content-on-brand rounded-2xl text-sm font-bold hover:opacity-90 transition-all disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed flex items-center gap-2 hover:scale-[1.02] active:scale-95"
                                         >
-                                            {isChangingPassword ? t("settings.security.password.updating") : t("settings.security.password.update")}
+                                            {(isChangingPassword || isSettingPassword) ? "Actualizando..." : (user.is_password_set ? "Actualizar contraseña" : "Establecer contraseña")}
                                         </button>
+                                    </div>
+                                </div>
+                            </section>
+
+                            <section className="bg-main border border-line rounded-3xl shadow-sm p-6 sm:p-8 animate-fade-in animate-duration-300">
+                                <div className="flex items-center gap-3 mb-6">
+                                    <div className="p-2 bg-brand/10 text-brand rounded-xl">
+                                        <LayoutGrid size={20} />
+                                    </div>
+                                    <h2 className="text-xl font-bold">Aplicaciones conectadas</h2>
+                                </div>
+
+                                <p className="text-sm text-content-muted mb-8 opacity-70 border-b border-line pb-4">
+                                    Gestiona las cuentas de terceros vinculadas a tu cuenta de flAIghts.
+                                </p>
+
+                                <div className="space-y-4">
+                                    <div className="flex items-center justify-between p-4 bg-surface/50 rounded-2xl border border-line">
+                                        <div className="flex items-center gap-4">
+                                            <div className="w-10 h-10 flex items-center justify-center bg-white rounded-xl shadow-sm border border-line">
+                                                <svg viewBox="0 0 24 24" width="20" height="20" xmlns="http://www.w3.org/2000/svg">
+                                                    <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
+                                                    <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-1 .67-2.28 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
+                                                    <path d="M5.84 14.09c-.22-.67-.35-1.39-.35-2.09s.13-1.42.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05" />
+                                                    <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
+                                                </svg>
+                                            </div>
+                                            <div>
+                                                <h3 className="font-bold">Google</h3>
+                                                <p className="text-xs text-content-muted opacity-70">
+                                                    {user.google_id
+                                                        ? (user.google_email || "Cuenta vinculada correctamente")
+                                                        : "No has vinculado tu cuenta de Google"}
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <div>
+                                            {user.google_id ? (
+                                                <div className="flex items-center gap-3">
+                                                    <span className="px-3 py-1 bg-green-500/10 text-green-500 text-[10px] font-black uppercase tracking-widest rounded-full border border-green-500/20">
+                                                        Conectado
+                                                    </span>
+                                                    <button
+                                                        onClick={handleDisconnectGoogle}
+                                                        disabled={isDisconnectingGoogle}
+                                                        title="Desconectar cuenta de Google"
+                                                        className="p-1.5 text-content-muted hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-all cursor-pointer disabled:opacity-50"
+                                                    >
+                                                        {isDisconnectingGoogle ? (
+                                                            <div className="w-4 h-4 border-2 border-red-500/30 border-t-red-500 rounded-full animate-spin" />
+                                                        ) : (
+                                                            <X size={16} />
+                                                        )}
+                                                    </button>
+                                                </div>
+                                            ) : (
+                                                <div className="flex flex-col items-end gap-2">
+                                                    <GoogleLogin
+                                                        onSuccess={credentialResponse => {
+                                                            if (credentialResponse.credential) {
+                                                                const actionLabel = "Vincular Google";
+                                                                setVerificationStep({
+                                                                    active: false,
+                                                                    action: 'connect-google',
+                                                                    actionLabel,
+                                                                    code: "",
+                                                                    data: { credential: credentialResponse.credential }
+                                                                });
+                                                                requestCode({
+                                                                    data: { actionName: 'connect-google' }
+                                                                });
+                                                            }
+                                                        }}
+                                                        onError={() => {
+                                                            toast.error('Error al conectar con Google');
+                                                        }}
+                                                        useOneTap
+                                                        theme="outline"
+                                                        shape="pill"
+                                                        size="medium"
+                                                        text="signin_with"
+                                                    />
+                                                </div>
+                                            )}
+                                        </div>
                                     </div>
                                 </div>
                             </section>
@@ -868,6 +1039,110 @@ export default function Settings() {
 
                 </div>
             </div >
+
+            {/* Modal de Verificación de Seguridad */}
+            {verificationStep.active && (
+                <div className="fixed inset-0 z-modal flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-300">
+                    <div className="bg-main border border-line w-full max-w-md rounded-[2.5rem] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300">
+                        <div className="p-8">
+                            <div className="flex flex-col items-center text-center gap-4 mb-8">
+                                <div className="p-4 bg-brand/10 text-brand rounded-3xl">
+                                    <ShieldCheck size={32} />
+                                </div>
+                                <div>
+                                    <h3 className="text-2xl font-bold">{verificationStep.actionLabel}</h3>
+                                    <p className="text-sm text-content-muted mt-2">
+                                        Por seguridad, introduce el código de 6 dígitos que hemos enviado a <span className="font-bold text-content">{user.email}</span>
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div className="space-y-6">
+                                <div className="flex flex-col gap-2">
+                                    <div className="relative">
+                                        <input
+                                            pattern="[0-9]*"
+                                            inputMode="numeric"
+                                            type="text"
+                                            maxLength={6}
+                                            value={verificationStep.code}
+                                            onChange={(e) => {
+                                                const numericValue = e.target.value.replace(/\D/g, '');
+                                                setVerificationStep(prev => ({ ...prev, code: numericValue }));
+                                            }}
+                                            className="w-full text-center text-3xl font-mono tracking-[0.5em] font-bold py-4 bg-surface border border-line rounded-2xl focus:ring-4 focus:ring-brand/20 focus:border-brand outline-none transition-all placeholder:text-content-muted/20"
+                                            placeholder="000000"
+                                            autoFocus
+                                        />
+                                    </div>
+                                    <button
+                                        onClick={() => requestCode({ data: { actionName: verificationStep.action || "" } })}
+                                        disabled={isRequestingCode}
+                                        className="text-xs font-bold text-brand hover:underline disabled:opacity-50 cursor-pointer"
+                                    >
+                                        ¿No has recibido el código? Reenviar
+                                    </button>
+                                </div>
+
+                                <div className="flex gap-3 pt-2">
+                                    <button
+                                        onClick={() => setVerificationStep({ active: false, action: null, actionLabel: "", code: "", transactionId: "" })}
+                                        className="flex-1 py-4 px-6 bg-surface border border-line text-content-muted rounded-2xl font-bold hover:bg-main transition-all active:scale-95 cursor-pointer"
+                                    >
+                                        Cancelar
+                                    </button>
+                                    <button
+                                        disabled={verificationStep.code.length !== 6 || isChangingPassword || isSettingPassword || isConnectingGoogle || isDisconnectingGoogle}
+                                        onClick={() => {
+                                            const { action, code, data, transactionId } = verificationStep;
+                                            if (action === 'change-password') {
+                                                changePassword({
+                                                    data: {
+                                                        newPassword: data.newPassword,
+                                                        verificationCode: code,
+                                                        transactionId: transactionId || ""
+                                                    }
+                                                });
+                                            } else if (action === 'set-password') {
+                                                setPassword({
+                                                    data: {
+                                                        password: data.newPassword,
+                                                        verificationCode: code,
+                                                        transactionId: transactionId || ""
+                                                    }
+                                                });
+                                            } else if (action === 'connect-google') {
+                                                connectGoogle({
+                                                    data: {
+                                                        credential: data.credential,
+                                                        verificationCode: code,
+                                                        transactionId: transactionId || ""
+                                                    }
+                                                });
+                                            } else if (action === 'disconnect-google') {
+                                                disconnectGoogle({
+                                                    data: {
+                                                        verificationCode: code,
+                                                        transactionId: transactionId || ""
+                                                    }
+                                                });
+                                            }
+                                        }}
+                                        className="flex-2 py-4 px-6 bg-brand text-content-on-brand rounded-2xl font-bold hover:opacity-90 transition-all active:scale-95 disabled:opacity-50 cursor-pointer flex items-center justify-center gap-2"
+                                    >
+                                        {(isChangingPassword || isSettingPassword || isConnectingGoogle || isDisconnectingGoogle) ? (
+                                            <>
+                                                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                                Confirmando...
+                                            </>
+                                        ) : "Confirmar acción"}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div >
     );
 }

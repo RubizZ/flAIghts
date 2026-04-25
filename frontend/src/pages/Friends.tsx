@@ -9,8 +9,8 @@ import {
 } from "@/api/generated/openapi/users";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { UserMinus, Check, X, Clock, Users, UserPlus, MessageCircle, UserSearch } from "lucide-react";
-import { useState } from "react";
+import { UserMinus, Check, X, Clock, Users, UserPlus, MessageCircle, UserSearch, Search } from "lucide-react";
+import { useState, useMemo } from "react";
 import UserAvatar from "@/components/ui/UserAvatar";
 import { useTranslation } from "react-i18next";
 
@@ -20,6 +20,7 @@ export default function Friends() {
     const { user, isAuthenticated, isLoading } = useAuth();
     const queryClient = useQueryClient();
     const [activeTab, setActiveTab] = useState<'friends' | 'requests'>('friends');
+    const [searchQuery, setSearchQuery] = useState("");
 
     const invalidateUser = () => {
         queryClient.invalidateQueries({ queryKey: getGetSelfUserQueryKey() });
@@ -80,19 +81,33 @@ export default function Friends() {
     const received = user?.received_friend_requests || [];
     const sent = user?.sent_friend_requests || [];
 
+    const filteredFriends = useMemo(() => {
+        return friends.filter(f =>
+            f.username.toLowerCase().includes(searchQuery.toLowerCase())
+        );
+    }, [friends, searchQuery]);
+
     const totalRequests = received.length + sent.length;
 
     return (
         <div className="flex flex-col max-w-5xl mx-auto w-full p-6 sm:p-8 gap-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-            <header className="flex flex-col gap-2">
-                <h1 className="text-4xl font-extrabold text-content tracking-tight">{t("friends.title")}</h1>
-                <p className="text-content-muted text-lg">{t("friends.subtitle")}</p>
+            <header className="flex justify-between items-end gap-4">
+                <div className="flex flex-col gap-2">
+                    <h1 className="text-4xl font-extrabold text-content tracking-tight">{t("friends.title")}</h1>
+                    <p className="text-content-muted text-lg">{t("friends.subtitle")}</p>
+                </div>
+                <Link
+                    to="/user/search"
+                    className="mb-1 flex items-center gap-2 bg-brand text-content-on-brand px-4 py-2 rounded-xl font-bold hover:opacity-90 transition-all shadow-lg shadow-brand/20 hover:scale-105 active:scale-95 whitespace-nowrap"
+                >
+                    <UserSearch size={18} />
+                    <span className="hidden sm:inline">Añadir amigo</span>
+                </Link>
             </header>
-
-            <div className="flex gap-4 border-b border-line">
+            <div className="flex gap-4 border-b border-line overflow-x-auto no-scrollbar scroll-smooth">
                 <button
                     onClick={() => setActiveTab('friends')}
-                    className={`flex items-center gap-2 pb-4 text-lg font-medium transition-all relative cursor-pointer ${activeTab === 'friends' ? 'text-brand' : 'text-content-muted hover:text-content'}`}
+                    className={`flex items-center gap-2 pb-4 text-base sm:text-lg font-medium transition-all relative cursor-pointer whitespace-nowrap ${activeTab === 'friends' ? 'text-brand' : 'text-content-muted hover:text-content'}`}
                 >
                     <Users size={20} />
                     <span>{t("friends.tabs.friends")}</span>
@@ -103,7 +118,7 @@ export default function Friends() {
                 </button>
                 <button
                     onClick={() => setActiveTab('requests')}
-                    className={`flex items-center gap-2 pb-4 text-lg font-medium transition-all relative cursor-pointer ${activeTab === 'requests' ? 'text-brand' : 'text-content-muted hover:text-content'}`}
+                    className={`flex items-center gap-2 pb-4 text-base sm:text-lg font-medium transition-all relative cursor-pointer whitespace-nowrap ${activeTab === 'requests' ? 'text-brand' : 'text-content-muted hover:text-content'}`}
                 >
                     <UserPlus size={20} />
                     <span>{t("friends.tabs.requests")}</span>
@@ -114,14 +129,6 @@ export default function Friends() {
                         <span className="absolute bottom-0 left-0 right-0 h-1 bg-brand rounded-t-full transition-all" />
                     )}
                 </button>
-
-                <Link
-                    to="/user/search"
-                    className="ml-auto mb-4 flex items-center gap-2 bg-brand text-content-on-brand px-4 py-2 rounded-xl font-bold hover:opacity-90 transition-all shadow-lg shadow-brand/20 hover:scale-105 active:scale-95"
-                >
-                    <UserSearch size={18} />
-                    <span>{t("friends.addFriend")}</span>
-                </Link>
             </div>
 
             <main className="flex flex-col gap-6">
@@ -134,39 +141,68 @@ export default function Friends() {
                                 <p className="text-content-muted text-center mt-2 max-w-sm">{t("friends.emptyFriends.description")}</p>
                             </div>
                         ) : (
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                                {friends.map((friend) => (
-                                    <div key={friend._id} className="flex flex-col p-5 bg-main rounded-3xl border border-line shadow-xs hover:border-brand hover:shadow-md transition-all group">
-                                        <div className="flex items-center gap-4">
-                                            <Link to={`/user/${friend._id}`} className="shrink-0 relative">
-                                                <UserAvatar user={friend} size={64} className="transition-transform group-hover:scale-105" />
-                                            </Link>
-                                            <div className="flex flex-col flex-1 overflow-hidden">
-                                                <Link to={`/user/${friend._id}`} className="font-bold text-lg text-content truncate hover:text-brand transition-colors">
-                                                    {friend.username}
-                                                </Link>
-                                            </div>
-                                        </div>
-                                        <div className="mt-4 pt-4 border-t border-line flex justify-end gap-2">
-                                            <Link
-                                                to={`/chats/${friend._id}`}
-                                                className="flex items-center gap-2 px-4 py-2 bg-brand text-content-on-brand rounded-full text-sm font-bold hover:bg-brand/90 transition-colors cursor-pointer hover:scale-105 active:scale-95"
-                                                title={t("friends.sendMessage")}
-                                            >
-                                                <MessageCircle size={16} />
-                                                {t("friends.actions.message")}
-                                            </Link>
-                                            <button
-                                                onClick={() => removeFriend({ id: friend._id })}
-                                                className="flex items-center gap-2 px-4 py-2 bg-red-50 hover:bg-red-100 text-red-600 rounded-full text-sm font-bold transition-colors cursor-pointer hover:scale-105 active:scale-95"
-                                                title={t("friends.removeFriend")}
-                                            >
-                                                <UserMinus size={16} />
-                                                {t("friends.actions.remove")}
-                                            </button>
-                                        </div>
+                            <div className="flex flex-col gap-6">
+                                <div className="relative w-full max-w-md">
+                                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-content-muted">
+                                        <Search size={18} />
                                     </div>
-                                ))}
+                                    <input
+                                        type="text"
+                                        placeholder="Buscar entre tus amigos..."
+                                        className="w-full bg-main placeholder-content-muted outline-none px-4 py-2 pl-10 rounded-xl font-medium border border-line focus:border-brand shadow-xs transition-all"
+                                        value={searchQuery}
+                                        onChange={(e) => setSearchQuery(e.target.value)}
+                                    />
+                                    {searchQuery && (
+                                        <button
+                                            onClick={() => setSearchQuery("")}
+                                            className="absolute inset-y-0 right-0 pr-3 flex items-center text-content-muted hover:text-content transition-colors cursor-pointer"
+                                        >
+                                            <X size={16} />
+                                        </button>
+                                    )}
+                                </div>
+
+                                {filteredFriends.length === 0 ? (
+                                    <div className="flex flex-col items-center justify-center py-12 bg-surface/5 rounded-2xl border border-dashed border-line">
+                                        <p className="text-content-muted font-medium">No se han encontrado amigos que coincidan con &quot;<span className="text-content font-bold">{searchQuery}</span>&quot;</p>
+                                    </div>
+                                ) : (
+                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                        {filteredFriends.map((friend) => (
+                                            <div key={friend._id} className="flex flex-col p-5 bg-main rounded-3xl border border-line shadow-xs hover:border-brand hover:shadow-md transition-all group">
+                                                <div className="flex items-center gap-4">
+                                                    <Link to={`/user/${friend._id}`} className="shrink-0 relative">
+                                                        <UserAvatar user={friend} size={64} className="transition-transform group-hover:scale-105" />
+                                                    </Link>
+                                                    <div className="flex flex-col flex-1 overflow-hidden">
+                                                        <Link to={`/user/${friend._id}`} className="font-bold text-lg text-content truncate hover:text-brand transition-colors">
+                                                            {friend.username}
+                                                        </Link>
+                                                    </div>
+                                                </div>
+                                                <div className="mt-4 pt-4 border-t border-line flex justify-end gap-2">
+                                                    <Link
+                                                        to={`/chats/${friend._id}`}
+                                                        className="flex items-center gap-2 px-4 py-2 bg-brand text-content-on-brand rounded-full text-sm font-bold hover:bg-brand/90 transition-colors cursor-pointer hover:scale-105 active:scale-95"
+                                                        title={t("friends.actions.message")}
+                                                    >
+                                                        <MessageCircle size={16} />
+                                                        {t("friends.actions.message")}
+                                                    </Link>
+                                                    <button
+                                                        onClick={() => removeFriend({ id: friend._id })}
+                                                        className="flex items-center gap-2 px-4 py-2 bg-red-50 hover:bg-red-100 text-red-600 rounded-full text-sm font-bold transition-colors cursor-pointer hover:scale-105 active:scale-95"
+                                                        title={t("friends.removeFriend")}
+                                                    >
+                                                        <UserMinus size={16} />
+                                                        {t("friends.actions.remove")}
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
                             </div>
                         )}
                     </section>

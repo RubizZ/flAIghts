@@ -2,19 +2,20 @@ import React from "react";
 import { MapPin, Search } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { AirportResponse } from "@/api/generated/openapi/model";
+import { UnifiedSelection } from "@/types/selection";
 import AirportAutocomplete from "../AirportAutocomplete";
 import PremiumInput from "../ui/PremiumInput";
 
 interface FlightSearchInputProps {
     type: 'origin' | 'destination';
-    value: AirportResponse[];
-    onChange: (airports: AirportResponse[]) => void;
+    value: UnifiedSelection[];
+    onChange: (selections: UnifiedSelection[]) => void;
     onMapClick: () => void;
     isMapSelecting?: boolean;
     placeholder?: string;
     className?: string;
-    otherSelected?: AirportResponse[];
-    onHoverChange?: (airport: AirportResponse | null) => void;
+    otherSelected?: UnifiedSelection[];
+    onHoverChange?: (entity: UnifiedSelection | null) => void;
 }
 
 const FlightSearchInput: React.FC<FlightSearchInputProps> = ({

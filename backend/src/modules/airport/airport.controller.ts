@@ -22,9 +22,10 @@ export class AirportController extends Controller {
         @Query() page: number = 1,
         @Query() limit: number = 10,
         @Query() lat?: number,
-        @Query() lon?: number
+        @Query() lon?: number,
+        @Query() isDynamic: boolean = true
     ): Promise<SuccessResponseType<AirportSearchPaginatedResult>> {
-        const results = await this.airportService.searchAirports(q, lat, lon, page, limit);
+        const results = await this.airportService.searchAirports(q, lat, lon, page, limit, isDynamic);
         return { status: "success", data: results };
     }
 
@@ -34,9 +35,10 @@ export class AirportController extends Controller {
         @Query() lat: number,
         @Query() lon: number,
         @Query() limit?: number,
-        @Query() maxDistanceKm?: number
+        @Query() maxDistanceKm?: number,
+        @Query() isDynamic: boolean = true
     ): Promise<SuccessResponseType<AirportResponse[]>> {
-        const results = await this.airportService.getNearAirports(lat, lon, limit, maxDistanceKm);
+        const results = await this.airportService.getNearAirports(lat, lon, limit, maxDistanceKm, isDynamic);
         return {
             status: "success",
             data: results

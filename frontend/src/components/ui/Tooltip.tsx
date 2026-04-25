@@ -35,7 +35,7 @@ export default function Tooltip({ children, content, position = 'top', disabled 
             {children}
             {isVisible && (
                 <div
-                    className={`absolute z-100 px-3 py-2 bg-main/90 backdrop-blur-3xl border border-line text-content text-xs font-medium rounded-xl shadow-2xl pointer-events-none whitespace-nowrap animate-duration-200 animate-delay-500 ${positions[position]} ${position === 'top' ? 'animate-fade-in-up' :
+                    className={`absolute z-tooltip px-3 py-2 bg-main/90 backdrop-blur-3xl border border-line text-content text-xs font-medium rounded-xl shadow-2xl pointer-events-none whitespace-nowrap animate-duration-200 animate-delay-500 ${positions[position]} ${position === 'top' ? 'animate-fade-in-up' :
                         position === 'bottom' ? 'animate-fade-in-down' :
                             position === 'left' ? 'animate-fade-in-left' :
                                 'animate-fade-in-right'

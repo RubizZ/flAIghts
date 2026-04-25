@@ -82,6 +82,15 @@ export class ResetTokenInvalidOrExpiredError extends AppError<'RESET_TOKEN_INVAL
     }
 }
 
+export class InvalidResetCodeError extends AppError<'INVALID_RESET_CODE'> {
+    public readonly code = 'INVALID_RESET_CODE';
+    public readonly statusCode: number = 400;
+
+    constructor() {
+        super("El código de verificación es inválido o ha expirado.");
+    }
+}
+
 export class EmailNotVerifiedError extends AppError<'EMAIL_NOT_VERIFIED', { email: string }> {
     public readonly code = 'EMAIL_NOT_VERIFIED';
     public readonly statusCode: number = 403;
@@ -98,5 +107,75 @@ export class NewPasswordSameAsOldError extends AppError<'NEW_PASSWORD_SAME_AS_OL
 
     constructor() {
         super("La nueva contraseña debe ser diferente a la actual.");
+    }
+}
+
+export class GoogleAccountAlreadyLinkedError extends AppError<'GOOGLE_ACCOUNT_ALREADY_LINKED', { email: string }> {
+    public readonly code = 'GOOGLE_ACCOUNT_ALREADY_LINKED';
+    public readonly statusCode: number = 409;
+
+    constructor(email: string) {
+        super(`Esta cuenta de Google ya está vinculada a otro usuario.`);
+        this.details = { email };
+    }
+}
+
+export class CannotDisconnectGoogleWithoutPasswordError extends AppError<'CANNOT_DISCONNECT_GOOGLE_WITHOUT_PASSWORD'> {
+    public readonly code = 'CANNOT_DISCONNECT_GOOGLE_WITHOUT_PASSWORD';
+    public readonly statusCode: number = 400;
+
+    constructor() {
+        super("Debes establecer una contraseña antes de desconectar tu cuenta de Google para no perder el acceso.");
+    }
+}
+
+export class PasswordAlreadySetError extends AppError<'PASSWORD_ALREADY_SET'> {
+    public readonly code = 'PASSWORD_ALREADY_SET';
+    public readonly statusCode: number = 400;
+
+    constructor() {
+        super("Ya has establecido una contraseña. Usa el cambio de contraseña si quieres modificarla.");
+    }
+}
+
+export abstract class TurnstileError<TCode extends string = string> extends AppError<TCode> {
+    public readonly statusCode: number = 403;
+}
+
+export class TurnstileVerificationFailedError extends TurnstileError<'TURNSTILE_VERIFICATION_FAILED'> {
+    public readonly code = 'TURNSTILE_VERIFICATION_FAILED';
+    constructor() {
+        super("La verificación de seguridad ha fallado. Por favor, inténtalo de nuevo.");
+    }
+}
+
+export class TurnstileMissingTokenError extends TurnstileError<'TURNSTILE_MISSING_TOKEN'> {
+    public readonly code = 'TURNSTILE_MISSING_TOKEN';
+    constructor() {
+        super("Falta el token de verificación de seguridad.");
+    }
+}
+
+export class TurnstileInvalidTokenError extends TurnstileError<'TURNSTILE_INVALID_TOKEN'> {
+    public readonly code = 'TURNSTILE_INVALID_TOKEN';
+    constructor() {
+        super("El token de seguridad no es válido.");
+    }
+}
+
+export class TurnstileTokenAlreadySpentError extends TurnstileError<'TURNSTILE_TOKEN_ALREADY_SPENT'> {
+    public readonly code = 'TURNSTILE_TOKEN_ALREADY_SPENT';
+    constructor() {
+        super("La verificación de seguridad ya ha sido utilizada o ha expirado.");
+    }
+}
+
+export class AccountLinkRequiredError extends AppError<'ACCOUNT_LINK_REQUIRED', { email: string }> {
+    public readonly code = 'ACCOUNT_LINK_REQUIRED';
+    public readonly statusCode: number = 403;
+
+    constructor(email: string) {
+        super(`Ya existe una cuenta con el correo ${email}. Para vincularla con Google, por favor introduce tu contraseña.`);
+        this.details = { email };
     }
 }

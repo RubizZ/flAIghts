@@ -61,15 +61,15 @@ const MissionDashboard: React.FC<MissionDashboardProps> = ({
                             <>
                                 <button
                                     onClick={onPrev}
-                                    className="p-1.5 sm:p-2 rounded-lg bg-white/5 border border-white/10 text-white/40 hover:text-white hover:bg-white/10 transition-all cursor-pointer"
+                                    className="p-3 sm:p-2 rounded-lg bg-white/5 border border-white/10 text-white/40 hover:text-white hover:bg-white/10 transition-all cursor-pointer"
                                 >
-                                    <ChevronLeft size={16} />
+                                    <ChevronLeft size={20} className="sm:size-4" />
                                 </button>
 
-                                <div className="px-3 sm:px-5 py-1.5 sm:py-2 rounded-xl bg-blue-500/10 border border-blue-500/20 backdrop-blur-md flex-1 sm:flex-initial">
+                                <div className="px-4 sm:px-5 py-2.5 sm:py-2 rounded-xl bg-blue-500/10 border border-blue-500/20 backdrop-blur-md flex-1 sm:flex-initial">
                                     <div className="flex items-center gap-2 sm:gap-3 justify-center">
-                                        <span className="text-xs">{mission.icon}</span>
-                                        <span className="text-[8px] sm:text-[9px] font-black uppercase tracking-[0.15em] sm:tracking-[0.2em] text-white truncate max-w-30 sm:max-w-none">
+                                        <span className="text-sm sm:text-xs">{mission.icon}</span>
+                                        <span className="text-[10px] sm:text-[9px] font-black uppercase tracking-[0.15em] sm:tracking-[0.2em] text-white truncate max-w-30 sm:max-w-none">
                                             {mission.title}
                                         </span>
                                         <span className="text-[8px] sm:text-[9px] font-bold text-white/20 ml-1 sm:ml-2">
@@ -80,9 +80,9 @@ const MissionDashboard: React.FC<MissionDashboardProps> = ({
 
                                 <button
                                     onClick={onNext}
-                                    className="p-1.5 sm:p-2 rounded-lg bg-white/5 border border-white/10 text-white/40 hover:text-white hover:bg-white/10 transition-all cursor-pointer"
+                                    className="p-3 sm:p-2 rounded-lg bg-white/5 border border-white/10 text-white/40 hover:text-white hover:bg-white/10 transition-all cursor-pointer"
                                 >
-                                    <ChevronRight size={16} />
+                                    <ChevronRight size={20} className="sm:size-4" />
                                 </button>
                             </>
                         )}
@@ -93,17 +93,17 @@ const MissionDashboard: React.FC<MissionDashboardProps> = ({
                         <button
                             id="dashboard-back-button"
                             onClick={handleBackToRoadmapWithAnim}
-                            className="flex-1 sm:flex-initial px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl bg-white/5 text-white/40 hover:text-white hover:bg-blue-500/20 hover:border-blue-500/30 transition-all flex items-center justify-center gap-2 group border border-white/10 shadow-lg backdrop-blur-md cursor-pointer"
+                            className="flex-1 sm:flex-initial px-5 py-3 sm:px-4 sm:py-2 rounded-xl bg-white/5 text-white/40 hover:text-white hover:bg-blue-500/20 hover:border-blue-500/30 transition-all flex items-center justify-center gap-2 group border border-white/10 shadow-lg backdrop-blur-md cursor-pointer"
                         >
-                            <Map size={16} className="group-hover:scale-110 transition-transform hidden sm:block" />
-                            <span className="text-[8px] sm:text-[9px] font-black uppercase tracking-[0.15em] sm:tracking-[0.2em]">{t('missions.dashboard.backToRoadmap')}</span>
+                            <Map size={18} className="group-hover:scale-110 transition-transform sm:size-4" />
+                            <span className="text-[10px] sm:text-[9px] font-black uppercase tracking-[0.15em] sm:tracking-[0.2em]">{t('missions.dashboard.backToRoadmap')}</span>
                         </button>
 
                         <button
                             onClick={handleClose}
-                            className="p-1.5 sm:p-2 rounded-xl bg-white/5 text-white/40 hover:text-rose-500 hover:bg-rose-500/10 hover:border-rose-500/20 transition-all border border-white/10 shadow-lg backdrop-blur-md cursor-pointer"
+                            className="p-3 sm:p-2 rounded-xl bg-white/5 text-white/40 hover:text-rose-500 hover:bg-rose-500/10 hover:border-rose-500/20 transition-all border border-white/10 shadow-lg backdrop-blur-md cursor-pointer"
                         >
-                            <X size={18} />
+                            <X size={22} className="sm:size-4.5" />
                         </button>
                     </div>
                 </div>
@@ -138,7 +138,7 @@ const MissionDashboard: React.FC<MissionDashboardProps> = ({
                                     {mission.description}
                                 </p>
                                 {mission.isCompleted && (
-                                    <p className="text-[11px] sm:text-xs text-white/40 italic leading-relaxed max-w-md border-l-2 border-green-500/30 pl-4 py-1">
+                                    <p className="text-[11px] sm:text-xs text-white/40 italic leading-relaxed max-w-md border-l-2 border-green-500/30 pl-4 py-1 mt-4">
                                         {t('missions.dashboard.successMessage')}
                                     </p>
                                 )}
@@ -187,10 +187,19 @@ const MissionDashboard: React.FC<MissionDashboardProps> = ({
                                         ? 'bg-green-500/5 border-green-500/10 opacity-40'
                                         : 'bg-white/5 border-white/5 hover:border-blue-500/30'
                                         }`}>
-                                        <div className={`shrink-0 h-8 w-8 sm:h-10 sm:w-10 flex items-center justify-center rounded-lg sm:rounded-xl transition-all ${step.isCompleted ? 'bg-green-500/20 text-green-400 shadow-[0_0_15px_rgba(34,197,94,0.2)]' : 'bg-white/5 text-white/10 group-hover:bg-blue-500/20 group-hover:text-blue-400'
-                                            }`}>
-                                            {step.isCompleted ? <CheckCircle2 size={16} className="sm:size-5" /> : <Circle size={14} className="sm:size-5" />}
+                                        <div className="relative group/tooltip shrink-0">
+                                            <div className={`h-8 w-8 sm:h-10 sm:w-10 flex items-center justify-center rounded-lg sm:rounded-xl transition-all ${step.isCompleted ? 'bg-green-500/20 text-green-400 shadow-[0_0_15px_rgba(34,197,94,0.2)]' : 'bg-white/5 text-white/10 group-hover:bg-blue-500/20 group-hover:text-blue-400'}`}>
+                                                {step.isCompleted ? <CheckCircle2 size={16} className="sm:size-5" /> : <Circle size={14} className="sm:size-5" />}
+                                            </div>
+
+                                            {/* Tooltip Detallado */}
+                                            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 px-4 py-2 bg-gray-900 text-white text-[10px] rounded-xl opacity-0 group-hover/tooltip:opacity-100 transition-all scale-90 group-hover/tooltip:scale-100 whitespace-nowrap pointer-events-none z-50 shadow-2xl border border-white/10 flex flex-col items-center gap-0.5">
+                                                <span className="font-black uppercase tracking-widest text-blue-400 text-[8px]">Detección Automática</span>
+                                                <span className="font-medium opacity-80">El sistema detectará automáticamente cuando completes esta tarea</span>
+                                                <div className="absolute top-full left-1/2 -translate-x-1/2 border-8 border-transparent border-t-gray-900"></div>
+                                            </div>
                                         </div>
+
                                         <div className="flex-1 min-w-0">
                                             <p className={`text-sm sm:text-base lg:text-lg font-bold mb-0.5 sm:mb-1 transition-all truncate ${step.isCompleted ? 'text-white/30 line-through' : 'text-white'}`}>
                                                 {step.title}
@@ -210,7 +219,7 @@ const MissionDashboard: React.FC<MissionDashboardProps> = ({
                 <div className="shrink-0 p-4 sm:p-6 border-t border-white/5 bg-gray-950 flex flex-col sm:flex-row justify-between items-center gap-3 text-center sm:text-left">
                     <div className="flex items-center gap-3 text-white/20">
                         <LayoutGrid size={14} className="sm:size-4" />
-                        <span className="text-[7px] sm:text-[9px] font-black uppercase tracking-[0.2em] sm:tracking-[0.3em]">{t('missions.dashboard.branding')}</span>
+                        <span className="text-[7px] sm:text-[9px] font-black uppercase tracking-[0.2em] sm:tracking-[0.3em]">flAIghts</span>
                     </div>
                     <div className="flex items-center gap-3 text-white/40 text-[7px] sm:text-[9px] font-bold italic">
                         {t('missions.dashboard.footerHero')}

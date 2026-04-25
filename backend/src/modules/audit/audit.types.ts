@@ -2,6 +2,7 @@ export interface AuditDetails {
     USER: {
         INITIATE_REGISTRATION: {
             email: string;
+            transactionId: string;
         }
         COMPLETE_REGISTRATION: {
             email: string;
@@ -12,6 +13,15 @@ export interface AuditDetails {
                 stops_weight: number;
                 airline_quality_weight: number;
             }
+        }
+        FAILED_INITIATE_REGISTRATION: {
+            email: string;
+            reason: string;
+        }
+        FAILED_COMPLETE_REGISTRATION: {
+            email: string;
+            reason: string;
+            subReason?: string;
         }
         UPDATE: {
             username?: string;
@@ -24,6 +34,11 @@ export interface AuditDetails {
                 stops_weight?: number;
                 airline_quality_weight?: number;
             }
+        }
+        FAILED_UPDATE: {
+            userId: string;
+            username?: string;
+            reason: string;
         }
         UPDATE_PROFILE_PICTURE: {
             url: string;
@@ -40,6 +55,15 @@ export interface AuditDetails {
         }
         CANCEL_EMAIL_CHANGE: {
             stayingEmail: string;
+        }
+        FAILED_INITIATE_EMAIL_CHANGE: {
+            userId: string;
+            newEmail: string;
+            reason: string;
+        }
+        FAILED_COMPLETE_EMAIL_CHANGE: {
+            userId: string;
+            reason: string;
         }
         SEND_FRIEND_REQUEST: {
             userId: string;
@@ -61,9 +85,21 @@ export interface AuditDetails {
         LOGIN: {
             identifier: string;
         }
+        LOGIN_GOOGLE: {
+            email: string;
+        }
         FAILED_LOGIN: {
             identifier: string;
             reason: string;
+        }
+        FAILED_LOGIN_GOOGLE: {
+            email?: string;
+            reason: string;
+            details?: string;
+        }
+        AUTO_LINK_GOOGLE: {
+            email: string;
+            googleId: string;
         }
         LOGOUT_ALL: {
             auth_version: number;
@@ -73,6 +109,8 @@ export interface AuditDetails {
         }
         CHANGE_PASSWORD: {
             auth_version: number;
+            method: "change-password" | "set-password" | "google-link-reset" | "reset-password";
+            email?: string;
         }
         FAILED_CHANGE_PASSWORD: {
             reason: string;
@@ -83,11 +121,40 @@ export interface AuditDetails {
         FAILED_FORGOT_PASSWORD: {
             reason: string;
         }
-        RESET_PASSWORD: {
-            email: string;
-        }
         FAILED_RESET_PASSWORD: {
             reason: string;
+        }
+        CONNECT_GOOGLE: {
+            userId: string;
+            googleId: string;
+            email: string;
+        }
+        DISCONNECT_GOOGLE: {
+            userId: string;
+            googleId: string;
+        }
+        FAILED_DISCONNECT_GOOGLE: {
+            userId: string;
+            reason: string;
+        }
+        FAILED_CONNECT_GOOGLE: {
+            userId: string;
+            googleId: string;
+            email: string;
+            reason: string;
+        }
+        FAILED_SET_PASSWORD: {
+            userId: string;
+            reason: string;
+        }
+        REQUEST_LINKING_RESET_CODE: {
+            email: string;
+            transactionId: string;
+        }
+        REQUEST_SECURITY_CODE: {
+            userId: string;
+            actionName: string;
+            transactionId: string;
         }
     }
     SEARCH: {

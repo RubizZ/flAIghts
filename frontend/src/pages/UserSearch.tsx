@@ -21,7 +21,7 @@ export default function UserSearch() {
     const users = searchResponse || [];
 
     return (
-        <div className="flex flex-col gap-6 max-w-4xl mx-auto w-full pt-8 px-4 md:px-0">
+        <div className="flex flex-col gap-6 max-w-4xl mx-auto w-full px-4 md:px-0">
             <div className="flex flex-col gap-2">
                 <h1 className="text-3xl font-bold">{t("userSearch.title")}</h1>
                 <p className="text-content-muted text-sm">{t("userSearch.subtitle")}</p>

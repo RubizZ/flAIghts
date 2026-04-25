@@ -20,6 +20,7 @@ import Acknowledgements from "@/pages/Acknowledgements.tsx";
 import GeneticTrip from "@/pages/GeneticTrip.tsx";
 import Chats from "@/pages/Chats.tsx";
 import Chat from "@/pages/Chat.tsx";
+import SearchHistory from "@/pages/SearchHistory.tsx";
 
 export const routes: RouteObject[] = [
     {
@@ -47,6 +48,7 @@ export const routes: RouteObject[] = [
                     { path: "/chats", element: <Chats /> },
                     { path: "/chats/:userId", element: <Chat /> },
                     { path: "/settings", element: <Settings /> },
+                    { path: "/history", element: <SearchHistory /> },
                     { path: "/genetic-trip", element: <GeneticTrip /> },
                     { path: "/terms", element: <TermsOfService /> },
                     { path: "/privacy", element: <PrivacyPolicy /> },

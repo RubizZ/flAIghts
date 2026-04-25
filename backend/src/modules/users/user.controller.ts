@@ -19,13 +19,15 @@ import type {
     GetUserByIdResponseData,
     FriendUser,
     SetProfilePictureRequest,
-    RateLimitFailResponse
+    RateLimitFailResponse,
+    VerificationTransactionResponse
 } from "./user.types.js";
 import { inject, injectable } from "tsyringe";
 import { UserService } from "./user.service.js";
-import type { AuthenticatedUser } from "../auth/auth.types.js";
+import { TurnstileService } from "../auth/turnstile.service.js";
+import type { AuthenticatedUser, TurnstileFailResponse } from "../auth/auth.types.js";
 import type { IFriend, IFriendPopulated, IUser, IUserUnpopulated } from "./models/user.model.js";
-import type { SuccessResponse as SuccessResponseType, FailResponseFromError, PathPath, QueryPath, ValidationDetails, RequestValidationFailResponse } from "../../utils/responses.js";
+import type { SuccessResponse as SuccessResponseType, FailResponseFromError, PathPath, QueryPath, ValidationDetails, RequestValidationFailResponse, MessageResponseData } from "../../utils/responses.js";
 import type { AuthFailResponse } from "../auth/auth.types.js";
 import {
     EmailAlreadyInUseError,
@@ -49,7 +51,10 @@ import { profilePictureRateLimit } from "../../middlewares/rateLimiter.js";
 @Tags("Users")
 export class UsersController extends Controller {
 
-    constructor(@inject(UserService) private userService: UserService) {
+    constructor(
+        @inject(UserService) private userService: UserService,
+        @inject(TurnstileService) private turnstileService: TurnstileService
+    ) {
         super();
     }
 
@@ -59,10 +64,12 @@ export class UsersController extends Controller {
     @Post("/register/initiate")
     @SuccessResponse(200, "OK")
     @Response<FailResponseFromError<EmailAlreadyInUseError>>(409, "Email ya registrado")
+    @Response<TurnstileFailResponse>(403, "Verificación de seguridad fallida")
     @Response<InitiateRegistrationRequestValidationFailResponse>(422, "Error de validación")
-    public async initiateRegistration(@Body() body: InitiateRegistrationData): Promise<SuccessResponseType> {
-        await this.userService.initiateRegistration(body);
-        return {} satisfies {} as any;
+    public async initiateRegistration(@Body() body: InitiateRegistrationData, @Request() request: express.Request): Promise<SuccessResponseType<VerificationTransactionResponse>> {
+        await this.turnstileService.verifyToken(body.turnstileToken, request.ip);
+        const result = await this.userService.initiateRegistration(body);
+        return result satisfies VerificationTransactionResponse as any;
     }
 
     /**
@@ -112,9 +119,9 @@ export class UsersController extends Controller {
     @Response<AuthFailResponse>(401, "No autenticado")
     @Response<FailResponseFromError<EmailAlreadyInUseError>>(409, "El nuevo email ya está en uso")
     @Response<InitiateEmailChangeRequestValidationFailResponse>(422, "Error de validación")
-    public async initiateEmailChange(@RequestProp('user') user: AuthenticatedUser, @Body() body: InitiateEmailChangeData): Promise<SuccessResponseType> {
+    public async initiateEmailChange(@RequestProp('user') user: AuthenticatedUser, @Body() body: InitiateEmailChangeData): Promise<SuccessResponseType<MessageResponseData>> {
         await this.userService.initiateEmailChange(user._id, body);
-        return {} satisfies {} as any;
+        return { message: "Códigos de verificación enviados" } satisfies MessageResponseData as any;
     }
 
     /**
@@ -292,7 +299,14 @@ export class UsersController extends Controller {
             sent_friend_requests: user.sent_friend_requests.map(p => this.userPopulatedDocToString(p)),
             received_friend_requests: user.received_friend_requests.map(p => this.userPopulatedDocToString(p)),
             pending_email: user.email_change_request?.new_email,
-            profile_picture: this.getAvatarUrl(user)
+            profile_picture: this.getAvatarUrl(user),
+            google_id: user.google_id,
+            google_email: user.google_email,
+            is_password_set: user.is_password_set,
+            badges: user.badges?.map(b => ({
+                ...b,
+                earned_at: b.earned_at.toISOString()
+            }))
         };
     }
 
@@ -322,7 +336,14 @@ export class UsersController extends Controller {
             sent_friend_requests: user.sent_friend_requests.filter((f): f is IUserUnpopulated => typeof f !== 'string').map(f => this.sanitizePublicUser(f, true, false)),
             received_friend_requests: user.received_friend_requests.filter((f): f is IUserUnpopulated => typeof f !== 'string').map(f => this.sanitizePublicUser(f, false, true)),
             pending_email: user.email_change_request?.new_email,
-            profile_picture: this.getAvatarUrl(user)
+            profile_picture: this.getAvatarUrl(user),
+            google_id: user.google_id,
+            google_email: user.google_email,
+            is_password_set: user.is_password_set,
+            badges: user.badges?.map(b => ({
+                ...b,
+                earned_at: b.earned_at.toISOString()
+            }))
         };
     }
 
@@ -337,7 +358,11 @@ export class UsersController extends Controller {
             last_seen_at: user.last_seen_at.toISOString(),
             sent_friend_request: sentFriendRequest,
             received_friend_request: receivedFriendRequest,
-            profile_picture: this.getAvatarUrl(user)
+            profile_picture: this.getAvatarUrl(user),
+            badges: user.badges?.map(b => ({
+                ...b,
+                earned_at: b.earned_at.toISOString()
+            }))
         };
     }
 
@@ -350,12 +375,17 @@ export class UsersController extends Controller {
             created_at: user.created_at.toISOString(),
             last_seen_at: user.last_seen_at.toISOString(),
             friend_since: friendSince ? friendSince.toISOString() : user.friends.find(f => f.user.toString() === user._id.toString())!.friend_since.toISOString(),
-            profile_picture: this.getAvatarUrl(user)
+            profile_picture: this.getAvatarUrl(user),
+            badges: user.badges?.map(b => ({
+                ...b,
+                earned_at: b.earned_at.toISOString()
+            }))
         };
     }
 
     private getAvatarUrl(user: { _id: string; profile_picture?: string }): string | undefined {
         if (!user.profile_picture) return undefined;
+        if (user.profile_picture.startsWith('http')) return user.profile_picture;
 
         // Extraemos el timestamp de la key (ej: media/avatars/uuid-TIMESTAMP.jpg)
         const parts = user.profile_picture.split('-');

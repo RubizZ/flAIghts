@@ -600,6 +600,8 @@
     "scales_other": "{{count}} stops",
     "direct": "Direct",
     "toolStatus": {
+      "connecting": "Connecting...",
+      "unavailable": "Unavailable",
       "searchCompleted": "Flight search completed",
       "searchFailed": "Error: {{message}}",
       "accessingProfile": "Accessing your profile...",
@@ -635,7 +637,6 @@
       "register": "Don't have an account? Join here"
     },
     "header": "flAIghts Agent",
-    "connecting": "Connecting...",
     "welcome": "Hello, {{username}}!",
     "welcomeFallback": "explorer",
     "emptyDescription": "I am fl**AI**ghts. I don't just search for flights, I learn from you to suggest your next destination.",
@@ -685,7 +686,7 @@
     "addStop": "Add stop",
     "advancedFilters": "Advanced filters",
     "manualTitle": "Fly beyond.",
-    "manualSubtitle": "Explore global destinations with flAIghts.",
+    "manualSubtitle": "Explore global destinations with fl",
     "aiTitle": "flAIghts Agent",
     "aiSubtitle": "Your intelligent co-pilot for trip planning.",
     "clearChat": "Clear chat"

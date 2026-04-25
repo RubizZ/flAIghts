@@ -10,7 +10,7 @@ interface MissionRoadmapProps {
 
 const MissionRoadmap: React.FC<MissionRoadmapProps> = ({ onClose, onMissionClick }) => {
     const { t } = useTranslation();
-    const { missions, isMissionUnlocked, isMissionCompleted, isMissionRated, activeMission } = useMissions();
+    const { missions, isMissionUnlocked, isMissionCompleted, isMissionRated, activeMission, onboardingStep, surveyOnboardingStep } = useMissions();
     const [isClosing, setIsClosing] = useState(false);
     const [connections, setConnections] = useState<Array<{
         x1: number; y1: number; x2: number; y2: number;
@@ -77,7 +77,7 @@ const MissionRoadmap: React.FC<MissionRoadmapProps> = ({ onClose, onMissionClick
             }
         });
         setConnections(newConnections);
-        if (newConnections.length > 0) {
+        if (missions.length > 0) {
             setIsGraphReady(true);
         }
     }, [missions, isMissionCompleted, isMissionUnlocked]);
@@ -108,7 +108,7 @@ const MissionRoadmap: React.FC<MissionRoadmapProps> = ({ onClose, onMissionClick
     };
 
     const handleMouseDown = (e: React.MouseEvent) => {
-        if (!scrollContainerRef.current) return;
+        if (!scrollContainerRef.current || onboardingStep > 0 || surveyOnboardingStep > 0) return;
         isDragging.current = true;
         setIsGrabbing(true);
         startX.current = e.pageX - scrollContainerRef.current.offsetLeft;
@@ -167,6 +167,23 @@ const MissionRoadmap: React.FC<MissionRoadmapProps> = ({ onClose, onMissionClick
         };
     }, [isGrabbing, handleWindowMouseMove, handleWindowMouseUp]);
 
+    // Auto-scroll to center on the most relevant mission
+    React.useEffect(() => {
+        // Wait for graph to be ready so positions are calculated
+        if (!isGraphReady || !scrollContainerRef.current) return;
+
+        // Priority: 1. Mission needing feedback, 2. Next available mission
+        const missionToFocus = missionsWithLevels.find(m => isMissionCompleted(m.id) && !isMissionRated(m.id))
+            || missionsWithLevels.find(m => isMissionUnlocked(m.id) && !isMissionCompleted(m.id));
+
+        if (missionToFocus) {
+            const element = document.getElementById(`roadmap-mission-${missionToFocus.id}`);
+            if (element) {
+                element.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' });
+            }
+        }
+    }, [isGraphReady]);
+
     const handleMissionClick = (id: string) => {
         setIsClosing(true);
         setTimeout(() => onMissionClick?.(id), 300);
@@ -190,7 +207,7 @@ const MissionRoadmap: React.FC<MissionRoadmapProps> = ({ onClose, onMissionClick
 
     return (
         <div
-            className={`fixed inset-0 z-100 flex items-center justify-center backdrop-blur-sm animate-duration-500 p-4 ${isClosing ? 'animate-fade-out' : 'animate-fade-in'}`}
+            className={`fixed inset-0 z-modal flex items-center justify-center backdrop-blur-sm animate-duration-500 p-4 ${isClosing ? 'animate-fade-out' : 'animate-fade-in'}`}
             onMouseDown={(e) => {
                 if (e.target === e.currentTarget) backdropMouseDown.current = true;
             }}
@@ -205,7 +222,7 @@ const MissionRoadmap: React.FC<MissionRoadmapProps> = ({ onClose, onMissionClick
                 <button
                     id="roadmap-close-button"
                     onClick={handleClose}
-                    className="absolute top-4 right-4 sm:top-6 sm:right-6 p-2 rounded-full bg-white/5 text-white/50 hover:text-rose-500 hover:bg-rose-500/10 transition-all z-10 cursor-pointer"
+                    className="absolute top-4 right-4 sm:top-6 sm:right-6 p-2 rounded-full bg-white/5 text-white/50 hover:text-rose-500 hover:bg-rose-500/10 transition-all z-content cursor-pointer"
                 >
                     <X size={24} />
                 </button>
@@ -243,13 +260,28 @@ const MissionRoadmap: React.FC<MissionRoadmapProps> = ({ onClose, onMissionClick
                         className="flex flex-col gap-16 sm:gap-40 items-start min-w-max py-10 sm:py-20 px-4 sm:px-8 relative transition-transform duration-300 ease-out"
                     >
                         <svg
-                            className={`absolute inset-0 pointer-events-none z-0 w-full h-full min-w-full min-h-full overflow-visible transition-opacity duration-500 ${isGraphReady ? 'opacity-100' : 'opacity-0'}`}
+                            className={`absolute inset-0 pointer-events-none z-base w-full h-full min-w-full min-h-full overflow-visible transition-opacity duration-500 ${isGraphReady ? 'opacity-100' : 'opacity-0'}`}
                         >
                             {connections.map((conn, i) => {
                                 const distY = conn.y2 - conn.y1;
-                                const tension = distY * 0.6;
-                                const d = `M ${conn.x1},${conn.y1} 
-                                           C ${conn.x1},${conn.y1 + tension} ${conn.x2},${conn.y2 - tension} ${conn.x2},${conn.y2 - 8}`;
+                                const tension = distY * 0.4;
+                                // Routing condicional:
+                                // - Niveles adyacentes: Curva suave directa
+                                // - Saltos largos: Pasillo lateral para esquivar cards
+                                const isLongJump = conn.levelDiff > 1;
+                                let d = "";
+
+                                if (!isLongJump) {
+                                    const tension = distY * 0.4;
+                                    d = `M ${conn.x1},${conn.y1} 
+                                         C ${conn.x1},${conn.y1 + tension} ${conn.x2},${conn.y2 - tension} ${conn.x2},${conn.y2 - 8}`;
+                                } else {
+                                    const railX = Math.max(conn.x1, conn.x2) + 280;
+                                    const midY = conn.y1 + (distY / 2);
+                                    d = `M ${conn.x1},${conn.y1} 
+                                         C ${conn.x1},${conn.y1 + 60} ${railX},${conn.y1 + 30} ${railX},${midY}
+                                         C ${railX},${conn.y2 - 30} ${conn.x2},${conn.y2 - 60} ${conn.x2},${conn.y2 - 8}`;
+                                }
 
                                 const colorClass = conn.completed
                                     ? 'text-green-500'
@@ -285,9 +317,7 @@ const MissionRoadmap: React.FC<MissionRoadmapProps> = ({ onClose, onMissionClick
                             return (
                                 <div
                                     key={level}
-                                    className={`flex flex-row gap-10 items-center relative w-max
-                                        ${level === 0 ? 'sm:pl-48' : level % 2 === 0 ? 'sm:pl-96' : 'sm:pl-0'}
-                                    `}
+                                    className="flex flex-row gap-10 items-center justify-start relative w-max z-content pl-10 sm:pl-20"
                                 >
                                     {levelMissions.map(mission => {
                                         const unlocked = isMissionUnlocked(mission.id);
@@ -305,12 +335,15 @@ const MissionRoadmap: React.FC<MissionRoadmapProps> = ({ onClose, onMissionClick
                                             >
                                                 <div
                                                     id={`roadmap-mission-${mission.id}`}
-                                                    className={`w-72 sm:w-96 p-4 sm:p-6 rounded-2xl sm:rounded-3xl border transition-all duration-300 relative z-10 ${completed
-                                                        ? 'bg-green-500/10 border-green-500/30 hover:bg-green-500/20 hover:scale-[1.02] hover:border-green-500/50'
+                                                    className={`w-72 sm:w-96 p-4 sm:p-6 rounded-2xl sm:rounded-3xl border transition-all duration-300 relative z-20 shadow-2xl ${completed
+                                                        ? 'bg-gray-950 border-green-500/30 hover:border-green-500/50'
                                                         : unlocked
-                                                            ? 'bg-blue-500/10 border-blue-500/30 shadow-xl shadow-blue-500/5 hover:bg-blue-500/20 hover:scale-[1.02]'
-                                                            : 'bg-white/5 border-white/10 grayscale opacity-40'
-                                                        } ${needsRating ? 'animate-pulse border-amber-500/50 shadow-lg shadow-amber-500/20' : ''}`}>
+                                                            ? 'bg-gray-950 border-blue-500/30 shadow-blue-500/5'
+                                                            : 'bg-gray-950/50 border-white/10 grayscale opacity-40'
+                                                        } ${needsRating ? 'animate-pulse border-amber-500/50 shadow-amber-500/20' : ''}`}>
+
+                                                    {/* Background overlay for color without losing opacity */}
+                                                    <div className={`absolute inset-0 rounded-[inherit] -z-10 transition-colors duration-300 ${completed ? 'bg-green-500/5 group-hover:bg-green-500/10' : unlocked ? 'bg-blue-500/5 group-hover:bg-blue-500/10' : ''}`} />
                                                     <div className="flex items-center gap-4 mb-4">
                                                         <div className={`h-12 w-12 flex items-center justify-center rounded-2xl text-xl ${completed ? 'bg-green-500/20 text-green-400' :
                                                             unlocked ? 'bg-blue-500/20 text-blue-400' : 'bg-gray-800 text-gray-500'

@@ -1,14 +1,16 @@
 import { inject, singleton } from "tsyringe";
 import type { HydratedDocument } from "mongoose";
 import { MongoServerError } from "mongodb";
-import crypto from "node:crypto";
+import crypto, { randomUUID } from "node:crypto";
 import { fileTypeFromBuffer } from 'file-type';
+import ms from "ms";
 import type {
     InitiateRegistrationData,
     CompleteRegistrationData,
     InitiateEmailChangeData,
     CompleteEmailChangeData,
-    UpdateUserData
+    UpdateUserData,
+    VerificationTransactionResponse
 } from "./user.types.js";
 import { User, type IUser, type IUserDocument, type IUserPopulated, type IUserUnpopulated } from "./models/user.model.js";
 import { PreRegistration } from "./models/pre-registration.model.js";
@@ -32,6 +34,7 @@ import { MailService } from "@/services/mail.service.js";
 import { MailTemplates } from "@/services/mail.templates.js";
 import { S3Service, S3FileTooLargeError } from "@/services/s3.service.js";
 import { AuditService } from "../audit/audit.service.js";
+import { ServerConfig } from "@/config/server.config.js";
 
 export class EmailVerificationService {
     public static generateCode() {
@@ -49,46 +52,85 @@ export class UserService {
     constructor(
         @inject(MailService) private mailService: MailService,
         @inject(S3Service) private s3Service: S3Service,
-        @inject(AuditService) private auditService: AuditService
+        @inject(AuditService) private auditService: AuditService,
+        @inject(ServerConfig) private config: ServerConfig
     ) { }
 
-    public async initiateRegistration(data: InitiateRegistrationData): Promise<void> {
+    public async initiateRegistration(data: InitiateRegistrationData): Promise<VerificationTransactionResponse> {
         // Check if user already exists
         const userExists = await User.findOne({ email: data.email.toLowerCase() });
-        if (userExists) throw new EmailAlreadyInUseError(data.email);
+        if (userExists) {
+            const error = new EmailAlreadyInUseError(data.email);
+            this.auditService.register({
+                resource: "USER",
+                action: "FAILED_INITIATE_REGISTRATION",
+                details: {
+                    email: data.email,
+                    reason: error.code
+                }
+            });
+            throw error;
+        }
 
         const verificationCode = EmailVerificationService.generateCode();
         const hashedCode = EmailVerificationService.generateHashedCode(verificationCode);
+        const transactionId = randomUUID();
 
         // Save or update pre-registration
         await PreRegistration.findOneAndUpdate(
             { email: data.email.toLowerCase() },
             {
                 code: hashedCode,
-                expires: new Date(Date.now() + 3600000)
+                transaction_id: transactionId,
+                expires: new Date(Date.now() + ms(this.config.SECURITY_CODE_EXPIRATION))
             },
             { upsert: true, returnDocument: 'after' }
         );
 
-        const template = MailTemplates.emailVerification(verificationCode);
+        const template = MailTemplates.emailVerification(verificationCode, this.config.SECURITY_CODE_EXPIRATION);
         this.mailService.sendMail(data.email, template.subject, template.html);
 
         this.auditService.register({
             resource: "USER",
             action: "INITIATE_REGISTRATION",
             details: {
-                email: data.email
+                email: data.email,
+                transactionId
             }
         });
+
+        return { transactionId };
     }
 
     public async completeRegistration(data: CompleteRegistrationData): Promise<IUserUnpopulated> {
         const preReg = await PreRegistration.findOne({ email: data.email.toLowerCase() });
-        if (!preReg) throw new EmailVerificationCodeInvalidOrExpiredError();
+        if (!preReg) {
+            const error = new EmailVerificationCodeInvalidOrExpiredError();
+            this.auditService.register({
+                resource: "USER",
+                action: "FAILED_COMPLETE_REGISTRATION",
+                details: {
+                    email: data.email,
+                    reason: error.code,
+                    subReason: "NO_PRE_REGISTRATION"
+                }
+            });
+            throw error;
+        }
 
         const hashedCode = EmailVerificationService.generateHashedCode(data.code);
-        if (preReg.code !== hashedCode || preReg.expires < new Date()) {
-            throw new EmailVerificationCodeInvalidOrExpiredError();
+        if (preReg.code !== hashedCode || preReg.expires < new Date() || preReg.transaction_id !== data.transactionId) {
+            const error = new EmailVerificationCodeInvalidOrExpiredError();
+            this.auditService.register({
+                resource: "USER",
+                action: "FAILED_COMPLETE_REGISTRATION",
+                details: {
+                    email: data.email,
+                    reason: error.code,
+                    subReason: preReg.expires < new Date() ? "EXPIRED" : "INVALID_CODE"
+                }
+            });
+            throw error;
         }
 
         try {
@@ -96,7 +138,8 @@ export class UserService {
                 username: data.username,
                 email: data.email.toLowerCase(),
                 password: PasswordService.hashPassword(data.password),
-                preferences: data.preferences
+                preferences: data.preferences,
+                is_password_set: true
             });
 
             // Clean up pre-registration
@@ -112,6 +155,9 @@ export class UserService {
                 }
             });
 
+            const welcomeTemplate = MailTemplates.welcomeEmail(this.config.FRONTEND_URL);
+            this.mailService.sendMail(user.email, welcomeTemplate.subject, welcomeTemplate.html);
+
             return this.sanitizeUser(user);
         } catch (error) {
             if (error instanceof MongoServerError && error.code === 11000) {
@@ -123,32 +169,45 @@ export class UserService {
         }
     }
 
-    public async initiateEmailChange(userId: string, data: InitiateEmailChangeData): Promise<void> {
+    public async initiateEmailChange(userId: string, data: InitiateEmailChangeData): Promise<VerificationTransactionResponse> {
         const user = await User.findById(userId);
         if (!user) throw new UserNotFoundError(userId);
 
         const newEmail = data.newEmail.toLowerCase();
-        if (newEmail === user.email) return;
+        if (newEmail === user.email) return { transactionId: "" }; // O lanzar error si prefieres
 
         // Check availability
         const emailInUse = await User.findOne({ email: newEmail });
-        if (emailInUse) throw new EmailAlreadyInUseError(newEmail);
+        if (emailInUse) {
+            const error = new EmailAlreadyInUseError(newEmail);
+            this.auditService.register({
+                resource: "USER",
+                action: "FAILED_INITIATE_EMAIL_CHANGE",
+                details: {
+                    userId,
+                    newEmail,
+                    reason: error.code
+                }
+            });
+            throw error;
+        }
 
         const oldEmailCode = EmailVerificationService.generateCode();
         const newEmailCode = EmailVerificationService.generateCode();
+        const transactionId = randomUUID();
 
         user.email_change_request = {
             new_email: newEmail,
             old_email_code: EmailVerificationService.generateHashedCode(oldEmailCode),
             new_email_code: EmailVerificationService.generateHashedCode(newEmailCode),
-            expires: new Date(Date.now() + 3600000)
+            expires: new Date(Date.now() + ms(this.config.SECURITY_CODE_EXPIRATION))
         };
 
         await user.save();
 
         // Send both emails
-        const oldTemplate = MailTemplates.emailChangeSecurity(oldEmailCode);
-        const newTemplate = MailTemplates.emailChangeVerification(newEmailCode);
+        const oldTemplate = MailTemplates.emailChangeSecurity(oldEmailCode, this.config.SECURITY_CODE_EXPIRATION);
+        const newTemplate = MailTemplates.emailChangeVerification(newEmailCode, this.config.SECURITY_CODE_EXPIRATION);
 
         this.mailService.sendMail(user.email, oldTemplate.subject, oldTemplate.html);
         this.mailService.sendMail(newEmail, newTemplate.subject, newTemplate.html);
@@ -160,6 +219,8 @@ export class UserService {
                 newEmail: newEmail
             }
         });
+
+        return { transactionId };
     }
 
     public async cancelEmailChange(userId: string): Promise<void> {
@@ -178,7 +239,7 @@ export class UserService {
     }
 
     public async completeEmailChange(userId: string, data: CompleteEmailChangeData): Promise<IUserUnpopulated> {
-        const user = await User.findById(userId).select("+email_change_request.old_email_code +email_change_request.new_email_code");
+        const user = await User.findById(userId).select("+email_change_request.old_email_code +email_change_request.new_email_code +email_change_request.transaction_id");
         if (!user) throw new UserNotFoundError(userId);
         if (!user.email_change_request) throw new Error("No hay ninguna solicitud de cambio de email pendiente");
 
@@ -193,7 +254,16 @@ export class UserService {
 
         if (user.email_change_request.old_email_code !== hashedOld ||
             user.email_change_request.new_email_code !== hashedNew) {
-            throw new EmailVerificationCodeInvalidOrExpiredError();
+            const error = new EmailVerificationCodeInvalidOrExpiredError();
+            this.auditService.register({
+                resource: "USER",
+                action: "FAILED_COMPLETE_EMAIL_CHANGE",
+                details: {
+                    userId,
+                    reason: error.code
+                }
+            });
+            throw error;
         }
 
         const oldEmail = user.email;
@@ -203,6 +273,10 @@ export class UserService {
         user.email_change_request = undefined;
         user.auth_version++;
         await user.save();
+
+        const successTemplate = MailTemplates.securityActionSuccess("Cambio de correo electrónico");
+        this.mailService.sendMail(oldEmail, successTemplate.subject, successTemplate.html);
+        this.mailService.sendMail(newEmail, successTemplate.subject, successTemplate.html);
 
         this.auditService.register({
             resource: "USER",
@@ -219,9 +293,21 @@ export class UserService {
     public async updateUser(userId: string, data: UpdateUserData): Promise<IUserUnpopulated> {
         if (data.username) {
             const existing = await User.findOne({ username: data.username, _id: { $ne: userId } });
-            if (existing) throw new UsernameAlreadyInUseError(data.username);
+            if (existing) {
+                const error = new UsernameAlreadyInUseError(data.username);
+                this.auditService.register({
+                    resource: "USER",
+                    action: "FAILED_UPDATE",
+                    details: {
+                        userId,
+                        username: data.username,
+                        reason: error.code
+                    }
+                });
+                throw error;
+            }
         }
-        const user = await User.findByIdAndUpdate(userId, data, { returnDocument: 'after' });
+        const user = await User.findByIdAndUpdate(userId, data, { returnDocument: 'after', runValidators: true });
         if (!user) throw new UserNotFoundError(userId);
 
         this.auditService.register({
@@ -292,6 +378,58 @@ export class UserService {
     public async sendFriendRequest(requesterId: string, targetId: string): Promise<void> {
         if (requesterId === targetId) throw new SelfFriendRequestError();
 
+        // Check if target is "flights" for auto-acceptance
+        const target = await User.findById(targetId);
+        if (!target) throw new UserNotFoundError(targetId);
+
+        if (target.username.toLowerCase() === 'flaights') {
+            // Auto-accept: check if already friends first
+            if (target.friends.some(f => (typeof f.user === 'string' ? f.user : f.user._id) === requesterId)) {
+                throw new AlreadyFriendsError();
+            }
+
+            const now = new Date();
+            // Add to both friends lists and clean up any existing requests
+            await Promise.all([
+                User.updateOne(
+                    { _id: requesterId },
+                    {
+                        $push: { friends: { user: targetId, friend_since: now } },
+                        $pull: { sent_friend_requests: targetId, received_friend_requests: targetId }
+                    }
+                ),
+                User.updateOne(
+                    { _id: targetId },
+                    {
+                        $push: { friends: { user: requesterId, friend_since: now } },
+                        $pull: { sent_friend_requests: requesterId, received_friend_requests: requesterId }
+                    }
+                )
+            ]);
+
+            this.auditService.register({
+                resource: "USER",
+                action: "SEND_FRIEND_REQUEST",
+                details: {
+                    userId: targetId
+                }
+            });
+
+            this.auditService.register({
+                resource: "USER",
+                action: "ACCEPT_FRIEND_REQUEST",
+                details: {
+                    userId: requesterId
+                },
+                user: {
+                    id: targetId,
+                    ip: "system",
+                    userAgent: "system"
+                }
+            });
+            return;
+        }
+
         const bulkResult = await User.bulkWrite([
             {
                 updateOne: {
@@ -308,13 +446,10 @@ export class UserService {
         ]);
 
         if (bulkResult.modifiedCount < 2) {
-            const [requester, target] = await Promise.all([
-                User.findById(requesterId),
-                User.findById(targetId)
-            ]);
-
+            const requester = await User.findById(requesterId);
             if (!requester) throw new UserNotFoundError(requesterId);
-            if (!target) throw new UserNotFoundError(targetId);
+
+            // target was already fetched above
 
             if (target.friends.some(f => (typeof f.user === 'string' ? f.user : f.user._id) === requesterId) || requester.friends.some(f => (typeof f.user === 'string' ? f.user : f.user._id) === targetId)) throw new AlreadyFriendsError();
             if (requester.sent_friend_requests.some(id => (typeof id === 'string' ? id : id._id) === targetId)) throw new FriendRequestAlreadySentError();

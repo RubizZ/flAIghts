@@ -107,6 +107,7 @@ export interface SearchResponseData {
     source: "manual" | "agent";
     departure_itineraries?: ItineraryResponse[];
     return_itineraries?: ItineraryResponse[];
+    shared: boolean;
     /**
      * @isDateTime
      */
