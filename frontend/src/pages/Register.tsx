@@ -251,8 +251,8 @@ export default function Register() {
                             <button
                                 type="button"
                                 onClick={handleNextStep}
-                                disabled={isInitiating || !formData.turnstileToken}
-                                className="mt-4 rounded-lg bg-brand p-3 text-content-on-brand font-bold hover:scale-[1.02] active:scale-95 transition-all shadow-lg shadow-brand/20 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                                disabled={isInitiating || !formData.turnstileToken || !formData.email}
+                                className="mt-4 rounded-lg bg-brand p-3 text-content-on-brand font-bold enabled:hover:scale-[1.02] enabled:active:scale-95 transition-all shadow-lg shadow-brand/20 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                                 {isInitiating ? "Enviando código..." : "Continuar"}
                             </button>
@@ -403,8 +403,8 @@ export default function Register() {
                             <button
                                 type="button"
                                 onClick={handleRegister}
-                                disabled={isCompleting}
-                                className="mt-4 rounded-lg bg-brand p-3 text-content-on-brand font-bold hover:scale-[1.02] active:scale-95 transition-all shadow-lg shadow-brand/20 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                                disabled={isCompleting || !formData.code || !formData.username || !formData.password || !formData.confirmPassword || !formData.acceptedTerms}
+                                className="mt-4 rounded-lg bg-brand p-3 text-content-on-brand font-bold enabled:hover:scale-[1.02] enabled:active:scale-95 transition-all shadow-lg shadow-brand/20 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                                 {isCompleting ? "Creando cuenta..." : "Completar Registro"}
                             </button>
