@@ -3,6 +3,7 @@ import { User, type IUserDocument } from "../users/models/user.model.js";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import crypto from "node:crypto";
+import ms from "ms";
 import { MailService } from "../../services/mail.service.js";
 import { MailTemplates } from "../../services/mail.templates.js";
 import { ResetTokenInvalidOrExpiredError, LoginUserNotFoundError, InvalidPasswordError, NewPasswordSameAsOldError, InvalidTokenError, TokenUserNotFoundError, AuthenticationVersionMismatchError, GoogleAccountAlreadyLinkedError, CannotDisconnectGoogleWithoutPasswordError, PasswordAlreadySetError, AccountLinkRequiredError, InvalidResetCodeError } from "./auth.errors.js";
