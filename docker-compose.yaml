@@ -104,7 +104,7 @@ services:
       - .env
     environment:
       - CHOKIDAR_USEPOLLING=true
-      - VITE_BACKEND_API_BASE_URL="/api"
+      - VITE_BACKEND_API_BASE_URL=/api
       - VITE_EVALUATION_MODE=${VITE_EVALUATION_MODE:-true}
       - VITE_TURNSTILE_SITE_KEY=1x00000000000000000000AA
     ports:

@@ -27,7 +27,8 @@ export default function Register() {
         password: "",
         confirmPassword: "",
         acceptedTerms: false,
-        turnstileToken: ""
+        turnstileToken: "",
+        turnstileTokenStep2: ""
     });
     const [isHoveringLink, setIsHoveringLink] = useState(false);
     const [errors, setErrors] = useState({
@@ -99,12 +100,18 @@ export default function Register() {
     const { mutate: completeRegistration, isPending: isCompleting } = useCompleteRegistration({
         mutation: {
             onSuccess: () => {
-                performLogin({
-                    data: {
-                        identifier: formData.email,
-                        password: formData.password,
-                    }
-                });
+                if (formData.turnstileTokenStep2) {
+                    performLogin({
+                        data: {
+                            identifier: formData.email,
+                            password: formData.password,
+                            turnstileToken: formData.turnstileTokenStep2
+                        }
+                    });
+                } else {
+                    toast.success("¡Cuenta creada correctamente! Por favor, inicia sesión para continuar.");
+                    navigate("/login");
+                }
             },
             onError: (error) => {
                 if (error.code === "REQUEST_VALIDATION_ERROR") {
@@ -235,8 +242,8 @@ export default function Register() {
                                 icon={<Mail size={18} />}
                             />
 
-                            <TurnstileWidget 
-                                onVerify={(token) => setFormData(prev => ({ ...prev, turnstileToken: token }))} 
+                            <TurnstileWidget
+                                onVerify={(token) => setFormData(prev => ({ ...prev, turnstileToken: token }))}
                                 onExpire={() => setFormData(prev => ({ ...prev, turnstileToken: "" }))}
                                 onError={() => setFormData(prev => ({ ...prev, turnstileToken: "" }))}
                             />
@@ -386,6 +393,12 @@ export default function Register() {
                                 </label>
                                 {errors.acceptedTerms && <p className="text-[10px] text-red-500 ml-8 font-bold animate-shake">{errors.acceptedTerms}</p>}
                             </div>
+
+                            <TurnstileWidget
+                                onVerify={(token) => setFormData(prev => ({ ...prev, turnstileTokenStep2: token }))}
+                                onExpire={() => setFormData(prev => ({ ...prev, turnstileTokenStep2: "" }))}
+                                onError={() => setFormData(prev => ({ ...prev, turnstileTokenStep2: "" }))}
+                            />
 
                             <button
                                 type="button"
