@@ -3,6 +3,7 @@ import type { HydratedDocument } from "mongoose";
 import { MongoServerError } from "mongodb";
 import crypto, { randomUUID } from "node:crypto";
 import { fileTypeFromBuffer } from 'file-type';
+import ms from "ms";
 import type {
     InitiateRegistrationData,
     CompleteRegistrationData,
@@ -33,6 +34,7 @@ import { MailService } from "@/services/mail.service.js";
 import { MailTemplates } from "@/services/mail.templates.js";
 import { S3Service, S3FileTooLargeError } from "@/services/s3.service.js";
 import { AuditService } from "../audit/audit.service.js";
+import { ServerConfig } from "@/config/server.config.js";
 
 export class EmailVerificationService {
     public static generateCode() {
@@ -50,7 +52,8 @@ export class UserService {
     constructor(
         @inject(MailService) private mailService: MailService,
         @inject(S3Service) private s3Service: S3Service,
-        @inject(AuditService) private auditService: AuditService
+        @inject(AuditService) private auditService: AuditService,
+        @inject(ServerConfig) private config: ServerConfig
     ) { }
 
     public async initiateRegistration(data: InitiateRegistrationData): Promise<VerificationTransactionResponse> {
@@ -79,12 +82,12 @@ export class UserService {
             {
                 code: hashedCode,
                 transaction_id: transactionId,
-                expires: new Date(Date.now() + 3600000)
+                expires: new Date(Date.now() + ms(this.config.SECURITY_CODE_EXPIRATION))
             },
             { upsert: true, returnDocument: 'after' }
         );
 
-        const template = MailTemplates.emailVerification(verificationCode);
+        const template = MailTemplates.emailVerification(verificationCode, this.config.SECURITY_CODE_EXPIRATION);
         this.mailService.sendMail(data.email, template.subject, template.html);
 
         this.auditService.register({
@@ -197,14 +200,14 @@ export class UserService {
             new_email: newEmail,
             old_email_code: EmailVerificationService.generateHashedCode(oldEmailCode),
             new_email_code: EmailVerificationService.generateHashedCode(newEmailCode),
-            expires: new Date(Date.now() + 3600000)
+            expires: new Date(Date.now() + ms(this.config.SECURITY_CODE_EXPIRATION))
         };
 
         await user.save();
 
         // Send both emails
-        const oldTemplate = MailTemplates.emailChangeSecurity(oldEmailCode);
-        const newTemplate = MailTemplates.emailChangeVerification(newEmailCode);
+        const oldTemplate = MailTemplates.emailChangeSecurity(oldEmailCode, this.config.SECURITY_CODE_EXPIRATION);
+        const newTemplate = MailTemplates.emailChangeVerification(newEmailCode, this.config.SECURITY_CODE_EXPIRATION);
 
         this.mailService.sendMail(user.email, oldTemplate.subject, oldTemplate.html);
         this.mailService.sendMail(newEmail, newTemplate.subject, newTemplate.html);

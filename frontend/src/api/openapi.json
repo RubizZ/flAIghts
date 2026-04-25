@@ -6788,10 +6788,43 @@
           "is_password_set": {
             "type": "boolean"
           },
-          "password_reset_token": {
+          "badges": {
+            "items": {
+              "properties": {
+                "earned_at": {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                "icon": {
+                  "type": "string"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "id": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "earned_at",
+                "icon",
+                "name",
+                "id"
+              ],
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "security_code": {
             "type": "string"
           },
-          "password_reset_expires": {
+          "security_code_id": {
+            "type": "string"
+          },
+          "security_code_action": {
+            "type": "string"
+          },
+          "security_code_expires": {
             "type": "string",
             "format": "date-time"
           },
@@ -6908,10 +6941,43 @@
           "is_password_set": {
             "type": "boolean"
           },
-          "password_reset_token": {
+          "badges": {
+            "items": {
+              "properties": {
+                "earned_at": {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                "icon": {
+                  "type": "string"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "id": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "earned_at",
+                "icon",
+                "name",
+                "id"
+              ],
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "security_code": {
             "type": "string"
           },
-          "password_reset_expires": {
+          "security_code_id": {
+            "type": "string"
+          },
+          "security_code_action": {
+            "type": "string"
+          },
+          "security_code_expires": {
             "type": "string",
             "format": "date-time"
           },
@@ -7502,6 +7568,51 @@
           "fullName": {
             "type": "string"
           },
+          "age": {
+            "type": "number",
+            "format": "double"
+          },
+          "gender": {
+            "type": "string"
+          },
+          "educationLevel": {
+            "type": "string"
+          },
+          "screenInfo": {
+            "properties": {
+              "devicePixelRatio": {
+                "type": "number",
+                "format": "double"
+              },
+              "innerHeight": {
+                "type": "number",
+                "format": "double"
+              },
+              "innerWidth": {
+                "type": "number",
+                "format": "double"
+              },
+              "height": {
+                "type": "number",
+                "format": "double"
+              },
+              "width": {
+                "type": "number",
+                "format": "double"
+              }
+            },
+            "required": [
+              "devicePixelRatio",
+              "innerHeight",
+              "innerWidth",
+              "height",
+              "width"
+            ],
+            "type": "object"
+          },
+          "userAgent": {
+            "type": "string"
+          },
           "receivedAt": {
             "type": "string",
             "format": "date-time"
@@ -7511,6 +7622,7 @@
           "_id",
           "results",
           "timestamp",
+          "userAgent",
           "receivedAt"
         ],
         "type": "object",
@@ -7541,6 +7653,51 @@
           "fullName": {
             "type": "string"
           },
+          "age": {
+            "type": "number",
+            "format": "double"
+          },
+          "gender": {
+            "type": "string"
+          },
+          "educationLevel": {
+            "type": "string"
+          },
+          "screenInfo": {
+            "properties": {
+              "devicePixelRatio": {
+                "type": "number",
+                "format": "double"
+              },
+              "innerHeight": {
+                "type": "number",
+                "format": "double"
+              },
+              "innerWidth": {
+                "type": "number",
+                "format": "double"
+              },
+              "height": {
+                "type": "number",
+                "format": "double"
+              },
+              "width": {
+                "type": "number",
+                "format": "double"
+              }
+            },
+            "required": [
+              "devicePixelRatio",
+              "innerHeight",
+              "innerWidth",
+              "height",
+              "width"
+            ],
+            "type": "object"
+          },
+          "userAgent": {
+            "type": "string"
+          },
           "receivedAt": {
             "type": "string",
             "format": "date-time"
@@ -7553,6 +7710,7 @@
           "_id",
           "results",
           "timestamp",
+          "userAgent",
           "receivedAt"
         ],
         "type": "object",
