@@ -89,6 +89,187 @@
         "$ref": "#/components/schemas/FailResponse_EMAIL_ALREADY_IN_USE._field-email--value-string__",
         "description": "Extrae automáticamente code y details de una clase AppError.\r\n\r\nEjemplo:\r\n- FailResponseFromError<UserAlreadyExistsError> → { status: 'fail', data: { code: 'CONFLICT', message: string, details: { field, value } } }\r\n- FailResponseFromError<UserNotFoundError> → { status: 'fail', data: { code: 'NOT_FOUND', message: string, details: { userId } } }"
       },
+      "FailResponse_TURNSTILE_VERIFICATION_FAILED.undefined_": {
+        "properties": {
+          "data": {
+            "properties": {
+              "details": {},
+              "message": {
+                "type": "string"
+              },
+              "code": {
+                "type": "string",
+                "enum": [
+                  "TURNSTILE_VERIFICATION_FAILED"
+                ],
+                "nullable": false
+              }
+            },
+            "required": [
+              "message",
+              "code"
+            ],
+            "type": "object"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "fail"
+            ],
+            "nullable": false
+          }
+        },
+        "required": [
+          "data",
+          "status"
+        ],
+        "type": "object",
+        "description": "Tipo genérico base para respuestas de error con código y detalles opcionales."
+      },
+      "FailResponseFromError_TurnstileVerificationFailedError_": {
+        "$ref": "#/components/schemas/FailResponse_TURNSTILE_VERIFICATION_FAILED.undefined_",
+        "description": "Extrae automáticamente code y details de una clase AppError.\r\n\r\nEjemplo:\r\n- FailResponseFromError<UserAlreadyExistsError> → { status: 'fail', data: { code: 'CONFLICT', message: string, details: { field, value } } }\r\n- FailResponseFromError<UserNotFoundError> → { status: 'fail', data: { code: 'NOT_FOUND', message: string, details: { userId } } }"
+      },
+      "FailResponse_TURNSTILE_MISSING_TOKEN.undefined_": {
+        "properties": {
+          "data": {
+            "properties": {
+              "details": {},
+              "message": {
+                "type": "string"
+              },
+              "code": {
+                "type": "string",
+                "enum": [
+                  "TURNSTILE_MISSING_TOKEN"
+                ],
+                "nullable": false
+              }
+            },
+            "required": [
+              "message",
+              "code"
+            ],
+            "type": "object"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "fail"
+            ],
+            "nullable": false
+          }
+        },
+        "required": [
+          "data",
+          "status"
+        ],
+        "type": "object",
+        "description": "Tipo genérico base para respuestas de error con código y detalles opcionales."
+      },
+      "FailResponseFromError_TurnstileMissingTokenError_": {
+        "$ref": "#/components/schemas/FailResponse_TURNSTILE_MISSING_TOKEN.undefined_",
+        "description": "Extrae automáticamente code y details de una clase AppError.\r\n\r\nEjemplo:\r\n- FailResponseFromError<UserAlreadyExistsError> → { status: 'fail', data: { code: 'CONFLICT', message: string, details: { field, value } } }\r\n- FailResponseFromError<UserNotFoundError> → { status: 'fail', data: { code: 'NOT_FOUND', message: string, details: { userId } } }"
+      },
+      "FailResponse_TURNSTILE_INVALID_TOKEN.undefined_": {
+        "properties": {
+          "data": {
+            "properties": {
+              "details": {},
+              "message": {
+                "type": "string"
+              },
+              "code": {
+                "type": "string",
+                "enum": [
+                  "TURNSTILE_INVALID_TOKEN"
+                ],
+                "nullable": false
+              }
+            },
+            "required": [
+              "message",
+              "code"
+            ],
+            "type": "object"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "fail"
+            ],
+            "nullable": false
+          }
+        },
+        "required": [
+          "data",
+          "status"
+        ],
+        "type": "object",
+        "description": "Tipo genérico base para respuestas de error con código y detalles opcionales."
+      },
+      "FailResponseFromError_TurnstileInvalidTokenError_": {
+        "$ref": "#/components/schemas/FailResponse_TURNSTILE_INVALID_TOKEN.undefined_",
+        "description": "Extrae automáticamente code y details de una clase AppError.\r\n\r\nEjemplo:\r\n- FailResponseFromError<UserAlreadyExistsError> → { status: 'fail', data: { code: 'CONFLICT', message: string, details: { field, value } } }\r\n- FailResponseFromError<UserNotFoundError> → { status: 'fail', data: { code: 'NOT_FOUND', message: string, details: { userId } } }"
+      },
+      "FailResponse_TURNSTILE_TOKEN_ALREADY_SPENT.undefined_": {
+        "properties": {
+          "data": {
+            "properties": {
+              "details": {},
+              "message": {
+                "type": "string"
+              },
+              "code": {
+                "type": "string",
+                "enum": [
+                  "TURNSTILE_TOKEN_ALREADY_SPENT"
+                ],
+                "nullable": false
+              }
+            },
+            "required": [
+              "message",
+              "code"
+            ],
+            "type": "object"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "fail"
+            ],
+            "nullable": false
+          }
+        },
+        "required": [
+          "data",
+          "status"
+        ],
+        "type": "object",
+        "description": "Tipo genérico base para respuestas de error con código y detalles opcionales."
+      },
+      "FailResponseFromError_TurnstileTokenAlreadySpentError_": {
+        "$ref": "#/components/schemas/FailResponse_TURNSTILE_TOKEN_ALREADY_SPENT.undefined_",
+        "description": "Extrae automáticamente code y details de una clase AppError.\r\n\r\nEjemplo:\r\n- FailResponseFromError<UserAlreadyExistsError> → { status: 'fail', data: { code: 'CONFLICT', message: string, details: { field, value } } }\r\n- FailResponseFromError<UserNotFoundError> → { status: 'fail', data: { code: 'NOT_FOUND', message: string, details: { userId } } }"
+      },
+      "TurnstileFailResponse": {
+        "anyOf": [
+          {
+            "$ref": "#/components/schemas/FailResponseFromError_TurnstileVerificationFailedError_"
+          },
+          {
+            "$ref": "#/components/schemas/FailResponseFromError_TurnstileMissingTokenError_"
+          },
+          {
+            "$ref": "#/components/schemas/FailResponseFromError_TurnstileInvalidTokenError_"
+          },
+          {
+            "$ref": "#/components/schemas/FailResponseFromError_TurnstileTokenAlreadySpentError_"
+          }
+        ],
+        "description": "Tipo de respuesta para errores de Turnstile (403)."
+      },
       "ValidationDetails_BodyPath_InitiateRegistrationData__": {
         "properties": {
           "body": {
@@ -117,6 +298,22 @@
                   "invalid string value",
                   "invalid email format",
                   "Not match in '^(?:[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*|\"(?:[\\x01-\\x08\\x0b\\x0c\\x0e-\\x1f\\x21\\x23-\\x5b\\x5d-\\x7f]|\\\\[\\x01-\\x09\\x0b\\x0c\\x0e-\\x7f])*\")@(?:(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?|\\[(?:(?:(2(5[0-5]|[0-4][0-9])|1[0-9][0-9]|[1-9]?[0-9]))\\.){3}(?:(2(5[0-5]|[0-4][0-9])|1[0-9][0-9]|[1-9]?[0-9])|[a-z0-9-]*[a-z0-9]:(?:[\\x01-\\x08\\x0b\\x0c\\x0e-\\x1f\\x21-\\x5a\\x53-\\x7f]|\\\\[\\x01-\\x09\\x0b\\x0c\\x0e-\\x7f])+)\\])$'"
+                ]
+              }
+            },
+            "required": [
+              "message"
+            ],
+            "type": "object"
+          },
+          "body.turnstileToken": {
+            "properties": {
+              "value": {},
+              "message": {
+                "type": "string",
+                "enum": [
+                  "'turnstileToken' is required",
+                  "invalid string value"
                 ]
               }
             },
@@ -177,10 +374,15 @@
             "type": "string",
             "format": "email",
             "pattern": "^(?:[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*|\"(?:[\\x01-\\x08\\x0b\\x0c\\x0e-\\x1f\\x21\\x23-\\x5b\\x5d-\\x7f]|\\\\[\\x01-\\x09\\x0b\\x0c\\x0e-\\x7f])*\")@(?:(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?|\\[(?:(?:(2(5[0-5]|[0-4][0-9])|1[0-9][0-9]|[1-9]?[0-9]))\\.){3}(?:(2(5[0-5]|[0-4][0-9])|1[0-9][0-9]|[1-9]?[0-9])|[a-z0-9-]*[a-z0-9]:(?:[\\x01-\\x08\\x0b\\x0c\\x0e-\\x1f\\x21-\\x5a\\x53-\\x7f]|\\\\[\\x01-\\x09\\x0b\\x0c\\x0e-\\x7f])+)\\])$"
+          },
+          "turnstileToken": {
+            "type": "string",
+            "description": "Cloudflare Turnstile token for bot protection."
           }
         },
         "required": [
-          "email"
+          "email",
+          "turnstileToken"
         ],
         "type": "object",
         "additionalProperties": false
@@ -4001,6 +4203,22 @@
             ],
             "type": "object"
           },
+          "body.turnstileToken": {
+            "properties": {
+              "value": {},
+              "message": {
+                "type": "string",
+                "enum": [
+                  "'turnstileToken' is required",
+                  "invalid string value"
+                ]
+              }
+            },
+            "required": [
+              "message"
+            ],
+            "type": "object"
+          },
           "body.password": {
             "properties": {
               "value": {},
@@ -4028,18 +4246,6 @@
                   "invalid string value",
                   "minLength 3"
                 ]
-              }
-            },
-            "required": [
-              "message"
-            ],
-            "type": "object"
-          },
-          "body.responseType": {
-            "properties": {
-              "value": {},
-              "message": {
-                "type": "string"
               }
             },
             "required": [
@@ -4155,19 +4361,49 @@
             "type": "string",
             "minLength": 8
           },
-          "responseType": {
+          "turnstileToken": {
             "type": "string",
-            "enum": [
-              "cookie",
-              "json"
-            ],
-            "description": "Indicates how the token should be returned.",
-            "default": "json"
+            "description": "Cloudflare Turnstile token for bot protection."
           }
         },
         "required": [
           "identifier",
-          "password"
+          "password",
+          "turnstileToken"
+        ],
+        "type": "object",
+        "additionalProperties": false
+      },
+      "MessageResponseData": {
+        "description": "Respuesta de éxito solo con mensaje (sin datos).\r\nEl wrapper global lo convertirá en: { status: 'success', data: { message: string } }",
+        "properties": {
+          "message": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "message"
+        ],
+        "type": "object",
+        "additionalProperties": false
+      },
+      "SuccessResponse_MessageResponseData_": {
+        "description": "Wrapper de éxito JSend (aplicado por el middleware global).",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "success"
+            ],
+            "nullable": false
+          },
+          "data": {
+            "$ref": "#/components/schemas/MessageResponseData"
+          }
+        },
+        "required": [
+          "status",
+          "data"
         ],
         "type": "object",
         "additionalProperties": false
@@ -4183,18 +4419,6 @@
                   "'body' is required",
                   "invalid object"
                 ]
-              }
-            },
-            "required": [
-              "message"
-            ],
-            "type": "object"
-          },
-          "body.responseType": {
-            "properties": {
-              "value": {},
-              "message": {
-                "type": "string"
               }
             },
             "required": [
@@ -4268,53 +4492,10 @@
         "properties": {
           "credential": {
             "type": "string"
-          },
-          "responseType": {
-            "type": "string",
-            "enum": [
-              "cookie",
-              "json"
-            ],
-            "description": "Indicates how the token should be returned.",
-            "default": "json"
           }
         },
         "required": [
           "credential"
-        ],
-        "type": "object",
-        "additionalProperties": false
-      },
-      "MessageResponseData": {
-        "description": "Respuesta de éxito solo con mensaje (sin datos).\r\nEl wrapper global lo convertirá en: { status: 'success', data: { message: string } }",
-        "properties": {
-          "message": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "message"
-        ],
-        "type": "object",
-        "additionalProperties": false
-      },
-      "SuccessResponse_MessageResponseData_": {
-        "description": "Wrapper de éxito JSend (aplicado por el middleware global).",
-        "properties": {
-          "status": {
-            "type": "string",
-            "enum": [
-              "success"
-            ],
-            "nullable": false
-          },
-          "data": {
-            "$ref": "#/components/schemas/MessageResponseData"
-          }
-        },
-        "required": [
-          "status",
-          "data"
         ],
         "type": "object",
         "additionalProperties": false
@@ -4965,6 +5146,22 @@
               "message"
             ],
             "type": "object"
+          },
+          "body.turnstileToken": {
+            "properties": {
+              "value": {},
+              "message": {
+                "type": "string",
+                "enum": [
+                  "'turnstileToken' is required",
+                  "invalid string value"
+                ]
+              }
+            },
+            "required": [
+              "message"
+            ],
+            "type": "object"
           }
         },
         "type": "object",
@@ -5021,10 +5218,15 @@
             "type": "string",
             "format": "email",
             "pattern": "^(?:[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*|\"(?:[\\x01-\\x08\\x0b\\x0c\\x0e-\\x1f\\x21\\x23-\\x5b\\x5d-\\x7f]|\\\\[\\x01-\\x09\\x0b\\x0c\\x0e-\\x7f])*\")@(?:(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?|\\[(?:(?:(2(5[0-5]|[0-4][0-9])|1[0-9][0-9]|[1-9]?[0-9]))\\.){3}(?:(2(5[0-5]|[0-4][0-9])|1[0-9][0-9]|[1-9]?[0-9])|[a-z0-9-]*[a-z0-9]:(?:[\\x01-\\x08\\x0b\\x0c\\x0e-\\x1f\\x21-\\x5a\\x53-\\x7f]|\\\\[\\x01-\\x09\\x0b\\x0c\\x0e-\\x7f])+)\\])$"
+          },
+          "turnstileToken": {
+            "type": "string",
+            "description": "Cloudflare Turnstile token for bot protection."
           }
         },
         "required": [
-          "email"
+          "email",
+          "turnstileToken"
         ],
         "type": "object",
         "additionalProperties": false
@@ -6034,6 +6236,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/SuccessResponseType"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Verificación de seguridad fallida",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TurnstileFailResponse"
                 }
               }
             }
@@ -7745,6 +7957,16 @@
               }
             }
           },
+          "403": {
+            "description": "Verificación de seguridad fallida",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TurnstileFailResponse"
+                }
+              }
+            }
+          },
           "422": {
             "description": "Error de validación",
             "content": {
@@ -7756,18 +7978,85 @@
             }
           }
         },
-        "description": "Inicia sesión con un identificador (email o username) y contraseña.",
+        "description": "Inicia sesión de forma tradicional (JSON).\r\n\r\nAutentica al usuario usando su identificador (email o username) y contraseña.\r\nDevuelve el token JWT directamente en el cuerpo de la respuesta para que el cliente lo gestione manualmente.",
         "tags": [
           "Auth"
         ],
         "security": [],
         "parameters": [],
         "requestBody": {
+          "description": "Datos de inicio de sesión e identificador de Turnstile.",
           "required": true,
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/LoginRequest"
+                "$ref": "#/components/schemas/LoginRequest",
+                "description": "Datos de inicio de sesión e identificador de Turnstile."
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/login/web": {
+      "post": {
+        "operationId": "LoginWeb",
+        "responses": {
+          "200": {
+            "description": "Ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse_MessageResponseData_"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Credenciales inválidas",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FailResponseFromError_InvalidCredentialsError_"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Verificación de seguridad fallida",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TurnstileFailResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Error de validación",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LoginValidationFailResponse"
+                }
+              }
+            }
+          }
+        },
+        "description": "Inicia sesión optimizada para entornos web (Cookie).\r\n\r\nAutentica al usuario y establece una cookie HTTP-only con el token JWT.\r\nEsta opción es más segura para aplicaciones web ya que previene ataques XSS al no exponer el token al JS.",
+        "tags": [
+          "Auth"
+        ],
+        "security": [],
+        "parameters": [],
+        "requestBody": {
+          "description": "Datos de inicio de sesión e identificador de Turnstile.",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginRequest",
+                "description": "Datos de inicio de sesión e identificador de Turnstile."
               }
             }
           }
@@ -7809,18 +8098,75 @@
             }
           }
         },
-        "description": "Inicia sesión o registra usuario mediante Google OAuth.",
+        "description": "Inicia sesión mediante Google OAuth (JSON).\r\n\r\nAutentica o registra al usuario utilizando una credencial de Google.\r\nDevuelve el token JWT directamente en el cuerpo de la respuesta.",
         "tags": [
           "Auth"
         ],
         "security": [],
         "parameters": [],
         "requestBody": {
+          "description": "Credencial de Google.",
           "required": true,
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/GoogleLoginRequest"
+                "$ref": "#/components/schemas/GoogleLoginRequest",
+                "description": "Credencial de Google."
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/login/google/web": {
+      "post": {
+        "operationId": "LoginWithGoogleWeb",
+        "responses": {
+          "200": {
+            "description": "Ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse_MessageResponseData_"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token de Google inválido",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FailResponseFromError_InvalidTokenError_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Error de validación",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GoogleLoginValidationFailResponse"
+                }
+              }
+            }
+          }
+        },
+        "description": "Inicia sesión mediante Google OAuth optimizada para web (Cookie).\r\n\r\nAutentica o registra al usuario y establece una cookie HTTP-only con el token JWT.",
+        "tags": [
+          "Auth"
+        ],
+        "security": [],
+        "parameters": [],
+        "requestBody": {
+          "description": "Credencial de Google.",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GoogleLoginRequest",
+                "description": "Credencial de Google."
               }
             }
           }
@@ -7956,7 +8302,7 @@
             }
           }
         },
-        "description": "Cierra la sesión actual (limpia la cookie del navegador).",
+        "description": "Cierra la sesión del usuario actual.\r\n\r\nInvalida la sesión en el cliente borrando la cookie de autenticación.",
         "tags": [
           "Auth"
         ],
@@ -7989,7 +8335,7 @@
             }
           }
         },
-        "description": "Cierra todas las sesiones activas del usuario (invalida todos los tokens).",
+        "description": "Cierra todas las sesiones activas del usuario.\r\n\r\nInvalida todas las sesiones en el servidor (resetea auth_version) y\r\nsolicita al navegador limpiar la cookie actual.",
         "tags": [
           "Auth"
         ],
@@ -8155,6 +8501,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/SuccessResponse_MessageResponseData_"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Verificación de seguridad fallida",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TurnstileFailResponse"
                 }
               }
             }

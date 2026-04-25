@@ -23,7 +23,8 @@ import type {
 } from "./user.types.js";
 import { inject, injectable } from "tsyringe";
 import { UserService } from "./user.service.js";
-import type { AuthenticatedUser } from "../auth/auth.types.js";
+import { TurnstileService } from "../auth/turnstile.service.js";
+import type { AuthenticatedUser, TurnstileFailResponse } from "../auth/auth.types.js";
 import type { IFriend, IFriendPopulated, IUser, IUserUnpopulated } from "./models/user.model.js";
 import type { SuccessResponse as SuccessResponseType, FailResponseFromError, PathPath, QueryPath, ValidationDetails, RequestValidationFailResponse } from "../../utils/responses.js";
 import type { AuthFailResponse } from "../auth/auth.types.js";
@@ -49,7 +50,10 @@ import { profilePictureRateLimit } from "../../middlewares/rate-limit.middleware
 @Tags("Users")
 export class UsersController extends Controller {
 
-    constructor(@inject(UserService) private userService: UserService) {
+    constructor(
+        @inject(UserService) private userService: UserService,
+        @inject(TurnstileService) private turnstileService: TurnstileService
+    ) {
         super();
     }
 
@@ -59,8 +63,10 @@ export class UsersController extends Controller {
     @Post("/register/initiate")
     @SuccessResponse(200, "OK")
     @Response<FailResponseFromError<EmailAlreadyInUseError>>(409, "Email ya registrado")
+    @Response<TurnstileFailResponse>(403, "Verificación de seguridad fallida")
     @Response<InitiateRegistrationRequestValidationFailResponse>(422, "Error de validación")
-    public async initiateRegistration(@Body() body: InitiateRegistrationData): Promise<SuccessResponseType> {
+    public async initiateRegistration(@Body() body: InitiateRegistrationData, @Request() request: express.Request): Promise<SuccessResponseType> {
+        await this.turnstileService.verifyToken(body.turnstileToken, request.ip);
         await this.userService.initiateRegistration(body);
         return {} satisfies {} as any;
     }

@@ -128,3 +128,35 @@ export class PasswordAlreadySetError extends AppError<'PASSWORD_ALREADY_SET'> {
         super("Ya has establecido una contraseña. Usa el cambio de contraseña si quieres modificarla.");
     }
 }
+
+export abstract class TurnstileError<TCode extends string = string> extends AppError<TCode> {
+    public readonly statusCode: number = 403;
+}
+
+export class TurnstileVerificationFailedError extends TurnstileError<'TURNSTILE_VERIFICATION_FAILED'> {
+    public readonly code = 'TURNSTILE_VERIFICATION_FAILED';
+    constructor() {
+        super("La verificación de seguridad ha fallado. Por favor, inténtalo de nuevo.");
+    }
+}
+
+export class TurnstileMissingTokenError extends TurnstileError<'TURNSTILE_MISSING_TOKEN'> {
+    public readonly code = 'TURNSTILE_MISSING_TOKEN';
+    constructor() {
+        super("Falta el token de verificación de seguridad.");
+    }
+}
+
+export class TurnstileInvalidTokenError extends TurnstileError<'TURNSTILE_INVALID_TOKEN'> {
+    public readonly code = 'TURNSTILE_INVALID_TOKEN';
+    constructor() {
+        super("El token de seguridad no es válido.");
+    }
+}
+
+export class TurnstileTokenAlreadySpentError extends TurnstileError<'TURNSTILE_TOKEN_ALREADY_SPENT'> {
+    public readonly code = 'TURNSTILE_TOKEN_ALREADY_SPENT';
+    constructor() {
+        super("La verificación de seguridad ya ha sido utilizada o ha expirado.");
+    }
+}

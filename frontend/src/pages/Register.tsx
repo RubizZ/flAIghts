@@ -4,7 +4,7 @@ import AuthLayout from "@/components/layout/AuthLayout";
 import AuthCard from "@/components/ui/AuthCard";
 import FloatingLabelInput from "@/components/ui/FloatingLabelInput";
 import { useInitiateRegistration, useCompleteRegistration } from "@/api/generated/openapi/users";
-import { useLogin, useLoginWithGoogle } from "@/api/generated/openapi/auth";
+import { useLoginWeb, useLoginWithGoogleWeb } from "@/api/generated/openapi/auth";
 import { GoogleLogin } from '@react-oauth/google';
 import { useNavigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
@@ -12,6 +12,7 @@ import { getGetSelfUserQueryKey } from "@/api/generated/openapi/users";
 import { useAuth } from "@/context/AuthContext";
 import { Mail, ShieldCheck, User as UserIcon, Lock } from "lucide-react";
 import Logo from "@/components/ui/Logo";
+import TurnstileWidget from "@/components/ui/TurnstileWidget";
 
 export default function Register() {
     const navigate = useNavigate();
@@ -25,7 +26,8 @@ export default function Register() {
         username: "",
         password: "",
         confirmPassword: "",
-        acceptedTerms: false
+        acceptedTerms: false,
+        turnstileToken: ""
     });
     const [isHoveringLink, setIsHoveringLink] = useState(false);
     const [errors, setErrors] = useState({
@@ -43,7 +45,7 @@ export default function Register() {
         }
     }, [isAuthenticated, isLoading, navigate]);
 
-    const { mutate: performLogin } = useLogin({
+    const { mutate: performLogin } = useLoginWeb({
         mutation: {
             onSuccess: () => {
                 queryClient.invalidateQueries({ queryKey: getGetSelfUserQueryKey() });
@@ -56,7 +58,7 @@ export default function Register() {
         }
     });
 
-    const { mutate: performGoogleLogin, isPending: isGooglePending } = useLoginWithGoogle({
+    const { mutate: performGoogleLogin, isPending: isGooglePending } = useLoginWithGoogleWeb({
         mutation: {
             onSuccess: () => {
                 queryClient.invalidateQueries({ queryKey: getGetSelfUserQueryKey() });
@@ -80,6 +82,14 @@ export default function Register() {
                     newErrors.email = "Este email ya está registrado";
                 } else if (error.code === "REQUEST_VALIDATION_ERROR") {
                     if (error.details["body.email"]) newErrors.email = "El email no es válido";
+                } else if (error.code === "TURNSTILE_MISSING_TOKEN") {
+                    toast.error("Por favor, completa la verificación de seguridad.");
+                } else if (error.code === "TURNSTILE_INVALID_TOKEN") {
+                    toast.error("El token de seguridad no es válido. Inténtalo de nuevo.");
+                } else if (error.code === "TURNSTILE_TOKEN_ALREADY_SPENT") {
+                    toast.error("La verificación ha expirado o ya ha sido usada. Por favor, recarga el widget.");
+                } else if (error.code === "TURNSTILE_VERIFICATION_FAILED") {
+                    toast.error("La verificación de seguridad ha fallado. Por favor, inténtalo de nuevo.");
                 }
                 setErrors(newErrors);
             }
@@ -93,7 +103,6 @@ export default function Register() {
                     data: {
                         identifier: formData.email,
                         password: formData.password,
-                        responseType: 'cookie'
                     }
                 });
             },
@@ -155,7 +164,7 @@ export default function Register() {
             setErrors(prev => ({ ...prev, email: "El email es obligatorio" }));
             return;
         }
-        initiateRegistration({ data: { email: formData.email } });
+        initiateRegistration({ data: { email: formData.email, turnstileToken: formData.turnstileToken } });
     };
 
     const handleRegister = () => {
@@ -225,10 +234,17 @@ export default function Register() {
                                 onKeyDown={enterKeyPress}
                                 icon={<Mail size={18} />}
                             />
+
+                            <TurnstileWidget 
+                                onVerify={(token) => setFormData(prev => ({ ...prev, turnstileToken: token }))} 
+                                onExpire={() => setFormData(prev => ({ ...prev, turnstileToken: "" }))}
+                                onError={() => setFormData(prev => ({ ...prev, turnstileToken: "" }))}
+                            />
+
                             <button
                                 type="button"
                                 onClick={handleNextStep}
-                                disabled={isInitiating}
+                                disabled={isInitiating || !formData.turnstileToken}
                                 className="mt-4 rounded-lg bg-brand p-3 text-content-on-brand font-bold hover:scale-[1.02] active:scale-95 transition-all shadow-lg shadow-brand/20 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                                 {isInitiating ? "Enviando código..." : "Continuar"}
@@ -247,7 +263,6 @@ export default function Register() {
                                             performGoogleLogin({
                                                 data: {
                                                     credential: credentialResponse.credential,
-                                                    responseType: 'cookie'
                                                 }
                                             });
                                         }
