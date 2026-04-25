@@ -285,9 +285,20 @@ export default function Register() {
                         </>
                     ) : (
                         <>
-                            <p className="text-sm text-center text-content/70">
-                                Hemos enviado un código a <span className="font-bold text-brand">{formData.email}</span>.
-                            </p>
+                            <div className="flex flex-col items-center gap-4 py-2 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                                <div className="relative">
+                                    <div className="absolute inset-0 bg-brand/20 blur-xl rounded-full animate-pulse" />
+                                    <div className="relative bg-brand/10 p-4 rounded-full border border-brand/20">
+                                        <Mail className="text-brand size-8 animate-radar-slow" />
+                                    </div>
+                                </div>
+                                <div className="flex flex-col gap-1">
+                                    <h3 className="text-lg font-bold text-content">¡Código enviado!</h3>
+                                    <p className="text-sm text-center text-content-muted">
+                                        Hemos enviado un código a <span className="font-medium text-brand">{formData.email}</span>
+                                    </p>
+                                </div>
+                            </div>
 
                             <div className="flex justify-between items-center gap-4">
                                 <FloatingLabelInput className="flex-1 bg-surface!"
