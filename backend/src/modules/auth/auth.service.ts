@@ -134,7 +134,7 @@ export class AuthService {
         const googleId = payload.sub;
 
         // Intentar encontrar por google_id primero, luego por email
-        let user = await User.findOne({ $or: [{ google_id: googleId }, { email }] }).select('+password +security_code +security_code_expires');
+        let user = await User.findOne({ $or: [{ google_id: googleId }, { email }] }).select('+password +security_code +security_code_expires +security_code_id +security_code_action');
 
         if (!user) {
             // Generar username basado en email
@@ -513,7 +513,7 @@ export class AuthService {
             {
                 $set: {
                     security_code: hashedToken,
-                    security_code_expires: new Date(Date.now() + 3600000)
+                    security_code_expires: new Date(Date.now() + ms(this.config.SECURITY_CODE_EXPIRATION))
                 }
             },
             { returnDocument: 'after' }
@@ -532,7 +532,7 @@ export class AuthService {
         }
 
         const resetUrl = `${this.config.FRONTEND_URL}/reset-password?token=${resetToken}`;
-        const template = MailTemplates.passwordReset(resetUrl);
+        const template = MailTemplates.passwordReset(resetUrl, this.config.SECURITY_CODE_EXPIRATION);
 
         await this.mailService.sendMail(user.email, template.subject, template.html);
 
@@ -638,10 +638,10 @@ export class AuthService {
         user.security_code = hashedCode;
         user.security_code_id = transactionId;
         user.security_code_action = "linking-reset";
-        user.security_code_expires = new Date(Date.now() + 3600000); // 1 hora
+        user.security_code_expires = new Date(Date.now() + ms(this.config.SECURITY_CODE_EXPIRATION));
         await user.save();
 
-        const template = MailTemplates.passwordResetCode(verificationCode);
+        const template = MailTemplates.passwordResetCode(verificationCode, this.config.SECURITY_CODE_EXPIRATION);
         await this.mailService.sendMail(user.email, template.subject, template.html);
 
         await this.auditService.register({
@@ -667,7 +667,7 @@ export class AuthService {
         user.security_code = hashedCode;
         user.security_code_id = transactionId;
         user.security_code_action = actionName;
-        user.security_code_expires = new Date(Date.now() + 3600000); // 1 hora
+        user.security_code_expires = new Date(Date.now() + ms(this.config.SECURITY_CODE_EXPIRATION));
         await user.save();
 
         let actionLabel = actionName;
@@ -678,7 +678,7 @@ export class AuthService {
             case "connect-google": actionLabel = "Vincular Google"; break;
         }
 
-        const template = MailTemplates.securityActionCode(verificationCode, actionLabel);
+        const template = MailTemplates.securityActionCode(verificationCode, actionLabel, this.config.SECURITY_CODE_EXPIRATION);
         await this.mailService.sendMail(user.email, template.subject, template.html);
 
         await this.auditService.register({

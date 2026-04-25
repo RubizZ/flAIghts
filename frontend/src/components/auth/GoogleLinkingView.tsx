@@ -141,14 +141,23 @@ export default function GoogleLinkingView({ linkData, turnstileToken, onCancel, 
                             </button>
                         </div>
 
-                        <button
-                            type="button"
-                            onClick={handleConfirmLink}
-                            disabled={!linkPassword || isGooglePending || !turnstileToken}
-                            className="w-full rounded-lg bg-brand p-3 text-content-on-brand font-bold enabled:hover:scale-[1.02] enabled:active:scale-95 transition-all shadow-lg shadow-brand/20 cursor-pointer disabled:opacity-50"
-                        >
-                            {isGooglePending ? "Vinculando..." : "Confirmar y Vincular"}
-                        </button>
+                        <div className="flex gap-3 pt-2">
+                            <button
+                                type="button"
+                                onClick={onCancel}
+                                className="px-4 py-3 rounded-lg bg-surface/50 border border-line text-content-muted hover:text-content hover:bg-surface/80 font-bold transition-all cursor-pointer"
+                            >
+                                Volver
+                            </button>
+                            <button
+                                type="button"
+                                onClick={handleConfirmLink}
+                                disabled={!linkPassword || isGooglePending || !turnstileToken}
+                                className="flex-1 rounded-lg bg-brand p-3 text-content-on-brand font-bold enabled:hover:scale-[1.02] enabled:active:scale-95 transition-all shadow-lg shadow-brand/20 cursor-pointer disabled:opacity-50"
+                            >
+                                {isGooglePending ? "Vinculando..." : "Confirmar y Vincular"}
+                            </button>
+                        </div>
                     </>
                 ) : (
                     <>
@@ -186,7 +195,7 @@ export default function GoogleLinkingView({ linkData, turnstileToken, onCancel, 
                             </p>
                         </div>
 
-                        <div className="text-right">
+                        <div className="flex gap-3 pt-2">
                             <button
                                 type="button"
                                 onClick={() => {
@@ -194,30 +203,21 @@ export default function GoogleLinkingView({ linkData, turnstileToken, onCancel, 
                                     setNewPassword("");
                                     setConfirmNewPassword("");
                                 }}
-                                className="text-xs text-content-muted hover:text-content font-medium cursor-pointer transition-colors"
+                                className="px-4 py-3 rounded-lg bg-surface/50 border border-line text-content-muted hover:text-content hover:bg-surface/80 font-bold transition-all cursor-pointer"
                             >
                                 Volver
                             </button>
+                            <button
+                                type="button"
+                                onClick={handleResetAndLink}
+                                disabled={!newPassword || !confirmNewPassword || verificationCode.length !== 6 || isGooglePending || !turnstileToken}
+                                className="flex-1 rounded-lg bg-brand p-3 text-content-on-brand font-bold enabled:hover:scale-[1.02] enabled:active:scale-95 transition-all shadow-lg shadow-brand/20 cursor-pointer disabled:opacity-50"
+                            >
+                                {isGooglePending ? "Vinculando..." : "Restablecer y Vincular"}
+                            </button>
                         </div>
-
-                        <button
-                            type="button"
-                            onClick={handleResetAndLink}
-                            disabled={!newPassword || !confirmNewPassword || verificationCode.length !== 6 || isGooglePending || !turnstileToken}
-                            className="w-full rounded-lg bg-brand p-3 text-content-on-brand font-bold enabled:hover:scale-[1.02] enabled:active:scale-95 transition-all shadow-lg shadow-brand/20 cursor-pointer disabled:opacity-50"
-                        >
-                            {isGooglePending ? "Vinculando..." : "Restablecer y Vincular"}
-                        </button>
                     </>
                 )}
-
-                <button
-                    type="button"
-                    onClick={onCancel}
-                    className="text-sm text-content-muted hover:text-content transition-colors font-medium cursor-pointer"
-                >
-                    Usar otra cuenta
-                </button>
             </div>
         </div>
     );

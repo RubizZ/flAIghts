@@ -93,6 +93,7 @@ const serverConfigSchema = z.object({
     GEOCODING_API_KEY: z.preprocess(emptyToUndefined, z.string().optional()),
     GEOCODE_CACHE_TTL: z.preprocess(emptyToUndefined, msSchema.default("7d")).transform(v => v as StringValue),
     GOOGLE_CLIENT_ID: z.preprocess(emptyToUndefined, z.string()),
+    SECURITY_CODE_EXPIRATION: z.preprocess(emptyToUndefined, msSchema.default("1h")).transform(v => v as StringValue),
     TURNSTILE_SECRET_KEY: z.preprocess(emptyToUndefined, z.string()),
 }).superRefine((data, ctx) => {
     if (data.GEOCODING_PROVIDER === "google" && !data.GEOCODING_API_KEY) {

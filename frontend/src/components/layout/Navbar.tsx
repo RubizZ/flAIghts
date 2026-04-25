@@ -209,16 +209,22 @@ export default function Navbar({ variant = 'floating', logoRef }: { variant?: 'f
                             <span className="leading-none">Mi Perfil</span>
                         </div>
                     </button>
-                    <button onClick={() => { setIsOpen(false); navigate('/settings') }} className="w-full flex items-center justify-between text-content px-4 py-3 text-sm rounded-xl transition-all group text-left hover:bg-surface/70 hover:cursor-pointer font-medium">
-                        <div className="flex items-center gap-3">
-                            <Settings size={20} className="shrink-0" />
-                            <span className="leading-none">Ajustes</span>
-                        </div>
-                    </button>
-                    <button onClick={() => { setIsOpen(false); navigate('/history') }} className="w-full flex items-center justify-between text-content px-4 py-3 text-sm rounded-xl transition-all group text-left hover:bg-surface/70 hover:cursor-pointer font-medium">
+                    <button
+                        onClick={() => { setIsOpen(false); navigate('/history') }}
+                        className="w-full flex items-center justify-between text-content px-4 py-3 text-sm rounded-xl transition-all group text-left hover:bg-surface/70 hover:cursor-pointer font-medium"
+                    >
                         <div className="flex items-center gap-3">
                             <History size={20} className="shrink-0" />
                             <span className="leading-none">Historial</span>
+                        </div>
+                    </button>
+                    <button
+                        onClick={() => { setIsOpen(false); navigate('/settings') }}
+                        className="w-full flex items-center justify-between text-content px-4 py-3 text-sm rounded-xl transition-all group text-left hover:bg-surface/70 hover:cursor-pointer font-medium"
+                    >
+                        <div className="flex items-center gap-3">
+                            <Settings size={20} className="shrink-0" />
+                            <span className="leading-none">Ajustes</span>
                         </div>
                     </button>
                     {user?.role === 'admin' && (
@@ -230,22 +236,7 @@ export default function Navbar({ variant = 'floating', logoRef }: { variant?: 'f
                             <span className="text-[8px] bg-amber-500/10 px-1.5 py-0.5 rounded uppercase tracking-tighter opacity-20 text-amber-500">Soon</span>
                         </button>
                     )}
-                    <button
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            pushMenu('theme');
-                        }}
-                        className="w-full flex items-center justify-between px-4 py-3 text-sm text-content hover:bg-surface/70 rounded-xl transition-all cursor-pointer group text-left font-medium"
-                    >
-                        <div className="flex items-center gap-3">
-                            <Palette size={20} className="shrink-0" />
-                            <span className="leading-none">Tema</span>
-                        </div>
-                        <div className="flex items-center gap-1.5 text-[10px] text-content opacity-60 font-bold transition-colors">
-                            <span className="leading-none">{themeLabels[theme as keyof typeof themeLabels]}</span>
-                            <ChevronDown size={14} className="-rotate-90 group-hover:rotate-0 transition-transform shrink-0" />
-                        </div>
-                    </button>
+
                 </div>
                 <div className="p-1 border-t border-line">
                     <button
@@ -359,22 +350,24 @@ export default function Navbar({ variant = 'floating', logoRef }: { variant?: 'f
                 </div>
 
                 <p className="hidden sm:block px-3 py-2 text-[10px] uppercase tracking-widest text-content-muted font-bold opacity-50">Opciones</p>
-                <button
-                    onClick={(e) => {
-                        e.stopPropagation();
-                        pushMenu('theme');
-                    }}
-                    className="w-full flex items-center justify-between px-4 py-3 text-sm text-content hover:text-content hover:bg-surface/70 rounded-xl transition-colors cursor-pointer group text-left font-medium"
-                >
-                    <div className="flex items-center gap-3">
-                        <Palette size={20} className="group-hover:text-brand transition-colors" />
-                        Tema
-                    </div>
-                    <div className="flex items-center gap-1 text-[10px] text-content-muted opacity-60 font-bold">
-                        {themeLabels[theme as keyof typeof themeLabels]}
-                        <ChevronDown size={14} className="-rotate-90" />
-                    </div>
-                </button>
+{!isAuthenticated && (
+    <button
+        onClick={(e) => {
+            e.stopPropagation();
+            pushMenu('theme');
+        }}
+        className="w-full flex items-center justify-between px-4 py-3 text-sm text-content hover:text-content hover:bg-surface/70 rounded-xl transition-colors cursor-pointer group text-left font-medium"
+    >
+        <div className="flex items-center gap-3">
+            <Palette size={20} className="group-hover:text-brand transition-colors" />
+            Tema
+        </div>
+        <div className="flex items-center gap-1 text-[10px] text-content-muted opacity-60 font-bold">
+            {themeLabels[theme as keyof typeof themeLabels]}
+            <ChevronDown size={14} className="-rotate-90" />
+        </div>
+    </button>
+)}
             </div>
         );
     };
