@@ -104,7 +104,7 @@ const ConsentModal: React.FC<ConsentModalProps> = ({ onAccept }) => {
 
                                     <button
                                         onClick={handleDecline}
-                                        className="text-center text-[11px] text-gray-500 hover:text-gray-300 transition-colors uppercase tracking-widest font-bold"
+                                        className="text-center text-[11px] text-gray-500 hover:text-gray-300 transition-colors uppercase tracking-widest font-bold cursor-pointer"
                                     >
                                         Prefiero no participar
                                     </button>
@@ -179,7 +179,7 @@ const ConsentModal: React.FC<ConsentModalProps> = ({ onAccept }) => {
 
                                     <button
                                         onClick={prevStep}
-                                        className="flex items-center justify-center gap-2 text-center text-[11px] text-gray-500 hover:text-gray-300 transition-colors uppercase tracking-widest font-bold"
+                                        className="flex items-center justify-center gap-2 text-center text-[11px] text-gray-500 hover:text-gray-300 transition-colors uppercase tracking-widest font-bold cursor-pointer"
                                     >
                                         <ArrowLeft size={14} /> Volver
                                     </button>
