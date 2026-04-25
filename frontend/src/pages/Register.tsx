@@ -187,10 +187,16 @@ export default function Register() {
     });
 
     const handleNextStep = () => {
-        if (!formData.email) {
-            setErrors(prev => ({ ...prev, email: "El email es obligatorio" }));
+        const newErrors = { ...errors, email: !formData.email ? "El email es obligatorio" : "" };
+        setErrors(newErrors);
+
+        if (newErrors.email) return;
+
+        if (!formData.turnstileToken) {
+            toast.error("Por favor, completa la verificación de seguridad.");
             return;
         }
+
         initiateRegistration({ data: { email: formData.email, turnstileToken: formData.turnstileToken } });
     };
 
@@ -200,13 +206,14 @@ export default function Register() {
             code: !formData.code ? "El código es obligatorio" : "",
             username: !formData.username ? "El nombre de usuario es obligatorio" : "",
             password: !formData.password ? "La contraseña es obligatoria" : formData.password.length < 8 ? "Mínimo 8 caracteres" : "",
-            confirmPassword: formData.password !== formData.confirmPassword ? "Las contraseñas no coinciden" : "",
+            confirmPassword: !formData.confirmPassword ? "Debes confirmar la contraseña" : formData.password !== formData.confirmPassword ? "Las contraseñas no coinciden" : "",
             acceptedTerms: !formData.acceptedTerms ? "Debes aceptar los términos y condiciones" : ""
         };
 
         setErrors(newErrors);
 
         if (newErrors.code || newErrors.username || newErrors.password || newErrors.confirmPassword || newErrors.acceptedTerms) {
+            toast.error("Por favor completa todos los campos correctamente");
             return;
         }
 
@@ -280,7 +287,7 @@ export default function Register() {
                                 <button
                                     type="button"
                                     onClick={handleNextStep}
-                                    disabled={isInitiating || !formData.turnstileToken || !formData.email}
+                                    disabled={isInitiating}
                                     className="mt-4 rounded-lg bg-brand p-3 text-content-on-brand font-bold enabled:hover:scale-[1.02] enabled:active:scale-95 transition-all shadow-lg shadow-brand/20 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
                                     {isInitiating ? "Enviando código..." : "Continuar"}
@@ -444,7 +451,7 @@ export default function Register() {
                                 <button
                                     type="button"
                                     onClick={handleRegister}
-                                    disabled={isCompleting || !formData.code || !formData.username || !formData.password || !formData.confirmPassword || !formData.acceptedTerms}
+                                    disabled={isCompleting}
                                     className="mt-4 rounded-lg bg-brand p-3 text-content-on-brand font-bold enabled:hover:scale-[1.02] enabled:active:scale-95 transition-all shadow-lg shadow-brand/20 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
                                     {isCompleting ? "Creando cuenta..." : "Completar Registro"}

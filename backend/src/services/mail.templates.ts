@@ -35,8 +35,28 @@ const baseInfoTemplate = (title: string, description: string, htmlContent: strin
 });
 
 export const MailTemplates = {
-    welcomeEmail: () =>
-        baseInfoTemplate("¡Bienvenido a flAIghts!", "Tu cuenta ha sido creada y verificada con éxito. Ya puedes empezar a disfrutar de todas las funcionalidades y buscar los mejores vuelos con la ayuda de nuestra inteligencia artificial."),
+    welcomeEmail: (frontendUrl: string) =>
+        baseInfoTemplate(
+            "¡Bienvenido a flAIghts!", 
+            "Tu cuenta ha sido creada y verificada con éxito. Ya puedes empezar a disfrutar de todas las funcionalidades y buscar los mejores vuelos con la ayuda de nuestra inteligencia artificial.",
+            `
+            <div style="margin-top: 30px; text-align: center;">
+                <a href="${frontendUrl}" style="display: inline-block; padding: 12px 24px; background-color: #007bff; color: #ffffff; text-decoration: none; font-weight: bold; border-radius: 5px; margin-bottom: 25px; box-shadow: 0 4px 6px rgba(0,123,255,0.2);">
+                    ✈️ Empezar a buscar vuelos
+                </a>
+                
+                <div style="margin-top: 20px; border-top: 1px solid #eee; padding-top: 20px;">
+                    <p style="font-size: 0.85em; color: #666; margin-bottom: 15px;">Enlaces de interés:</p>
+                    <div style="font-size: 0.85em; color: #007bff;">
+                        <a href="${frontendUrl}/terms" style="color: #007bff; text-decoration: none; margin: 0 10px;">Términos de Servicio</a> |
+                        <a href="${frontendUrl}/privacy" style="color: #007bff; text-decoration: none; margin: 0 10px;">Política de Privacidad</a> |
+                        <a href="${frontendUrl}/about" style="color: #007bff; text-decoration: none; margin: 0 10px;">Sobre Nosotros</a> |
+                        <a href="${frontendUrl}/contact" style="color: #007bff; text-decoration: none; margin: 0 10px;">Contacto</a>
+                    </div>
+                </div>
+            </div>
+            `
+        ),
 
     securityActionSuccess: (actionName: string) =>
         baseInfoTemplate("Aviso de seguridad: Acción completada", `Te confirmamos que la acción de seguridad <strong>${actionName}</strong> se ha completado con éxito en tu cuenta de flAIghts.`, "", true),

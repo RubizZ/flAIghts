@@ -218,7 +218,7 @@ export default function Login() {
                         <button
                             type="button"
                             onClick={login}
-                            disabled={isPending || !credentials.identifier || !credentials.password}
+                            disabled={isPending}
                             className={`mt-2 rounded-lg bg-brand p-3 text-content-on-brand font-bold enabled:hover:scale-[1.02] enabled:active:scale-95 transition-all shadow-lg shadow-brand/20 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed`}
                         >
                             {isPending ? "Conectando..." : "Login"}
