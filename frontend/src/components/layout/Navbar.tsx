@@ -14,17 +14,31 @@ import {
     Palette,
     ShieldCheck,
     Bell,
-    Trophy
+    Trophy,
+    MoreHorizontal,
+    History
 } from "lucide-react";
 import { PopulatedUser } from "@/api/generated/openapi/model";
 import UserAvatar from "@/components/ui/UserAvatar";
 import NavIconButton from "@/components/ui/NavIconButton";
 import { useMissions } from "@/context/MissionContext";
+import Logo from "@/components/ui/Logo";
+import type { LogoHandle } from "@/components/ui/Logo";
+import { useGetConversations } from "@/api/generated/openapi/conversations";
 
-export default function Navbar({ variant = 'floating' }: { variant?: 'floating' | 'flat' }) {
+export default function Navbar({ variant = 'floating', logoRef }: { variant?: 'floating' | 'flat', logoRef?: React.RefObject<LogoHandle | null> }) {
     const navigate = useNavigate();
     const { user, isAuthenticated, isLoading, logout } = useAuth();
     const { theme, setTheme } = useTheme();
+
+    const { data: conversationsData } = useGetConversations(undefined, {
+        query: {
+            enabled: isAuthenticated,
+            staleTime: 30000, // No necesitamos frescura absoluta en el navbar
+        }
+    });
+
+    const unreadMessagesCount = conversationsData?.items?.reduce((acc: number, conv: any) => acc + (conv.unreadCount || 0), 0) || 0;
 
     const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
     const [isOptionsMenuOpen, setIsOptionsMenuOpen] = useState(false);
@@ -42,17 +56,37 @@ export default function Navbar({ variant = 'floating' }: { variant?: 'floating' 
         system: 'Sistema'
     };
 
-    const { isEvaluationMode, hasConsented, setShowRoadmap, missions, isMissionRated, allCompleted } = useMissions();
+    const { isEvaluationMode, hasConsented, setShowRoadmap, missions, isMissionRated, allCompleted, reopenConsent } = useMissions();
     const pendingSurveysCount = missions.filter(m => m.isCompleted && !isMissionRated(m.id)).length;
 
-    const NotificationsMainView = ({ user }: { user: PopulatedUser }) => {
-        const { pushMenu } = useDropdown();
+    const NotificationsMainView = ({ user, unreadMessagesCount }: { user: PopulatedUser, unreadMessagesCount: number }) => {
+        const { pushMenu, setIsOpen } = useDropdown();
+        const hasFriendRequests = user?.received_friend_requests && user.received_friend_requests.length > 0;
+        const hasUnreadMessages = unreadMessagesCount > 0;
+
         return (
-            <div className="p-2 min-w-70 max-w-sm whitespace-normal">
+            <div className="p-2 min-w-70 max-w-sm whitespace-normal flex flex-col gap-1">
                 <div className="p-2 border-b border-line mb-1">
                     <p className="text-[10px] uppercase tracking-widest text-content-muted font-bold opacity-50">Notificaciones</p>
                 </div>
-                {user?.received_friend_requests && user.received_friend_requests.length > 0 ? (
+
+                {hasUnreadMessages && (
+                    <button
+                        onClick={() => {
+                            setIsOpen(false);
+                            navigate('/chats');
+                        }}
+                        className="w-full flex items-center justify-between px-3 py-3 text-sm text-content hover:bg-surface/70 rounded-xl transition-all cursor-pointer group text-left font-medium bg-brand/5"
+                    >
+                        <div className="flex flex-col">
+                            <span className="text-brand font-bold">Mensajes no leídos</span>
+                            <span className="text-xs text-content-muted opacity-80">Tienes {unreadMessagesCount} mensaje{unreadMessagesCount > 1 ? 's' : ''} nuevo{unreadMessagesCount > 1 ? 's' : ''}</span>
+                        </div>
+                        <ChevronDown size={14} className="-rotate-90 group-hover:translate-x-1 transition-transform text-brand" />
+                    </button>
+                )}
+
+                {hasFriendRequests && (
                     <button
                         onClick={(e) => {
                             e.stopPropagation();
@@ -66,7 +100,9 @@ export default function Navbar({ variant = 'floating' }: { variant?: 'floating' 
                         </div>
                         <ChevronDown size={14} className="-rotate-90 group-hover:translate-x-1 transition-transform text-brand" />
                     </button>
-                ) : (
+                )}
+
+                {!hasFriendRequests && !hasUnreadMessages && (
                     <div className="p-4 text-center text-content-muted opacity-50 text-sm">
                         No tienes notificaciones
                     </div>
@@ -104,10 +140,39 @@ export default function Navbar({ variant = 'floating' }: { variant?: 'floating' 
         );
     };
 
-    const UserMainView = ({ user, logout, navigate, theme, themeLabels }: { user: PopulatedUser, logout: () => void, navigate: any, theme: string, themeLabels: Record<string, string> }) => {
+    const UserMainView = ({ user, logout, navigate, theme, themeLabels, unreadMessagesCount }: { user: PopulatedUser, logout: () => void, navigate: any, theme: Theme, themeLabels: Record<string, string>, unreadMessagesCount: number }) => {
         const { pushMenu, setIsOpen } = useDropdown();
+        const totalNotifications = (user?.received_friend_requests?.length || 0) + unreadMessagesCount;
+
         return (
             <div className="w-64">
+                {isEvaluationMode && (
+                    <div className="lg:hidden p-1 border-b border-line bg-brand/5">
+                        <p className="px-3 py-1.5 text-[10px] uppercase tracking-widest text-brand font-black opacity-70">Evaluación</p>
+                        <button
+                            id="nav-missions-button-mobile"
+                            onClick={() => {
+                                setIsOpen(false);
+                                if (hasConsented) {
+                                    setShowRoadmap(true);
+                                } else {
+                                    reopenConsent();
+                                }
+                            }}
+                            className="w-full flex items-center justify-between px-4 py-3 text-sm text-content hover:bg-brand/10 rounded-xl transition-all cursor-pointer group text-left font-medium"
+                        >
+                            <div className="flex items-center gap-3">
+                                <Trophy size={20} className={`shrink-0 transition-colors ${pendingSurveysCount > 0 ? "text-amber-500 animate-soft-pulse" : allCompleted ? "text-green-500" : "group-hover:text-brand"}`} />
+                                <span className="leading-none font-bold">Misiones</span>
+                            </div>
+                            {pendingSurveysCount > 0 && (
+                                <span className="text-[10px] text-brand font-bold bg-brand/10 px-1.5 py-0.5 rounded-full">
+                                    {pendingSurveysCount}
+                                </span>
+                            )}
+                        </button>
+                    </div>
+                )}
                 <div className="p-3 border-b border-line bg-surface/50">
                     <p className="text-[10px] uppercase tracking-widest text-content-muted font-bold mb-1 opacity-50">Cuenta</p>
                     <p className="text-sm font-bold text-content truncate">{user?.email}</p>
@@ -120,77 +185,58 @@ export default function Navbar({ variant = 'floating' }: { variant?: 'floating' 
                                 e.stopPropagation();
                                 pushMenu('notifications');
                             }}
-                            className="w-full flex items-center justify-between px-3 py-2 text-sm text-content hover:bg-surface/70 rounded-xl transition-all cursor-pointer group text-left font-medium"
+                            className="w-full flex items-center justify-between px-4 py-3 text-sm text-content hover:bg-surface/70 rounded-xl transition-all cursor-pointer group text-left font-medium"
                         >
                             <div className="flex items-center gap-3">
-                                <Bell size={16} className="shrink-0 group-hover:text-brand transition-colors" />
+                                <Bell size={20} className="shrink-0 group-hover:text-brand transition-colors" />
                                 <span className="leading-none">Notificaciones</span>
                             </div>
                             <div className="flex items-center gap-1.5">
-                                {user?.received_friend_requests && user.received_friend_requests.length > 0 && (
+                                {totalNotifications > 0 && (
                                     <span className="text-[10px] text-brand font-bold bg-brand/10 px-1.5 py-0.5 rounded-full">
-                                        {user.received_friend_requests.length}
+                                        {totalNotifications}
                                     </span>
                                 )}
-                                <ChevronDown size={12} className="-rotate-90 opacity-60" />
+                                <ChevronDown size={14} className="-rotate-90 opacity-60" />
                             </div>
                         </button>
                     </div>
 
-                    {isEvaluationMode && hasConsented && (
-                        <button
-                            id="nav-missions-button-mobile"
-                            onClick={() => { setIsOpen(false); setShowRoadmap(true); }}
-                            className="lg:hidden w-full flex items-center justify-between px-3 py-2 text-sm text-content hover:bg-surface/70 rounded-xl transition-all cursor-pointer group text-left font-medium"
-                        >
-                            <div className="flex items-center gap-3">
-                                <Trophy size={16} className={`shrink-0 transition-colors ${pendingSurveysCount > 0 ? "text-amber-500 animate-pulse" : allCompleted ? "text-green-500" : "group-hover:text-brand"}`} />
-                                <span className="leading-none">Misiones</span>
-                            </div>
-                            {pendingSurveysCount > 0 && (
-                                <span className="text-[10px] text-brand font-bold bg-brand/10 px-1.5 py-0.5 rounded-full">
-                                    {pendingSurveysCount}
-                                </span>
-                            )}
-                        </button>
-                    )}
-                    <button onClick={() => { setIsOpen(false); navigate(`/user/${user?._id}`) }} className="w-full flex items-center justify-between text-content px-3 py-2 text-sm rounded-xl transition-all group text-left hover:bg-surface/70 hover:cursor-pointer font-medium">
+
+                    <button onClick={() => { setIsOpen(false); navigate(`/user/${user?._id}`) }} className="w-full flex items-center justify-between text-content px-4 py-3 text-sm rounded-xl transition-all group text-left hover:bg-surface/70 hover:cursor-pointer font-medium">
                         <div className="flex items-center gap-3">
-                            <User size={16} className="shrink-0" />
+                            <User size={20} className="shrink-0" />
                             <span className="leading-none">Mi Perfil</span>
                         </div>
                     </button>
-                    <button onClick={() => { setIsOpen(false); navigate('/settings') }} className="w-full flex items-center justify-between text-content px-3 py-2 text-sm rounded-xl transition-all group text-left hover:bg-surface/70 hover:cursor-pointer font-medium">
+                    <button
+                        onClick={() => { setIsOpen(false); navigate('/history') }}
+                        className="w-full flex items-center justify-between text-content px-4 py-3 text-sm rounded-xl transition-all group text-left hover:bg-surface/70 hover:cursor-pointer font-medium"
+                    >
                         <div className="flex items-center gap-3">
-                            <Settings size={16} className="shrink-0" />
+                            <History size={20} className="shrink-0" />
+                            <span className="leading-none">Historial</span>
+                        </div>
+                    </button>
+                    <button
+                        onClick={() => { setIsOpen(false); navigate('/settings') }}
+                        className="w-full flex items-center justify-between text-content px-4 py-3 text-sm rounded-xl transition-all group text-left hover:bg-surface/70 hover:cursor-pointer font-medium"
+                    >
+                        <div className="flex items-center gap-3">
+                            <Settings size={20} className="shrink-0" />
                             <span className="leading-none">Ajustes</span>
                         </div>
                     </button>
                     {(user?.role === 'admin' || user?.role === 'superadmin') && (
-                        <button onClick={() => { setIsOpen(false); navigate('/admin') }} className="w-full flex items-center justify-between px-3 py-2 text-sm rounded-xl transition-all group text-left hover:bg-surface/70 cursor-pointer font-medium">
+                        <button onClick={() => { setIsOpen(false); navigate('/admin') }} className="w-full flex items-center justify-between px-4 py-3 text-sm rounded-xl transition-all group text-left hover:bg-surface/70 cursor-pointer font-medium">
                             <div className="flex items-center gap-3 text-amber-500">
-                                <ShieldCheck size={16} />
+                                <ShieldCheck size={20} />
                                 Panel Admin
                             </div>
                             <ChevronDown size={12} className="-rotate-90 opacity-60" />
                         </button>
                     )}
-                    <button
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            pushMenu('theme');
-                        }}
-                        className="w-full flex items-center justify-between px-3 py-2 text-sm text-content hover:bg-surface/70 rounded-xl transition-all cursor-pointer group text-left font-medium"
-                    >
-                        <div className="flex items-center gap-3">
-                            <Palette size={16} className="shrink-0" />
-                            <span className="leading-none">Tema</span>
-                        </div>
-                        <div className="flex items-center gap-1.5 text-[10px] text-content opacity-60 font-bold transition-colors">
-                            <span className="leading-none">{themeLabels[theme as keyof typeof themeLabels]}</span>
-                            <ChevronDown size={12} className="-rotate-90 group-hover:rotate-0 transition-transform shrink-0" />
-                        </div>
-                    </button>
+
                 </div>
                 <div className="p-1 border-t border-line">
                     <button
@@ -198,9 +244,9 @@ export default function Navbar({ variant = 'floating' }: { variant?: 'floating' 
                             setIsOpen(false);
                             logout();
                         }}
-                        className="w-full flex items-center gap-3 px-3 py-2 text-sm text-red-500 hover:bg-red-500/10 rounded-xl transition-all cursor-pointer text-left font-bold"
+                        className="w-full flex items-center gap-3 px-4 py-3 text-sm text-red-500 hover:bg-red-500/10 rounded-xl transition-all cursor-pointer text-left font-bold"
                     >
-                        <LogOut size={16} />
+                        <LogOut size={20} />
                         Cerrar sesión
                     </button>
                 </div>
@@ -220,9 +266,9 @@ export default function Navbar({ variant = 'floating' }: { variant?: 'floating' 
                         e.stopPropagation();
                         popMenu();
                     }}
-                    className="w-full flex items-center gap-3 text-content-muted px-3 py-2 text-sm rounded-xl transition-[background-color_300ms,border-color_150ms,color_300ms,transform_300ms,opacity_300ms,box-shadow_300ms] group text-left hover:bg-surface/70 hover:cursor-pointer font-medium mb-1"
+                    className="w-full flex items-center gap-3 text-content-muted px-4 py-3 text-sm rounded-xl transition-[background-color_300ms,border-color_150ms,color_300ms,transform_300ms,opacity_300ms,box-shadow_300ms] group text-left hover:bg-surface/70 hover:cursor-pointer font-medium mb-1"
                 >
-                    <ChevronDown size={16} className="rotate-90 shrink-0" />
+                    <ChevronDown size={20} className="rotate-90 shrink-0" />
                     <span className="leading-none">Volver</span>
                 </button>
                 <div className="flex flex-col">
@@ -230,7 +276,7 @@ export default function Navbar({ variant = 'floating' }: { variant?: 'floating' 
                         <button
                             key={t}
                             onClick={() => setTheme(t)}
-                            className={`w-full flex items-center justify-between px-3 py-2 text-sm rounded-xl transition-all group text-left font-medium
+                            className={`w-full flex items-center justify-between px-4 py-3 text-sm rounded-xl transition-all group text-left font-medium
                                 ${theme === t
                                     ? 'bg-surface/70 text-content cursor-pointer'
                                     : 'text-content-muted hover:bg-surface/70 hover:cursor-pointer'
@@ -257,154 +303,248 @@ export default function Navbar({ variant = 'floating' }: { variant?: 'floating' 
         );
     };
 
-    const OptionsMainView = ({ theme, themeLabels, navigate }: { theme: string, themeLabels: Record<string, string>, navigate: any }) => {
+    const OptionsMainView = ({ theme, themeLabels, navigate }: { theme: Theme, themeLabels: Record<string, string>, navigate: any }) => {
         const { pushMenu, setIsOpen } = useDropdown();
         return (
             <div className="w-64 p-1">
-                {isEvaluationMode && hasConsented && (
-                    <div className="lg:hidden border-b border-line mb-1 pb-1">
+                {isEvaluationMode && (
+                    <div className="lg:hidden mb-2 pb-2 border-b border-line bg-brand/5 rounded-xl">
+                        <p className="px-3 py-1.5 text-[10px] uppercase tracking-widest text-brand font-black opacity-70">Evaluación</p>
                         <button
                             id="nav-missions-button-mobile-alt"
-                            onClick={() => { setIsOpen(false); setShowRoadmap(true); }}
-                            className="w-full flex items-center justify-between px-3 py-2 text-sm text-content hover:bg-surface/70 rounded-xl transition-all cursor-pointer group text-left font-medium"
+                            onClick={() => {
+                                setIsOpen(false);
+                                if (hasConsented) {
+                                    setShowRoadmap(true);
+                                } else {
+                                    reopenConsent();
+                                }
+                            }}
+                            className="w-full flex items-center justify-between px-3 py-2 text-sm text-content hover:bg-brand/10 rounded-xl transition-all cursor-pointer group text-left font-medium"
                         >
                             <div className="flex items-center gap-3">
-                                <Trophy size={16} className={`shrink-0 transition-colors ${pendingSurveysCount > 0 ? "text-amber-500 animate-pulse" : allCompleted ? "text-green-500" : "group-hover:text-brand"}`} />
-                                <span className="leading-none">Misiones</span>
+                                <Trophy size={16} className={`shrink-0 transition-colors ${pendingSurveysCount > 0 ? "text-amber-500 animate-soft-pulse" : allCompleted ? "text-green-500" : "group-hover:text-brand"}`} />
+                                <span className="leading-none font-bold">Misiones</span>
                             </div>
                         </button>
                     </div>
                 )}
+
                 {/* Mobile/Tablet Auth Options */}
                 <div className="lg:hidden mb-2 pb-2 border-b border-line">
                     <p className="px-3 py-2 text-[10px] uppercase tracking-widest text-content-muted font-bold opacity-50">Autenticación</p>
                     <button
                         onClick={() => { setIsOpen(false); navigate('/login'); }}
-                        className="w-full flex items-center gap-3 px-3 py-2 text-sm text-content hover:bg-surface/70 rounded-xl transition-colors cursor-pointer font-medium"
+                        className="w-full flex items-center gap-3 px-4 py-3 text-sm text-content hover:bg-surface/70 rounded-xl transition-colors cursor-pointer font-medium"
                     >
-                        <User size={16} className="text-brand" />
+                        <User size={20} className="text-brand" />
                         Log in
                     </button>
                     <button
                         onClick={() => { setIsOpen(false); navigate('/register'); }}
-                        className="w-full flex items-center gap-3 px-3 py-2 text-sm text-content hover:bg-surface/70 rounded-xl transition-colors cursor-pointer font-medium"
+                        className="w-full flex items-center gap-3 px-4 py-3 text-sm text-content hover:bg-surface/70 rounded-xl transition-colors cursor-pointer font-medium"
                     >
-                        <ShieldCheck size={16} className="text-brand" />
+                        <ShieldCheck size={20} className="text-brand" />
                         Register
                     </button>
                 </div>
 
                 <p className="hidden sm:block px-3 py-2 text-[10px] uppercase tracking-widest text-content-muted font-bold opacity-50">Opciones</p>
-                <button
-                    onClick={(e) => {
-                        e.stopPropagation();
-                        pushMenu('theme');
-                    }}
-                    className="w-full flex items-center justify-between px-3 py-2 text-sm text-content hover:text-content hover:bg-surface/70 rounded-xl transition-colors cursor-pointer group text-left font-medium"
-                >
-                    <div className="flex items-center gap-3">
-                        <Palette size={16} className="group-hover:text-brand transition-colors" />
-                        Tema
-                    </div>
-                    <div className="flex items-center gap-1 text-[10px] text-content-muted opacity-60 font-bold">
-                        {themeLabels[theme as keyof typeof themeLabels]}
-                        <ChevronDown size={12} className="-rotate-90" />
-                    </div>
-                </button>
+{!isAuthenticated && (
+    <button
+        onClick={(e) => {
+            e.stopPropagation();
+            pushMenu('theme');
+        }}
+        className="w-full flex items-center justify-between px-4 py-3 text-sm text-content hover:text-content hover:bg-surface/70 rounded-xl transition-colors cursor-pointer group text-left font-medium"
+    >
+        <div className="flex items-center gap-3">
+            <Palette size={20} className="group-hover:text-brand transition-colors" />
+            Tema
+        </div>
+        <div className="flex items-center gap-1 text-[10px] text-content-muted opacity-60 font-bold">
+            {themeLabels[theme as keyof typeof themeLabels]}
+            <ChevronDown size={14} className="-rotate-90" />
+        </div>
+    </button>
+)}
             </div>
-        )
+        );
     };
 
-
     return (
-        <nav className={variant === 'floating' ? "contents" : "contents"}>
+        <>
+            {/* CENTER LOGO */}
             <div className={variant === 'floating'
-                ? "fixed top-4 right-4 flex items-center justify-end gap-2 sm:gap-4 z-10 pointer-events-auto"
-                : "flex items-center gap-2 sm:gap-4 pointer-events-auto"
+                ? "absolute top-4 left-1/2 -translate-x-1/2 h-12 flex items-center z-header pointer-events-none"
+                : "absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-header pointer-events-none"
             }>
-                {/* Mission Indicator Button (Evaluation Mode) */}
-                {isEvaluationMode && hasConsented && (
-                    <NavIconButton
-                        id="nav-missions-button"
-                        variant={variant}
-                        onClick={() => setShowRoadmap(true)}
-                        showBadge={pendingSurveysCount > 0}
-                        title="Misiones de Evaluación"
-                        className={`hidden lg:flex ${pendingSurveysCount > 0 ? "animate-pulse" : ""}`}
-                    >
-                        <Trophy
-                            size={20}
-                            className={pendingSurveysCount > 0 ? "text-amber-500" : allCompleted ? "text-green-500" : "text-content group-hover:text-brand transition-colors"}
-                        />
-                    </NavIconButton>
-                )}
+                <Logo ref={logoRef} className={variant === 'floating' ? "" : "scale-90 sm:scale-100"} />
+            </div>
 
-                {isLoading ? (
-                    <div className="flex items-center gap-2">
-                        <div className="hidden sm:block w-16 h-8 bg-surface rounded-full animate-pulse opacity-50" />
-                        <div className="hidden sm:block w-20 h-8 bg-surface rounded-full animate-pulse opacity-50" />
-                        <div className="w-10 h-10 bg-surface rounded-2xl sm:rounded-full animate-pulse opacity-50" />
-                    </div>
-                ) : isAuthenticated ? (
-                    <>
-                        <Dropdown
-                            isOpen={isNotificationsMenuOpen}
-                            onOpenChange={(open) => {
-                                setIsNotificationsMenuOpen(open);
-                                if (open) {
-                                    setIsUserMenuOpen(false);
-                                    setIsOptionsMenuOpen(false);
+            <nav className={variant === 'floating' ? "contents" : "contents"}>
+                <div className={variant === 'floating'
+                    ? "absolute top-4 right-4 flex items-center justify-end gap-2 sm:gap-4 z-content pointer-events-auto"
+                    : "flex items-center gap-2 sm:gap-4 pointer-events-auto"
+                }>
+                    {/* Mission Indicator Button (Evaluation Mode) */}
+                    {isEvaluationMode && (
+                        <NavIconButton
+                            id="nav-missions-button"
+                            variant={variant}
+                            onClick={() => {
+                                if (hasConsented) {
+                                    setShowRoadmap(true);
+                                } else {
+                                    reopenConsent();
                                 }
                             }}
-                            trigger={
-                                <NavIconButton
-                                    variant={variant}
-                                    showBadge={!!(user?.received_friend_requests && user.received_friend_requests.length > 0)}
-                                    className="hidden lg:flex"
-                                >
-                                    <Bell size={20} className="text-content group-hover:text-brand transition-colors" />
-                                </NavIconButton>
-                            }
-                            menus={{
-                                main: (
-                                    <NotificationsMainView
-                                        user={user!}
-                                    />
-                                ),
-                                friend_requests: (
-                                    <NotificationsFriendRequestsView
-                                        user={user!}
-                                        navigate={navigate}
-                                    />
-                                )
-                            }}
-                        />
+                            showBadge={pendingSurveysCount > 0}
+                            title="Misiones de Evaluación"
+                            className={`hidden lg:flex ${pendingSurveysCount > 0 ? "animate-soft-pulse" : ""}`}
+                        >
+                            <Trophy
+                                size={20}
+                                className={pendingSurveysCount > 0 ? "text-amber-500" : allCompleted ? "text-green-500" : "text-content group-hover:text-brand transition-colors"}
+                            />
+                        </NavIconButton>
+                    )}
+
+                    {isLoading ? (
+                        <div className="flex items-center gap-2">
+                            <div className="hidden sm:block w-16 h-8 bg-surface rounded-full animate-pulse opacity-50" />
+                            <div className="hidden sm:block w-20 h-8 bg-surface rounded-full animate-pulse opacity-50" />
+                            <div className="w-10 h-10 bg-surface rounded-2xl sm:rounded-full animate-pulse opacity-50" />
+                        </div>
+                    ) : isAuthenticated ? (
+                        <>
+                            <Dropdown
+                                isOpen={isNotificationsMenuOpen}
+                                onOpenChange={(open) => {
+                                    setIsNotificationsMenuOpen(open);
+                                    if (open) {
+                                        setIsUserMenuOpen(false);
+                                        setIsOptionsMenuOpen(false);
+                                    }
+                                }}
+                                trigger={
+                                    <NavIconButton
+                                        variant={variant}
+                                        showBadge={!!(user?.received_friend_requests && user.received_friend_requests.length > 0) || unreadMessagesCount > 0}
+                                        className="hidden lg:flex"
+                                    >
+                                        <Bell size={20} className="text-content group-hover:text-brand transition-colors" />
+                                    </NavIconButton>
+                                }
+                                menus={{
+                                    main: (
+                                        <NotificationsMainView
+                                            user={user!}
+                                            unreadMessagesCount={unreadMessagesCount}
+                                        />
+                                    ),
+                                    friend_requests: (
+                                        <NotificationsFriendRequestsView
+                                            user={user!}
+                                            navigate={navigate}
+                                        />
+                                    )
+                                }}
+                            />
+                            <Dropdown
+                                isOpen={isUserMenuOpen}
+                                onOpenChange={(open) => {
+                                    setIsUserMenuOpen(open);
+                                    if (open) {
+                                        setIsOptionsMenuOpen(false);
+                                        setIsNotificationsMenuOpen(false);
+                                    }
+                                }}
+                                trigger={
+                                    <NavIconButton
+                                        id="nav-user-menu-trigger"
+                                        variant={variant}
+                                        showBadge={!!(user?.received_friend_requests && user.received_friend_requests.length > 0) || unreadMessagesCount > 0}
+                                        badgeClassName="lg:hidden"
+                                    >
+                                        <UserAvatar user={user} size={32} />
+                                    </NavIconButton>
+                                }
+                                menus={{
+                                    main: (
+                                        <UserMainView
+                                            user={user!}
+                                            logout={logout}
+                                            navigate={navigate}
+                                            theme={theme}
+                                            themeLabels={themeLabels}
+                                            unreadMessagesCount={unreadMessagesCount}
+                                        />
+                                    ),
+                                    theme: (
+                                        <ThemeMenuView
+                                            theme={theme}
+                                            setTheme={setTheme}
+                                        />
+                                    ),
+                                    notifications: (
+                                        <NotificationsMainView
+                                            user={user!}
+                                            unreadMessagesCount={unreadMessagesCount}
+                                        />
+                                    ),
+                                    friend_requests: (
+                                        <NotificationsFriendRequestsView
+                                            user={user!}
+                                            navigate={navigate}
+                                        />
+                                    )
+                                }}
+                            />
+                        </>
+                    ) : (
+                        <div className="hidden lg:flex gap-2">
+                            <NavIconButton to="/login" variant={variant} isPill>
+                                Log in
+                            </NavIconButton>
+                            <NavIconButton
+                                to="/register"
+                                variant={variant}
+                                isPill
+                                className="bg-brand! hover:bg-brand-hover! text-content-on-brand! border-none!"
+                            >
+                                Register
+                            </NavIconButton>
+                        </div>
+                    )}
+
+                    {/* More Options Menu - Solo visible si NO está autenticado y NO está cargando */}
+                    {!isLoading && !isAuthenticated && (
                         <Dropdown
-                            isOpen={isUserMenuOpen}
+                            isOpen={isOptionsMenuOpen}
                             onOpenChange={(open) => {
-                                setIsUserMenuOpen(open);
+                                setIsOptionsMenuOpen(open);
                                 if (open) {
-                                    setIsOptionsMenuOpen(false);
+                                    setIsUserMenuOpen(false);
                                     setIsNotificationsMenuOpen(false);
                                 }
                             }}
                             trigger={
                                 <NavIconButton
-                                    id="nav-user-menu-trigger"
+                                    id="nav-options-menu-trigger"
                                     variant={variant}
-                                    showBadge={!!(user?.received_friend_requests && user.received_friend_requests.length > 0)}
+                                    className={variant === 'flat' ? 'bg-transparent! border-transparent! shadow-none' : ''}
                                 >
-                                    <UserAvatar user={user} size={32} />
+                                    <MoreHorizontal size={22} className="hidden lg:block" />
+                                    <User size={22} className="block lg:hidden" />
                                 </NavIconButton>
                             }
                             menus={{
                                 main: (
-                                    <UserMainView
-                                        user={user!}
-                                        logout={logout}
-                                        navigate={navigate}
+                                    <OptionsMainView
                                         theme={theme}
                                         themeLabels={themeLabels}
+                                        navigate={navigate}
                                     />
                                 ),
                                 theme: (
@@ -412,71 +552,12 @@ export default function Navbar({ variant = 'floating' }: { variant?: 'floating' 
                                         theme={theme}
                                         setTheme={setTheme}
                                     />
-                                ),
-                                notifications: (
-                                    <NotificationsMainView
-                                        user={user!}
-                                    />
-                                ),
-                                friend_requests: (
-                                    <NotificationsFriendRequestsView
-                                        user={user!}
-                                        navigate={navigate}
-                                    />
                                 )
                             }}
                         />
-                    </>
-                ) : (
-                    <div className="hidden lg:flex gap-2">
-                        <NavIconButton to="/login" variant={variant} isPill>
-                            Log in
-                        </NavIconButton>
-                        <NavIconButton
-                            to="/register"
-                            variant={variant}
-                            isPill
-                            className="bg-brand! hover:bg-brand-hover! text-content-on-brand! border-none!"
-                        >
-                            Register
-                        </NavIconButton>
-                    </div>
-                )}
-
-                {/* More Options Menu - Solo visible si NO está autenticado y NO está cargando */}
-                {!isLoading && !isAuthenticated && (
-                    <Dropdown
-                        isOpen={isOptionsMenuOpen}
-                        onOpenChange={(open) => {
-                            setIsOptionsMenuOpen(open);
-                            if (open) {
-                                setIsUserMenuOpen(false);
-                                setIsNotificationsMenuOpen(false);
-                            }
-                        }}
-                        trigger={
-                            <NavIconButton id="nav-options-menu-trigger" variant={variant}>
-                                <User size={22} />
-                            </NavIconButton>
-                        }
-                        menus={{
-                            main: (
-                                <OptionsMainView
-                                    theme={theme}
-                                    themeLabels={themeLabels}
-                                    navigate={navigate}
-                                />
-                            ),
-                            theme: (
-                                <ThemeMenuView
-                                    theme={theme}
-                                    setTheme={setTheme}
-                                />
-                            )
-                        }}
-                    />
-                )}
-            </div>
-        </nav>
+                    )}
+                </div>
+            </nav>
+        </>
     );
 }

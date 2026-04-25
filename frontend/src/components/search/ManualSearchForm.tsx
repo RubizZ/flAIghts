@@ -1,14 +1,15 @@
 import React from "react";
 import { ArrowLeftRight, Search } from "lucide-react";
 import { AirportResponse } from "@/api/generated/openapi/model";
+import { UnifiedSelection } from "@/types/selection";
 import FlightSearchInput from "./FlightSearchInput";
 import DateSearchInput from "./DateSearchInput";
 
 interface ManualSearchFormProps {
-    origins: AirportResponse[];
-    setOrigins: (airports: AirportResponse[]) => void;
-    destinations: AirportResponse[];
-    setDestinations: (airports: AirportResponse[]) => void;
+    origins: UnifiedSelection[];
+    setOrigins: (selections: UnifiedSelection[]) => void;
+    destinations: UnifiedSelection[];
+    setDestinations: (selections: UnifiedSelection[]) => void;
     departureDate: string;
     setDepartureDate: (date: string) => void;
     returnDate: string;
@@ -24,7 +25,7 @@ interface ManualSearchFormProps {
     isHorizontal: boolean;
     isMapMode: boolean;
     today: string;
-    onHoverChange?: (airport: AirportResponse | null) => void;
+    onHoverChange?: (entity: UnifiedSelection | null, type?: 'origin' | 'destination') => void;
 }
 
 const ManualSearchForm: React.FC<ManualSearchFormProps> = ({
@@ -71,7 +72,7 @@ const ManualSearchForm: React.FC<ManualSearchFormProps> = ({
                     isMapSelecting={selectingType === 'origin'}
                     className={'flex-1 min-w-0 h-full'}
                     otherSelected={destinations}
-                    onHoverChange={onHoverChange}
+                    onHoverChange={(entity) => onHoverChange?.(entity, 'origin')}
                 />
 
                 {/* Switch Button */}
@@ -99,7 +100,7 @@ const ManualSearchForm: React.FC<ManualSearchFormProps> = ({
                     isMapSelecting={selectingType === 'destination'}
                     className={'flex-1 min-w-0 h-full'}
                     otherSelected={origins}
-                    onHoverChange={onHoverChange}
+                    onHoverChange={(entity) => onHoverChange?.(entity, 'destination')}
                 />
             </div>
 

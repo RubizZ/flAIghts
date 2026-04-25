@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, UIEvent, useCallback } from "react";
+import { useState, useEffect, useRef, UIEvent, useCallback, ChangeEvent } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { ArrowLeft, Send, Loader2, CheckCheck, Plane, X, History, Calendar, MapPin } from "lucide-react";
 import { useGetUserById } from "@/api/generated/openapi/users";
@@ -6,7 +6,7 @@ import UserAvatar from "@/components/ui/UserAvatar";
 import { useAuth } from "@/context/AuthContext";
 import { useInfiniteQuery, useQueryClient, type InfiniteData } from "@tanstack/react-query";
 import { getMessages, useMarkConversationAsRead, getGetConversationsQueryKey } from "@/api/generated/openapi/conversations";
-import { useGetSearches } from "@/api/generated/openapi/search";
+import { useGetSearches, useShareSearch } from "@/api/generated/openapi/search";
 import { useConversationsStreamWS } from "@/api/generated/asyncapi/hooks";
 import type { MessageResponse, PaginatedMessagesResponse } from "@/api/generated/openapi/model";
 import type { ChatServerMessage } from "@/api/generated/asyncapi/models";
@@ -36,6 +36,7 @@ export default function Chat() {
         mutation: {
             onSuccess: () => {
                 queryClient.invalidateQueries({ queryKey: getGetConversationsQueryKey() });
+                queryClient.invalidateQueries({ queryKey: ['messages', userId] });
 
                 queryClient.setQueryData<InfiniteData<PaginatedMessagesResponse>>(['messages', userId], (oldData) => {
                     if (!oldData) return oldData;
@@ -136,6 +137,12 @@ export default function Chat() {
                             items: [...firstPage.items, incomingMessage],
                         };
                     }
+
+                    // Si el mensaje es para mí, lo marcamos como leído en el servidor
+                    if (incomingMessage.receiver === selfUser?._id) {
+                        markConversationAsRead({ otherUserId: userId! });
+                    }
+
                     return { ...oldData, pages: newPages };
                 });
             }
@@ -193,7 +200,21 @@ export default function Chat() {
         return `${date.toLocaleDateString()} a las ${time}`;
     };
 
-    const handleShareSearch = (search: any) => {
+    const { mutateAsync: shareSearch } = useShareSearch();
+
+    const handleShareSearch = async (search: any) => {
+        // Si la búsqueda es privada, la hacemos pública primero
+        if (!search.shared) {
+            try {
+                await shareSearch({ searchId: search._id });
+                // Actualizamos localmente para evitar re-llamadas si el usuario vuelve a compartir rápido
+                search.shared = true;
+            } catch (err) {
+                toast.error("No se pudo preparar la búsqueda para compartir");
+                return;
+            }
+        }
+
         const origins = search.origins.join(", ");
         const destinations = search.destinations.join(", ");
         // Formato: SHARE_SEARCH:id:origen:destino
@@ -202,6 +223,8 @@ export default function Chat() {
             receiverId: userId!,
             content: `SHARE_SEARCH:${search._id}:${origins}:${destinations}`,
         });
+        window.dispatchEvent(new CustomEvent('flaights:mission:send-message'));
+        window.dispatchEvent(new CustomEvent('flaights:mission:share-from-chat'));
         setIsShareModalOpen(false);
     };
 
@@ -214,8 +237,12 @@ export default function Chat() {
             receiverId: userId,
             content: newMessage.trim(),
         });
+        window.dispatchEvent(new CustomEvent('flaights:mission:send-message'));
 
         setNewMessage("");
+        // Reset height after sending
+        const textarea = document.getElementById('chat-textarea') as HTMLTextAreaElement;
+        if (textarea) textarea.style.height = '46px';
     };
 
     const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -252,8 +279,8 @@ export default function Chat() {
     }
 
     return (
-        <div className="h-full w-full px-2 py-4 sm:px-6 sm:py-6 sm:pt-20 flex justify-center">
-            <div className="flex flex-col w-full h-[calc(100vh-5.5rem)] sm:h-full max-w-4xl bg-main rounded-3xl border border-line shadow-lg overflow-hidden animate-in fade-in duration-300">
+        <div className="h-full w-full px-2 py-4 sm:px-6 sm:py-6 flex justify-center overflow-hidden">
+            <div className="flex flex-col w-full h-full max-w-4xl bg-main rounded-3xl border border-line shadow-lg overflow-hidden animate-in fade-in duration-300">
 
                 <header className="flex items-center gap-4 p-4 border-b border-line shrink-0">
                     <button
@@ -349,7 +376,7 @@ export default function Chat() {
                                 <h3 className="text-xs font-bold uppercase tracking-wider text-content-muted flex items-center gap-2">
                                     <History size={14} /> Tus búsquedas recientes
                                 </h3>
-                                <button onClick={() => setIsShareModalOpen(false)} className="text-content-muted hover:text-content">
+                                <button onClick={() => setIsShareModalOpen(false)} className="text-content-muted hover:text-content cursor-pointer">
                                     <X size={16} />
                                 </button>
                             </div>
@@ -363,7 +390,7 @@ export default function Chat() {
                                         <button
                                             key={search._id}
                                             onClick={() => handleShareSearch(search)}
-                                            className="flex flex-col gap-1 p-3 rounded-xl hover:bg-surface border border-transparent hover:border-line transition-all text-left group"
+                                            className="flex flex-col gap-1 p-3 rounded-xl hover:bg-surface border border-transparent hover:border-line transition-all text-left group cursor-pointer"
                                         >
                                             <div className="flex items-center justify-between">
                                                 <div className="font-bold text-sm text-content flex items-center gap-2">
@@ -393,21 +420,26 @@ export default function Chat() {
                         >
                             <Plane size={20} className={isShareModalOpen ? '' : 'rotate-45'} />
                         </button>
-                        <TextareaAutosize
+                        <textarea
+                            id="chat-textarea"
                             value={newMessage}
-                            onChange={(e) => setNewMessage(e.target.value)}
+                            onChange={(e: ChangeEvent<HTMLTextAreaElement>) => {
+                                setNewMessage(e.target.value);
+                                e.target.style.height = '46px';
+                                const newHeight = Math.min(e.target.scrollHeight, 120); // 120px is roughly 4-5 rows
+                                e.target.style.height = `${newHeight}px`;
+                            }}
                             onKeyDown={handleKeyDown}
                             placeholder="Escribe un mensaje..."
-                            className="flex-1 bg-surface placeholder-content-muted outline-none px-4 pt-3 pb-3.5 rounded-xl font-medium border border-line focus:border-brand shadow-sm resize-none custom-scrollbar"
+                            className="flex-1 bg-surface placeholder-content-muted outline-none px-4 py-3 rounded-xl font-medium border border-line focus:border-brand shadow-sm resize-none custom-scrollbar h-[46px] transition-[height] duration-100"
                             autoComplete="off"
-                            maxRows={4}
                             rows={1}
                         />
                         <button
                             type="submit"
                             disabled={newMessage.trim() === "" || wsStatus !== 'open'}
                             title={wsStatus !== 'open' ? 'Conectando al chat...' : 'Enviar mensaje'}
-                            className="p-3 bg-brand text-content-on-brand rounded-full hover:bg-brand/90 transition-all shadow-lg shadow-brand/20 active:scale-95 disabled:bg-brand/50 disabled:cursor-not-allowed disabled:scale-100"
+                            className="p-3 bg-brand text-content-on-brand rounded-full hover:bg-brand/90 transition-all shadow-lg shadow-brand/20 active:scale-95 disabled:bg-brand/50 disabled:cursor-not-allowed disabled:scale-100 cursor-pointer"
                             aria-label="Enviar mensaje"
                         >
                             <Send size={20} />

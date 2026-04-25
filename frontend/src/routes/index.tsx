@@ -16,6 +16,7 @@ import Settings from "@/pages/Settings.tsx";
 import Home from "@/pages/Home.tsx";
 import Chats from "@/pages/Chats.tsx";
 import Chat from "@/pages/Chat.tsx";
+import SearchHistory from "@/pages/SearchHistory.tsx";
 
 export const routes: RouteObject[] = [
     {
@@ -43,6 +44,7 @@ export const routes: RouteObject[] = [
                     { path: "/chats", element: <Chats /> },
                     { path: "/chats/:userId", element: <Chat /> },
                     { path: "/settings", element: <Settings /> },
+                    { path: "/history", element: <SearchHistory /> },
                     { path: "*", element: <NotFound /> },
                 ]
             }

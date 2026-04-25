@@ -1,9 +1,11 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Outlet, useMatches } from "react-router-dom";
 import { Menu } from "lucide-react";
 import Navbar from "./Navbar.tsx";
 import Sidebar from "./Sidebar.tsx";
 import Footer from "./Footer.tsx";
+import { NavLogoProvider } from "@/context/NavLogoContext";
+import type { LogoHandle } from "@/components/ui/Logo";
 
 function useIsGlobeRoute() {
     const matches = useMatches();
@@ -18,6 +20,7 @@ function useIsGlobeRoute() {
 export default function AppLayout() {
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const isGlobe = useIsGlobeRoute();
+    const logoRef = useRef<LogoHandle>(null);
 
     const toggleSidebar = () => setIsSidebarOpen(prev => !prev);
     const closeSidebar = () => setIsSidebarOpen(false);
@@ -25,10 +28,11 @@ export default function AppLayout() {
     const variant = isGlobe ? 'floating' : 'classic';
 
     return (
+        <NavLogoProvider logoRef={logoRef}>
         <div className={`h-svh w-full bg-main text-content overflow-hidden flex flex-col sm:flex-row`}>
             {/* Mobile Top Navbar */}
             {!isGlobe && (
-                <div className="sm:hidden w-full h-14 bg-main border-b border-line flex items-center justify-between px-4 shrink-0 z-40">
+                <div className="sm:hidden w-full h-14 bg-main border-b border-line flex items-center justify-between px-4 shrink-0 z-header relative">
                     <div className="flex items-center gap-3">
                         <button
                             onClick={toggleSidebar}
@@ -36,7 +40,6 @@ export default function AppLayout() {
                         >
                             <Menu size={22} />
                         </button>
-                        <span className="font-bold tracking-tight text-lg">flAIghts</span>
                     </div>
 
                     {/* Integrated Navbar actions (flat variant) */}
@@ -59,23 +62,23 @@ export default function AppLayout() {
             )}
 
             <div className={`flex flex-col min-w-0 relative grow shrink min-h-0 ${isGlobe ? 'w-full' : ''}`}>
-                <header className={`absolute top-0 left-0 w-full z-40 pointer-events-none ${isGlobe ? 'block' : 'hidden sm:block'}`}>
-                    <Navbar variant="floating" />
+                <header className={`absolute top-0 left-0 w-full z-header pointer-events-none ${isGlobe ? 'block' : 'hidden sm:block'}`}>
+                    <Navbar variant="floating" logoRef={logoRef} />
                 </header>
 
                 {/* Backdrop */}
                 <div
-                    className={`fixed inset-0 bg-black/40 z-30 transition-opacity duration-300 pointer-events-none
+                    className={`fixed inset-0 bg-black/40 z-sticky transition-opacity duration-300 pointer-events-none
                         ${isSidebarOpen ? 'opacity-100' : 'opacity-0'}
                     `}
                 />
 
                 <main
                     onClick={() => isSidebarOpen && closeSidebar()}
-                    className={`grow bg-surface overflow-auto relative transition-[padding] duration-300 ease-in-out min-h-0
+                    className={`grow bg-surface overflow-auto custom-scrollbar relative transition-[padding] duration-300 ease-in-out min-h-0
                         ${isGlobe
                             ? `w-full ${isSidebarOpen ? 'sm:pl-64' : ''}`
-                            : 'w-full'
+                            : 'w-full sm:pt-20'
                         }
                     `}
                 >
@@ -89,5 +92,6 @@ export default function AppLayout() {
                 </div>
             </div>
         </div>
+        </NavLogoProvider>
     );
 }

@@ -39,6 +39,8 @@ jobs:
       S3_SECRET_ACCESS_KEY: "test-secret"
       SERPAPI_API_KEY: "test-serpapi-key"
       OPENAI_API_KEY: "test-openai-key"
+      GOOGLE_CLIENT_ID: "ci"
+      TURNSTILE_SECRET_KEY: "test-turnstile-key"
 
     steps:
       - uses: actions/checkout@v4

@@ -1,15 +1,19 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { toast } from "sonner";
 import AuthLayout from "@/components/layout/AuthLayout";
 import AuthCard from "@/components/ui/AuthCard";
 import FloatingLabelInput from "@/components/ui/FloatingLabelInput";
 import { useInitiateRegistration, useCompleteRegistration } from "@/api/generated/openapi/users";
-import { useLogin } from "@/api/generated/openapi/auth";
+import { useLoginWeb, useLoginWithGoogleWeb } from "@/api/generated/openapi/auth";
+import { GoogleLogin } from '@react-oauth/google';
 import { useNavigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import { getGetSelfUserQueryKey } from "@/api/generated/openapi/users";
 import { useAuth } from "@/context/AuthContext";
 import { Mail, ShieldCheck, User as UserIcon, Lock } from "lucide-react";
+import Logo from "@/components/ui/Logo";
+import TurnstileWidget, { type TurnstileWidgetRef } from "@/components/ui/TurnstileWidget";
+import GoogleLinkingView from "@/components/auth/GoogleLinkingView";
 
 export default function Register() {
     const navigate = useNavigate();
@@ -17,14 +21,18 @@ export default function Register() {
     const { isAuthenticated, isLoading } = useAuth();
 
     const [step, setStep] = useState<1 | 2>(1);
+    const [transactionId, setTransactionId] = useState("");
     const [formData, setFormData] = useState({
         email: "",
         code: "",
         username: "",
         password: "",
         confirmPassword: "",
-        acceptedTerms: false
+        acceptedTerms: false,
+        turnstileToken: "",
+        turnstileTokenStep2: ""
     });
+    const turnstileRef = useRef<TurnstileWidgetRef>(null);
     const [isHoveringLink, setIsHoveringLink] = useState(false);
     const [errors, setErrors] = useState({
         email: "",
@@ -34,6 +42,8 @@ export default function Register() {
         confirmPassword: "",
         acceptedTerms: ""
     });
+    const [googleLinkData, setGoogleLinkData] = useState<{ credential: string, email: string } | null>(null);
+    const googleCredentialRef = useRef<string | null>(null);
 
     useEffect(() => {
         if (!isLoading && isAuthenticated) {
@@ -41,11 +51,10 @@ export default function Register() {
         }
     }, [isAuthenticated, isLoading, navigate]);
 
-    const { mutate: performLogin } = useLogin({
+    const { mutate: performLogin } = useLoginWeb({
         mutation: {
             onSuccess: () => {
                 queryClient.invalidateQueries({ queryKey: getGetSelfUserQueryKey() });
-                toast.success("¡Bienvenido a bordo!");
                 navigate("/");
             },
             onError: () => {
@@ -55,11 +64,39 @@ export default function Register() {
         }
     });
 
-    const { mutate: initiateRegistration, isPending: isInitiating } = useInitiateRegistration({
+    const { mutate: performGoogleLogin, isPending: isGooglePending } = useLoginWithGoogleWeb({
         mutation: {
             onSuccess: () => {
+                toast.success(googleLinkData ? "Cuentas vinculadas correctamente" : "Sesión iniciada con Google");
+                setGoogleLinkData(null);
+                queryClient.invalidateQueries({ queryKey: getGetSelfUserQueryKey() });
+                navigate("/");
+            },
+            onError: (error) => {
+                if (error.code === "ACCOUNT_LINK_REQUIRED") {
+                    setGoogleLinkData({ 
+                        credential: googleCredentialRef.current || "", 
+                        email: error.details.email 
+                    });
+                    toast.info("Cuenta existente detectada. Introduce tu contraseña para vincularla.");
+                } else if (error.code === "TURNSTILE_MISSING_TOKEN" || error.code === "TURNSTILE_INVALID_TOKEN" || error.code === "TURNSTILE_TOKEN_ALREADY_SPENT" || error.code === "TURNSTILE_VERIFICATION_FAILED") {
+                    toast.error("La verificación de seguridad ha fallado o caducado. Inténtalo de nuevo.");
+                    turnstileRef.current?.reset();
+                } else {
+                    setGoogleLinkData(null);
+                    toast.error("Error al iniciar sesión o registrarse con Google");
+                }
+            }
+        }
+    });
+
+    const { mutate: initiateRegistration, isPending: isInitiating } = useInitiateRegistration({
+        mutation: {
+            onSuccess: (response) => {
                 toast.success("Email de verificación enviado. Revisa tu bandeja de entrada.");
+                setTransactionId(response.transactionId);
                 setStep(2);
+                turnstileRef.current?.reset();
             },
             onError: (error) => {
                 const newErrors = { ...errors };
@@ -67,6 +104,13 @@ export default function Register() {
                     newErrors.email = "Este email ya está registrado";
                 } else if (error.code === "REQUEST_VALIDATION_ERROR") {
                     if (error.details["body.email"]) newErrors.email = "El email no es válido";
+                } else if (error.code === "TURNSTILE_MISSING_TOKEN") {
+                    toast.error("Por favor, completa la verificación de seguridad.");
+                } else if (error.code === "TURNSTILE_INVALID_TOKEN" || error.code === "TURNSTILE_TOKEN_ALREADY_SPENT") {
+                    toast.error("La verificación de seguridad ha caducado. Inténtalo de nuevo.");
+                    turnstileRef.current?.reset();
+                } else if (error.code === "TURNSTILE_VERIFICATION_FAILED") {
+                    toast.error("La verificación de seguridad ha fallado. Por favor, inténtalo de nuevo.");
                 }
                 setErrors(newErrors);
             }
@@ -76,13 +120,18 @@ export default function Register() {
     const { mutate: completeRegistration, isPending: isCompleting } = useCompleteRegistration({
         mutation: {
             onSuccess: () => {
-                performLogin({
-                    data: {
-                        identifier: formData.email,
-                        password: formData.password,
-                        responseType: 'cookie'
-                    }
-                });
+                if (formData.turnstileTokenStep2) {
+                    performLogin({
+                        data: {
+                            identifier: formData.email,
+                            password: formData.password,
+                            turnstileToken: formData.turnstileTokenStep2
+                        }
+                    });
+                } else {
+                    toast.success("¡Cuenta creada correctamente! Por favor, inicia sesión para continuar.");
+                    navigate("/login");
+                }
             },
             onError: (error) => {
                 if (error.code === "REQUEST_VALIDATION_ERROR") {
@@ -138,11 +187,17 @@ export default function Register() {
     });
 
     const handleNextStep = () => {
-        if (!formData.email) {
-            setErrors(prev => ({ ...prev, email: "El email es obligatorio" }));
+        const newErrors = { ...errors, email: !formData.email ? "El email es obligatorio" : "" };
+        setErrors(newErrors);
+
+        if (newErrors.email) return;
+
+        if (!formData.turnstileToken) {
+            toast.error("Por favor, completa la verificación de seguridad.");
             return;
         }
-        initiateRegistration({ data: { email: formData.email } });
+
+        initiateRegistration({ data: { email: formData.email, turnstileToken: formData.turnstileToken } });
     };
 
     const handleRegister = () => {
@@ -151,13 +206,14 @@ export default function Register() {
             code: !formData.code ? "El código es obligatorio" : "",
             username: !formData.username ? "El nombre de usuario es obligatorio" : "",
             password: !formData.password ? "La contraseña es obligatoria" : formData.password.length < 8 ? "Mínimo 8 caracteres" : "",
-            confirmPassword: formData.password !== formData.confirmPassword ? "Las contraseñas no coinciden" : "",
+            confirmPassword: !formData.confirmPassword ? "Debes confirmar la contraseña" : formData.password !== formData.confirmPassword ? "Las contraseñas no coinciden" : "",
             acceptedTerms: !formData.acceptedTerms ? "Debes aceptar los términos y condiciones" : ""
         };
 
         setErrors(newErrors);
 
         if (newErrors.code || newErrors.username || newErrors.password || newErrors.confirmPassword || newErrors.acceptedTerms) {
+            toast.error("Por favor completa todos los campos correctamente");
             return;
         }
 
@@ -166,14 +222,20 @@ export default function Register() {
                 email: formData.email,
                 code: formData.code,
                 username: formData.username,
-                password: formData.password
+                password: formData.password,
+                transactionId: transactionId
             }
         });
     };
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value, type, checked } = e.target;
-        const finalValue = type === 'checkbox' ? checked : value;
+        let finalValue: string | boolean = type === 'checkbox' ? checked : value;
+
+        if (name === 'code') {
+            finalValue = String(finalValue).replace(/\D/g, '');
+        }
+
         setFormData(prev => ({ ...prev, [name]: finalValue }));
         if (errors[name as keyof typeof errors]) {
             setErrors(prev => ({ ...prev, [name]: "" }));
@@ -189,154 +251,234 @@ export default function Register() {
 
     return (
         <AuthLayout>
-            <AuthCard title={step === 1 ? "Únete a flAIghts" : "Completa tu perfil"}>
-                <div className="flex flex-col gap-5">
-                    {step === 1 ? (
-                        <>
-                            <p className="text-sm text-center text-content-muted">
-                                Introduce tu email para recibir un código de verificación.
-                            </p>
-                            <FloatingLabelInput
-                                value={formData.email}
-                                onChange={handleChange}
-                                type="email"
-                                id="email"
-                                name="email"
-                                label="Email"
-                                error={errors.email}
-                                onKeyDown={enterKeyPress}
-                                icon={<Mail size={18} />}
-                            />
-                            <button
-                                type="button"
-                                onClick={handleNextStep}
-                                disabled={isInitiating}
-                                className="mt-4 rounded-lg bg-brand p-3 text-content-on-brand font-bold hover:scale-[1.02] active:scale-95 transition-all shadow-lg shadow-brand/20 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-                            >
-                                {isInitiating ? "Enviando código..." : "Continuar"}
-                            </button>
-                        </>
-                    ) : (
-                        <>
-                            <p className="text-sm text-center text-content/70">
-                                Hemos enviado un código a <span className="font-bold text-brand">{formData.email}</span>.
-                            </p>
-
-                            <div className="flex justify-between items-center gap-4">
-                                <FloatingLabelInput className="flex-1 bg-surface!"
-                                    disabled={true}
+            <AuthCard title={
+                <>
+                    <Logo size={32} />
+                    <span>{step === 1 ? "Registrate en la plataforma" : "Completa tu perfil"}</span>
+                </>
+            }>
+                {googleLinkData ? (
+                    <GoogleLinkingView
+                        linkData={googleLinkData}
+                        turnstileToken={formData.turnstileToken}
+                        onCancel={() => setGoogleLinkData(null)}
+                        onSuccess={() => setGoogleLinkData(null)}
+                    />
+                ) : (
+                    <div className="flex flex-col gap-5">
+                        {step === 1 ? (
+                            <>
+                                <p className="text-sm text-center text-content-muted">
+                                    Introduce tu email para recibir un código de verificación.
+                                </p>
+                                <FloatingLabelInput
                                     value={formData.email}
+                                    onChange={handleChange}
                                     type="email"
                                     id="email"
                                     name="email"
                                     label="Email"
                                     error={errors.email}
+                                    onKeyDown={enterKeyPress}
                                     icon={<Mail size={18} />}
                                 />
+
+
                                 <button
-                                    onClick={() => setStep(1)}
-                                    className="shrink-0 text-content-muted hover:underline hover:cursor-pointer text-xs"
+                                    type="button"
+                                    onClick={handleNextStep}
+                                    disabled={isInitiating}
+                                    className="mt-4 rounded-lg bg-brand p-3 text-content-on-brand font-bold enabled:hover:scale-[1.02] enabled:active:scale-95 transition-all shadow-lg shadow-brand/20 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
-                                    Cambiar email
+                                    {isInitiating ? "Enviando código..." : "Continuar"}
                                 </button>
-                            </div>
 
-                            <FloatingLabelInput
-                                value={formData.code}
-                                onChange={handleChange}
-                                type="text"
-                                id="code"
-                                name="code"
-                                label="Código de verificación"
-                                error={errors.code}
-                                onKeyDown={enterKeyPress}
-                                icon={<ShieldCheck size={18} />}
-                            />
+                                <div className="relative flex py-2 items-center">
+                                    <div className="grow border-t border-content-muted/30"></div>
+                                    <span className="shrink-0 mx-4 text-content-muted text-sm">O continúa con</span>
+                                    <div className="grow border-t border-content-muted/30"></div>
+                                </div>
 
-                            <FloatingLabelInput
-                                value={formData.username}
-                                onChange={handleChange}
-                                type="text"
-                                id="username"
-                                name="username"
-                                label="Nombre de usuario"
-                                error={errors.username}
-                                onKeyDown={enterKeyPress}
-                                icon={<UserIcon size={18} />}
-                            />
-
-                            <FloatingLabelInput
-                                value={formData.password}
-                                onChange={handleChange}
-                                type="password"
-                                id="password"
-                                name="password"
-                                label="Contraseña"
-                                error={errors.password}
-                                onKeyDown={enterKeyPress}
-                                icon={<Lock size={18} />}
-                            />
-
-                            <FloatingLabelInput
-                                value={formData.confirmPassword}
-                                onChange={handleChange}
-                                type="password"
-                                isRepeat
-                                id="confirmPassword"
-                                name="confirmPassword"
-                                label="Confirmar contraseña"
-                                error={errors.confirmPassword}
-                                onKeyDown={enterKeyPress}
-                                icon={<Lock size={18} />}
-                            />
-
-                            <div className="flex flex-col gap-2">
-                                <label className="flex items-center gap-3 cursor-pointer group">
-                                    <div className="relative w-5 h-5 flex items-center justify-center shrink-0">
-                                        <input
-                                            type="checkbox"
-                                            name="acceptedTerms"
-                                            id="acceptedTerms"
-                                            checked={formData.acceptedTerms}
-                                            onChange={handleChange}
-                                            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
-                                        />
-                                        <div className={`w-5 h-5 border rounded-md transition-all flex items-center justify-center ${formData.acceptedTerms ? 'bg-brand border-line text-content-on-brand animate-fade-in animate-duration-200' : `bg-main border-line ${!isHoveringLink ? 'group-hover:border-gray-400' : ''}`}`}>
-                                            {formData.acceptedTerms && (
-                                                <svg
-                                                    className="w-3.5 h-3.5 fill-none stroke-current stroke-3 pointer-events-none"
-                                                    viewBox="0 0 24 24"
-                                                >
-                                                    <polyline points="20 6 9 17 4 12" />
-                                                </svg>
-                                            )}
+                                <div className="flex justify-center">
+                                    <GoogleLogin
+                                        onSuccess={credentialResponse => {
+                                            if (credentialResponse.credential) {
+                                                const credential = credentialResponse.credential;
+                                                googleCredentialRef.current = credential;
+                                                performGoogleLogin({
+                                                    data: {
+                                                        credential,
+                                                        turnstileToken: formData.turnstileToken
+                                                    }
+                                                });
+                                            }
+                                        }}
+                                        onError={() => {
+                                            toast.error('Error al conectar con Google');
+                                        }}
+                                        theme='filled_blue'
+                                        shape="circle"
+                                        text="continue_with"
+                                    />
+                                </div>
+                            </>
+                        ) : (
+                            <>
+                                <div className="flex flex-col items-center gap-4 py-2 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                                    <div className="relative">
+                                        <div className="absolute inset-0 bg-brand/20 blur-xl rounded-full animate-pulse" />
+                                        <div className="relative bg-brand/10 p-4 rounded-full border border-brand/20">
+                                            <Mail className="text-brand size-8 animate-radar-slow" />
                                         </div>
                                     </div>
-                                    <span className="text-xs text-content-muted leading-tight select-none">
-                                        Acepto los <a href="/terms" target="_blank" rel="noopener noreferrer" className="text-brand hover:underline font-bold relative z-20" onClick={(e) => e.stopPropagation()} onMouseEnter={() => setIsHoveringLink(true)} onMouseLeave={() => setIsHoveringLink(false)}>Términos de Servicio</a> y la <a href="/privacy" target="_blank" rel="noopener noreferrer" className="text-brand hover:underline font-bold relative z-20" onClick={(e) => e.stopPropagation()} onMouseEnter={() => setIsHoveringLink(true)} onMouseLeave={() => setIsHoveringLink(false)}>Política de Privacidad</a>
-                                    </span>
-                                </label>
-                                {errors.acceptedTerms && <p className="text-[10px] text-red-500 ml-8 font-bold animate-shake">{errors.acceptedTerms}</p>}
-                            </div>
+                                    <div className="flex flex-col gap-1">
+                                        <h3 className="text-lg font-bold text-content">¡Código enviado!</h3>
+                                        <p className="text-sm text-center text-content-muted">
+                                            Hemos enviado un código a <span className="font-medium text-brand">{formData.email}</span>
+                                        </p>
+                                    </div>
+                                </div>
 
-                            <button
-                                type="button"
-                                onClick={handleRegister}
-                                disabled={isCompleting}
-                                className="mt-4 rounded-lg bg-brand p-3 text-content-on-brand font-bold hover:scale-[1.02] active:scale-95 transition-all shadow-lg shadow-brand/20 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-                            >
-                                {isCompleting ? "Creando cuenta..." : "Completar Registro"}
-                            </button>
-                        </>
-                    )}
+                                <div className="flex justify-between items-center gap-4">
+                                    <FloatingLabelInput className="flex-1 bg-surface!"
+                                        disabled={true}
+                                        value={formData.email}
+                                        type="email"
+                                        id="email"
+                                        name="email"
+                                        label="Email"
+                                        error={errors.email}
+                                        icon={<Mail size={18} />}
+                                    />
+                                    <button
+                                        onClick={() => setStep(1)}
+                                        className="shrink-0 text-content-muted hover:underline hover:cursor-pointer text-xs"
+                                    >
+                                        Cambiar email
+                                    </button>
+                                </div>
+
+                                <FloatingLabelInput
+                                    value={formData.code}
+                                    onChange={handleChange}
+                                    type="text"
+                                    inputMode="numeric"
+                                    pattern="[0-9]*"
+                                    maxLength={6}
+                                    id="code"
+                                    name="code"
+                                    label="Código de verificación"
+                                    error={errors.code}
+                                    onKeyDown={enterKeyPress}
+                                    icon={<ShieldCheck size={18} />}
+                                />
+
+                                <FloatingLabelInput
+                                    value={formData.username}
+                                    onChange={handleChange}
+                                    type="text"
+                                    id="username"
+                                    name="username"
+                                    label="Nombre de usuario"
+                                    error={errors.username}
+                                    onKeyDown={enterKeyPress}
+                                    icon={<UserIcon size={18} />}
+                                />
+
+                                <FloatingLabelInput
+                                    value={formData.password}
+                                    onChange={handleChange}
+                                    type="password"
+                                    id="password"
+                                    name="password"
+                                    label="Contraseña"
+                                    error={errors.password}
+                                    onKeyDown={enterKeyPress}
+                                    icon={<Lock size={18} />}
+                                />
+
+                                <FloatingLabelInput
+                                    value={formData.confirmPassword}
+                                    onChange={handleChange}
+                                    type="password"
+                                    isRepeat
+                                    id="confirmPassword"
+                                    name="confirmPassword"
+                                    label="Confirmar contraseña"
+                                    error={errors.confirmPassword}
+                                    onKeyDown={enterKeyPress}
+                                    icon={<Lock size={18} />}
+                                />
+
+                                <div className="p-3 bg-brand/5 rounded-xl border border-line">
+                                    <h4 className="text-[10px] font-bold text-brand uppercase tracking-wider mb-1.5">Requisitos de seguridad:</h4>
+                                    <ul className="text-[10px] text-content-muted space-y-1 list-disc list-inside opacity-80">
+                                        <li>Mínimo 8 caracteres</li>
+                                        <li>Recomendamos incluir números y símbolos</li>
+                                    </ul>
+                                </div>
+
+                                <div className="flex flex-col gap-2">
+                                    <label className="flex items-center gap-3 cursor-pointer group">
+                                        <div className="relative w-5 h-5 flex items-center justify-center shrink-0">
+                                            <input
+                                                type="checkbox"
+                                                name="acceptedTerms"
+                                                id="acceptedTerms"
+                                                checked={formData.acceptedTerms}
+                                                onChange={handleChange}
+                                                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                                            />
+                                            <div className={`w-5 h-5 border rounded-md transition-all flex items-center justify-center ${formData.acceptedTerms ? 'bg-brand border-line text-content-on-brand animate-fade-in animate-duration-200' : `bg-main border-line ${!isHoveringLink ? 'group-hover:border-gray-400' : ''}`}`}>
+                                                {formData.acceptedTerms && (
+                                                    <svg
+                                                        className="w-3.5 h-3.5 fill-none stroke-current stroke-3 pointer-events-none"
+                                                        viewBox="0 0 24 24"
+                                                    >
+                                                        <polyline points="20 6 9 17 4 12" />
+                                                    </svg>
+                                                )}
+                                            </div>
+                                        </div>
+                                        <span className="text-xs text-content-muted leading-tight select-none">
+                                            Acepto los <a href="/terms" target="_blank" rel="noopener noreferrer" className="text-brand hover:underline font-bold relative z-20" onClick={(e) => e.stopPropagation()} onMouseEnter={() => setIsHoveringLink(true)} onMouseLeave={() => setIsHoveringLink(false)}>Términos de Servicio</a> y la <a href="/privacy" target="_blank" rel="noopener noreferrer" className="text-brand hover:underline font-bold relative z-20" onClick={(e) => e.stopPropagation()} onMouseEnter={() => setIsHoveringLink(true)} onMouseLeave={() => setIsHoveringLink(false)}>Política de Privacidad</a>
+                                        </span>
+                                    </label>
+                                    {errors.acceptedTerms && <p className="text-[10px] text-red-500 ml-8 font-bold animate-shake">{errors.acceptedTerms}</p>}
+                                </div>
+
+
+                                <button
+                                    type="button"
+                                    onClick={handleRegister}
+                                    disabled={isCompleting}
+                                    className="mt-4 rounded-lg bg-brand p-3 text-content-on-brand font-bold enabled:hover:scale-[1.02] enabled:active:scale-95 transition-all shadow-lg shadow-brand/20 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
+                                    {isCompleting ? "Creando cuenta..." : "Completar Registro"}
+                                </button>
+                            </>
+                        )}
 
 
 
-                    <span className="text-sm text-content text-center">
-                        ¿Ya tienes cuenta? <a href="/login" className="text-brand font-bold hover:underline">Inicia sesión</a>
-                    </span>
-                </div>
+                        <span className="text-sm text-content text-center">
+                            ¿Ya tienes cuenta? <a href="/login" className="text-brand font-bold hover:underline">Inicia sesión</a>
+                        </span>
+                    </div>
+                )}
             </AuthCard>
+            <TurnstileWidget
+                ref={turnstileRef}
+                onVerify={(token) => {
+                    setFormData(prev => ({
+                        ...prev,
+                        turnstileToken: token,
+                        turnstileTokenStep2: token
+                    }));
+                }}
+                onExpire={() => setFormData(prev => ({ ...prev, turnstileToken: "", turnstileTokenStep2: "" }))}
+                onError={() => setFormData(prev => ({ ...prev, turnstileToken: "", turnstileTokenStep2: "" }))}
+            />
         </AuthLayout>
     );
 }

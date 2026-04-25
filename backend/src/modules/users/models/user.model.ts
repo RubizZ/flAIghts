@@ -17,8 +17,10 @@ export interface IUserFields {
   created_at: Date;
   last_seen_at: Date;
   auth_version: number;
-  password_reset_token?: string;
-  password_reset_expires?: Date;
+  security_code?: string;
+  security_code_id?: string;
+  security_code_action?: string;
+  security_code_expires?: Date;
   email_change_request?: {
     new_email: string;
     old_email_code: string;
@@ -26,6 +28,15 @@ export interface IUserFields {
     expires: Date;
   };
   profile_picture?: string;
+  google_id?: string;
+  google_email?: string;
+  is_password_set: boolean;
+  badges?: {
+    id: string;
+    name: string;
+    icon: string;
+    earned_at: Date;
+  }[];
 }
 
 export interface IFriendUnpopulated {
@@ -71,7 +82,7 @@ const UserSchema = new Schema<IUserDocument>({
     required: true,
     minlength: [3, "El nombre de usuario debe tener al menos 3 caracteres"],
     maxlength: [50, "El nombre de usuario no puede exceder 50 caracteres"],
-    match: [/^[a-zA-Z0-9_-]+$/, "El nombre de usuario solo puede contener letras, números, guiones y guiones bajos"]
+    match: [/^[a-zA-Z0-9À-ÿ_-]+$/, "El nombre de usuario solo puede contener letras, números, guiones y guiones bajos"]
   },
   email: {
     type: String,
@@ -120,8 +131,10 @@ const UserSchema = new Schema<IUserDocument>({
   created_at: { type: Date, default: Date.now },
   last_seen_at: { type: Date, default: Date.now },
   auth_version: { type: Number, default: 1, min: 1 },
-  password_reset_token: { type: String, select: false, index: true },
-  password_reset_expires: { type: Date, select: false },
+  security_code: { type: String, select: false, index: true },
+  security_code_id: { type: String, select: false },
+  security_code_action: { type: String, select: false },
+  security_code_expires: { type: Date, select: false },
   friends: [{
     user: { type: String, ref: "User", required: true },
     friend_since: { type: Date, default: Date.now }
@@ -134,7 +147,16 @@ const UserSchema = new Schema<IUserDocument>({
     new_email_code: { type: String, select: false },
     expires: { type: Date, select: false }
   },
-  profile_picture: { type: String }
+  profile_picture: { type: String },
+  google_id: { type: String, index: true, sparse: true },
+  google_email: { type: String, lowercase: true },
+  is_password_set: { type: Boolean, default: true },
+  badges: [{
+    id: { type: String, required: true },
+    name: { type: String, required: true },
+    icon: { type: String, required: true },
+    earned_at: { type: Date, default: Date.now }
+  }]
 });
 
 // Índice único case-insensitive para username

@@ -7,7 +7,6 @@ export interface MissionStep {
     isCompleted: boolean;
     completedBy?: string;
     completedAt?: string;
-    userAgent?: string;
     listener?: React.ComponentType; // Listener específico para este paso
 }
 
@@ -20,7 +19,6 @@ export interface Mission {
     isCompleted: boolean;
     completedBy?: string;
     completedAt?: string;
-    userAgent?: string;
     dependsOn?: string[]; // IDs de misiones que deben estar completadas
 }
 

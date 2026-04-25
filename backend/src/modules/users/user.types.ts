@@ -24,6 +24,15 @@ export interface User {
     received_friend_requests: string[];
     pending_email?: string;
     profile_picture?: string;
+    google_id?: string;
+    google_email?: string;
+    is_password_set: boolean;
+    badges?: {
+        id: string;
+        name: string;
+        icon: string;
+        earned_at: string;
+    }[];
 }
 
 export interface PopulatedUser extends Omit<User, 'friends' | 'sent_friend_requests' | 'received_friend_requests'> {
@@ -50,6 +59,12 @@ export interface FriendUser {
      */
     friend_since: string;
     profile_picture?: string;
+    badges?: {
+        id: string;
+        name: string;
+        icon: string;
+        earned_at: string;
+    }[];
 }
 
 export interface PublicUser {
@@ -69,6 +84,12 @@ export interface PublicUser {
     sent_friend_request: boolean;
     received_friend_request: boolean;
     profile_picture?: string;
+    badges?: {
+        id: string;
+        name: string;
+        icon: string;
+        earned_at: string;
+    }[];
 }
 
 // ==================== TIPOS DE RESPUESTA POR ENDPOINT ====================
@@ -79,12 +100,14 @@ export interface PublicUser {
 export type CreateUserResponseData = User;
 
 /**
- * Respuesta del endpoint POST /users/verify-email
+ * Respuesta que contiene un ID de transacción para veroficación.
  */
-export type VerifyEmailResponseData = null;
+export interface VerificationTransactionResponse {
+    transactionId: string;
+}
 
 /**
- * Respuesta del endpoint GET /users/me
+ * Respuesta del endpoint POST /users/me
  */
 export type GetUserResponseData = PopulatedUser;
 
@@ -137,6 +160,10 @@ export interface InitiateRegistrationData {
      * @format email
      * @pattern ^(?:[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*|"(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21\x23-\x5b\x5d-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])*")@(?:(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?|\[(?:(?:(2(5[0-5]|[0-4][0-9])|1[0-9][0-9]|[1-9]?[0-9]))\.){3}(?:(2(5[0-5]|[0-4][0-9])|1[0-9][0-9]|[1-9]?[0-9])|[a-z0-9-]*[a-z0-9]:(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21-\x5a\x53-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])+)\])$     */
     email: string;
+    /**
+     * Cloudflare Turnstile token for bot protection.
+     */
+    turnstileToken: string;
 }
 
 export interface CompleteRegistrationData {
@@ -158,6 +185,7 @@ export interface CompleteRegistrationData {
      * @minLength 8
      */
     password: string;
+    transactionId: string;
     preferences?: {
         /**
          * @minimum 0

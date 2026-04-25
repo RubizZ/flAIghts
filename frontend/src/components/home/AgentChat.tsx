@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, forwardRef, useImperativeHandle } from "react";
-import { Send, Sparkles, User, ExternalLink, Plane, MapPin, Calendar, Clock, ArrowRight, Check, Square, ChevronRight, ChevronDown, Lock } from "lucide-react";
+import { Send, Sparkles, User, ExternalLink, Plane, MapPin, Calendar, Clock, ArrowRight, Check, Square, ChevronRight, ChevronDown, Lock, AlertCircle } from "lucide-react";
 
 import ReactMarkdown from 'react-markdown';
 import { toast } from "sonner";
@@ -9,6 +9,7 @@ import type {
     ItineraryResponse,
     AirportResponse
 } from "@/api/generated/asyncapi/models";
+import { UnifiedSelection } from "@/types/selection";
 import { useAuth } from "@/context/AuthContext";
 import { useUserLocation } from "@/context/UserLocationContext";
 import { getAirportByIata } from "@/api/generated/openapi/airports";
@@ -43,12 +44,12 @@ type UIStep = AsyncAPIModels.AgentStreamEvent & {
 interface AgentChatProps {
     messages: ExtendedChatMessage[];
     setMessages: (messages: ExtendedChatMessage[] | ((prev: ExtendedChatMessage[]) => ExtendedChatMessage[])) => void;
-    origins?: AirportResponse[];
-    destinations?: AirportResponse[];
+    origins?: UnifiedSelection[];
+    destinations?: UnifiedSelection[];
     departureDate?: string;
     returnDate?: string;
-    setOrigins?: (airports: AirportResponse[]) => void;
-    setDestinations?: (airports: AirportResponse[]) => void;
+    setOrigins?: (selections: UnifiedSelection[]) => void;
+    setDestinations?: (selections: UnifiedSelection[]) => void;
     setDepartureDate?: (date: string) => void;
     setReturnDate?: (date: string) => void;
 }
@@ -381,7 +382,7 @@ const AgentChat = forwardRef<any, AgentChatProps>(({
     const scrollRef = useRef<HTMLDivElement>(null);
     const abortControllerRef = useRef<AbortController | null>(null);
 
-    const { data: availableModelsData } = useModels();
+    const { data: availableModelsData, isLoading: isLoadingModels } = useModels();
     const availableModels = availableModelsData || [];
     const [selectedModel, setSelectedModel] = useState<string>("");
     const [isStreaming, setIsStreaming] = useState(false);
@@ -459,8 +460,8 @@ const AgentChat = forwardRef<any, AgentChatProps>(({
                     model: selectedModel,
                     location: location ? location : undefined,
                     manual_state: {
-                        origins: origins?.map(o => o.iata_code),
-                        destinations: destinations?.map(d => d.iata_code),
+                        origins: origins?.flatMap(o => (o as AirportResponse).iata_code ? [(o as AirportResponse).iata_code] : (o as any).airports?.map((a: any) => a.iata_code) || []),
+                        destinations: destinations?.flatMap(d => (d as AirportResponse).iata_code ? [(d as AirportResponse).iata_code] : (d as any).airports?.map((a: any) => a.iata_code) || []),
                         departure_date: departureDate,
                         return_date: returnDate
                     }
@@ -490,24 +491,30 @@ const AgentChat = forwardRef<any, AgentChatProps>(({
                         });
                     } else if (event.type === 'tool_call' || event.type === 'tool_result' || event.type === 'tool_progress' || event.type === 'iteration') {
                         // Sync UI state for searches
-                        if (event.type === 'tool_call' && event.name === 'performSearch') {
-                            const args = event.args || {};
-                            if (args.origins && args.origins.length > 0 && setOrigins) {
-                                Promise.all(args.origins.map((iata: string) => getAirportByIata(iata)))
-                                    .then(res => {
-                                        const valid = res.filter(Boolean) as AirportResponse[];
-                                        if (valid.length > 0) setOrigins(valid);
-                                    }).catch(console.error);
+                        if (event.type === 'tool_call') {
+                            if (event.name === 'getUserSearchHistory') {
+                                window.dispatchEvent(new CustomEvent('flaights:mission:agent-get-user-search-history'));
                             }
-                            if (args.destinations && args.destinations.length > 0 && setDestinations) {
-                                Promise.all(args.destinations.map((iata: string) => getAirportByIata(iata)))
-                                    .then(res => {
-                                        const valid = res.filter(Boolean) as AirportResponse[];
-                                        if (valid.length > 0) setDestinations(valid);
-                                    }).catch(console.error);
+
+                            if (event.name === 'performSearch') {
+                                const args = event.args || {};
+                                if (args.origins && args.origins.length > 0 && setOrigins) {
+                                    Promise.all(args.origins.map((iata: string) => getAirportByIata(iata)))
+                                        .then(res => {
+                                            const valid = res.filter(Boolean) as AirportResponse[];
+                                            if (valid.length > 0) setOrigins(valid);
+                                        }).catch(console.error);
+                                }
+                                if (args.destinations && args.destinations.length > 0 && setDestinations) {
+                                    Promise.all(args.destinations.map((iata: string) => getAirportByIata(iata)))
+                                        .then(res => {
+                                            const valid = res.filter(Boolean) as AirportResponse[];
+                                            if (valid.length > 0) setDestinations(valid);
+                                        }).catch(console.error);
+                                }
+                                if (args.departure_date && setDepartureDate) setDepartureDate(args.departure_date);
+                                if (args.return_date && setReturnDate) setReturnDate(args.return_date);
                             }
-                            if (args.departure_date && setDepartureDate) setDepartureDate(args.departure_date);
-                            if (args.return_date && setReturnDate) setReturnDate(args.return_date);
                         }
 
                         setMessages((prev: ExtendedChatMessage[]) => {
@@ -538,6 +545,11 @@ const AgentChat = forwardRef<any, AgentChatProps>(({
                         });
                     } else if (event.type === 'final_result') {
                         hasFinalResult = true;
+
+                        if (event.data?.flights && event.data.flights.length > 0) {
+                            window.dispatchEvent(new CustomEvent('flaights:mission:ai-flights-returned'));
+                        }
+
                         setMessages((prev: ExtendedChatMessage[]) => {
                             const cleaned = prev.map(m => m.isStreaming ? { ...m, isStreaming: false } : m);
                             if (event.data?.flights && event.data.flights.length > 0) {
@@ -706,8 +718,10 @@ const AgentChat = forwardRef<any, AgentChatProps>(({
                     )}
                     {availableModels.length === 0 && (
                         <div className="flex items-center gap-1">
-                            <div className="w-1 h-1 bg-brand rounded-full animate-pulse" />
-                            <span className="text-[8px] font-bold uppercase text-content-muted/40">Conectando...</span>
+                            <div className="w-1 h-1 bg-orange-400 rounded-full animate-pulse" />
+                            <span className="text-[8px] font-bold uppercase text-content-muted/40 tracking-widest italic">
+                                {isLoadingModels ? "Conectando..." : "Sin Servicio"}
+                            </span>
                         </div>
                     )}
                 </div>
@@ -729,18 +743,20 @@ const AgentChat = forwardRef<any, AgentChatProps>(({
                             <ReactMarkdown>Soy fl**AI**ghts. No solo busco vuelos, aprendo de ti para sugerirte tu próximo destino.</ReactMarkdown>
                         </div>
 
-                        <div className="grid grid-cols-1 gap-2 w-full max-w-72">
-                            {suggestions.map((s, idx) => (
-                                <button
-                                    key={idx}
-                                    onClick={() => handleSend(s)}
-                                    className="px-4 py-3 text-xs font-bold text-content-muted hover:text-brand bg-white/5 hover:bg-brand/10 border border-line/30 hover:border-brand/40 rounded-2xl transition-all text-left flex items-center gap-3 group active:scale-95 cursor-pointer"
-                                >
-                                    <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
-                                    {s}
-                                </button>
-                            ))}
-                        </div>
+                        {availableModels.length > 0 && (
+                            <div className="grid grid-cols-1 gap-2 w-full max-w-72">
+                                {suggestions.map((s, idx) => (
+                                    <button
+                                        key={idx}
+                                        onClick={() => handleSend(s)}
+                                        className="px-4 py-3 text-xs font-bold text-content-muted hover:text-brand bg-white/5 hover:bg-brand/10 border border-line/30 hover:border-brand/40 rounded-2xl transition-all text-left flex items-center gap-3 group active:scale-95 cursor-pointer"
+                                    >
+                                        <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
+                                        {s}
+                                    </button>
+                                ))}
+                            </div>
+                        )}
                     </div>
                 ) : (
                     messages.map((msg, i) => {
@@ -823,7 +839,7 @@ const AgentChat = forwardRef<any, AgentChatProps>(({
                                     )}
 
                                     {/* Iteration limit reached continue button */}
-                                    {(msg as any).isLimitReached && (
+                                    {(msg as any).isLimitReached && availableModels.length > 0 && (
                                         <div className="mt-4 flex animate-fade-in">
                                             <button
                                                 onClick={() => handleSend("continue")}
@@ -861,61 +877,71 @@ const AgentChat = forwardRef<any, AgentChatProps>(({
 
             {/* Input Area */}
             <div className="p-2 lg:p-4 border-t border-line/20 bg-white/5 backdrop-blur-md shrink-0">
-                <div className="relative w-full flex items-center gap-2 bg-main/50 border border-line/50 rounded-2xl pl-4 pr-1.5 py-1.5 focus-within:border-brand/50 focus-within:ring-4 focus-within:ring-brand/10 transition-all shadow-inner group">
-                    <input
-                        type="text"
-                        value={input}
-                        onChange={(e) => setInput(e.target.value)}
-                        onKeyDown={(e) => e.key === 'Enter' && handleSend()}
-                        placeholder="Pregunta lo que quieras..."
-                        className="flex-1 bg-transparent py-2 text-sm focus:outline-none placeholder:text-content-muted/40 placeholder:italic font-medium min-w-0"
-                    />
-
-                    <div className="flex items-center gap-1.5 shrink-0">
-                        {isStreaming ? (
-                            <button
-                                onClick={() => stopStream('user')}
-                                className="p-2 rounded-xl transition-all duration-300 bg-red-500 hover:bg-red-600 text-white shadow-lg scale-100 hover:scale-105 active:scale-95 cursor-pointer"
-                                title="Detener"
-                            >
-                                <Square size={16} className="fill-white" />
-                            </button>
-                        ) : (
-                            <>
-                                {/* Compact Model Selector Dropdown - Hidden on mobile, shown on desktop */}
-                                {availableModels.length > 0 && (
-                                    <div className="hidden lg:block relative group/model">
-                                        <select
-                                            value={selectedModel}
-                                            onChange={(e) => setSelectedModel(e.target.value)}
-                                            className="appearance-none bg-surface/80 hover:bg-white/10 border border-line/30 hover:border-brand/40 pl-2.5 pr-7 py-2 rounded-xl text-[9px] lg:text-[10px] font-bold uppercase tracking-widest text-content-muted hover:text-brand focus:outline-none transition-all cursor-pointer max-w-[120px] truncate"
-                                        >
-                                            {availableModels.map(model => (
-                                                <option key={model} value={model} className="bg-surface text-content text-xs">
-                                                    {(model as string).toUpperCase()}
-                                                </option>
-                                            ))}
-                                        </select>
-                                        <div className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none text-content-muted/50">
-                                            <ChevronDown size={10} />
-                                        </div>
-                                    </div>
-                                )}
-
-                                <button
-                                    onClick={() => handleSend()}
-                                    disabled={!input.trim()}
-                                    className={`p-2 rounded-xl transition-all duration-300 cursor-pointer
-                                        ${input.trim()
-                                            ? 'bg-brand text-content-on-brand shadow-lg scale-100 ring-2 ring-brand/10'
-                                            : 'bg-line/20 text-content-muted scale-95 opacity-50'}`}
-                                >
-                                    <Send size={16} className={input.trim() ? 'animate-pulse' : ''} />
-                                </button>
-                            </>
-                        )}
+                {availableModels.length === 0 ? (
+                    <div className="relative w-full flex items-center justify-center gap-3 bg-orange-500/5 border border-orange-500/20 rounded-2xl py-3 px-4 shadow-sm animate-fade-in group overflow-hidden">
+                        <AlertCircle size={18} className="text-orange-500 animate-pulse relative z-10" />
+                        <span className="text-xs font-bold text-orange-500/80 uppercase tracking-widest italic relative z-10">
+                            {isLoadingModels ? "Sincronizando modelos..." : "Agente no disponible temporalmente"}
+                        </span>
+                        <div className="absolute inset-0 bg-linear-to-r from-transparent via-orange-500/5 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
                     </div>
-                </div>
+                ) : (
+                    <div className="relative w-full flex items-center gap-2 bg-main/50 border border-line/50 rounded-2xl pl-4 pr-1.5 py-1.5 focus-within:border-brand/50 focus-within:ring-4 focus-within:ring-brand/10 transition-all shadow-inner group">
+                        <input
+                            type="text"
+                            value={input}
+                            onChange={(e) => setInput(e.target.value)}
+                            onKeyDown={(e) => e.key === 'Enter' && handleSend()}
+                            placeholder="Pregunta lo que quieras..."
+                            className="flex-1 bg-transparent py-2 text-sm focus:outline-none placeholder:text-content-muted/40 placeholder:italic font-medium min-w-0"
+                        />
+
+                        <div className="flex items-center gap-1.5 shrink-0">
+                            {isStreaming ? (
+                                <button
+                                    onClick={() => stopStream('user')}
+                                    className="p-2 rounded-xl transition-all duration-300 bg-red-500 hover:bg-red-600 text-white shadow-lg scale-100 hover:scale-105 active:scale-95 cursor-pointer"
+                                    title="Detener"
+                                >
+                                    <Square size={16} className="fill-white" />
+                                </button>
+                            ) : (
+                                <>
+                                    {/* Compact Model Selector Dropdown - Hidden on mobile, shown on desktop */}
+                                    {availableModels.length > 0 && (
+                                        <div className="hidden lg:block relative group/model">
+                                            <select
+                                                value={selectedModel}
+                                                onChange={(e) => setSelectedModel(e.target.value)}
+                                                className="appearance-none bg-surface/80 hover:bg-white/10 border border-line/30 hover:border-brand/40 pl-2.5 pr-7 py-2 rounded-xl text-[9px] lg:text-[10px] font-bold uppercase tracking-widest text-content-muted hover:text-brand focus:outline-none transition-all cursor-pointer max-w-[120px] truncate"
+                                            >
+                                                {availableModels.map(model => (
+                                                    <option key={model} value={model} className="bg-surface text-content text-xs">
+                                                        {(model as string).toUpperCase()}
+                                                    </option>
+                                                ))}
+                                            </select>
+                                            <div className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none text-content-muted/50">
+                                                <ChevronDown size={10} />
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    <button
+                                        onClick={() => handleSend()}
+                                        disabled={!input.trim()}
+                                        className={`p-2 rounded-xl transition-all duration-300 cursor-pointer
+                                        ${input.trim()
+                                                ? 'bg-brand text-content-on-brand shadow-lg scale-100 ring-2 ring-brand/10'
+                                                : 'bg-line/20 text-content-muted scale-95 opacity-50'}`}
+                                    >
+                                        <Send size={16} className={input.trim() ? 'animate-pulse' : ''} />
+                                    </button>
+                                </>
+                            )}
+                        </div>
+                    </div>
+                )}
                 <div className="mt-2.5 flex items-center justify-center">
                     <span className="text-[8px] font-bold uppercase tracking-widest text-content-muted/30 text-center">
                         IA Experimental • flAIghts puede cometer errores. Verifica la información importante.

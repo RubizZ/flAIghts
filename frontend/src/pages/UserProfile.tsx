@@ -13,17 +13,16 @@ import { useNavigate, useParams, Link } from "react-router-dom";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/context/AuthContext";
-import { Lock, MessageCircle, UserMinus, Share2 } from "lucide-react";
+import { Lock, MessageCircle, UserMinus, History, Star, Users, Calendar, ShieldCheck } from "lucide-react";
+import { useEffect } from "react";
 import UserAvatar from "@/components/ui/UserAvatar";
 import { useSendMessage } from "@/api/generated/openapi/conversations";
-import SmartPopover from "@/components/ui/SmartPopover";
-import type { FriendUser } from "@/api/generated/openapi/model/friendUser";
+import SearchCard from "@/components/search/SearchCard";
 
 export default function UserProfile() {
     const { id } = useParams();
     const navigate = useNavigate();
-    const [sharingSearchId, setSharingSearchId] = useState<string | null>(null);
-    const { isAuthenticated, isLoading: isAuthLoading } = useAuth();
+    const { isAuthenticated, user: authUser, isLoading: isAuthLoading } = useAuth();
 
     if (!id) {
         throw new Error("User ID is required");
@@ -47,7 +46,11 @@ export default function UserProfile() {
 
     const { mutate: sendMessage } = useSendMessage({
         mutation: {
-            onSuccess: () => toast.success("Vuelo compartido con éxito"),
+            onSuccess: () => {
+                toast.success("Vuelo compartido con éxito");
+                window.dispatchEvent(new CustomEvent('flaights:mission:send-message'));
+                window.dispatchEvent(new CustomEvent('flaights:mission:share-from-results'));
+            },
             onError: () => toast.error("Error al compartir el vuelo")
         }
     });
@@ -95,7 +98,11 @@ export default function UserProfile() {
         isFetchingNextPage,
         isLoading: isSearchesLoading
     } = useGetSearchesInfinite(
-        id, { limit: 10 },
+        id,
+        {
+            limit: 10,
+            sharedOnly: true // Siempre mostramos solo las destacadas en el perfil
+        },
         {
             query: {
                 enabled: !!id && !!user && (user.type !== "public" || user.public === true),
@@ -110,6 +117,12 @@ export default function UserProfile() {
             fetchNextPage();
         }
     };
+
+    useEffect(() => {
+        if (user && user.type !== "self") {
+            window.dispatchEvent(new CustomEvent('flaights:mission:view-user-profile'));
+        }
+    }, [user]);
 
     if (isAuthLoading || isLoading) {
         return (
@@ -168,63 +181,138 @@ export default function UserProfile() {
     const now = new Date().getTime();
 
     return (
-        <div className="flex p-8 gap-8 justify-center w-full max-w-6xl mx-auto items-start h-[calc(100vh-100px)]">
-            <div className="flex flex-col gap-6">
-                <div className="flex flex-col text-center gap-4 bg-main p-8 rounded-3xl border border-line shadow-sm shrink-0 w-fit sticky top-8">
+        <div className="flex flex-col lg:flex-row p-4 lg:p-8 gap-6 lg:gap-8 justify-center w-full max-w-6xl mx-auto items-start min-h-[calc(100vh-100px)] lg:h-[calc(100vh-100px)] overflow-y-auto lg:overflow-hidden">
+            <div className="flex flex-col gap-6 w-full lg:w-fit">
+                <div className="flex flex-col text-center gap-4 bg-main p-6 lg:p-8 rounded-3xl border border-line shadow-sm shrink-0 w-full lg:w-fit lg:sticky lg:top-8">
                     <div className="relative self-center">
-                        <UserAvatar user={user} size={256} className="border-4 border-line p-1 bg-main" />
+                        <UserAvatar user={user} className="w-32 h-32 lg:w-64 lg:h-64 border-4 border-line p-1 bg-main" />
                         {lastSeenAt + 5 * 60 * 1000 >= now ? (
-                            <div className="absolute bottom-6 right-6 w-8 h-8 bg-green-500 rounded-full border-4 border-line shadow-sm" title="Online"></div>
+                            <div className="absolute bottom-2 right-2 lg:bottom-6 lg:right-6 w-6 h-6 lg:w-8 lg:h-8 bg-green-500 rounded-full border-4 border-line shadow-sm" title="Online"></div>
                         ) : (
-                            <div className="absolute bottom-6 right-6 w-8 h-8 bg-red-500 rounded-full border-4 border-line shadow-sm" title="Offline"></div>
+                            <div className="absolute bottom-2 right-2 lg:bottom-6 lg:right-6 w-6 h-6 lg:w-8 lg:h-8 bg-red-500 rounded-full border-4 border-line shadow-sm" title="Offline"></div>
                         )}
                     </div>
-                    <div>
-                        <h1 className="text-3xl font-bold text-content">{user.username}</h1>
-                        {user.type === "friend" ? (
-                            <p className="text-content-muted text-sm">Amigo desde {new Date(user.friend_since).toLocaleDateString()}</p>
-                        ) : user.type === "public" && user.sent_friend_request ? (
-                            <p className="text-content-muted text-sm">Solicitud de amistad enviada</p>
-                        ) : user.type === "public" && user.received_friend_request ? (
-                            <p className="text-content-muted text-sm">Solicitud de amistad recibida</p>
-                        ) : null}
-                        <p className="text-content-muted text-sm">Miembro desde {new Date(user.created_at).toLocaleDateString()}</p>
+                    <div className="flex flex-col gap-3">
+                        <div className="flex items-center justify-center gap-2">
+                            <h1 className="text-3xl font-black text-content tracking-tight leading-none">{user.username}</h1>
+                            {user.role === 'admin' && (
+                                <div className="flex items-center gap-1 px-2 py-0.5 bg-amber-500/10 border border-amber-500/20 rounded-full text-amber-600 shadow-sm" title="Administrador de flAIghts">
+                                    <ShieldCheck size={12} className="fill-amber-500/10" />
+                                    <span className="text-[10px] font-black uppercase tracking-wider">Admin</span>
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="flex flex-row flex-wrap lg:flex-col gap-2 justify-center items-center">
+                            {user.type === "friend" && 'friend_since' in user ? (
+                                <div className="flex items-center gap-2 px-3 py-1.5 bg-brand/5 border border-brand/10 rounded-xl">
+                                    <Users size={12} className="text-brand" />
+                                    <span className="text-[10px] font-black uppercase tracking-widest text-brand">Amigos desde {new Date(user.friend_since).toLocaleDateString()}</span>
+                                </div>
+                            ) : user.type === "public" && 'sent_friend_request' in user && user.sent_friend_request ? (
+                                <div className="flex items-center gap-2 px-3 py-1.5 bg-amber-500/5 border border-amber-500/10 rounded-xl">
+                                    <Users size={12} className="text-amber-500" />
+                                    <span className="text-[10px] font-black uppercase tracking-widest text-amber-500">Solicitud enviada</span>
+                                </div>
+                            ) : user.type === "public" && 'received_friend_request' in user && user.received_friend_request ? (
+                                <div className="flex items-center gap-2 px-3 py-1.5 bg-green-500/5 border border-green-500/10 rounded-xl">
+                                    <Users size={12} className="text-green-500" />
+                                    <span className="text-[10px] font-black uppercase tracking-widest text-green-500">Solicitud recibida</span>
+                                </div>
+                            ) : null}
+
+                            <div className="flex items-center gap-2 px-3 py-1.5 bg-surface border border-line rounded-xl">
+                                <Calendar size={12} className="text-content-muted opacity-60" />
+                                <span className="text-[10px] font-bold uppercase tracking-widest text-content-muted opacity-80">En flAIghts desde {new Date(user.created_at).toLocaleDateString(undefined, { month: 'short', year: 'numeric' })}</span>
+                            </div>
+                        </div>
                     </div>
+
+                    <div className="flex flex-col gap-3 mt-4">
+                        {user.type === "self" ? (
+                            <button onClick={() => navigate("/settings")} className="w-full px-8 py-3 bg-brand text-content-on-brand rounded-full hover:bg-brand/90 transition-all shadow-xl active:scale-95 cursor-pointer font-bold hover:scale-[1.02]">
+                                Editar mi perfil
+                            </button>
+                        ) : user.type === "friend" ? (
+                            <div className="flex flex-col gap-3">
+                                <Link to={`/chats/${id}`} className="w-full justify-center flex items-center gap-2 px-8 py-3 bg-brand text-content-on-brand rounded-full transition-all shadow-xl active:scale-95 cursor-pointer font-bold hover:scale-[1.02]">
+                                    <MessageCircle size={18} />
+                                    Mensaje
+                                </Link>
+                                <button onClick={() => removeFriend({ id })} className="w-full justify-center flex items-center gap-2 px-8 py-3 bg-red-50 text-red-600 hover:bg-red-100 rounded-full transition-all shadow-xl active:scale-95 cursor-pointer font-bold hover:scale-[1.02]">
+                                    <UserMinus size={18} />
+                                    Eliminar
+                                </button>
+                            </div>
+                        ) : user.type === "public" && 'received_friend_request' in user && user.received_friend_request ? (
+                            <button onClick={() => acceptFriendRequest({ id })} className="w-full px-8 py-3 bg-green-500 text-content-on-brand rounded-full hover:bg-green-600 transition-all shadow-xl active:scale-95 cursor-pointer font-bold hover:scale-[1.02]">
+                                Aceptar solicitud de amistad
+                            </button>
+                        ) : user.type === "public" && 'sent_friend_request' in user && user.sent_friend_request ? (
+                            <button onClick={() => cancelFriendRequest({ id })} className="w-full px-8 py-3 bg-brand text-content-on-brand rounded-full hover:bg-brand/90 transition-all shadow-xl active:scale-95 cursor-pointer font-bold hover:scale-[1.02]">
+                                Cancelar solicitud de amistad
+                            </button>
+                        ) : (
+                            <button onClick={() => sendFriendRequest({ id })} className="w-full px-8 py-3 bg-brand text-content-on-brand rounded-full hover:bg-brand/90 transition-all shadow-xl active:scale-95 cursor-pointer font-bold hover:scale-[1.02]">
+                                Enviar solicitud de amistad
+                            </button>
+                        )}
+                    </div>
+
+                    {/* Expositor de Badges */}
+                    {user.badges && user.badges.length > 0 && (
+                        <div className="mt-6 pt-6 border-t border-line">
+                            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-content-muted mb-4 opacity-50">Expositor de Logros</p>
+                            <div className="flex flex-wrap lg:flex-col gap-3 justify-center lg:items-center bg-surface/50 p-4 rounded-2xl border border-line/50 shadow-inner">
+                                {user.badges.map((badge) => {
+                                    const earnedDate = new Date(badge.earned_at);
+                                    const formattedDate = !isNaN(earnedDate.getTime())
+                                        ? earnedDate.toLocaleDateString()
+                                        : 'Fecha desconocida';
+
+                                    return (
+                                        <div
+                                            key={badge.id}
+                                            className="group relative flex items-center justify-center w-12 h-12 bg-main border border-line rounded-xl shadow-sm hover:shadow-md active:scale-95 hover:-translate-y-1 transition-all cursor-pointer hover:border-brand/30 focus-within:border-brand/30 outline-hidden"
+                                            tabIndex={0}
+                                        >
+                                            <span className="text-2xl drop-shadow-sm select-none">{badge.icon}</span>
+
+                                            {/* Tooltip Detallado (Hover & Focus) */}
+                                            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 px-3 py-2 bg-content text-main text-[10px] rounded-xl opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-all scale-90 group-hover:scale-100 group-focus-within:scale-100 whitespace-nowrap pointer-events-none z-50 shadow-2xl border border-line flex flex-col gap-0.5 items-center">
+                                                <span className="font-black uppercase tracking-tight text-brand">{badge.name}</span>
+                                                <span className="opacity-60 font-bold italic">Obtenida el {formattedDate}</span>
+                                                <div className="absolute top-full left-1/2 -translate-x-1/2 border-8 border-transparent border-t-content"></div>
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    )}
                 </div>
-
-                {user.type === "self" ? (
-                    <button onClick={() => navigate("/settings")} className="px-8 py-3 bg-brand text-content-on-brand rounded-full hover:bg-brand/90 transition-all shadow-xl active:scale-95 cursor-pointer font-bold hover:scale-[1.02]">
-                        Editar mi perfil
-                    </button>
-                ) : user.type === "friend" ? (
-                    <div className="flex gap-4">
-                        <Link to={`/chats/${id}`} className="flex-1 justify-center flex items-center gap-2 px-8 py-3 bg-brand text-content-on-brand rounded-full transition-all shadow-xl active:scale-95 cursor-pointer font-bold hover:scale-[1.02]">
-                            <MessageCircle size={18} />
-                            Mensaje
-                        </Link>
-                        <button onClick={() => removeFriend({ id })} className="flex-1 justify-center flex items-center gap-2 px-8 py-3 bg-red-50 text-red-600 hover:bg-red-100 rounded-full transition-all shadow-xl active:scale-95 cursor-pointer font-bold hover:scale-[1.02]">
-                            <UserMinus size={18} />
-                            Eliminar
-                        </button>
-                    </div>
-                ) : user.type === "public" && user.received_friend_request ? (
-                    <button onClick={() => acceptFriendRequest({ id })} className="px-8 py-3 bg-green-500 text-content-on-brand rounded-full hover:bg-green-600 transition-all shadow-xl active:scale-95 cursor-pointer font-bold hover:scale-[1.02]">
-                        Aceptar solicitud de amistad
-                    </button>
-                ) : user.type === "public" && user.sent_friend_request ? (
-                    <button onClick={() => cancelFriendRequest({ id })} className="px-8 py-3 bg-brand text-content-on-brand rounded-full hover:bg-brand/90 transition-all shadow-xl active:scale-95 cursor-pointer font-bold hover:scale-[1.02]">
-                        Cancelar solicitud de amistad
-                    </button>
-                ) : (
-                    <button onClick={() => sendFriendRequest({ id })} className="px-8 py-3 bg-brand text-content-on-brand rounded-full hover:bg-brand/90 transition-all shadow-xl active:scale-95 cursor-pointer font-bold hover:scale-[1.02]">
-                        Enviar solicitud de amistad
-                    </button>
-                )}
-
             </div>
 
-            <div className="flex-1 bg-main rounded-3xl border border-line shadow-sm p-8 flex flex-col h-full max-h-full">
-                <h1 className="text-3xl font-bold text-content mb-6">Últimas búsquedas</h1>
+            <div className="flex-1 bg-main rounded-3xl border border-line shadow-sm p-6 lg:p-8 flex flex-col w-full lg:h-full lg:max-h-full">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+                    <div className="flex items-center gap-3">
+                        <div className="p-2 bg-amber-500/10 rounded-xl">
+                            <Star className="w-6 h-6 text-amber-500" fill="currentColor" />
+                        </div>
+                        <h1 className="text-2xl lg:text-3xl font-bold text-content tracking-tight">Búsquedas destacadas</h1>
+                    </div>
+
+                    {user.type === "self" && (
+                        <Link
+                            to="/history"
+                            className="flex items-center gap-2 px-4 py-2 bg-surface border border-line rounded-2xl text-sm font-bold text-content hover:border-brand hover:text-brand transition-all shadow-sm"
+                            onClick={() => window.dispatchEvent(new CustomEvent('flaights:mission:access-search-history'))}
+                        >
+                            <History size={16} />
+                            Ver historial completo
+                        </Link>
+                    )}
+                </div>
 
                 {user.type === "public" && !user.public ? (
                     <div className="flex-1 flex flex-col items-center justify-center gap-4 text-content-muted opacity-70">
@@ -236,7 +324,7 @@ export default function UserProfile() {
                     </div>
                 ) : (
                     <div
-                        className="flex-1 overflow-y-auto pr-4 flex flex-col gap-4 custom-scrollbar"
+                        className="flex-1 lg:overflow-y-auto lg:pr-4 flex flex-col gap-6 custom-scrollbar"
                         onScroll={handleScroll}
                     >
                         {isSearchesLoading ? (
@@ -244,98 +332,28 @@ export default function UserProfile() {
                                 <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-brand"></div>
                             </div>
                         ) : searchesData?.pages[0]?.items?.length === 0 ? (
-                            <div className="text-center p-8 text-content-muted border-2 border-dashed border-line rounded-2xl">
-                                Este usuario aún no tiene búsquedas de vuelos guardadas.
+                            <div className="flex flex-col items-center justify-center p-12 text-center gap-4 border-2 border-dashed border-line rounded-[2.5rem] bg-surface/30">
+                                <div className="p-4 bg-surface border border-line rounded-full shadow-sm">
+                                    <Star className="w-8 h-8 text-content-muted opacity-20" />
+                                </div>
+                                <div className="flex flex-col gap-1">
+                                    <h3 className="text-lg font-bold text-content">Sin búsquedas destacadas</h3>
+                                    <p className="text-sm text-content-muted max-w-[250px]">
+                                        Este usuario aún no ha compartido ninguna de sus búsquedas de vuelos.
+                                    </p>
+                                </div>
                             </div>
                         ) : (
                             <>
                                 {searchesData?.pages.map((page, i) => (
-                                    <div key={i} className="flex flex-col gap-4">
+                                    <div key={i} className="flex flex-col gap-6">
                                         {page.items.map((search) => (
-                                            <div key={search._id} className="relative group/card">
-                                                <Link
-                                                    to={`/search/${search._id}`}
-                                                    className="p-5 border border-line rounded-3xl hover:border-brand hover:shadow-md cursor-pointer transition-all bg-surface flex flex-col gap-3 group"
-                                                >
-                                                    <div className="flex justify-between items-center">
-                                                        <div className="flex items-center gap-2 text-lg font-bold text-content">
-                                                            <span>{search.origins.join(', ')}</span>
-                                                            <span className="text-brand group-hover:px-1 transition-all">→</span>
-                                                            <span>{search.destinations.join(', ')}</span>
-                                                        </div>
-                                                        <div className="px-3 py-1 bg-brand/10 text-brand text-xs font-bold rounded-full uppercase tracking-wider">
-                                                            {search.criteria?.priority || 'Balanced'}
-                                                        </div>
-                                                    </div>
-
-                                                    <div className="flex items-center gap-6 text-sm text-content-muted font-medium">
-                                                        <div className="flex items-center gap-2">
-                                                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                                            </svg>
-                                                            <span>Salida: {new Date(search.departure_date).toLocaleDateString()}</span>
-                                                        </div>
-
-                                                        {search.return_date && (
-                                                            <div className="flex items-center gap-2">
-                                                                <svg className="w-4 h-4 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
-                                                                </svg>
-                                                                <span>Regreso: {new Date(search.return_date).toLocaleDateString()}</span>
-                                                            </div>
-                                                        )}
-
-                                                        {search.criteria?.max_price && (
-                                                            <div className="flex items-center gap-1 text-green-600 dark:text-green-400 ml-auto">
-                                                                <span>Max {search.criteria.max_price}€</span>
-                                                            </div>
-                                                        )}
-                                                    </div>
-                                                </Link>
-
-
-                                                {user.type === "self" && (
-                                                    <div className="absolute right-4 bottom-4">
-                                                        <SmartPopover
-                                                            isOpen={sharingSearchId === search._id}
-                                                            setIsOpen={(open) => setSharingSearchId(open ? search._id : null)}
-                                                            preferredAlign="right"
-                                                            trigger={
-                                                                <button
-                                                                    onClick={(e) => {
-                                                                        e.preventDefault();
-                                                                        e.stopPropagation();
-                                                                        setSharingSearchId(sharingSearchId === search._id ? null : search._id);
-                                                                    }}
-                                                                    className="p-2 bg-main border border-line rounded-full text-content-muted hover:text-brand hover:border-brand transition-all shadow-sm">
-                                                                    <Share2 size={16} />
-                                                                </button>
-                                                            }
-                                                        >
-                                                            <div className="p-2 flex flex-col gap-1 min-w-[200px]">
-                                                                <p className="px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-content-muted border-b border-line mb-1">Compartir con amigo</p>
-                                                                {user.friends.filter((f): f is FriendUser => typeof f !== 'string').map(friend => (
-                                                                    <button
-                                                                        key={friend._id}
-                                                                        onClick={() => {
-                                                                            sendMessage({
-                                                                                otherUserId: friend._id,
-                                                                                data: { content: `SHARE_SEARCH:${search._id}:${search.origins[0]}:${search.destinations[0]}` }
-                                                                            });
-                                                                            setSharingSearchId(null);
-                                                                        }}
-                                                                        className="flex items-center gap-2 p-2 hover:bg-surface rounded-xl transition-all text-left w-full"
-                                                                    >
-                                                                        <UserAvatar user={friend} size={24} />
-                                                                        <span className="text-xs font-bold">{friend.username}</span>
-                                                                    </button>
-                                                                ))}
-                                                            </div>
-                                                        </SmartPopover>
-                                                    </div>
-                                                )
-                                                }
-                                            </div>
+                                            <SearchCard
+                                                key={search._id}
+                                                search={search}
+                                                isFeatured
+                                            >
+                                            </SearchCard>
                                         ))}
                                     </div>
                                 ))}
@@ -347,8 +365,8 @@ export default function UserProfile() {
                                 )}
 
                                 {!hasNextPage && (searchesData?.pages[0]?.items?.length ?? 0) > 0 && (
-                                    <div className="text-center p-4 text-xs text-content-muted/60 uppercase tracking-widest font-bold">
-                                        No hay más búsquedas
+                                    <div className="text-center p-8 text-[10px] text-content-muted/40 uppercase tracking-[0.2em] font-black">
+                                        Fin de las búsquedas destacadas
                                     </div>
                                 )}
                             </>

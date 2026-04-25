@@ -46,7 +46,7 @@ const serverConfigSchema = z.object({
     PORT: portSchema.default(3000),
     MONGODB_URI: z.preprocess(emptyToUndefined, z.url()),
     JWT_SECRET: z.preprocess(emptyToUndefined, z.string()),
-    JWT_EXPIRATION: z.preprocess(emptyToUndefined, msSchema.default("30d")).transform(v => v as StringValue),
+    JWT_EXPIRATION: z.preprocess(emptyToUndefined, msSchema.default("7d")).transform(v => v as StringValue),
     FRONTEND_URL: z.preprocess(emptyToUndefined, z.url().transform(s => s.replace(/\/$/, ""))),
     ALLOWED_ORIGINS: z.preprocess(emptyToUndefined, z.string().optional().transform((val) =>
         val ? val.split(",").map((o) => o.trim().replace(/\/$/, "")) : []
@@ -92,12 +92,29 @@ const serverConfigSchema = z.object({
     GEOCODING_PROVIDER: z.preprocess(emptyToUndefined, z.enum(["nominatim", "google"]).default("nominatim")),
     GEOCODING_API_KEY: z.preprocess(emptyToUndefined, z.string().optional()),
     GEOCODE_CACHE_TTL: z.preprocess(emptyToUndefined, msSchema.default("7d")).transform(v => v as StringValue),
+    GOOGLE_CLIENT_ID: z.preprocess(emptyToUndefined, z.string()),
+    SECURITY_CODE_EXPIRATION: z.preprocess(emptyToUndefined, msSchema.default("1h")).transform(v => v as StringValue),
+    TURNSTILE_SECRET_KEY: z.preprocess(emptyToUndefined, z.string()),
 }).superRefine((data, ctx) => {
     if (data.GEOCODING_PROVIDER === "google" && !data.GEOCODING_API_KEY) {
         ctx.addIssue({
             code: "custom",
             message: "GEOCODING_API_KEY is required when GEOCODING_PROVIDER is 'google'",
             path: ["GEOCODING_API_KEY"],
+        });
+    }
+
+    const TURNSTILE_TEST_KEYS = [
+        "1x0000000000000000000000000000000AA", // Always pass
+        "2x0000000000000000000000000000000AA", // Always fail
+        "3x0000000000000000000000000000000AA"  // Always token already spent
+    ];
+
+    if (data.NODE_ENV === "production" && TURNSTILE_TEST_KEYS.includes(data.TURNSTILE_SECRET_KEY)) {
+        ctx.addIssue({
+            code: "custom",
+            message: "Turnstile test keys are only allowed in non-production environments",
+            path: ["TURNSTILE_SECRET_KEY"],
         });
     }
 });
@@ -114,6 +131,8 @@ function sanitize<K extends keyof ServerConfigType>(val: ServerConfigType[K], fi
         case "MONGODB_URI":
         case "OPENAI_API_KEY":
         case "GEOCODING_API_KEY":
+        case "GOOGLE_CLIENT_ID":
+        case "TURNSTILE_SECRET_KEY":
             return "[REDACTED] (please check .env file)";
         // Other non-sensitive values
         default:

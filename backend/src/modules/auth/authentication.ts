@@ -6,14 +6,15 @@ import { AuthenticationVersionMismatchError, InvalidTokenError, NoTokenProvidedE
 import { container } from "tsyringe"
 import { ServerConfig } from "../../config/server.config.js"
 import { contextStorage } from "../../utils/context.js"
+import logger from "../../utils/logger.js"
 
-export async function expressAuthentication(request: Request, securityName: "jwt", _scopes?: string[]): Promise<AuthenticatedUser>;
-export async function expressAuthentication(request: Request, securityName: "jwt-optional", _scopes?: string[]): Promise<AuthenticatedUser | null>;
-export async function expressAuthentication(request: Request, securityName: string, _scopes?: string[]): Promise<AuthenticatedUser | null>;
+export async function expressAuthentication(request: Request, securityName: "jwt", scopes?: string[]): Promise<AuthenticatedUser>;
+export async function expressAuthentication(request: Request, securityName: "jwt-optional", scopes?: string[]): Promise<AuthenticatedUser | null>;
+export async function expressAuthentication(request: Request, securityName: string, scopes?: string[]): Promise<AuthenticatedUser | null>;
 export async function expressAuthentication(
     request: Request,
     securityName: string,
-    _scopes?: string[]
+    scopes?: string[]
 ): Promise<AuthenticatedUser | null> {
     const config = container.resolve(ServerConfig);
     const authHeader = request.headers['authorization'] || request.headers['Authorization'];
@@ -58,8 +59,8 @@ export async function expressAuthentication(
         }
 
         // Verificación de roles (scopes)
-        if (securityName === 'jwt' && _scopes && _scopes.length > 0) {
-            if (!user.role || !_scopes.includes(user.role)) {
+        if (securityName === 'jwt' && scopes && scopes.length > 0) {
+            if (!user.role || !scopes.includes(user.role)) {
                 throw new InvalidTokenError("Insufficient permissions");
             }
         }
@@ -107,6 +108,7 @@ export async function expressAuthentication(
             throw err;
         }
         const message = err instanceof Error ? err.message : 'Unknown error';
+        logger.error({ error: err }, `Unexpected error during expressAuthentication: ${message}`);
         throw new InvalidTokenError(message);
     }
 

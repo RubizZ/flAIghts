@@ -66,7 +66,7 @@ const ConnectionOverlay: React.FC = () => {
     return (
         <div
             ref={overlayRef}
-            className="fixed inset-0 z-9999 flex items-center justify-center bg-main/20 backdrop-blur-[2px] px-6 pointer-events-auto"
+            className="fixed inset-0 z-max flex items-center justify-center bg-main/20 backdrop-blur-[2px] px-6 pointer-events-auto"
             style={{ opacity: 0 }}
         >
             <div

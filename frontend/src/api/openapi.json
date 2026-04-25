@@ -7,7 +7,20 @@
     "requestBodies": {},
     "responses": {},
     "schemas": {
-      "SuccessResponseType": {
+      "VerificationTransactionResponse": {
+        "description": "Respuesta que contiene un ID de transacción para veroficación.",
+        "properties": {
+          "transactionId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "transactionId"
+        ],
+        "type": "object",
+        "additionalProperties": false
+      },
+      "SuccessResponseType_VerificationTransactionResponse_": {
         "description": "Wrapper de éxito JSend (aplicado por el middleware global).",
         "properties": {
           "status": {
@@ -18,8 +31,7 @@
             "nullable": false
           },
           "data": {
-            "properties": {},
-            "type": "object"
+            "$ref": "#/components/schemas/VerificationTransactionResponse"
           }
         },
         "required": [
@@ -89,6 +101,187 @@
         "$ref": "#/components/schemas/FailResponse_EMAIL_ALREADY_IN_USE._field-email--value-string__",
         "description": "Extrae automáticamente code y details de una clase AppError.\r\n\r\nEjemplo:\r\n- FailResponseFromError<UserAlreadyExistsError> → { status: 'fail', data: { code: 'CONFLICT', message: string, details: { field, value } } }\r\n- FailResponseFromError<UserNotFoundError> → { status: 'fail', data: { code: 'NOT_FOUND', message: string, details: { userId } } }"
       },
+      "FailResponse_TURNSTILE_VERIFICATION_FAILED.undefined_": {
+        "properties": {
+          "data": {
+            "properties": {
+              "details": {},
+              "message": {
+                "type": "string"
+              },
+              "code": {
+                "type": "string",
+                "enum": [
+                  "TURNSTILE_VERIFICATION_FAILED"
+                ],
+                "nullable": false
+              }
+            },
+            "required": [
+              "message",
+              "code"
+            ],
+            "type": "object"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "fail"
+            ],
+            "nullable": false
+          }
+        },
+        "required": [
+          "data",
+          "status"
+        ],
+        "type": "object",
+        "description": "Tipo genérico base para respuestas de error con código y detalles opcionales."
+      },
+      "FailResponseFromError_TurnstileVerificationFailedError_": {
+        "$ref": "#/components/schemas/FailResponse_TURNSTILE_VERIFICATION_FAILED.undefined_",
+        "description": "Extrae automáticamente code y details de una clase AppError.\r\n\r\nEjemplo:\r\n- FailResponseFromError<UserAlreadyExistsError> → { status: 'fail', data: { code: 'CONFLICT', message: string, details: { field, value } } }\r\n- FailResponseFromError<UserNotFoundError> → { status: 'fail', data: { code: 'NOT_FOUND', message: string, details: { userId } } }"
+      },
+      "FailResponse_TURNSTILE_MISSING_TOKEN.undefined_": {
+        "properties": {
+          "data": {
+            "properties": {
+              "details": {},
+              "message": {
+                "type": "string"
+              },
+              "code": {
+                "type": "string",
+                "enum": [
+                  "TURNSTILE_MISSING_TOKEN"
+                ],
+                "nullable": false
+              }
+            },
+            "required": [
+              "message",
+              "code"
+            ],
+            "type": "object"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "fail"
+            ],
+            "nullable": false
+          }
+        },
+        "required": [
+          "data",
+          "status"
+        ],
+        "type": "object",
+        "description": "Tipo genérico base para respuestas de error con código y detalles opcionales."
+      },
+      "FailResponseFromError_TurnstileMissingTokenError_": {
+        "$ref": "#/components/schemas/FailResponse_TURNSTILE_MISSING_TOKEN.undefined_",
+        "description": "Extrae automáticamente code y details de una clase AppError.\r\n\r\nEjemplo:\r\n- FailResponseFromError<UserAlreadyExistsError> → { status: 'fail', data: { code: 'CONFLICT', message: string, details: { field, value } } }\r\n- FailResponseFromError<UserNotFoundError> → { status: 'fail', data: { code: 'NOT_FOUND', message: string, details: { userId } } }"
+      },
+      "FailResponse_TURNSTILE_INVALID_TOKEN.undefined_": {
+        "properties": {
+          "data": {
+            "properties": {
+              "details": {},
+              "message": {
+                "type": "string"
+              },
+              "code": {
+                "type": "string",
+                "enum": [
+                  "TURNSTILE_INVALID_TOKEN"
+                ],
+                "nullable": false
+              }
+            },
+            "required": [
+              "message",
+              "code"
+            ],
+            "type": "object"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "fail"
+            ],
+            "nullable": false
+          }
+        },
+        "required": [
+          "data",
+          "status"
+        ],
+        "type": "object",
+        "description": "Tipo genérico base para respuestas de error con código y detalles opcionales."
+      },
+      "FailResponseFromError_TurnstileInvalidTokenError_": {
+        "$ref": "#/components/schemas/FailResponse_TURNSTILE_INVALID_TOKEN.undefined_",
+        "description": "Extrae automáticamente code y details de una clase AppError.\r\n\r\nEjemplo:\r\n- FailResponseFromError<UserAlreadyExistsError> → { status: 'fail', data: { code: 'CONFLICT', message: string, details: { field, value } } }\r\n- FailResponseFromError<UserNotFoundError> → { status: 'fail', data: { code: 'NOT_FOUND', message: string, details: { userId } } }"
+      },
+      "FailResponse_TURNSTILE_TOKEN_ALREADY_SPENT.undefined_": {
+        "properties": {
+          "data": {
+            "properties": {
+              "details": {},
+              "message": {
+                "type": "string"
+              },
+              "code": {
+                "type": "string",
+                "enum": [
+                  "TURNSTILE_TOKEN_ALREADY_SPENT"
+                ],
+                "nullable": false
+              }
+            },
+            "required": [
+              "message",
+              "code"
+            ],
+            "type": "object"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "fail"
+            ],
+            "nullable": false
+          }
+        },
+        "required": [
+          "data",
+          "status"
+        ],
+        "type": "object",
+        "description": "Tipo genérico base para respuestas de error con código y detalles opcionales."
+      },
+      "FailResponseFromError_TurnstileTokenAlreadySpentError_": {
+        "$ref": "#/components/schemas/FailResponse_TURNSTILE_TOKEN_ALREADY_SPENT.undefined_",
+        "description": "Extrae automáticamente code y details de una clase AppError.\r\n\r\nEjemplo:\r\n- FailResponseFromError<UserAlreadyExistsError> → { status: 'fail', data: { code: 'CONFLICT', message: string, details: { field, value } } }\r\n- FailResponseFromError<UserNotFoundError> → { status: 'fail', data: { code: 'NOT_FOUND', message: string, details: { userId } } }"
+      },
+      "TurnstileFailResponse": {
+        "anyOf": [
+          {
+            "$ref": "#/components/schemas/FailResponseFromError_TurnstileVerificationFailedError_"
+          },
+          {
+            "$ref": "#/components/schemas/FailResponseFromError_TurnstileMissingTokenError_"
+          },
+          {
+            "$ref": "#/components/schemas/FailResponseFromError_TurnstileInvalidTokenError_"
+          },
+          {
+            "$ref": "#/components/schemas/FailResponseFromError_TurnstileTokenAlreadySpentError_"
+          }
+        ],
+        "description": "Tipo de respuesta para errores de Turnstile (403)."
+      },
       "ValidationDetails_BodyPath_InitiateRegistrationData__": {
         "properties": {
           "body": {
@@ -117,6 +310,22 @@
                   "invalid string value",
                   "invalid email format",
                   "Not match in '^(?:[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*|\"(?:[\\x01-\\x08\\x0b\\x0c\\x0e-\\x1f\\x21\\x23-\\x5b\\x5d-\\x7f]|\\\\[\\x01-\\x09\\x0b\\x0c\\x0e-\\x7f])*\")@(?:(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?|\\[(?:(?:(2(5[0-5]|[0-4][0-9])|1[0-9][0-9]|[1-9]?[0-9]))\\.){3}(?:(2(5[0-5]|[0-4][0-9])|1[0-9][0-9]|[1-9]?[0-9])|[a-z0-9-]*[a-z0-9]:(?:[\\x01-\\x08\\x0b\\x0c\\x0e-\\x1f\\x21-\\x5a\\x53-\\x7f]|\\\\[\\x01-\\x09\\x0b\\x0c\\x0e-\\x7f])+)\\])$'"
+                ]
+              }
+            },
+            "required": [
+              "message"
+            ],
+            "type": "object"
+          },
+          "body.turnstileToken": {
+            "properties": {
+              "value": {},
+              "message": {
+                "type": "string",
+                "enum": [
+                  "'turnstileToken' is required",
+                  "invalid string value"
                 ]
               }
             },
@@ -177,10 +386,15 @@
             "type": "string",
             "format": "email",
             "pattern": "^(?:[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*|\"(?:[\\x01-\\x08\\x0b\\x0c\\x0e-\\x1f\\x21\\x23-\\x5b\\x5d-\\x7f]|\\\\[\\x01-\\x09\\x0b\\x0c\\x0e-\\x7f])*\")@(?:(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?|\\[(?:(?:(2(5[0-5]|[0-4][0-9])|1[0-9][0-9]|[1-9]?[0-9]))\\.){3}(?:(2(5[0-5]|[0-4][0-9])|1[0-9][0-9]|[1-9]?[0-9])|[a-z0-9-]*[a-z0-9]:(?:[\\x01-\\x08\\x0b\\x0c\\x0e-\\x1f\\x21-\\x5a\\x53-\\x7f]|\\\\[\\x01-\\x09\\x0b\\x0c\\x0e-\\x7f])+)\\])$"
+          },
+          "turnstileToken": {
+            "type": "string",
+            "description": "Cloudflare Turnstile token for bot protection."
           }
         },
         "required": [
-          "email"
+          "email",
+          "turnstileToken"
         ],
         "type": "object",
         "additionalProperties": false
@@ -274,6 +488,41 @@
           },
           "profile_picture": {
             "type": "string"
+          },
+          "google_id": {
+            "type": "string"
+          },
+          "google_email": {
+            "type": "string"
+          },
+          "is_password_set": {
+            "type": "boolean"
+          },
+          "badges": {
+            "items": {
+              "properties": {
+                "earned_at": {
+                  "type": "string"
+                },
+                "icon": {
+                  "type": "string"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "id": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "earned_at",
+                "icon",
+                "name",
+                "id"
+              ],
+              "type": "object"
+            },
+            "type": "array"
           }
         },
         "required": [
@@ -289,7 +538,8 @@
           "auth_version",
           "friends",
           "sent_friend_requests",
-          "received_friend_requests"
+          "received_friend_requests",
+          "is_password_set"
         ],
         "type": "object",
         "additionalProperties": false
@@ -505,6 +755,22 @@
             ],
             "type": "object"
           },
+          "body.transactionId": {
+            "properties": {
+              "value": {},
+              "message": {
+                "type": "string",
+                "enum": [
+                  "'transactionId' is required",
+                  "invalid string value"
+                ]
+              }
+            },
+            "required": [
+              "message"
+            ],
+            "type": "object"
+          },
           "body.preferences": {
             "properties": {
               "value": {},
@@ -632,6 +898,9 @@
             "type": "string",
             "minLength": 8
           },
+          "transactionId": {
+            "type": "string"
+          },
           "preferences": {
             "properties": {
               "airline_quality_weight": {
@@ -666,7 +935,8 @@
           "email",
           "code",
           "username",
-          "password"
+          "password",
+          "transactionId"
         ],
         "type": "object",
         "additionalProperties": false
@@ -705,6 +975,32 @@
           },
           "profile_picture": {
             "type": "string"
+          },
+          "badges": {
+            "items": {
+              "properties": {
+                "earned_at": {
+                  "type": "string"
+                },
+                "icon": {
+                  "type": "string"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "id": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "earned_at",
+                "icon",
+                "name",
+                "id"
+              ],
+              "type": "object"
+            },
+            "type": "array"
           }
         },
         "required": [
@@ -759,6 +1055,32 @@
           },
           "profile_picture": {
             "type": "string"
+          },
+          "badges": {
+            "items": {
+              "properties": {
+                "earned_at": {
+                  "type": "string"
+                },
+                "icon": {
+                  "type": "string"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "id": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "earned_at",
+                "icon",
+                "name",
+                "id"
+              ],
+              "type": "object"
+            },
+            "type": "array"
           }
         },
         "required": [
@@ -864,6 +1186,41 @@
           },
           "profile_picture": {
             "type": "string"
+          },
+          "google_id": {
+            "type": "string"
+          },
+          "google_email": {
+            "type": "string"
+          },
+          "is_password_set": {
+            "type": "boolean"
+          },
+          "badges": {
+            "items": {
+              "properties": {
+                "earned_at": {
+                  "type": "string"
+                },
+                "icon": {
+                  "type": "string"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "id": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "earned_at",
+                "icon",
+                "name",
+                "id"
+              ],
+              "type": "object"
+            },
+            "type": "array"
           }
         },
         "required": [
@@ -879,7 +1236,8 @@
           "role",
           "created_at",
           "last_seen_at",
-          "auth_version"
+          "auth_version",
+          "is_password_set"
         ],
         "type": "object",
         "description": "From T, pick a set of properties whose keys are in the union K"
@@ -973,6 +1331,41 @@
           },
           "profile_picture": {
             "type": "string"
+          },
+          "google_id": {
+            "type": "string"
+          },
+          "google_email": {
+            "type": "string"
+          },
+          "is_password_set": {
+            "type": "boolean"
+          },
+          "badges": {
+            "items": {
+              "properties": {
+                "earned_at": {
+                  "type": "string"
+                },
+                "icon": {
+                  "type": "string"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "id": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "earned_at",
+                "icon",
+                "name",
+                "id"
+              ],
+              "type": "object"
+            },
+            "type": "array"
           }
         },
         "required": [
@@ -988,14 +1381,15 @@
           "role",
           "created_at",
           "last_seen_at",
-          "auth_version"
+          "auth_version",
+          "is_password_set"
         ],
         "type": "object",
         "additionalProperties": false
       },
       "GetUserResponseData": {
         "$ref": "#/components/schemas/PopulatedUser",
-        "description": "Respuesta del endpoint GET /users/me"
+        "description": "Respuesta del endpoint POST /users/me"
       },
       "SuccessResponseType_GetUserResponseData_": {
         "description": "Wrapper de éxito JSend (aplicado por el middleware global).",
@@ -1619,6 +2013,40 @@
         "type": "object",
         "additionalProperties": false
       },
+      "MessageResponseData": {
+        "description": "Respuesta de éxito solo con mensaje (sin datos).\r\nEl wrapper global lo convertirá en: { status: 'success', data: { message: string } }",
+        "properties": {
+          "message": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "message"
+        ],
+        "type": "object",
+        "additionalProperties": false
+      },
+      "SuccessResponseType_MessageResponseData_": {
+        "description": "Wrapper de éxito JSend (aplicado por el middleware global).",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "success"
+            ],
+            "nullable": false
+          },
+          "data": {
+            "$ref": "#/components/schemas/MessageResponseData"
+          }
+        },
+        "required": [
+          "status",
+          "data"
+        ],
+        "type": "object",
+        "additionalProperties": false
+      },
       "ValidationDetails_BodyPath_InitiateEmailChangeData__": {
         "properties": {
           "body": {
@@ -1831,6 +2259,28 @@
         "required": [
           "oldEmailCode",
           "newEmailCode"
+        ],
+        "type": "object",
+        "additionalProperties": false
+      },
+      "SuccessResponseType": {
+        "description": "Wrapper de éxito JSend (aplicado por el middleware global).",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "success"
+            ],
+            "nullable": false
+          },
+          "data": {
+            "properties": {},
+            "type": "object"
+          }
+        },
+        "required": [
+          "status",
+          "data"
         ],
         "type": "object",
         "additionalProperties": false
@@ -2649,6 +3099,9 @@
             },
             "type": "array"
           },
+          "shared": {
+            "type": "boolean"
+          },
           "created_at": {
             "type": "string"
           }
@@ -2661,6 +3114,7 @@
           "criteria",
           "status",
           "source",
+          "shared",
           "created_at"
         ],
         "type": "object",
@@ -3190,7 +3644,7 @@
         "type": "object",
         "additionalProperties": false
       },
-      "ValidationDetails_PathPath__userId-string__-or-QueryPath__page-number--limit-number___": {
+      "ValidationDetails_PathPath__userId-string__-or-QueryPath__page-number--limit-number--origin_63_-string--destination_63_-string--status_63_-string--minPrice_63_-number--maxPrice_63_-number--startDate_63_-string--endDate_63_-string--sharedOnly_63_-boolean___": {
         "properties": {
           "query": {
             "properties": {
@@ -3251,17 +3705,113 @@
               "message"
             ],
             "type": "object"
+          },
+          "query.origin": {
+            "properties": {
+              "value": {},
+              "message": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "message"
+            ],
+            "type": "object"
+          },
+          "query.destination": {
+            "properties": {
+              "value": {},
+              "message": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "message"
+            ],
+            "type": "object"
+          },
+          "query.status": {
+            "properties": {
+              "value": {},
+              "message": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "message"
+            ],
+            "type": "object"
+          },
+          "query.minPrice": {
+            "properties": {
+              "value": {},
+              "message": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "message"
+            ],
+            "type": "object"
+          },
+          "query.maxPrice": {
+            "properties": {
+              "value": {},
+              "message": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "message"
+            ],
+            "type": "object"
+          },
+          "query.startDate": {
+            "properties": {
+              "value": {},
+              "message": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "message"
+            ],
+            "type": "object"
+          },
+          "query.endDate": {
+            "properties": {
+              "value": {},
+              "message": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "message"
+            ],
+            "type": "object"
+          },
+          "query.sharedOnly": {
+            "properties": {
+              "value": {},
+              "message": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "message"
+            ],
+            "type": "object"
           }
         },
         "type": "object",
         "description": "Generador de estructura de detalles.\r\nTransforma una unión de llaves ('body' | 'body.id') en el objeto que TSOA espera."
       },
-      "RequestValidationFailResponse_ValidationDetails_PathPath__userId-string__-or-QueryPath__page-number--limit-number____": {
+      "RequestValidationFailResponse_ValidationDetails_PathPath__userId-string__-or-QueryPath__page-number--limit-number--origin_63_-string--destination_63_-string--status_63_-string--minPrice_63_-number--maxPrice_63_-number--startDate_63_-string--endDate_63_-string--sharedOnly_63_-boolean____": {
         "properties": {
           "data": {
             "properties": {
               "details": {
-                "$ref": "#/components/schemas/ValidationDetails_PathPath__userId-string__-or-QueryPath__page-number--limit-number___"
+                "$ref": "#/components/schemas/ValidationDetails_PathPath__userId-string__-or-QueryPath__page-number--limit-number--origin_63_-string--destination_63_-string--status_63_-string--minPrice_63_-number--maxPrice_63_-number--startDate_63_-string--endDate_63_-string--sharedOnly_63_-boolean___"
               },
               "message": {
                 "type": "string"
@@ -3551,16 +4101,12 @@
           },
           "completedAt": {
             "type": "string"
-          },
-          "userAgent": {
-            "type": "string"
           }
         },
         "required": [
           "id",
           "title",
-          "completedAt",
-          "userAgent"
+          "completedAt"
         ],
         "type": "object",
         "additionalProperties": false
@@ -3574,9 +4120,6 @@
             "type": "string"
           },
           "completedAt": {
-            "type": "string"
-          },
-          "userAgent": {
             "type": "string"
           },
           "steps": {
@@ -3605,9 +4148,41 @@
         "required": [
           "missionId",
           "completedAt",
-          "userAgent",
           "steps",
           "answer"
+        ],
+        "type": "object",
+        "additionalProperties": false
+      },
+      "ScreenInfo": {
+        "properties": {
+          "width": {
+            "type": "number",
+            "format": "double"
+          },
+          "height": {
+            "type": "number",
+            "format": "double"
+          },
+          "innerWidth": {
+            "type": "number",
+            "format": "double"
+          },
+          "innerHeight": {
+            "type": "number",
+            "format": "double"
+          },
+          "devicePixelRatio": {
+            "type": "number",
+            "format": "double"
+          }
+        },
+        "required": [
+          "width",
+          "height",
+          "innerWidth",
+          "innerHeight",
+          "devicePixelRatio"
         ],
         "type": "object",
         "additionalProperties": false
@@ -3620,6 +4195,13 @@
             },
             "type": "array"
           },
+          "susResults": {
+            "items": {
+              "type": "number",
+              "format": "double"
+            },
+            "type": "array"
+          },
           "timestamp": {
             "type": "string"
           },
@@ -3628,11 +4210,28 @@
           },
           "fullName": {
             "type": "string"
+          },
+          "age": {
+            "type": "number",
+            "format": "double"
+          },
+          "gender": {
+            "type": "string"
+          },
+          "educationLevel": {
+            "type": "string"
+          },
+          "screenInfo": {
+            "$ref": "#/components/schemas/ScreenInfo"
+          },
+          "userAgent": {
+            "type": "string"
           }
         },
         "required": [
           "results",
-          "timestamp"
+          "timestamp",
+          "userAgent"
         ],
         "type": "object",
         "additionalProperties": false
@@ -3698,6 +4297,22 @@
             ],
             "type": "object"
           },
+          "body.turnstileToken": {
+            "properties": {
+              "value": {},
+              "message": {
+                "type": "string",
+                "enum": [
+                  "'turnstileToken' is required",
+                  "invalid string value"
+                ]
+              }
+            },
+            "required": [
+              "message"
+            ],
+            "type": "object"
+          },
           "body.password": {
             "properties": {
               "value": {},
@@ -3725,18 +4340,6 @@
                   "invalid string value",
                   "minLength 3"
                 ]
-              }
-            },
-            "required": [
-              "message"
-            ],
-            "type": "object"
-          },
-          "body.responseType": {
-            "properties": {
-              "value": {},
-              "message": {
-                "type": "string"
               }
             },
             "required": [
@@ -3787,11 +4390,8 @@
         ],
         "type": "object"
       },
-      "LoginRequestValidationFailResponse": {
-        "$ref": "#/components/schemas/RequestValidationFailResponse_ValidationDetails_BodyPath_LoginRequest___"
-      },
       "LoginValidationFailResponse": {
-        "$ref": "#/components/schemas/LoginRequestValidationFailResponse"
+        "$ref": "#/components/schemas/RequestValidationFailResponse_ValidationDetails_BodyPath_LoginRequest___"
       },
       "FailResponse_INVALID_CREDENTIALS._identifier-string__": {
         "properties": {
@@ -3855,32 +4455,15 @@
             "type": "string",
             "minLength": 8
           },
-          "responseType": {
+          "turnstileToken": {
             "type": "string",
-            "enum": [
-              "cookie",
-              "json"
-            ],
-            "description": "Indicates how the token should be returned.",
-            "default": "json"
+            "description": "Cloudflare Turnstile token for bot protection."
           }
         },
         "required": [
           "identifier",
-          "password"
-        ],
-        "type": "object",
-        "additionalProperties": false
-      },
-      "MessageResponseData": {
-        "description": "Respuesta de éxito solo con mensaje (sin datos).\r\nEl wrapper global lo convertirá en: { status: 'success', data: { message: string } }",
-        "properties": {
-          "message": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "message"
+          "password",
+          "turnstileToken"
         ],
         "type": "object",
         "additionalProperties": false
@@ -3906,6 +4489,599 @@
         "type": "object",
         "additionalProperties": false
       },
+      "ValidationDetails_BodyPath_GoogleLoginRequest__": {
+        "properties": {
+          "body": {
+            "properties": {
+              "value": {},
+              "message": {
+                "type": "string",
+                "enum": [
+                  "'body' is required",
+                  "invalid object"
+                ]
+              }
+            },
+            "required": [
+              "message"
+            ],
+            "type": "object"
+          },
+          "body.turnstileToken": {
+            "properties": {
+              "value": {},
+              "message": {
+                "type": "string",
+                "enum": [
+                  "'turnstileToken' is required",
+                  "invalid string value"
+                ]
+              }
+            },
+            "required": [
+              "message"
+            ],
+            "type": "object"
+          },
+          "body.password": {
+            "properties": {
+              "value": {},
+              "message": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "message"
+            ],
+            "type": "object"
+          },
+          "body.transactionId": {
+            "properties": {
+              "value": {},
+              "message": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "message"
+            ],
+            "type": "object"
+          },
+          "body.credential": {
+            "properties": {
+              "value": {},
+              "message": {
+                "type": "string",
+                "enum": [
+                  "'credential' is required",
+                  "invalid string value"
+                ]
+              }
+            },
+            "required": [
+              "message"
+            ],
+            "type": "object"
+          },
+          "body.newPassword": {
+            "properties": {
+              "value": {},
+              "message": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "message"
+            ],
+            "type": "object"
+          },
+          "body.verificationCode": {
+            "properties": {
+              "value": {},
+              "message": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "message"
+            ],
+            "type": "object"
+          }
+        },
+        "type": "object",
+        "description": "Generador de estructura de detalles.\r\nTransforma una unión de llaves ('body' | 'body.id') en el objeto que TSOA espera."
+      },
+      "RequestValidationFailResponse_ValidationDetails_BodyPath_GoogleLoginRequest___": {
+        "properties": {
+          "data": {
+            "properties": {
+              "details": {
+                "$ref": "#/components/schemas/ValidationDetails_BodyPath_GoogleLoginRequest__"
+              },
+              "message": {
+                "type": "string"
+              },
+              "code": {
+                "type": "string",
+                "enum": [
+                  "REQUEST_VALIDATION_ERROR"
+                ],
+                "nullable": false
+              }
+            },
+            "required": [
+              "details",
+              "message",
+              "code"
+            ],
+            "type": "object"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "fail"
+            ],
+            "nullable": false
+          }
+        },
+        "required": [
+          "data",
+          "status"
+        ],
+        "type": "object"
+      },
+      "GoogleLoginValidationFailResponse": {
+        "$ref": "#/components/schemas/RequestValidationFailResponse_ValidationDetails_BodyPath_GoogleLoginRequest___"
+      },
+      "InvalidTokenFailResponse": {
+        "$ref": "#/components/schemas/FailResponseFromError_InvalidTokenError_",
+        "description": "Tipo de respuesta para errores de login con Google (401)."
+      },
+      "FailResponse_INVALID_PASSWORD._identifier-string__": {
+        "properties": {
+          "data": {
+            "properties": {
+              "details": {
+                "properties": {
+                  "identifier": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "identifier"
+                ],
+                "type": "object"
+              },
+              "message": {
+                "type": "string"
+              },
+              "code": {
+                "type": "string",
+                "enum": [
+                  "INVALID_PASSWORD"
+                ],
+                "nullable": false
+              }
+            },
+            "required": [
+              "details",
+              "message",
+              "code"
+            ],
+            "type": "object"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "fail"
+            ],
+            "nullable": false
+          }
+        },
+        "required": [
+          "data",
+          "status"
+        ],
+        "type": "object",
+        "description": "Tipo genérico base para respuestas de error con código y detalles opcionales."
+      },
+      "FailResponseFromError_InvalidPasswordError_": {
+        "$ref": "#/components/schemas/FailResponse_INVALID_PASSWORD._identifier-string__",
+        "description": "Extrae automáticamente code y details de una clase AppError.\r\n\r\nEjemplo:\r\n- FailResponseFromError<UserAlreadyExistsError> → { status: 'fail', data: { code: 'CONFLICT', message: string, details: { field, value } } }\r\n- FailResponseFromError<UserNotFoundError> → { status: 'fail', data: { code: 'NOT_FOUND', message: string, details: { userId } } }"
+      },
+      "InvalidPasswordFailResponse": {
+        "$ref": "#/components/schemas/FailResponseFromError_InvalidPasswordError_"
+      },
+      "GoogleLoginError401": {
+        "anyOf": [
+          {
+            "$ref": "#/components/schemas/InvalidTokenFailResponse"
+          },
+          {
+            "$ref": "#/components/schemas/InvalidPasswordFailResponse"
+          }
+        ]
+      },
+      "FailResponse_ACCOUNT_LINK_REQUIRED._email-string__": {
+        "properties": {
+          "data": {
+            "properties": {
+              "details": {
+                "properties": {
+                  "email": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "email"
+                ],
+                "type": "object"
+              },
+              "message": {
+                "type": "string"
+              },
+              "code": {
+                "type": "string",
+                "enum": [
+                  "ACCOUNT_LINK_REQUIRED"
+                ],
+                "nullable": false
+              }
+            },
+            "required": [
+              "details",
+              "message",
+              "code"
+            ],
+            "type": "object"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "fail"
+            ],
+            "nullable": false
+          }
+        },
+        "required": [
+          "data",
+          "status"
+        ],
+        "type": "object",
+        "description": "Tipo genérico base para respuestas de error con código y detalles opcionales."
+      },
+      "FailResponseFromError_AccountLinkRequiredError_": {
+        "$ref": "#/components/schemas/FailResponse_ACCOUNT_LINK_REQUIRED._email-string__",
+        "description": "Extrae automáticamente code y details de una clase AppError.\r\n\r\nEjemplo:\r\n- FailResponseFromError<UserAlreadyExistsError> → { status: 'fail', data: { code: 'CONFLICT', message: string, details: { field, value } } }\r\n- FailResponseFromError<UserNotFoundError> → { status: 'fail', data: { code: 'NOT_FOUND', message: string, details: { userId } } }"
+      },
+      "AccountLinkRequiredFailResponse": {
+        "$ref": "#/components/schemas/FailResponseFromError_AccountLinkRequiredError_",
+        "description": "Tipo de respuesta para errores de conexión de cuenta de Google (403)."
+      },
+      "FailResponse_INVALID_RESET_CODE.undefined_": {
+        "properties": {
+          "data": {
+            "properties": {
+              "details": {},
+              "message": {
+                "type": "string"
+              },
+              "code": {
+                "type": "string",
+                "enum": [
+                  "INVALID_RESET_CODE"
+                ],
+                "nullable": false
+              }
+            },
+            "required": [
+              "message",
+              "code"
+            ],
+            "type": "object"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "fail"
+            ],
+            "nullable": false
+          }
+        },
+        "required": [
+          "data",
+          "status"
+        ],
+        "type": "object",
+        "description": "Tipo genérico base para respuestas de error con código y detalles opcionales."
+      },
+      "FailResponseFromError_InvalidResetCodeError_": {
+        "$ref": "#/components/schemas/FailResponse_INVALID_RESET_CODE.undefined_",
+        "description": "Extrae automáticamente code y details de una clase AppError.\r\n\r\nEjemplo:\r\n- FailResponseFromError<UserAlreadyExistsError> → { status: 'fail', data: { code: 'CONFLICT', message: string, details: { field, value } } }\r\n- FailResponseFromError<UserNotFoundError> → { status: 'fail', data: { code: 'NOT_FOUND', message: string, details: { userId } } }"
+      },
+      "AuthError403": {
+        "anyOf": [
+          {
+            "$ref": "#/components/schemas/AccountLinkRequiredFailResponse"
+          },
+          {
+            "$ref": "#/components/schemas/TurnstileFailResponse"
+          },
+          {
+            "$ref": "#/components/schemas/FailResponseFromError_InvalidResetCodeError_"
+          }
+        ]
+      },
+      "GoogleLoginRequest": {
+        "properties": {
+          "credential": {
+            "type": "string"
+          },
+          "password": {
+            "type": "string"
+          },
+          "newPassword": {
+            "type": "string"
+          },
+          "verificationCode": {
+            "type": "string"
+          },
+          "transactionId": {
+            "type": "string"
+          },
+          "turnstileToken": {
+            "type": "string",
+            "description": "Cloudflare Turnstile token for bot protection."
+          }
+        },
+        "required": [
+          "credential",
+          "turnstileToken"
+        ],
+        "type": "object",
+        "additionalProperties": false
+      },
+      "ValidationDetails_BodyPath_GoogleConnectRequest__": {
+        "properties": {
+          "body": {
+            "properties": {
+              "value": {},
+              "message": {
+                "type": "string",
+                "enum": [
+                  "'body' is required",
+                  "invalid object"
+                ]
+              }
+            },
+            "required": [
+              "message"
+            ],
+            "type": "object"
+          },
+          "body.transactionId": {
+            "properties": {
+              "value": {},
+              "message": {
+                "type": "string",
+                "enum": [
+                  "'transactionId' is required",
+                  "invalid string value"
+                ]
+              }
+            },
+            "required": [
+              "message"
+            ],
+            "type": "object"
+          },
+          "body.credential": {
+            "properties": {
+              "value": {},
+              "message": {
+                "type": "string",
+                "enum": [
+                  "'credential' is required",
+                  "invalid string value"
+                ]
+              }
+            },
+            "required": [
+              "message"
+            ],
+            "type": "object"
+          },
+          "body.verificationCode": {
+            "properties": {
+              "value": {},
+              "message": {
+                "type": "string",
+                "enum": [
+                  "'verificationCode' is required",
+                  "invalid string value"
+                ]
+              }
+            },
+            "required": [
+              "message"
+            ],
+            "type": "object"
+          }
+        },
+        "type": "object",
+        "description": "Generador de estructura de detalles.\r\nTransforma una unión de llaves ('body' | 'body.id') en el objeto que TSOA espera."
+      },
+      "RequestValidationFailResponse_ValidationDetails_BodyPath_GoogleConnectRequest___": {
+        "properties": {
+          "data": {
+            "properties": {
+              "details": {
+                "$ref": "#/components/schemas/ValidationDetails_BodyPath_GoogleConnectRequest__"
+              },
+              "message": {
+                "type": "string"
+              },
+              "code": {
+                "type": "string",
+                "enum": [
+                  "REQUEST_VALIDATION_ERROR"
+                ],
+                "nullable": false
+              }
+            },
+            "required": [
+              "details",
+              "message",
+              "code"
+            ],
+            "type": "object"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "fail"
+            ],
+            "nullable": false
+          }
+        },
+        "required": [
+          "data",
+          "status"
+        ],
+        "type": "object"
+      },
+      "GoogleConnectValidationFailResponse": {
+        "$ref": "#/components/schemas/RequestValidationFailResponse_ValidationDetails_BodyPath_GoogleConnectRequest___"
+      },
+      "FailResponse_GOOGLE_ACCOUNT_ALREADY_LINKED._email-string__": {
+        "properties": {
+          "data": {
+            "properties": {
+              "details": {
+                "properties": {
+                  "email": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "email"
+                ],
+                "type": "object"
+              },
+              "message": {
+                "type": "string"
+              },
+              "code": {
+                "type": "string",
+                "enum": [
+                  "GOOGLE_ACCOUNT_ALREADY_LINKED"
+                ],
+                "nullable": false
+              }
+            },
+            "required": [
+              "details",
+              "message",
+              "code"
+            ],
+            "type": "object"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "fail"
+            ],
+            "nullable": false
+          }
+        },
+        "required": [
+          "data",
+          "status"
+        ],
+        "type": "object",
+        "description": "Tipo genérico base para respuestas de error con código y detalles opcionales."
+      },
+      "FailResponseFromError_GoogleAccountAlreadyLinkedError_": {
+        "$ref": "#/components/schemas/FailResponse_GOOGLE_ACCOUNT_ALREADY_LINKED._email-string__",
+        "description": "Extrae automáticamente code y details de una clase AppError.\r\n\r\nEjemplo:\r\n- FailResponseFromError<UserAlreadyExistsError> → { status: 'fail', data: { code: 'CONFLICT', message: string, details: { field, value } } }\r\n- FailResponseFromError<UserNotFoundError> → { status: 'fail', data: { code: 'NOT_FOUND', message: string, details: { userId } } }"
+      },
+      "GoogleConnectRequest": {
+        "properties": {
+          "credential": {
+            "type": "string"
+          },
+          "verificationCode": {
+            "type": "string"
+          },
+          "transactionId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "credential",
+          "verificationCode",
+          "transactionId"
+        ],
+        "type": "object",
+        "additionalProperties": false
+      },
+      "FailResponse_CANNOT_DISCONNECT_GOOGLE_WITHOUT_PASSWORD.undefined_": {
+        "properties": {
+          "data": {
+            "properties": {
+              "details": {},
+              "message": {
+                "type": "string"
+              },
+              "code": {
+                "type": "string",
+                "enum": [
+                  "CANNOT_DISCONNECT_GOOGLE_WITHOUT_PASSWORD"
+                ],
+                "nullable": false
+              }
+            },
+            "required": [
+              "message",
+              "code"
+            ],
+            "type": "object"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "fail"
+            ],
+            "nullable": false
+          }
+        },
+        "required": [
+          "data",
+          "status"
+        ],
+        "type": "object",
+        "description": "Tipo genérico base para respuestas de error con código y detalles opcionales."
+      },
+      "FailResponseFromError_CannotDisconnectGoogleWithoutPasswordError_": {
+        "$ref": "#/components/schemas/FailResponse_CANNOT_DISCONNECT_GOOGLE_WITHOUT_PASSWORD.undefined_",
+        "description": "Extrae automáticamente code y details de una clase AppError.\r\n\r\nEjemplo:\r\n- FailResponseFromError<UserAlreadyExistsError> → { status: 'fail', data: { code: 'CONFLICT', message: string, details: { field, value } } }\r\n- FailResponseFromError<UserNotFoundError> → { status: 'fail', data: { code: 'NOT_FOUND', message: string, details: { userId } } }"
+      },
+      "DisconnectGoogleRequest": {
+        "properties": {
+          "verificationCode": {
+            "type": "string"
+          },
+          "transactionId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "verificationCode",
+          "transactionId"
+        ],
+        "type": "object",
+        "additionalProperties": false
+      },
       "ValidationDetails_BodyPath_ChangePasswordRequest__": {
         "properties": {
           "body": {
@@ -3924,15 +5100,14 @@
             ],
             "type": "object"
           },
-          "body.oldPassword": {
+          "body.transactionId": {
             "properties": {
               "value": {},
               "message": {
                 "type": "string",
                 "enum": [
-                  "'oldPassword' is required",
-                  "invalid string value",
-                  "minLength 8"
+                  "'transactionId' is required",
+                  "invalid string value"
                 ]
               }
             },
@@ -3950,6 +5125,22 @@
                   "'newPassword' is required",
                   "invalid string value",
                   "minLength 8"
+                ]
+              }
+            },
+            "required": [
+              "message"
+            ],
+            "type": "object"
+          },
+          "body.verificationCode": {
+            "properties": {
+              "value": {},
+              "message": {
+                "type": "string",
+                "enum": [
+                  "'verificationCode' is required",
+                  "invalid string value"
                 ]
               }
             },
@@ -4013,58 +5204,6 @@
             "$ref": "#/components/schemas/DatabaseValidationFailResponse"
           }
         ]
-      },
-      "FailResponse_INVALID_PASSWORD._identifier-string__": {
-        "properties": {
-          "data": {
-            "properties": {
-              "details": {
-                "properties": {
-                  "identifier": {
-                    "type": "string"
-                  }
-                },
-                "required": [
-                  "identifier"
-                ],
-                "type": "object"
-              },
-              "message": {
-                "type": "string"
-              },
-              "code": {
-                "type": "string",
-                "enum": [
-                  "INVALID_PASSWORD"
-                ],
-                "nullable": false
-              }
-            },
-            "required": [
-              "details",
-              "message",
-              "code"
-            ],
-            "type": "object"
-          },
-          "status": {
-            "type": "string",
-            "enum": [
-              "fail"
-            ],
-            "nullable": false
-          }
-        },
-        "required": [
-          "data",
-          "status"
-        ],
-        "type": "object",
-        "description": "Tipo genérico base para respuestas de error con código y detalles opcionales."
-      },
-      "FailResponseFromError_InvalidPasswordError_": {
-        "$ref": "#/components/schemas/FailResponse_INVALID_PASSWORD._identifier-string__",
-        "description": "Extrae automáticamente code y details de una clase AppError.\r\n\r\nEjemplo:\r\n- FailResponseFromError<UserAlreadyExistsError> → { status: 'fail', data: { code: 'CONFLICT', message: string, details: { field, value } } }\r\n- FailResponseFromError<UserNotFoundError> → { status: 'fail', data: { code: 'NOT_FOUND', message: string, details: { userId } } }"
       },
       "ChangePasswordErrorResponse": {
         "anyOf": [
@@ -4171,18 +5310,206 @@
       },
       "ChangePasswordRequest": {
         "properties": {
-          "oldPassword": {
-            "type": "string",
-            "minLength": 8
-          },
           "newPassword": {
             "type": "string",
             "minLength": 8
+          },
+          "verificationCode": {
+            "type": "string"
+          },
+          "transactionId": {
+            "type": "string"
           }
         },
         "required": [
-          "oldPassword",
-          "newPassword"
+          "newPassword",
+          "verificationCode",
+          "transactionId"
+        ],
+        "type": "object",
+        "additionalProperties": false
+      },
+      "ValidationDetails_BodyPath_SetPasswordRequest__": {
+        "properties": {
+          "body": {
+            "properties": {
+              "value": {},
+              "message": {
+                "type": "string",
+                "enum": [
+                  "'body' is required",
+                  "invalid object"
+                ]
+              }
+            },
+            "required": [
+              "message"
+            ],
+            "type": "object"
+          },
+          "body.password": {
+            "properties": {
+              "value": {},
+              "message": {
+                "type": "string",
+                "enum": [
+                  "'password' is required",
+                  "invalid string value",
+                  "minLength 8"
+                ]
+              }
+            },
+            "required": [
+              "message"
+            ],
+            "type": "object"
+          },
+          "body.transactionId": {
+            "properties": {
+              "value": {},
+              "message": {
+                "type": "string",
+                "enum": [
+                  "'transactionId' is required",
+                  "invalid string value"
+                ]
+              }
+            },
+            "required": [
+              "message"
+            ],
+            "type": "object"
+          },
+          "body.verificationCode": {
+            "properties": {
+              "value": {},
+              "message": {
+                "type": "string",
+                "enum": [
+                  "'verificationCode' is required",
+                  "invalid string value"
+                ]
+              }
+            },
+            "required": [
+              "message"
+            ],
+            "type": "object"
+          }
+        },
+        "type": "object",
+        "description": "Generador de estructura de detalles.\r\nTransforma una unión de llaves ('body' | 'body.id') en el objeto que TSOA espera."
+      },
+      "RequestValidationFailResponse_ValidationDetails_BodyPath_SetPasswordRequest___": {
+        "properties": {
+          "data": {
+            "properties": {
+              "details": {
+                "$ref": "#/components/schemas/ValidationDetails_BodyPath_SetPasswordRequest__"
+              },
+              "message": {
+                "type": "string"
+              },
+              "code": {
+                "type": "string",
+                "enum": [
+                  "REQUEST_VALIDATION_ERROR"
+                ],
+                "nullable": false
+              }
+            },
+            "required": [
+              "details",
+              "message",
+              "code"
+            ],
+            "type": "object"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "fail"
+            ],
+            "nullable": false
+          }
+        },
+        "required": [
+          "data",
+          "status"
+        ],
+        "type": "object"
+      },
+      "SetPasswordRequestValidationFailResponse": {
+        "$ref": "#/components/schemas/RequestValidationFailResponse_ValidationDetails_BodyPath_SetPasswordRequest___"
+      },
+      "SetPasswordValidationFailResponse": {
+        "anyOf": [
+          {
+            "$ref": "#/components/schemas/SetPasswordRequestValidationFailResponse"
+          },
+          {
+            "$ref": "#/components/schemas/DatabaseValidationFailResponse"
+          }
+        ]
+      },
+      "FailResponse_PASSWORD_ALREADY_SET.undefined_": {
+        "properties": {
+          "data": {
+            "properties": {
+              "details": {},
+              "message": {
+                "type": "string"
+              },
+              "code": {
+                "type": "string",
+                "enum": [
+                  "PASSWORD_ALREADY_SET"
+                ],
+                "nullable": false
+              }
+            },
+            "required": [
+              "message",
+              "code"
+            ],
+            "type": "object"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "fail"
+            ],
+            "nullable": false
+          }
+        },
+        "required": [
+          "data",
+          "status"
+        ],
+        "type": "object",
+        "description": "Tipo genérico base para respuestas de error con código y detalles opcionales."
+      },
+      "FailResponseFromError_PasswordAlreadySetError_": {
+        "$ref": "#/components/schemas/FailResponse_PASSWORD_ALREADY_SET.undefined_",
+        "description": "Extrae automáticamente code y details de una clase AppError.\r\n\r\nEjemplo:\r\n- FailResponseFromError<UserAlreadyExistsError> → { status: 'fail', data: { code: 'CONFLICT', message: string, details: { field, value } } }\r\n- FailResponseFromError<UserNotFoundError> → { status: 'fail', data: { code: 'NOT_FOUND', message: string, details: { userId } } }"
+      },
+      "SetPasswordRequest": {
+        "properties": {
+          "password": {
+            "type": "string",
+            "minLength": 8
+          },
+          "verificationCode": {
+            "type": "string"
+          },
+          "transactionId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "password",
+          "verificationCode",
+          "transactionId"
         ],
         "type": "object",
         "additionalProperties": false
@@ -4215,6 +5542,22 @@
                   "invalid string value",
                   "invalid email format",
                   "Not match in '^(?:[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*|\"(?:[\\x01-\\x08\\x0b\\x0c\\x0e-\\x1f\\x21\\x23-\\x5b\\x5d-\\x7f]|\\\\[\\x01-\\x09\\x0b\\x0c\\x0e-\\x7f])*\")@(?:(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?|\\[(?:(?:(2(5[0-5]|[0-4][0-9])|1[0-9][0-9]|[1-9]?[0-9]))\\.){3}(?:(2(5[0-5]|[0-4][0-9])|1[0-9][0-9]|[1-9]?[0-9])|[a-z0-9-]*[a-z0-9]:(?:[\\x01-\\x08\\x0b\\x0c\\x0e-\\x1f\\x21-\\x5a\\x53-\\x7f]|\\\\[\\x01-\\x09\\x0b\\x0c\\x0e-\\x7f])+)\\])$'"
+                ]
+              }
+            },
+            "required": [
+              "message"
+            ],
+            "type": "object"
+          },
+          "body.turnstileToken": {
+            "properties": {
+              "value": {},
+              "message": {
+                "type": "string",
+                "enum": [
+                  "'turnstileToken' is required",
+                  "invalid string value"
                 ]
               }
             },
@@ -4278,10 +5621,15 @@
             "type": "string",
             "format": "email",
             "pattern": "^(?:[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*|\"(?:[\\x01-\\x08\\x0b\\x0c\\x0e-\\x1f\\x21\\x23-\\x5b\\x5d-\\x7f]|\\\\[\\x01-\\x09\\x0b\\x0c\\x0e-\\x7f])*\")@(?:(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?|\\[(?:(?:(2(5[0-5]|[0-4][0-9])|1[0-9][0-9]|[1-9]?[0-9]))\\.){3}(?:(2(5[0-5]|[0-4][0-9])|1[0-9][0-9]|[1-9]?[0-9])|[a-z0-9-]*[a-z0-9]:(?:[\\x01-\\x08\\x0b\\x0c\\x0e-\\x1f\\x21-\\x5a\\x53-\\x7f]|\\\\[\\x01-\\x09\\x0b\\x0c\\x0e-\\x7f])+)\\])$"
+          },
+          "turnstileToken": {
+            "type": "string",
+            "description": "Cloudflare Turnstile token for bot protection."
           }
         },
         "required": [
-          "email"
+          "email",
+          "turnstileToken"
         ],
         "type": "object",
         "additionalProperties": false
@@ -4447,6 +5795,69 @@
         "required": [
           "token",
           "newPassword"
+        ],
+        "type": "object",
+        "additionalProperties": false
+      },
+      "SecurityCodeResponse": {
+        "properties": {
+          "transactionId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "transactionId"
+        ],
+        "type": "object",
+        "additionalProperties": false
+      },
+      "SuccessResponse_SecurityCodeResponse_": {
+        "description": "Wrapper de éxito JSend (aplicado por el middleware global).",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "success"
+            ],
+            "nullable": false
+          },
+          "data": {
+            "$ref": "#/components/schemas/SecurityCodeResponse"
+          }
+        },
+        "required": [
+          "status",
+          "data"
+        ],
+        "type": "object",
+        "additionalProperties": false
+      },
+      "RequestLinkingResetRequest": {
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
+          "turnstileToken": {
+            "type": "string",
+            "description": "Cloudflare Turnstile token for bot protection."
+          }
+        },
+        "required": [
+          "email",
+          "turnstileToken"
+        ],
+        "type": "object",
+        "additionalProperties": false
+      },
+      "SecurityCodeRequest": {
+        "properties": {
+          "actionName": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "actionName"
         ],
         "type": "object",
         "additionalProperties": false
@@ -4769,27 +6180,6 @@
           },
           "data": {
             "$ref": "#/components/schemas/AirportResponse"
-          }
-        },
-        "required": [
-          "status",
-          "data"
-        ],
-        "type": "object",
-        "additionalProperties": false
-      },
-      "SuccessResponseType_MessageResponseData_": {
-        "description": "Wrapper de éxito JSend (aplicado por el middleware global).",
-        "properties": {
-          "status": {
-            "type": "string",
-            "enum": [
-              "success"
-            ],
-            "nullable": false
-          },
-          "data": {
-            "$ref": "#/components/schemas/MessageResponseData"
           }
         },
         "required": [
@@ -5389,10 +6779,52 @@
           "profile_picture": {
             "type": "string"
           },
-          "password_reset_token": {
+          "google_id": {
             "type": "string"
           },
-          "password_reset_expires": {
+          "google_email": {
+            "type": "string"
+          },
+          "is_password_set": {
+            "type": "boolean"
+          },
+          "badges": {
+            "items": {
+              "properties": {
+                "earned_at": {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                "icon": {
+                  "type": "string"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "id": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "earned_at",
+                "icon",
+                "name",
+                "id"
+              ],
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "security_code": {
+            "type": "string"
+          },
+          "security_code_id": {
+            "type": "string"
+          },
+          "security_code_action": {
+            "type": "string"
+          },
+          "security_code_expires": {
             "type": "string",
             "format": "date-time"
           },
@@ -5430,7 +6862,8 @@
           "role",
           "created_at",
           "last_seen_at",
-          "auth_version"
+          "auth_version",
+          "is_password_set"
         ],
         "type": "object",
         "description": "From T, pick a set of properties whose keys are in the union K"
@@ -5499,10 +6932,52 @@
           "profile_picture": {
             "type": "string"
           },
-          "password_reset_token": {
+          "google_id": {
             "type": "string"
           },
-          "password_reset_expires": {
+          "google_email": {
+            "type": "string"
+          },
+          "is_password_set": {
+            "type": "boolean"
+          },
+          "badges": {
+            "items": {
+              "properties": {
+                "earned_at": {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                "icon": {
+                  "type": "string"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "id": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "earned_at",
+                "icon",
+                "name",
+                "id"
+              ],
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "security_code": {
+            "type": "string"
+          },
+          "security_code_id": {
+            "type": "string"
+          },
+          "security_code_action": {
+            "type": "string"
+          },
+          "security_code_expires": {
             "type": "string",
             "format": "date-time"
           },
@@ -5559,6 +7034,7 @@
           "created_at",
           "last_seen_at",
           "auth_version",
+          "is_password_set",
           "friends",
           "sent_friend_requests",
           "received_friend_requests"
@@ -5837,9 +7313,6 @@
             "type": "string",
             "format": "date-time"
           },
-          "reason": {
-            "type": "string"
-          },
           "status": {
             "type": "string",
             "enum": [
@@ -5848,6 +7321,9 @@
               "rejected"
             ]
           },
+          "reason": {
+            "type": "string"
+          },
           "updated_at": {
             "type": "string",
             "format": "date-time"
@@ -5855,8 +7331,8 @@
         },
         "required": [
           "created_at",
-          "reason",
           "status",
+          "reason",
           "updated_at"
         ],
         "type": "object",
@@ -5868,9 +7344,6 @@
             "type": "string",
             "format": "date-time"
           },
-          "reason": {
-            "type": "string"
-          },
           "status": {
             "type": "string",
             "enum": [
@@ -5878,6 +7351,9 @@
               "resolved",
               "rejected"
             ]
+          },
+          "reason": {
+            "type": "string"
           },
           "updated_at": {
             "type": "string",
@@ -5892,8 +7368,8 @@
         },
         "required": [
           "created_at",
-          "reason",
           "status",
+          "reason",
           "updated_at",
           "airport_iata"
         ],
@@ -6078,11 +7554,63 @@
             },
             "type": "array"
           },
+          "susResults": {
+            "items": {
+              "type": "number",
+              "format": "double"
+            },
+            "type": "array"
+          },
           "timestamp": {
             "type": "string",
             "format": "date-time"
           },
           "fullName": {
+            "type": "string"
+          },
+          "age": {
+            "type": "number",
+            "format": "double"
+          },
+          "gender": {
+            "type": "string"
+          },
+          "educationLevel": {
+            "type": "string"
+          },
+          "screenInfo": {
+            "properties": {
+              "devicePixelRatio": {
+                "type": "number",
+                "format": "double"
+              },
+              "innerHeight": {
+                "type": "number",
+                "format": "double"
+              },
+              "innerWidth": {
+                "type": "number",
+                "format": "double"
+              },
+              "height": {
+                "type": "number",
+                "format": "double"
+              },
+              "width": {
+                "type": "number",
+                "format": "double"
+              }
+            },
+            "required": [
+              "devicePixelRatio",
+              "innerHeight",
+              "innerWidth",
+              "height",
+              "width"
+            ],
+            "type": "object"
+          },
+          "userAgent": {
             "type": "string"
           },
           "receivedAt": {
@@ -6094,6 +7622,7 @@
           "_id",
           "results",
           "timestamp",
+          "userAgent",
           "receivedAt"
         ],
         "type": "object",
@@ -6110,11 +7639,63 @@
             },
             "type": "array"
           },
+          "susResults": {
+            "items": {
+              "type": "number",
+              "format": "double"
+            },
+            "type": "array"
+          },
           "timestamp": {
             "type": "string",
             "format": "date-time"
           },
           "fullName": {
+            "type": "string"
+          },
+          "age": {
+            "type": "number",
+            "format": "double"
+          },
+          "gender": {
+            "type": "string"
+          },
+          "educationLevel": {
+            "type": "string"
+          },
+          "screenInfo": {
+            "properties": {
+              "devicePixelRatio": {
+                "type": "number",
+                "format": "double"
+              },
+              "innerHeight": {
+                "type": "number",
+                "format": "double"
+              },
+              "innerWidth": {
+                "type": "number",
+                "format": "double"
+              },
+              "height": {
+                "type": "number",
+                "format": "double"
+              },
+              "width": {
+                "type": "number",
+                "format": "double"
+              }
+            },
+            "required": [
+              "devicePixelRatio",
+              "innerHeight",
+              "innerWidth",
+              "height",
+              "width"
+            ],
+            "type": "object"
+          },
+          "userAgent": {
             "type": "string"
           },
           "receivedAt": {
@@ -6129,6 +7710,7 @@
           "_id",
           "results",
           "timestamp",
+          "userAgent",
           "receivedAt"
         ],
         "type": "object",
@@ -6190,7 +7772,17 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/SuccessResponseType"
+                  "$ref": "#/components/schemas/SuccessResponseType_VerificationTransactionResponse_"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Verificación de seguridad fallida",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TurnstileFailResponse"
                 }
               }
             }
@@ -6425,7 +8017,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/SuccessResponseType"
+                  "$ref": "#/components/schemas/SuccessResponseType_MessageResponseData_"
                 }
               }
             }
@@ -7510,7 +9102,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/RequestValidationFailResponse_ValidationDetails_PathPath__userId-string__-or-QueryPath__page-number--limit-number____"
+                  "$ref": "#/components/schemas/RequestValidationFailResponse_ValidationDetails_PathPath__userId-string__-or-QueryPath__page-number--limit-number--origin_63_-string--destination_63_-string--status_63_-string--minPrice_63_-number--maxPrice_63_-number--startDate_63_-string--endDate_63_-string--sharedOnly_63_-boolean____"
                 }
               }
             }
@@ -7551,6 +9143,72 @@
               "default": 10,
               "format": "double",
               "type": "number"
+            }
+          },
+          {
+            "in": "query",
+            "name": "origin",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "destination",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "minPrice",
+            "required": false,
+            "schema": {
+              "format": "double",
+              "type": "number"
+            }
+          },
+          {
+            "in": "query",
+            "name": "maxPrice",
+            "required": false,
+            "schema": {
+              "format": "double",
+              "type": "number"
+            }
+          },
+          {
+            "in": "query",
+            "name": "startDate",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "endDate",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "sharedOnly",
+            "required": false,
+            "schema": {
+              "type": "boolean"
             }
           }
         ]
@@ -7836,6 +9494,16 @@
               }
             }
           },
+          "403": {
+            "description": "Verificación de seguridad fallida",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TurnstileFailResponse"
+                }
+              }
+            }
+          },
           "422": {
             "description": "Error de validación",
             "content": {
@@ -7847,18 +9515,339 @@
             }
           }
         },
-        "description": "Inicia sesión con un identificador (email o username) y contraseña.",
+        "description": "Inicia sesión de forma tradicional (JSON).\r\n\r\nAutentica al usuario usando su identificador (email o username) y contraseña.\r\nDevuelve el token JWT directamente en el cuerpo de la respuesta para que el cliente lo gestione manualmente.",
         "tags": [
           "Auth"
         ],
         "security": [],
         "parameters": [],
         "requestBody": {
+          "description": "Datos de inicio de sesión e identificador de Turnstile.",
           "required": true,
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/LoginRequest"
+                "$ref": "#/components/schemas/LoginRequest",
+                "description": "Datos de inicio de sesión e identificador de Turnstile."
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/login/web": {
+      "post": {
+        "operationId": "LoginWeb",
+        "responses": {
+          "200": {
+            "description": "Ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse_MessageResponseData_"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Credenciales inválidas",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FailResponseFromError_InvalidCredentialsError_"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Verificación de seguridad fallida",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TurnstileFailResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Error de validación",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LoginValidationFailResponse"
+                }
+              }
+            }
+          }
+        },
+        "description": "Inicia sesión optimizada para entornos web (Cookie).\r\n\r\nAutentica al usuario y establece una cookie HTTP-only con el token JWT.\r\nEsta opción es más segura para aplicaciones web ya que previene ataques XSS al no exponer el token al JS.",
+        "tags": [
+          "Auth"
+        ],
+        "security": [],
+        "parameters": [],
+        "requestBody": {
+          "description": "Datos de inicio de sesión e identificador de Turnstile.",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginRequest",
+                "description": "Datos de inicio de sesión e identificador de Turnstile."
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/login/google": {
+      "post": {
+        "operationId": "LoginWithGoogle",
+        "responses": {
+          "200": {
+            "description": "Ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse_LoginResponseData_"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Credenciales o token inválidos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GoogleLoginError401"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Vinculación requerida o error de seguridad",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthError403"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Error de validación",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GoogleLoginValidationFailResponse"
+                }
+              }
+            }
+          }
+        },
+        "description": "Inicia sesión mediante Google OAuth (JSON).\r\n\r\nAutentica o registra al usuario utilizando una credencial de Google.\r\nDevuelve el token JWT directamente en el cuerpo de la respuesta.",
+        "tags": [
+          "Auth"
+        ],
+        "security": [],
+        "parameters": [],
+        "requestBody": {
+          "description": "Credencial de Google.",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GoogleLoginRequest",
+                "description": "Credencial de Google."
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/login/google/web": {
+      "post": {
+        "operationId": "LoginWithGoogleWeb",
+        "responses": {
+          "200": {
+            "description": "Ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse_MessageResponseData_"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Credenciales o token inválidos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GoogleLoginError401"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Vinculación requerida o error de seguridad",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthError403"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Error de validación",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GoogleLoginValidationFailResponse"
+                }
+              }
+            }
+          }
+        },
+        "description": "Inicia sesión mediante Google OAuth optimizada para web (Cookie).\r\n\r\nAutentica o registra al usuario y establece una cookie HTTP-only con el token JWT.",
+        "tags": [
+          "Auth"
+        ],
+        "security": [],
+        "parameters": [],
+        "requestBody": {
+          "description": "Credencial de Google.",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GoogleLoginRequest",
+                "description": "Credencial de Google."
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/google/connect": {
+      "post": {
+        "operationId": "ConnectGoogle",
+        "responses": {
+          "200": {
+            "description": "Ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse_MessageResponseData_"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No autenticado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthFailResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Cuenta de Google ya vinculada",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FailResponseFromError_GoogleAccountAlreadyLinkedError_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Error de validación",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GoogleConnectValidationFailResponse"
+                }
+              }
+            }
+          }
+        },
+        "description": "Vincula la cuenta de Google al usuario actual.",
+        "tags": [
+          "Auth"
+        ],
+        "security": [
+          {
+            "jwt": []
+          }
+        ],
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GoogleConnectRequest"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/google/disconnect": {
+      "post": {
+        "operationId": "DisconnectGoogle",
+        "responses": {
+          "200": {
+            "description": "Ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse_MessageResponseData_"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Debe establecer una contraseña primero",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FailResponseFromError_CannotDisconnectGoogleWithoutPasswordError_"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No autenticado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthFailResponse"
+                }
+              }
+            }
+          }
+        },
+        "description": "Desvincula la cuenta de Google del usuario actual.",
+        "tags": [
+          "Auth"
+        ],
+        "security": [
+          {
+            "jwt": []
+          }
+        ],
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DisconnectGoogleRequest"
               }
             }
           }
@@ -7880,7 +9869,7 @@
             }
           }
         },
-        "description": "Cierra la sesión actual (limpia la cookie del navegador).",
+        "description": "Cierra la sesión del usuario actual.\r\n\r\nInvalida la sesión en el cliente borrando la cookie de autenticación.",
         "tags": [
           "Auth"
         ],
@@ -7913,7 +9902,7 @@
             }
           }
         },
-        "description": "Cierra todas las sesiones activas del usuario (invalida todos los tokens).",
+        "description": "Cierra todas las sesiones activas del usuario.\r\n\r\nInvalida todas las sesiones en el servidor (resetea auth_version) y\r\nsolicita al navegador limpiar la cookie actual.",
         "tags": [
           "Auth"
         ],
@@ -8002,6 +9991,73 @@
         }
       }
     },
+    "/auth/set-password": {
+      "post": {
+        "operationId": "SetPassword",
+        "responses": {
+          "200": {
+            "description": "Ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse_MessageResponseData_"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Contraseña ya establecida",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FailResponseFromError_PasswordAlreadySetError_"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No autenticado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthFailResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Error de validación",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SetPasswordValidationFailResponse"
+                }
+              }
+            }
+          }
+        },
+        "description": "Establece la contraseña por primera vez para el usuario autenticado (si no tiene una).",
+        "tags": [
+          "Auth"
+        ],
+        "security": [
+          {
+            "jwt": []
+          }
+        ],
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetPasswordRequest"
+              }
+            }
+          }
+        }
+      }
+    },
     "/auth/forgot-password": {
       "post": {
         "operationId": "ForgotPassword",
@@ -8012,6 +10068,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/SuccessResponse_MessageResponseData_"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Verificación de seguridad fallida",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TurnstileFailResponse"
                 }
               }
             }
@@ -8098,6 +10164,96 @@
         }
       }
     },
+    "/auth/google/link/request-reset": {
+      "post": {
+        "operationId": "RequestLinkingResetCode",
+        "responses": {
+          "200": {
+            "description": "Ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse_SecurityCodeResponse_"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Verificación de seguridad fallida",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TurnstileFailResponse"
+                }
+              }
+            }
+          }
+        },
+        "description": "Solicita un código de verificación para restablecer la contraseña durante la vinculación de Google.",
+        "tags": [
+          "Auth"
+        ],
+        "security": [],
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RequestLinkingResetRequest"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/security/request-code": {
+      "post": {
+        "operationId": "RequestSecurityCode",
+        "responses": {
+          "200": {
+            "description": "Ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse_SecurityCodeResponse_"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No autenticado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthFailResponse"
+                }
+              }
+            }
+          }
+        },
+        "description": "Solicita un código de verificación para una acción de seguridad (estando logueado).",
+        "tags": [
+          "Auth"
+        ],
+        "security": [
+          {
+            "jwt": []
+          }
+        ],
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SecurityCodeRequest"
+              }
+            }
+          }
+        }
+      }
+    },
     "/airports": {
       "get": {
         "operationId": "SearchAirports",
@@ -8173,6 +10329,15 @@
               "format": "double",
               "type": "number"
             }
+          },
+          {
+            "in": "query",
+            "name": "isDynamic",
+            "required": false,
+            "schema": {
+              "default": true,
+              "type": "boolean"
+            }
           }
         ]
       }
@@ -8231,6 +10396,15 @@
             "schema": {
               "format": "double",
               "type": "number"
+            }
+          },
+          {
+            "in": "query",
+            "name": "isDynamic",
+            "required": false,
+            "schema": {
+              "default": true,
+              "type": "boolean"
             }
           }
         ]
