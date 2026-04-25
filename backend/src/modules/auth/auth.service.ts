@@ -118,7 +118,16 @@ export class AuthService {
         });
         const payload = ticket.getPayload();
         if (!payload || !payload.email) {
-            throw new InvalidTokenError("Invalid Google token payload");
+            const error = new InvalidTokenError("Invalid Google token payload");
+            await this.auditService.register({
+                resource: "AUTH",
+                action: "FAILED_LOGIN_GOOGLE",
+                details: {
+                    reason: error.code,
+                    details: "Invalid payload or missing email"
+                }
+            });
+            throw error;
         }
 
         const email = payload.email.toLowerCase();
@@ -163,6 +172,18 @@ export class AuthService {
             user.google_id = googleId;
             user.google_email = email;
             await user.save();
+
+            await this.auditService.register({
+                resource: "AUTH",
+                action: "AUTO_LINK_GOOGLE",
+                details: {
+                    email,
+                    googleId
+                },
+                user: {
+                    id: user._id.toString()
+                }
+            });
         }
 
         const token = jwt.sign(
@@ -207,7 +228,18 @@ export class AuthService {
         // Check if this googleId is already linked to ANOTHER user
         const existingUser = await User.findOne({ google_id: googleId });
         if (existingUser && existingUser._id.toString() !== userId) {
-            throw new GoogleAccountAlreadyLinkedError(payload.email);
+            const error = new GoogleAccountAlreadyLinkedError(payload.email);
+            await this.auditService.register({
+                resource: "AUTH",
+                action: "FAILED_CONNECT_GOOGLE",
+                details: {
+                    userId,
+                    googleId,
+                    email: payload.email,
+                    reason: error.code
+                }
+            });
+            throw error;
         }
 
         const user = await User.findById(userId);
@@ -374,7 +406,16 @@ export class AuthService {
         if (!user) throw new LoginUserNotFoundError(userId);
 
         if (user.is_password_set) {
-            throw new PasswordAlreadySetError();
+            const error = new PasswordAlreadySetError();
+            await this.auditService.register({
+                resource: "AUTH",
+                action: "FAILED_SET_PASSWORD",
+                details: {
+                    userId,
+                    reason: error.code
+                }
+            });
+            throw error;
         }
 
         user.password = password;

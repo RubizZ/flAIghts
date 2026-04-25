@@ -55,7 +55,18 @@ export class UserService {
     public async initiateRegistration(data: InitiateRegistrationData): Promise<void> {
         // Check if user already exists
         const userExists = await User.findOne({ email: data.email.toLowerCase() });
-        if (userExists) throw new EmailAlreadyInUseError(data.email);
+        if (userExists) {
+            const error = new EmailAlreadyInUseError(data.email);
+            this.auditService.register({
+                resource: "USER",
+                action: "FAILED_INITIATE_REGISTRATION",
+                details: {
+                    email: data.email,
+                    reason: error.code
+                }
+            });
+            throw error;
+        }
 
         const verificationCode = EmailVerificationService.generateCode();
         const hashedCode = EmailVerificationService.generateHashedCode(verificationCode);
@@ -84,11 +95,33 @@ export class UserService {
 
     public async completeRegistration(data: CompleteRegistrationData): Promise<IUserUnpopulated> {
         const preReg = await PreRegistration.findOne({ email: data.email.toLowerCase() });
-        if (!preReg) throw new EmailVerificationCodeInvalidOrExpiredError();
+        if (!preReg) {
+            const error = new EmailVerificationCodeInvalidOrExpiredError();
+            this.auditService.register({
+                resource: "USER",
+                action: "FAILED_COMPLETE_REGISTRATION",
+                details: {
+                    email: data.email,
+                    reason: error.code,
+                    subReason: "NO_PRE_REGISTRATION"
+                }
+            });
+            throw error;
+        }
 
         const hashedCode = EmailVerificationService.generateHashedCode(data.code);
         if (preReg.code !== hashedCode || preReg.expires < new Date()) {
-            throw new EmailVerificationCodeInvalidOrExpiredError();
+            const error = new EmailVerificationCodeInvalidOrExpiredError();
+            this.auditService.register({
+                resource: "USER",
+                action: "FAILED_COMPLETE_REGISTRATION",
+                details: {
+                    email: data.email,
+                    reason: error.code,
+                    subReason: preReg.expires < new Date() ? "EXPIRED" : "INVALID_CODE"
+                }
+            });
+            throw error;
         }
 
         try {
@@ -133,7 +166,19 @@ export class UserService {
 
         // Check availability
         const emailInUse = await User.findOne({ email: newEmail });
-        if (emailInUse) throw new EmailAlreadyInUseError(newEmail);
+        if (emailInUse) {
+            const error = new EmailAlreadyInUseError(newEmail);
+            this.auditService.register({
+                resource: "USER",
+                action: "FAILED_INITIATE_EMAIL_CHANGE",
+                details: {
+                    userId,
+                    newEmail,
+                    reason: error.code
+                }
+            });
+            throw error;
+        }
 
         const oldEmailCode = EmailVerificationService.generateCode();
         const newEmailCode = EmailVerificationService.generateCode();
@@ -194,7 +239,16 @@ export class UserService {
 
         if (user.email_change_request.old_email_code !== hashedOld ||
             user.email_change_request.new_email_code !== hashedNew) {
-            throw new EmailVerificationCodeInvalidOrExpiredError();
+            const error = new EmailVerificationCodeInvalidOrExpiredError();
+            this.auditService.register({
+                resource: "USER",
+                action: "FAILED_COMPLETE_EMAIL_CHANGE",
+                details: {
+                    userId,
+                    reason: error.code
+                }
+            });
+            throw error;
         }
 
         const oldEmail = user.email;
@@ -220,7 +274,19 @@ export class UserService {
     public async updateUser(userId: string, data: UpdateUserData): Promise<IUserUnpopulated> {
         if (data.username) {
             const existing = await User.findOne({ username: data.username, _id: { $ne: userId } });
-            if (existing) throw new UsernameAlreadyInUseError(data.username);
+            if (existing) {
+                const error = new UsernameAlreadyInUseError(data.username);
+                this.auditService.register({
+                    resource: "USER",
+                    action: "FAILED_UPDATE",
+                    details: {
+                        userId,
+                        username: data.username,
+                        reason: error.code
+                    }
+                });
+                throw error;
+            }
         }
         const user = await User.findByIdAndUpdate(userId, data, { returnDocument: 'after', runValidators: true });
         if (!user) throw new UserNotFoundError(userId);
