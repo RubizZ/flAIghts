@@ -13,6 +13,15 @@ export interface AuditDetails {
                 airline_quality_weight: number;
             }
         }
+        FAILED_INITIATE_REGISTRATION: {
+            email: string;
+            reason: string;
+        }
+        FAILED_COMPLETE_REGISTRATION: {
+            email: string;
+            reason: string;
+            subReason?: string;
+        }
         UPDATE: {
             username?: string;
             public?: boolean;
@@ -22,6 +31,11 @@ export interface AuditDetails {
                 stops_weight?: number;
                 airline_quality_weight?: number;
             }
+        }
+        FAILED_UPDATE: {
+            userId: string;
+            username?: string;
+            reason: string;
         }
         UPDATE_PROFILE_PICTURE: {
             url: string;
@@ -38,6 +52,15 @@ export interface AuditDetails {
         }
         CANCEL_EMAIL_CHANGE: {
             stayingEmail: string;
+        }
+        FAILED_INITIATE_EMAIL_CHANGE: {
+            userId: string;
+            newEmail: string;
+            reason: string;
+        }
+        FAILED_COMPLETE_EMAIL_CHANGE: {
+            userId: string;
+            reason: string;
         }
         SEND_FRIEND_REQUEST: {
             userId: string;
@@ -67,8 +90,13 @@ export interface AuditDetails {
             reason: string;
         }
         FAILED_LOGIN_GOOGLE: {
-            email: string;
+            email?: string;
             reason: string;
+            details?: string;
+        }
+        AUTO_LINK_GOOGLE: {
+            email: string;
+            googleId: string;
         }
         LOGOUT_ALL: {
             auth_version: number;
@@ -105,6 +133,16 @@ export interface AuditDetails {
             googleId: string;
         }
         FAILED_DISCONNECT_GOOGLE: {
+            userId: string;
+            reason: string;
+        }
+        FAILED_CONNECT_GOOGLE: {
+            userId: string;
+            googleId: string;
+            email: string;
+            reason: string;
+        }
+        FAILED_SET_PASSWORD: {
             userId: string;
             reason: string;
         }
