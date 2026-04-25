@@ -3,10 +3,10 @@ import type { Request as ExpressRequest } from "express";
 import { inject, injectable } from "tsyringe";
 import { AuthService } from "./auth.service.js";
 import { TurnstileService } from "./turnstile.service.js";
-import type { AuthenticatedUser, ChangePasswordRequest, ChangePasswordValidationFailResponse, ForgotPasswordRequest, ForgotPasswordValidationFailResponse, LoginRequest, LoginResponseData, LoginValidationFailResponse, ResetPasswordRequest, ResetPasswordValidationFailResponse, ChangePasswordErrorResponse, GoogleLoginRequest, GoogleLoginValidationFailResponse, GoogleConnectRequest, GoogleConnectValidationFailResponse, SetPasswordRequest, SetPasswordValidationFailResponse, TurnstileFailResponse } from "./auth.types.js";
+import type { AuthenticatedUser, ChangePasswordRequest, ChangePasswordValidationFailResponse, ForgotPasswordRequest, ForgotPasswordValidationFailResponse, LoginRequest, LoginResponseData, LoginValidationFailResponse, ResetPasswordRequest, ResetPasswordValidationFailResponse, ChangePasswordErrorResponse, GoogleLoginRequest, GoogleLoginValidationFailResponse, GoogleConnectRequest, GoogleConnectValidationFailResponse, SetPasswordRequest, SetPasswordValidationFailResponse, TurnstileFailResponse, AccountLinkRequiredFailResponse, InvalidTokenFailResponse, GoogleLoginError401, AuthError403, RequestLinkingResetRequest, DisconnectGoogleRequest, SecurityCodeRequest, SecurityCodeResponse } from "./auth.types.js";
 import type { FailResponseFromError, MessageResponseData, SuccessResponse } from "../../utils/responses.js";
 import type { AuthFailResponse } from "./auth.types.js";
-import { InvalidCredentialsError, LoginUserNotFoundError, InvalidPasswordError, ResetTokenInvalidOrExpiredError, NewPasswordSameAsOldError, InvalidTokenError, GoogleAccountAlreadyLinkedError, CannotDisconnectGoogleWithoutPasswordError, PasswordAlreadySetError, TurnstileVerificationFailedError } from "./auth.errors.js";
+import { InvalidCredentialsError, LoginUserNotFoundError, InvalidPasswordError, ResetTokenInvalidOrExpiredError, NewPasswordSameAsOldError, InvalidTokenError, GoogleAccountAlreadyLinkedError, CannotDisconnectGoogleWithoutPasswordError, PasswordAlreadySetError, TurnstileVerificationFailedError, AccountLinkRequiredError } from "./auth.errors.js";
 import ms from "ms";
 import { ServerConfig } from "../../config/server.config.js";
 
@@ -104,10 +104,12 @@ export class AuthController extends Controller {
      */
     @Post("/login/google")
     @Response<GoogleLoginValidationFailResponse>(422, "Error de validación")
-    @Response<FailResponseFromError<InvalidTokenError>>(401, "Token de Google inválido")
-    public async loginWithGoogle(@Body() body: GoogleLoginRequest): Promise<SuccessResponse<LoginResponseData>> {
-        const { credential } = body;
-        const result = await this.authService.loginWithGoogle(credential);
+    @Response<GoogleLoginError401>(401, "Credenciales o token inválidos")
+    @Response<AuthError403>(403, "Vinculación requerida o error de seguridad")
+    public async loginWithGoogle(@Body() body: GoogleLoginRequest, @Request() request: ExpressRequest): Promise<SuccessResponse<LoginResponseData>> {
+        const { credential, password, newPassword, turnstileToken, verificationCode, transactionId } = body;
+        await this.turnstileService.verifyToken(turnstileToken, request.ip);
+        const result = await this.authService.loginWithGoogle(credential, password, newPassword, verificationCode, transactionId);
         return result satisfies LoginResponseData as any;
     }
 
@@ -121,10 +123,12 @@ export class AuthController extends Controller {
      */
     @Post("/login/google/web")
     @Response<GoogleLoginValidationFailResponse>(422, "Error de validación")
-    @Response<FailResponseFromError<InvalidTokenError>>(401, "Token de Google inválido")
-    public async loginWithGoogleWeb(@Body() body: GoogleLoginRequest): Promise<SuccessResponse<MessageResponseData>> {
-        const { credential } = body;
-        const result = await this.authService.loginWithGoogle(credential);
+    @Response<GoogleLoginError401>(401, "Credenciales o token inválidos")
+    @Response<AuthError403>(403, "Vinculación requerida o error de seguridad")
+    public async loginWithGoogleWeb(@Body() body: GoogleLoginRequest, @Request() request: ExpressRequest): Promise<SuccessResponse<MessageResponseData>> {
+        const { credential, password, newPassword, turnstileToken, verificationCode, transactionId } = body;
+        await this.turnstileService.verifyToken(turnstileToken, request.ip);
+        const result = await this.authService.loginWithGoogle(credential, password, newPassword, verificationCode, transactionId);
 
         logger.info(`Setting auth cookie for user: ${result.userId} via Google`);
         const isProduction = this.config.NODE_ENV === 'production';
@@ -152,8 +156,8 @@ export class AuthController extends Controller {
     @Response<FailResponseFromError<GoogleAccountAlreadyLinkedError>>(409, "Cuenta de Google ya vinculada")
     @Response<AuthFailResponse>(401, "No autenticado")
     public async connectGoogle(@RequestProp("user") user: AuthenticatedUser, @Body() body: GoogleConnectRequest): Promise<SuccessResponse<MessageResponseData>> {
-        const { credential } = body;
-        await this.authService.connectGoogle(user._id, credential);
+        const { credential, verificationCode, transactionId } = body;
+        await this.authService.connectGoogle(user._id, credential, verificationCode, transactionId);
         return {
             message: "Cuenta de Google vinculada correctamente."
         } satisfies MessageResponseData as any;
@@ -166,8 +170,9 @@ export class AuthController extends Controller {
     @Security("jwt")
     @Response<AuthFailResponse>(401, "No autenticado")
     @Response<FailResponseFromError<CannotDisconnectGoogleWithoutPasswordError>>(400, "Debe establecer una contraseña primero")
-    public async disconnectGoogle(@RequestProp("user") user: AuthenticatedUser): Promise<SuccessResponse<MessageResponseData>> {
-        await this.authService.disconnectGoogle(user._id);
+    public async disconnectGoogle(@RequestProp("user") user: AuthenticatedUser, @Body() body: DisconnectGoogleRequest): Promise<SuccessResponse<MessageResponseData>> {
+        const { verificationCode, transactionId } = body;
+        await this.authService.disconnectGoogle(user._id, verificationCode, transactionId);
         return {
             message: "Cuenta de Google desvinculada correctamente."
         } satisfies MessageResponseData as any;
@@ -233,8 +238,8 @@ export class AuthController extends Controller {
     @Response<FailResponseFromError<NewPasswordSameAsOldError>>(400, "Nueva contraseña igual a la anterior")
     @Response<FailResponseFromError<LoginUserNotFoundError>>(404, "Usuario no encontrado")
     public async changePassword(@RequestProp("user") user: AuthenticatedUser, @Body() body: ChangePasswordRequest): Promise<SuccessResponse<MessageResponseData>> {
-        const { oldPassword, newPassword } = body;
-        await this.authService.changePassword(user._id, oldPassword, newPassword);
+        const { newPassword, verificationCode, transactionId } = body;
+        await this.authService.changePassword(user._id, newPassword, verificationCode, transactionId);
         return {
             message: "Contraseña cambiada correctamente."
         } satisfies MessageResponseData as any;
@@ -249,8 +254,8 @@ export class AuthController extends Controller {
     @Response<FailResponseFromError<PasswordAlreadySetError>>(400, "Contraseña ya establecida")
     @Response<AuthFailResponse>(401, "No autenticado")
     public async setPassword(@RequestProp("user") user: AuthenticatedUser, @Body() body: SetPasswordRequest): Promise<SuccessResponse<MessageResponseData>> {
-        const { password } = body;
-        await this.authService.setPassword(user._id, password);
+        const { password, verificationCode, transactionId } = body;
+        await this.authService.setPassword(user._id, password, verificationCode, transactionId);
         return {
             message: "Contraseña establecida correctamente."
         } satisfies MessageResponseData as any;
@@ -290,5 +295,28 @@ export class AuthController extends Controller {
         return {
             message: "Contraseña restablecida correctamente."
         } satisfies MessageResponseData as any;
+    }
+
+    /**
+     * Solicita un código de verificación para restablecer la contraseña durante la vinculación de Google.
+     */
+    @Post("/google/link/request-reset")
+    @Response<TurnstileFailResponse>(403, "Verificación de seguridad fallida")
+    public async requestLinkingResetCode(@Body() body: RequestLinkingResetRequest, @Request() request: ExpressRequest): Promise<SuccessResponse<SecurityCodeResponse>> {
+        const { email, turnstileToken } = body;
+        await this.turnstileService.verifyToken(turnstileToken, request.ip);
+        const result = await this.authService.requestLinkingResetCode(email);
+        return result satisfies SecurityCodeResponse as any;
+    }
+
+    /**
+     * Solicita un código de verificación para una acción de seguridad (estando logueado).
+     */
+    @Post("/security/request-code")
+    @Security("jwt")
+    @Response<AuthFailResponse>(401, "No autenticado")
+    public async requestSecurityCode(@RequestProp('user') user: AuthenticatedUser, @Body() body: SecurityCodeRequest): Promise<SuccessResponse<SecurityCodeResponse>> {
+        const result = await this.authService.requestSecurityCode(user._id, body.actionName);
+        return result satisfies SecurityCodeResponse as any;
     }
 }

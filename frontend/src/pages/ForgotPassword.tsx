@@ -3,14 +3,15 @@ import AuthLayout from "@/components/layout/AuthLayout";
 import AuthCard from "@/components/ui/AuthCard";
 import FloatingLabelInput from "@/components/ui/FloatingLabelInput";
 import { JSX } from "react";
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { toast } from "sonner";
 import Logo from "@/components/ui/Logo";
-import TurnstileWidget from "@/components/ui/TurnstileWidget";
+import TurnstileWidget, { type TurnstileWidgetRef } from "@/components/ui/TurnstileWidget";
 
 export default function ForgotPassword(): JSX.Element {
     const [email, setEmail] = useState('');
     const [turnstileToken, setTurnstileToken] = useState<string>('');
+    const turnstileRef = useRef<TurnstileWidgetRef>(null);
     const [error, setError] = useState('');
 
     const { mutate: forgotPassword, isPending } = useForgotPassword({
@@ -31,10 +32,9 @@ export default function ForgotPassword(): JSX.Element {
                         toast.error("Por favor, completa la verificación de seguridad.");
                         break;
                     case "TURNSTILE_INVALID_TOKEN":
-                        toast.error("El token de seguridad no es válido. Inténtalo de nuevo.");
-                        break;
                     case "TURNSTILE_TOKEN_ALREADY_SPENT":
-                        toast.error("La verificación ha expirado o ya ha sido usada. Por favor, recarga el widget.");
+                        toast.error("La verificación ha caducado o es inválida. Por favor, verifica de nuevo.");
+                        turnstileRef.current?.reset();
                         break;
                     case "TURNSTILE_VERIFICATION_FAILED":
                         toast.error("La verificación de seguridad ha fallado. Por favor, inténtalo de nuevo.");
@@ -92,13 +92,8 @@ export default function ForgotPassword(): JSX.Element {
                             }
                         }}
                     />
-                    <TurnstileWidget 
-                        onVerify={setTurnstileToken} 
-                        onExpire={() => setTurnstileToken("")}
-                        onError={() => setTurnstileToken("")}
-                    />
                     <button 
-                        disabled={isPending || !turnstileToken || !email} 
+                        disabled={isPending || !email} 
                         onClick={handleSubmit} 
                         type="button" 
                         className="mt-2 rounded-lg bg-brand p-3 text-content-on-brand font-bold enabled:hover:scale-[1.02] enabled:active:scale-95 transition-all shadow-lg shadow-brand/20 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
@@ -107,6 +102,12 @@ export default function ForgotPassword(): JSX.Element {
                     </button>
                 </form>
             </AuthCard>
+            <TurnstileWidget 
+                ref={turnstileRef}
+                onVerify={setTurnstileToken} 
+                onExpire={() => setTurnstileToken("")}
+                onError={() => setTurnstileToken("")}
+            />
         </AuthLayout>
     )
 }

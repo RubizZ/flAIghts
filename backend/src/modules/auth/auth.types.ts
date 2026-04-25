@@ -1,17 +1,34 @@
 import type { ValidationDetails, RequestValidationFailResponse, DatabaseValidationFailResponse, FailResponseFromError, BodyPath } from "../../utils/responses.js";
-import { 
-    NoTokenProvidedError, 
-    InvalidTokenError, 
-    TokenUserNotFoundError, 
-    AuthenticationVersionMismatchError, 
+import {
+    NoTokenProvidedError,
+    InvalidTokenError,
+    TokenUserNotFoundError,
+    AuthenticationVersionMismatchError,
     InvalidPasswordError,
     TurnstileVerificationFailedError,
     TurnstileMissingTokenError,
     TurnstileInvalidTokenError,
-    TurnstileTokenAlreadySpentError
+    TurnstileTokenAlreadySpentError,
+    AccountLinkRequiredError,
+    GoogleAccountAlreadyLinkedError,
+    InvalidResetCodeError
 } from "./auth.errors.js";
 
 // ==================== TIPOS DE AUTENTICACIÓN ====================
+
+/**
+ * Tipo de respuesta para errores de login con Google (401).
+ */
+export type InvalidTokenFailResponse = FailResponseFromError<InvalidTokenError>;
+export type InvalidPasswordFailResponse = FailResponseFromError<InvalidPasswordError>;
+export type GoogleAccountAlreadyLinkedFailResponse = FailResponseFromError<GoogleAccountAlreadyLinkedError>;
+
+export type GoogleLoginError401 = InvalidTokenFailResponse | InvalidPasswordFailResponse;
+
+/**
+ * Tipo de respuesta para errores de conexión de cuenta de Google (403).
+ */
+export type AccountLinkRequiredFailResponse = FailResponseFromError<AccountLinkRequiredError>;
 
 /**
  * Tipo de respuesta para errores de Turnstile (403).
@@ -21,6 +38,8 @@ export type TurnstileFailResponse =
     | FailResponseFromError<TurnstileMissingTokenError>
     | FailResponseFromError<TurnstileInvalidTokenError>
     | FailResponseFromError<TurnstileTokenAlreadySpentError>;
+
+export type AuthError403 = AccountLinkRequiredFailResponse | TurnstileFailResponse | FailResponseFromError<InvalidResetCodeError>;
 
 /**
  * Tipo de respuesta para errores de autenticación JWT (401).
@@ -78,21 +97,53 @@ export interface LoginRequest {
 
 export interface GoogleLoginRequest {
     credential: string;
+    password?: string;
+    newPassword?: string;
+    verificationCode?: string;
+    transactionId?: string;
+    /**
+     * Cloudflare Turnstile token for bot protection.
+     */
+    turnstileToken: string;
+}
+
+export interface RequestLinkingResetRequest {
+    /**
+     * @format email
+     */
+    email: string;
+    /**
+     * Cloudflare Turnstile token for bot protection.
+     */
+    turnstileToken: string;
+}
+
+export interface SecurityCodeResponse {
+    transactionId: string;
 }
 
 export interface GoogleConnectRequest {
     credential: string;
+    verificationCode: string;
+    transactionId: string;
+}
+
+export interface DisconnectGoogleRequest {
+    verificationCode: string;
+    transactionId: string;
 }
 
 export interface ChangePasswordRequest {
     /**
      * @minLength 8
      */
-    oldPassword: string;
-    /**
-     * @minLength 8
-     */
     newPassword: string;
+    verificationCode: string;
+    transactionId: string;
+}
+
+export interface SecurityCodeRequest {
+    actionName: string;
 }
 
 export interface SetPasswordRequest {
@@ -100,6 +151,12 @@ export interface SetPasswordRequest {
      * @minLength 8
      */
     password: string;
+    verificationCode: string;
+    transactionId: string;
+}
+
+export interface SecurityCodeRequest {
+    actionName: string;
 }
 
 export interface ForgotPasswordRequest {

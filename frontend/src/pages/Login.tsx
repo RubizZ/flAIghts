@@ -8,7 +8,9 @@ import FloatingLabelInput from "@/components/ui/FloatingLabelInput";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import Logo from "@/components/ui/Logo";
-import TurnstileWidget from "@/components/ui/TurnstileWidget";
+import TurnstileWidget, { type TurnstileWidgetRef } from "@/components/ui/TurnstileWidget";
+import GoogleLinkingView from "@/components/auth/GoogleLinkingView";
+import { useRef } from "react";
 
 export default function Login() {
     const navigate = useNavigate();
@@ -22,7 +24,10 @@ export default function Login() {
 
     const [credentials, setCredentials] = useState({ identifier: "", password: "" });
     const [turnstileToken, setTurnstileToken] = useState<string>("");
+    const turnstileRef = useRef<TurnstileWidgetRef>(null);
     const [errors, setErrors] = useState({ identifier: "", password: "" });
+    const [googleLinkData, setGoogleLinkData] = useState<{ credential: string, email: string } | null>(null);
+    const googleCredentialRef = useRef<string | null>(null);
 
     const { mutate: performLogin, isPending } = useLoginWeb({
         mutation: {
@@ -65,10 +70,9 @@ export default function Login() {
                         toast.error("Por favor, completa la verificación de seguridad.");
                         break;
                     case "TURNSTILE_INVALID_TOKEN":
-                        toast.error("El token de seguridad no es válido. Inténtalo de nuevo.");
-                        break;
                     case "TURNSTILE_TOKEN_ALREADY_SPENT":
-                        toast.error("La verificación ha expirado o ya ha sido usada. Por favor, recarga el widget.");
+                        toast.error("La verificación ha caducado o es inválida. Por favor, verifica de nuevo.");
+                        turnstileRef.current?.reset();
                         break;
                     case "TURNSTILE_VERIFICATION_FAILED":
                         toast.error("La verificación de seguridad ha fallado. Por favor, inténtalo de nuevo.");
@@ -81,11 +85,27 @@ export default function Login() {
     const { mutate: performGoogleLogin, isPending: isGooglePending } = useLoginWithGoogleWeb({
         mutation: {
             onSuccess: async () => {
+                toast.success(googleLinkData ? "Cuentas vinculadas correctamente" : "Sesión iniciada con Google");
+                setGoogleLinkData(null);
                 await refetch();
                 navigate("/");
             },
-            onError: () => {
-                toast.error("Error al iniciar sesión con Google");
+            onError: (error) => {
+                if (error.code === "ACCOUNT_LINK_REQUIRED") {
+                    setGoogleLinkData({
+                        credential: googleCredentialRef.current || "",
+                        email: error.details.email
+                    });
+                    toast.info("Cuenta existente detectada. Introduce tu contraseña para vincularla.");
+                } else if (error.code === "INVALID_RESET_CODE") {
+                    toast.error("El código de verificación es incorrecto o ha caducado.");
+                } else if (error.code === "TURNSTILE_MISSING_TOKEN" || error.code === "TURNSTILE_INVALID_TOKEN" || error.code === "TURNSTILE_TOKEN_ALREADY_SPENT" || error.code === "TURNSTILE_VERIFICATION_FAILED") {
+                    toast.error("La verificación de seguridad ha fallado o caducado. Inténtalo de nuevo.");
+                    turnstileRef.current?.reset();
+                } else {
+                    setGoogleLinkData(null);
+                    toast.error("Error al iniciar sesión con Google");
+                }
             }
         }
     });
@@ -146,86 +166,98 @@ export default function Login() {
                     <span>Inicio de sesión</span>
                 </>
             }>
-                <form onSubmit={(e) => e.preventDefault()} className="flex flex-col gap-6">
-                    {/* Form Fields */}
-                    <FloatingLabelInput
-                        value={credentials.identifier}
-                        onChange={(e) => {
-                            setCredentials({ ...credentials, identifier: e.target.value });
-                            if (errors.identifier) setErrors({ ...errors, identifier: "" });
-                        }}
-                        type="text"
-                        id="identifier"
-                        name="identifier"
-                        label="Email o nombre de usuario"
-                        error={errors.identifier}
-                        onKeyDown={enterKeyPress}
+                {googleLinkData ? (
+                    <GoogleLinkingView
+                        linkData={googleLinkData}
+                        turnstileToken={turnstileToken}
+                        onCancel={() => setGoogleLinkData(null)}
+                        onSuccess={() => setGoogleLinkData(null)}
                     />
-
-                    <FloatingLabelInput
-                        value={credentials.password}
-                        onChange={(e) => {
-                            setCredentials({ ...credentials, password: e.target.value });
-                            if (errors.password) setErrors({ ...errors, password: "" });
-                        }}
-                        type="password"
-                        id="password"
-                        name="password"
-                        label="Contraseña"
-                        error={errors.password}
-                        onKeyDown={enterKeyPress}
-                    />
-
-                    <span className="text-sm text-content text-right">
-                        <a href="/forgot-password" className="text-brand hover:underline">¿Olvidaste tu contraseña?</a>
-                    </span>
-
-                    <TurnstileWidget 
-                        onVerify={setTurnstileToken} 
-                        onExpire={() => setTurnstileToken("")}
-                        onError={() => setTurnstileToken("")}
-                    />
-
-                    <button
-                        type="button"
-                        onClick={login}
-                        disabled={isPending || !turnstileToken || !credentials.identifier || !credentials.password}
-                        className={`mt-2 rounded-lg bg-brand p-3 text-content-on-brand font-bold enabled:hover:scale-[1.02] enabled:active:scale-95 transition-all shadow-lg shadow-brand/20 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed`}
-                    >
-                        {isPending ? "Conectando..." : "Login"}
-                    </button>
-
-                    <div className="relative flex py-2 items-center">
-                        <div className="grow border-t border-content-muted/30"></div>
-                        <span className="shrink-0 mx-4 text-content-muted text-sm">O continúa con</span>
-                        <div className="grow border-t border-content-muted/30"></div>
-                    </div>
-
-                    <div className="flex justify-center">
-                        <GoogleLogin
-                            onSuccess={credentialResponse => {
-                                if (credentialResponse.credential) {
-                                    performGoogleLogin({
-                                        data: {
-                                            credential: credentialResponse.credential,
-                                        }
-                                    });
-                                }
+                ) : (
+                    /* ================= PASO 1: LOGIN NORMAL ================= */
+                    <form onSubmit={(e) => e.preventDefault()} className="flex flex-col gap-6 animate-in fade-in duration-500">
+                        <FloatingLabelInput
+                            value={credentials.identifier}
+                            onChange={(e) => {
+                                setCredentials({ ...credentials, identifier: e.target.value });
+                                if (errors.identifier) setErrors({ ...errors, identifier: "" });
                             }}
-                            onError={() => {
-                                toast.error('Error al conectar con Google');
-                            }}
-                            theme='filled_blue'
-                            shape="circle"
-                            text="continue_with"
+                            type="text"
+                            id="identifier"
+                            name="identifier"
+                            label="Email o nombre de usuario"
+                            error={errors.identifier}
+                            onKeyDown={enterKeyPress}
                         />
-                    </div>
 
-                    <span className="text-sm text-content text-center">
-                        ¿No tienes cuenta? <a href="/register" className="text-brand font-bold hover:underline">Regístrate</a>
-                    </span>
-                </form>
+                        <FloatingLabelInput
+                            value={credentials.password}
+                            onChange={(e) => {
+                                setCredentials({ ...credentials, password: e.target.value });
+                                if (errors.password) setErrors({ ...errors, password: "" });
+                            }}
+                            type="password"
+                            id="password"
+                            name="password"
+                            label="Contraseña"
+                            error={errors.password}
+                            onKeyDown={enterKeyPress}
+                        />
+
+                        <span className="text-sm text-content text-right">
+                            <a href="/forgot-password" className="text-brand hover:underline">¿Olvidaste tu contraseña?</a>
+                        </span>
+
+                        <button
+                            type="button"
+                            onClick={login}
+                            disabled={isPending || !credentials.identifier || !credentials.password}
+                            className={`mt-2 rounded-lg bg-brand p-3 text-content-on-brand font-bold enabled:hover:scale-[1.02] enabled:active:scale-95 transition-all shadow-lg shadow-brand/20 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed`}
+                        >
+                            {isPending ? "Conectando..." : "Login"}
+                        </button>
+
+                        <div className="relative flex py-2 items-center">
+                            <div className="grow border-t border-content-muted/30"></div>
+                            <span className="shrink-0 mx-4 text-content-muted text-sm">O continúa con</span>
+                            <div className="grow border-t border-content-muted/30"></div>
+                        </div>
+
+                        <div className="flex justify-center">
+                            <GoogleLogin
+                                onSuccess={credentialResponse => {
+                                    if (credentialResponse.credential) {
+                                        const credential = credentialResponse.credential;
+                                        googleCredentialRef.current = credential;
+                                        performGoogleLogin({
+                                            data: {
+                                                credential,
+                                                turnstileToken
+                                            }
+                                        });
+                                    }
+                                }}
+                                onError={() => {
+                                    toast.error('Error al conectar con Google');
+                                }}
+                                theme='filled_blue'
+                                shape="circle"
+                                text="continue_with"
+                            />
+                        </div>
+
+                        <span className="text-sm text-content text-center">
+                            ¿No tienes cuenta? <a href="/register" className="text-brand font-bold hover:underline">Regístrate</a>
+                        </span>
+                    </form>
+                )}
             </AuthCard>
+            <TurnstileWidget
+                ref={turnstileRef}
+                onVerify={setTurnstileToken}
+                onExpire={() => setTurnstileToken("")}
+                onError={() => setTurnstileToken("")}
+            />
         </AuthLayout>
     )
 }

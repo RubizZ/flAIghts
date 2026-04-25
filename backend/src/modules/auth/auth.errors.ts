@@ -82,6 +82,15 @@ export class ResetTokenInvalidOrExpiredError extends AppError<'RESET_TOKEN_INVAL
     }
 }
 
+export class InvalidResetCodeError extends AppError<'INVALID_RESET_CODE'> {
+    public readonly code = 'INVALID_RESET_CODE';
+    public readonly statusCode: number = 400;
+
+    constructor() {
+        super("El código de verificación es inválido o ha expirado.");
+    }
+}
+
 export class EmailNotVerifiedError extends AppError<'EMAIL_NOT_VERIFIED', { email: string }> {
     public readonly code = 'EMAIL_NOT_VERIFIED';
     public readonly statusCode: number = 403;
@@ -158,5 +167,15 @@ export class TurnstileTokenAlreadySpentError extends TurnstileError<'TURNSTILE_T
     public readonly code = 'TURNSTILE_TOKEN_ALREADY_SPENT';
     constructor() {
         super("La verificación de seguridad ya ha sido utilizada o ha expirado.");
+    }
+}
+
+export class AccountLinkRequiredError extends AppError<'ACCOUNT_LINK_REQUIRED', { email: string }> {
+    public readonly code = 'ACCOUNT_LINK_REQUIRED';
+    public readonly statusCode: number = 403;
+
+    constructor(email: string) {
+        super(`Ya existe una cuenta con el correo ${email}. Para vincularla con Google, por favor introduce tu contraseña.`);
+        this.details = { email };
     }
 }

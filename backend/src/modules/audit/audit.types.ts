@@ -2,6 +2,7 @@ export interface AuditDetails {
     USER: {
         INITIATE_REGISTRATION: {
             email: string;
+            transactionId: string;
         }
         COMPLETE_REGISTRATION: {
             email: string;
@@ -108,7 +109,8 @@ export interface AuditDetails {
         }
         CHANGE_PASSWORD: {
             auth_version: number;
-            method: "change-password" | "set-password";
+            method: "change-password" | "set-password" | "google-link-reset" | "reset-password";
+            email?: string;
         }
         FAILED_CHANGE_PASSWORD: {
             reason: string;
@@ -118,9 +120,6 @@ export interface AuditDetails {
         }
         FAILED_FORGOT_PASSWORD: {
             reason: string;
-        }
-        RESET_PASSWORD: {
-            email: string;
         }
         FAILED_RESET_PASSWORD: {
             reason: string;
@@ -147,6 +146,15 @@ export interface AuditDetails {
         FAILED_SET_PASSWORD: {
             userId: string;
             reason: string;
+        }
+        REQUEST_LINKING_RESET_CODE: {
+            email: string;
+            transactionId: string;
+        }
+        REQUEST_SECURITY_CODE: {
+            userId: string;
+            actionName: string;
+            transactionId: string;
         }
     }
     SEARCH: {
