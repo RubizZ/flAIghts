@@ -28,6 +28,13 @@ export default function Login() {
     const [errors, setErrors] = useState({ identifier: "", password: "" });
     const [googleLinkData, setGoogleLinkData] = useState<{ credential: string, email: string } | null>(null);
     const googleCredentialRef = useRef<string | null>(null);
+    const [isInitialLoad, setIsInitialLoad] = useState(true);
+
+    useEffect(() => {
+        if (!isLoading) {
+            setIsInitialLoad(false);
+        }
+    }, [isLoading]);
 
     const { mutate: performLogin, isPending } = useLoginWeb({
         mutation: {
@@ -137,7 +144,7 @@ export default function Login() {
         }
     }
 
-    if (isLoading) {
+    if (isLoading && isInitialLoad) {
         return (
             <AuthLayout>
                 <div className="flex flex-col items-center gap-6 py-12 animate-in fade-in zoom-in duration-500">
