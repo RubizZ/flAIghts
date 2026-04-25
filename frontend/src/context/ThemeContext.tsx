@@ -4,6 +4,7 @@ export type Theme = 'light' | 'dark' | 'system';
 
 interface ThemeContextType {
     theme: Theme;
+    resolvedTheme: 'light' | 'dark';
     setTheme: (theme: Theme) => void;
 }
 
@@ -35,6 +36,8 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
         return () => mediaQuery.removeEventListener('change', handleChange);
     }, []);
 
+    const resolvedTheme = theme === 'system' ? systemTheme : theme;
+
     useEffect(() => {
         const root = document.documentElement;
 
@@ -56,7 +59,7 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
     }, [theme, systemTheme]);
 
     return (
-        <ThemeContext.Provider value={{ theme, setTheme }}>
+        <ThemeContext.Provider value={{ theme, resolvedTheme, setTheme }}>
             {children}
         </ThemeContext.Provider>
     );
