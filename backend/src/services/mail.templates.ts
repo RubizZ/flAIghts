@@ -37,7 +37,7 @@ const baseInfoTemplate = (title: string, description: string, htmlContent: strin
 export const MailTemplates = {
     welcomeEmail: (frontendUrl: string) =>
         baseInfoTemplate(
-            "¡Bienvenido a flAIghts!", 
+            "¡Bienvenido a flAIghts!",
             "Tu cuenta ha sido creada y verificada con éxito. Ya puedes empezar a disfrutar de todas las funcionalidades y buscar los mejores vuelos con la ayuda de nuestra inteligencia artificial.",
             `
             <div style="margin-top: 30px; text-align: center;">
@@ -92,5 +92,30 @@ export const MailTemplates = {
                 <p style="color: #999; font-size: 0.8em; text-align: center;">© 2026 flAIghts. Todos los derechos reservados.</p>
             </div>
         `
-    })
+    }),
+
+    evaluationCompleted: (frontendUrl: string, username: string) =>
+        baseInfoTemplate(
+            "¡Gracias por tu evaluación!",
+            `Queremos agradecerte sinceramente, <strong>${username}</strong>, por haber completado la evaluación de flAIghts.`,
+            `
+            <div style="margin-top: 20px;">
+                <p>Tu opinión es fundamental para ayudarnos a mejorar y ofrecerte la mejor experiencia posible en la búsqueda de vuelos con inteligencia artificial.</p>
+                <p>Te animamos a que sigas explorando la aplicación y descubras todas las herramientas que tenemos preparadas para ti.</p>
+                
+                <div style="text-align: center; margin: 35px 0;">
+                    <a href="${frontendUrl}" style="display: inline-block; padding: 14px 28px; background-color: #28a745; color: #ffffff; text-decoration: none; font-weight: bold; border-radius: 8px; box-shadow: 0 4px 6px rgba(40,167,69,0.2);">
+                        ✈️ Volver a flAIghts
+                    </a>
+                </div>
+
+                <div style="background-color: #f8f9fa; padding: 20px; border-radius: 10px; border: 1px solid #e9ecef; margin-top: 25px;">
+                    <p style="margin: 0; color: #495057; font-size: 0.95em;">
+                        <strong>¿Sabías que...?</strong><br>
+                        Como agradecimiento, hemos añadido la insignia de <strong>Evaluador</strong> a tu perfil. ¡Gracias por ayudarnos a crecer!
+                    </p>
+                </div>
+            </div>
+            `
+        )
 };

@@ -164,7 +164,7 @@ export default function Navbar({ variant = 'floating', logoRef }: { variant?: 'f
                             className="w-full flex items-center justify-between px-4 py-3 text-sm text-content hover:bg-brand/10 rounded-xl transition-all cursor-pointer group text-left font-medium"
                         >
                             <div className="flex items-center gap-3">
-                                <Trophy size={20} className={`shrink-0 transition-colors ${pendingSurveysCount > 0 ? "text-amber-500 animate-pulse" : allCompleted ? "text-green-500" : "group-hover:text-brand"}`} />
+                                <Trophy size={20} className={`shrink-0 transition-colors ${pendingSurveysCount > 0 ? "text-amber-500 animate-soft-pulse" : allCompleted ? "text-green-500" : "group-hover:text-brand"}`} />
                                 <span className="leading-none font-bold">Misiones</span>
                             </div>
                             {pendingSurveysCount > 0 && (
@@ -325,7 +325,7 @@ export default function Navbar({ variant = 'floating', logoRef }: { variant?: 'f
                             className="w-full flex items-center justify-between px-3 py-2 text-sm text-content hover:bg-brand/10 rounded-xl transition-all cursor-pointer group text-left font-medium"
                         >
                             <div className="flex items-center gap-3">
-                                <Trophy size={16} className={`shrink-0 transition-colors ${pendingSurveysCount > 0 ? "text-amber-500 animate-pulse" : allCompleted ? "text-green-500" : "group-hover:text-brand"}`} />
+                                <Trophy size={16} className={`shrink-0 transition-colors ${pendingSurveysCount > 0 ? "text-amber-500 animate-soft-pulse" : allCompleted ? "text-green-500" : "group-hover:text-brand"}`} />
                                 <span className="leading-none font-bold">{t("navbar.missions")}</span>
                             </div>
                         </button>
@@ -403,7 +403,7 @@ export default function Navbar({ variant = 'floating', logoRef }: { variant?: 'f
                             }}
                             showBadge={pendingSurveysCount > 0}
                             title={t("navbar.evaluationMissions")}
-                            className={`hidden lg:flex ${pendingSurveysCount > 0 ? "animate-pulse" : ""}`}
+                            className={`hidden lg:flex ${pendingSurveysCount > 0 ? "animate-soft-pulse" : ""}`}
                         >
                             <Trophy
                                 size={20}

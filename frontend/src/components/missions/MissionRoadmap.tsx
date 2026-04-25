@@ -340,7 +340,7 @@ const MissionRoadmap: React.FC<MissionRoadmapProps> = ({ onClose, onMissionClick
                                                         : unlocked
                                                             ? 'bg-gray-950 border-blue-500/30 shadow-blue-500/5'
                                                             : 'bg-gray-950/50 border-white/10 grayscale opacity-40'
-                                                        } ${needsRating ? 'animate-pulse border-amber-500/50 shadow-amber-500/20' : ''}`}>
+                                                        } ${needsRating ? 'animate-soft-pulse border-amber-500/50 shadow-amber-500/20' : ''}`}>
 
                                                     {/* Background overlay for color without losing opacity */}
                                                     <div className={`absolute inset-0 rounded-[inherit] -z-10 transition-colors duration-300 ${completed ? 'bg-green-500/5 group-hover:bg-green-500/10' : unlocked ? 'bg-blue-500/5 group-hover:bg-blue-500/10' : ''}`} />
@@ -354,7 +354,7 @@ const MissionRoadmap: React.FC<MissionRoadmapProps> = ({ onClose, onMissionClick
                                                             <div className="flex items-center justify-between gap-2">
                                                                 <h4 className="font-bold text-white truncate text-base">{mission.title}</h4>
                                                                 {needsRating && (
-                                                                    <div className="bg-amber-500 text-black p-1 rounded-md animate-pulse">
+                                                                    <div className="bg-amber-500 text-black p-1 rounded-md animate-soft-pulse">
                                                                         <MessageSquareText size={14} />
                                                                     </div>
                                                                 )}
