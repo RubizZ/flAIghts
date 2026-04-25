@@ -17,8 +17,10 @@ export interface IUserFields {
   created_at: Date;
   last_seen_at: Date;
   auth_version: number;
-  password_reset_token?: string;
-  password_reset_expires?: Date;
+  security_code?: string;
+  security_code_id?: string;
+  security_code_action?: string;
+  security_code_expires?: Date;
   email_change_request?: {
     new_email: string;
     old_email_code: string;
@@ -129,8 +131,10 @@ const UserSchema = new Schema<IUserDocument>({
   created_at: { type: Date, default: Date.now },
   last_seen_at: { type: Date, default: Date.now },
   auth_version: { type: Number, default: 1, min: 1 },
-  password_reset_token: { type: String, select: false, index: true },
-  password_reset_expires: { type: Date, select: false },
+  security_code: { type: String, select: false, index: true },
+  security_code_id: { type: String, select: false },
+  security_code_action: { type: String, select: false },
+  security_code_expires: { type: Date, select: false },
   friends: [{
     user: { type: String, ref: "User", required: true },
     friend_since: { type: Date, default: Date.now }

@@ -100,12 +100,14 @@ export interface PublicUser {
 export type CreateUserResponseData = User;
 
 /**
- * Respuesta del endpoint POST /users/verify-email
+ * Respuesta que contiene un ID de transacción para veroficación.
  */
-export type VerifyEmailResponseData = null;
+export interface VerificationTransactionResponse {
+    transactionId: string;
+}
 
 /**
- * Respuesta del endpoint GET /users/me
+ * Respuesta del endpoint POST /users/me
  */
 export type GetUserResponseData = PopulatedUser;
 
@@ -183,6 +185,7 @@ export interface CompleteRegistrationData {
      * @minLength 8
      */
     password: string;
+    transactionId: string;
     preferences?: {
         /**
          * @minimum 0

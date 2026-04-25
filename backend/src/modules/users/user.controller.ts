@@ -19,14 +19,15 @@ import type {
     GetUserByIdResponseData,
     FriendUser,
     SetProfilePictureRequest,
-    RateLimitFailResponse
+    RateLimitFailResponse,
+    VerificationTransactionResponse
 } from "./user.types.js";
 import { inject, injectable } from "tsyringe";
 import { UserService } from "./user.service.js";
 import { TurnstileService } from "../auth/turnstile.service.js";
 import type { AuthenticatedUser, TurnstileFailResponse } from "../auth/auth.types.js";
 import type { IFriend, IFriendPopulated, IUser, IUserUnpopulated } from "./models/user.model.js";
-import type { SuccessResponse as SuccessResponseType, FailResponseFromError, PathPath, QueryPath, ValidationDetails, RequestValidationFailResponse } from "../../utils/responses.js";
+import type { SuccessResponse as SuccessResponseType, FailResponseFromError, PathPath, QueryPath, ValidationDetails, RequestValidationFailResponse, MessageResponseData } from "../../utils/responses.js";
 import type { AuthFailResponse } from "../auth/auth.types.js";
 import {
     EmailAlreadyInUseError,
@@ -65,10 +66,10 @@ export class UsersController extends Controller {
     @Response<FailResponseFromError<EmailAlreadyInUseError>>(409, "Email ya registrado")
     @Response<TurnstileFailResponse>(403, "Verificación de seguridad fallida")
     @Response<InitiateRegistrationRequestValidationFailResponse>(422, "Error de validación")
-    public async initiateRegistration(@Body() body: InitiateRegistrationData, @Request() request: express.Request): Promise<SuccessResponseType> {
+    public async initiateRegistration(@Body() body: InitiateRegistrationData, @Request() request: express.Request): Promise<SuccessResponseType<VerificationTransactionResponse>> {
         await this.turnstileService.verifyToken(body.turnstileToken, request.ip);
-        await this.userService.initiateRegistration(body);
-        return {} satisfies {} as any;
+        const result = await this.userService.initiateRegistration(body);
+        return result satisfies VerificationTransactionResponse as any;
     }
 
     /**
@@ -118,9 +119,9 @@ export class UsersController extends Controller {
     @Response<AuthFailResponse>(401, "No autenticado")
     @Response<FailResponseFromError<EmailAlreadyInUseError>>(409, "El nuevo email ya está en uso")
     @Response<InitiateEmailChangeRequestValidationFailResponse>(422, "Error de validación")
-    public async initiateEmailChange(@RequestProp('user') user: AuthenticatedUser, @Body() body: InitiateEmailChangeData): Promise<SuccessResponseType> {
+    public async initiateEmailChange(@RequestProp('user') user: AuthenticatedUser, @Body() body: InitiateEmailChangeData): Promise<SuccessResponseType<MessageResponseData>> {
         await this.userService.initiateEmailChange(user._id, body);
-        return {} satisfies {} as any;
+        return { message: "Códigos de verificación enviados" } satisfies MessageResponseData as any;
     }
 
     /**

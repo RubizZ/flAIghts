@@ -1,12 +1,12 @@
 import { singleton, inject } from "tsyringe";
-import { User } from "../users/models/user.model.js";
+import { User, type IUserDocument } from "../users/models/user.model.js";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
-import ms from 'ms'
 import crypto from "node:crypto";
 import { MailService } from "../../services/mail.service.js";
 import { MailTemplates } from "../../services/mail.templates.js";
-import { ResetTokenInvalidOrExpiredError, LoginUserNotFoundError, InvalidPasswordError, NewPasswordSameAsOldError, InvalidTokenError, TokenUserNotFoundError, AuthenticationVersionMismatchError, GoogleAccountAlreadyLinkedError, CannotDisconnectGoogleWithoutPasswordError, PasswordAlreadySetError } from "./auth.errors.js";
+import { ResetTokenInvalidOrExpiredError, LoginUserNotFoundError, InvalidPasswordError, NewPasswordSameAsOldError, InvalidTokenError, TokenUserNotFoundError, AuthenticationVersionMismatchError, GoogleAccountAlreadyLinkedError, CannotDisconnectGoogleWithoutPasswordError, PasswordAlreadySetError, AccountLinkRequiredError, InvalidResetCodeError } from "./auth.errors.js";
+import { EmailVerificationService } from "../users/user.service.js";
 import type { LoginResponseData, JWTPayload, AuthenticatedUser } from "./auth.types.js";
 import { OAuth2Client } from "google-auth-library";
 import axios from "axios";
@@ -111,7 +111,7 @@ export class AuthService {
         };
     }
 
-    public async loginWithGoogle(credential: string): Promise<LoginResponseData> {
+    public async loginWithGoogle(credential: string, password?: string, newPassword?: string, verificationCode?: string, transactionId?: string): Promise<LoginResponseData> {
         const ticket = await this.googleClient.verifyIdToken({
             idToken: credential,
             audience: this.config.GOOGLE_CLIENT_ID,
@@ -134,7 +134,7 @@ export class AuthService {
         const googleId = payload.sub;
 
         // Intentar encontrar por google_id primero, luego por email
-        let user = await User.findOne({ $or: [{ google_id: googleId }, { email }] }).select('+password');
+        let user = await User.findOne({ $or: [{ google_id: googleId }, { email }] }).select('+password +security_code +security_code_expires');
 
         if (!user) {
             // Generar username basado en email
@@ -168,7 +168,56 @@ export class AuthService {
             });
             await user.save();
         } else if (!user.google_id) {
-            // Si el usuario existe por email pero no tiene vinculado el google_id, lo vinculamos
+            // Si el usuario existe por email pero no tiene vinculado el google_id,
+            // verificamos si tiene contraseña establecida.
+            if (user.is_password_set) {
+                if (newPassword) {
+                    this.verifySecurityCode(user, verificationCode, "linking-reset", transactionId);
+
+                    // Si se proporciona una nueva contraseña válida, la actualizamos.
+                    // Esto permite "recuperar" la cuenta durante la vinculación si se ha olvidado la anterior.
+                    user.password = PasswordService.hashPassword(newPassword);
+                    user.is_password_set = true;
+                    user.security_code = undefined;
+                    user.security_code_id = undefined;
+                    user.security_code_action = undefined;
+                    user.security_code_expires = undefined;
+                    user.auth_version = (user.auth_version || 0) + 1;
+
+                    await this.auditService.register({
+                        resource: "AUTH",
+                        action: "CHANGE_PASSWORD",
+                        details: {
+                            method: "google-link-reset",
+                            email,
+                            auth_version: user.auth_version
+                        },
+                        user: {
+                            id: user._id.toString()
+                        }
+                    });
+                } else if (!password) {
+                    throw new AccountLinkRequiredError(email);
+                } else {
+                    const passwordMatch = PasswordService.comparePassword(password, user.password!);
+                    if (!passwordMatch) {
+                        const error = new InvalidPasswordError(email);
+                        await this.auditService.register({
+                            resource: "AUTH",
+                            action: "FAILED_LOGIN_GOOGLE",
+                            details: {
+                                email,
+                                reason: error.code,
+                                details: "Link failed: invalid password"
+                            }
+                        });
+                        throw error;
+                    }
+                }
+            }
+
+            // Si llegamos aquí es porque o no tenía contraseña (is_password_set: false)
+            // o la contraseña proporcionada es correcta.
             user.google_id = googleId;
             user.google_email = email;
             await user.save();
@@ -213,7 +262,14 @@ export class AuthService {
         };
     }
 
-    public async connectGoogle(userId: string, credential: string): Promise<void> {
+    public async connectGoogle(userId: string, credential: string, verificationCode: string, transactionId?: string): Promise<void> {
+        const user = await User.findById(userId).select("+security_code +security_code_expires +security_code_id +security_code_action");
+        if (!user) {
+            throw new TokenUserNotFoundError(userId);
+        }
+
+        this.verifySecurityCode(user, verificationCode, "connect-google", transactionId);
+
         const ticket = await this.googleClient.verifyIdToken({
             idToken: credential,
             audience: this.config.GOOGLE_CLIENT_ID,
@@ -242,13 +298,10 @@ export class AuthService {
             throw error;
         }
 
-        const user = await User.findById(userId);
-        if (!user) {
-            throw new TokenUserNotFoundError(userId);
-        }
-
         user.google_id = googleId;
         user.google_email = payload.email.toLowerCase();
+        user.security_code = undefined;
+        user.security_code_expires = undefined;
 
         // Optionally update profile picture if user doesn't have one
         if (!user.profile_picture && payload.picture) {
@@ -269,13 +322,18 @@ export class AuthService {
                 email: payload.email
             }
         });
+
+        const template = MailTemplates.securityActionSuccess("Vincular cuenta de Google");
+        this.mailService.sendMail(user.email, template.subject, template.html);
     }
 
-    public async disconnectGoogle(userId: string): Promise<void> {
-        const user = await User.findById(userId);
+    public async disconnectGoogle(userId: string, verificationCode: string, transactionId?: string): Promise<void> {
+        const user = await User.findById(userId).select("+security_code +security_code_expires +security_code_id +security_code_action +is_password_set +google_id");
         if (!user) throw new TokenUserNotFoundError(userId);
 
         if (!user.google_id) return;
+
+        this.verifySecurityCode(user, verificationCode, "disconnect-google", transactionId);
 
         // Verificación crítica: ¿Tiene contraseña manual?
         if (!user.is_password_set) {
@@ -293,6 +351,10 @@ export class AuthService {
         const googleId = user.google_id;
         user.google_id = undefined;
         user.google_email = undefined;
+        user.security_code = undefined;
+        user.security_code_id = undefined;
+        user.security_code_action = undefined;
+        user.security_code_expires = undefined;
         await user.save();
 
         await this.auditService.register({
@@ -303,6 +365,9 @@ export class AuthService {
                 googleId
             }
         });
+
+        const template = MailTemplates.securityActionSuccess("Desvincular cuenta de Google");
+        this.mailService.sendMail(user.email, template.subject, template.html);
     }
 
     /**
@@ -354,23 +419,11 @@ export class AuthService {
         });
     }
 
-    public async changePassword(userId: string, oldPassword: string, newPassword: string) {
-        const user = await User.findOne({ _id: userId }).select('+password');
-        if (!user) throw new LoginUserNotFoundError(userId);
+    public async changePassword(userId: string, newPassword: string, verificationCode: string, transactionId?: string) {
+        const user = await User.findOne({ _id: userId }).select('+password +security_code +security_code_expires +security_code_id +security_code_action');
+        if (!user) throw new TokenUserNotFoundError(userId);
 
-        // Si el usuario no tiene contraseña establecida (ej: entró por Google la primera vez)
-        // permitimos establecerla sin pedir la anterior, ya que está autenticado.
-        if (user.is_password_set) {
-            const passwordMatch = PasswordService.comparePassword(oldPassword, user.password!);
-            if (!passwordMatch) {
-                await this.auditService.register({
-                    resource: "AUTH",
-                    action: "FAILED_CHANGE_PASSWORD",
-                    details: { reason: "INVALID_OLD_PASSWORD" }
-                });
-                throw new InvalidPasswordError(userId);
-            }
-        }
+        this.verifySecurityCode(user, verificationCode, "change-password", transactionId);
 
         if (PasswordService.comparePassword(newPassword, user.password!)) {
             const error = new NewPasswordSameAsOldError();
@@ -387,6 +440,8 @@ export class AuthService {
         user.password = PasswordService.hashPassword(newPassword);
         user.is_password_set = true;
         user.auth_version += 1;
+        user.security_code = undefined;
+        user.security_code_expires = undefined;
         await user.save();
 
         await this.auditService.register({
@@ -394,16 +449,22 @@ export class AuthService {
             action: "CHANGE_PASSWORD",
             details: {
                 method: "change-password",
-                auth_version: user.auth_version
+                auth_version: user.auth_version,
+                email: user.email
             }
         });
+
+        const template = MailTemplates.securityActionSuccess("Cambio de contraseña");
+        this.mailService.sendMail(user.email, template.subject, template.html);
 
         return true;
     }
 
-    public async setPassword(userId: string, password: string) {
-        const user = await User.findOne({ _id: userId }).select('+password');
-        if (!user) throw new LoginUserNotFoundError(userId);
+    public async setPassword(userId: string, password: string, verificationCode: string, transactionId?: string) {
+        const user = await User.findOne({ _id: userId }).select('+password +security_code +security_code_expires +security_code_id +security_code_action +is_password_set');
+        if (!user) throw new TokenUserNotFoundError(userId);
+
+        this.verifySecurityCode(user, verificationCode, "set-password", transactionId);
 
         if (user.is_password_set) {
             const error = new PasswordAlreadySetError();
@@ -418,10 +479,12 @@ export class AuthService {
             throw error;
         }
 
-        user.password = password;
+        user.password = PasswordService.hashPassword(password);
         user.is_password_set = true;
         // Incrementamos la versión de autenticación para invalidar sesiones antiguas si las hubiera
         user.auth_version = (user.auth_version || 0) + 1;
+        user.security_code = undefined;
+        user.security_code_expires = undefined;
 
         await user.save();
 
@@ -430,9 +493,13 @@ export class AuthService {
             action: "CHANGE_PASSWORD",
             details: {
                 method: "set-password",
-                auth_version: user.auth_version
+                auth_version: user.auth_version,
+                email: user.email
             }
         });
+
+        const template = MailTemplates.securityActionSuccess("Establecimiento de contraseña");
+        this.mailService.sendMail(user.email, template.subject, template.html);
 
         return true;
     }
@@ -445,8 +512,8 @@ export class AuthService {
             { email },
             {
                 $set: {
-                    password_reset_token: hashedToken,
-                    password_reset_expires: new Date(Date.now() + 3600000)
+                    security_code: hashedToken,
+                    security_code_expires: new Date(Date.now() + 3600000)
                 }
             },
             { returnDocument: 'after' }
@@ -467,7 +534,7 @@ export class AuthService {
         const resetUrl = `${this.config.FRONTEND_URL}/reset-password?token=${resetToken}`;
         const template = MailTemplates.passwordReset(resetUrl);
 
-        this.mailService.sendMail(user.email, template.subject, template.html);
+        await this.mailService.sendMail(user.email, template.subject, template.html);
 
         await this.auditService.register({
             resource: "AUTH",
@@ -485,12 +552,12 @@ export class AuthService {
 
         const user = await User.findOneAndUpdate(
             {
-                password_reset_token: hashedToken,
-                password_reset_expires: { $gt: new Date() }
+                security_code: hashedToken,
+                security_code_expires: { $gt: new Date() }
             },
             {
                 $set: { password: PasswordService.hashPassword(newPassword), is_password_set: true },
-                $unset: { password_reset_token: 1, password_reset_expires: 1 },
+                $unset: { security_code: 1, security_code_expires: 1 },
                 $inc: { auth_version: 1 }
             },
             { returnDocument: 'after' }
@@ -510,11 +577,16 @@ export class AuthService {
 
         await this.auditService.register({
             resource: "AUTH",
-            action: "RESET_PASSWORD",
+            action: "CHANGE_PASSWORD",
             details: {
+                method: "reset-password",
+                auth_version: user.auth_version,
                 email: user.email
             }
         });
+
+        const template = MailTemplates.securityActionSuccess("Recuperación de contraseña");
+        this.mailService.sendMail(user.email, template.subject, template.html);
 
         return true;
     }
@@ -550,5 +622,89 @@ export class AuthService {
         };
 
         return safeUser;
+    }
+    public async requestLinkingResetCode(email: string): Promise<{ transactionId: string }> {
+        const user = await User.findOne({ email: email.toLowerCase() });
+        if (!user) {
+            // Por seguridad, no informamos si el usuario no existe, 
+            // pero en este flujo el usuario ya ha pasado por Google y sabemos que el email existe.
+            return { transactionId: crypto.randomUUID() };
+        }
+
+        const verificationCode = EmailVerificationService.generateCode();
+        const hashedCode = EmailVerificationService.generateHashedCode(verificationCode);
+        const transactionId = crypto.randomUUID();
+
+        user.security_code = hashedCode;
+        user.security_code_id = transactionId;
+        user.security_code_action = "linking-reset";
+        user.security_code_expires = new Date(Date.now() + 3600000); // 1 hora
+        await user.save();
+
+        const template = MailTemplates.passwordResetCode(verificationCode);
+        await this.mailService.sendMail(user.email, template.subject, template.html);
+
+        await this.auditService.register({
+            resource: "AUTH",
+            action: "REQUEST_LINKING_RESET_CODE",
+            details: {
+                email: user.email,
+                transactionId
+            }
+        });
+
+        return { transactionId };
+    }
+
+    public async requestSecurityCode(userId: string, actionName: string): Promise<{ transactionId: string }> {
+        const user = await User.findById(userId);
+        if (!user) throw new TokenUserNotFoundError(userId);
+
+        const verificationCode = EmailVerificationService.generateCode();
+        const hashedCode = EmailVerificationService.generateHashedCode(verificationCode);
+        const transactionId = crypto.randomUUID();
+
+        user.security_code = hashedCode;
+        user.security_code_id = transactionId;
+        user.security_code_action = actionName;
+        user.security_code_expires = new Date(Date.now() + 3600000); // 1 hora
+        await user.save();
+
+        let actionLabel = actionName;
+        switch (actionName) {
+            case "change-password": actionLabel = "Cambiar contraseña"; break;
+            case "set-password": actionLabel = "Establecer contraseña"; break;
+            case "disconnect-google": actionLabel = "Desvincular Google"; break;
+            case "connect-google": actionLabel = "Vincular Google"; break;
+        }
+
+        const template = MailTemplates.securityActionCode(verificationCode, actionLabel);
+        await this.mailService.sendMail(user.email, template.subject, template.html);
+
+        await this.auditService.register({
+            resource: "AUTH",
+            action: "REQUEST_SECURITY_CODE",
+            details: {
+                userId,
+                actionName,
+                transactionId
+            }
+        });
+
+        return { transactionId };
+    }
+
+    private verifySecurityCode(user: IUserDocument, code: string | undefined, action: string, transactionId?: string) {
+        if (!code) {
+            throw new InvalidResetCodeError();
+        }
+        const hashedCode = EmailVerificationService.generateHashedCode(code);
+        if (user.security_code !== hashedCode ||
+            !user.security_code_expires ||
+            user.security_code_expires < new Date() ||
+            user.security_code_action !== action ||
+            (transactionId && user.security_code_id !== transactionId)) {
+            throw new InvalidResetCodeError();
+        }
     }
 }

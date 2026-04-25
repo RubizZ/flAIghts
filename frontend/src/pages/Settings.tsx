@@ -25,7 +25,7 @@ import {
 } from "lucide-react";
 import { useTheme } from "@/context/ThemeContext";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { useChangePassword, useConnectGoogle, useDisconnectGoogle, useSetPassword } from "@/api/generated/openapi/auth";
+import { useChangePassword, useConnectGoogle, useDisconnectGoogle, useSetPassword, useRequestSecurityCode } from "@/api/generated/openapi/auth";
 import UserAvatar from "@/components/ui/UserAvatar";
 import { GoogleLogin } from "@react-oauth/google";
 
@@ -66,9 +66,16 @@ export default function Settings() {
     const [durationWeight, setDurationWeight] = useState(user?.preferences?.duration_weight || 0.2);
     const [stopsWeight, setStopsWeight] = useState(user?.preferences?.stops_weight || 0.2);
     const [airlineWeight, setAirlineWeight] = useState(user?.preferences?.airline_quality_weight || 0.2);
+    const [verificationStep, setVerificationStep] = useState<{
+        active: boolean;
+        action: 'change-password' | 'set-password' | 'connect-google' | 'disconnect-google' | null;
+        actionLabel: string;
+        data?: any;
+        code: string;
+        transactionId?: string;
+    }>({ active: false, action: null, actionLabel: "", code: "", transactionId: "" });
 
     // Security state
-    const [oldPassword, setOldPassword] = useState("");
     const [newPassword, setNewPassword] = useState("");
     const [confirmPassword, setConfirmPassword] = useState("");
     const [showPasswords, setShowPasswords] = useState(false);
@@ -184,13 +191,13 @@ export default function Settings() {
         mutation: {
             onSuccess: () => {
                 toast.success("Contraseña actualizada correctamente");
-                setOldPassword("");
                 setNewPassword("");
                 setConfirmPassword("");
+                setVerificationStep({ active: false, action: null, actionLabel: "", code: "", transactionId: "" });
                 refetch();
             },
-            onError: (error: any) => {
-                toast.error(error.response?.data?.message || "Error al actualizar la contraseña");
+            onError: (error) => {
+                toast.error(error.message || "Error al actualizar la contraseña");
             }
         }
     });
@@ -199,9 +206,9 @@ export default function Settings() {
         mutation: {
             onSuccess: () => {
                 toast.success("Contraseña establecida correctamente");
-                setOldPassword("");
                 setNewPassword("");
                 setConfirmPassword("");
+                setVerificationStep({ active: false, action: null, actionLabel: "", code: "", transactionId: "" });
                 refetch();
             },
             onError: (error: any) => {
@@ -214,10 +221,23 @@ export default function Settings() {
         mutation: {
             onSuccess: () => {
                 toast.success("Cuenta de Google vinculada correctamente");
+                setVerificationStep({ active: false, action: null, actionLabel: "", code: "", transactionId: "" });
                 refetch();
             },
             onError: (error: any) => {
                 toast.error(error.response?.data?.message || "Error al vincular la cuenta de Google");
+            }
+        }
+    });
+
+    const { mutate: requestCode, isPending: isRequestingCode } = useRequestSecurityCode({
+        mutation: {
+            onSuccess: (response) => {
+                toast.success("Código de seguridad enviado a tu email");
+                setVerificationStep(prev => ({ ...prev, active: true, transactionId: response.transactionId }));
+            },
+            onError: (err: any) => {
+                toast.error(err.response?.data?.message || "Error al solicitar el código");
             }
         }
     });
@@ -300,7 +320,7 @@ export default function Settings() {
     };
 
     const handleSavePassword = () => {
-        if ((user?.is_password_set && !oldPassword) || !newPassword || !confirmPassword) {
+        if (!newPassword || !confirmPassword) {
             toast.error("Por favor, rellena todos los campos");
             return;
         }
@@ -308,35 +328,33 @@ export default function Settings() {
             toast.error("Las contraseñas nuevas no coinciden");
             return;
         }
-        if (user?.is_password_set && newPassword === oldPassword) {
-            toast.error("La nueva contraseña debe ser diferente a la actual");
-            return;
-        }
         if (newPassword.length < 8) {
             toast.error("La nueva contraseña debe tener al menos 8 caracteres");
             return;
         }
 
-        if (user?.is_password_set) {
-            changePassword({
-                data: {
-                    oldPassword,
-                    newPassword
-                }
-            });
-        } else {
-            setPassword({
-                data: {
-                    password: newPassword
-                }
-            });
-        }
+        const action = user?.is_password_set ? 'change-password' : 'set-password';
+        const actionLabel = user?.is_password_set ? 'Cambio de contraseña' : 'Establecer contraseña';
+
+        setVerificationStep({
+            active: false,
+            action,
+            actionLabel,
+            code: "",
+            transactionId: "",
+            data: { newPassword }
+        });
+
+        requestCode({
+            data: { actionName: action }
+        });
     };
 
     const { mutate: disconnectGoogle, isPending: isDisconnectingGoogle } = useDisconnectGoogle({
         mutation: {
             onSuccess: () => {
                 toast.success('Cuenta de Google desvinculada correctamente');
+                setVerificationStep({ active: false, action: null, actionLabel: "", code: "", transactionId: "" });
                 refetch();
             },
             onError: (err: any) => {
@@ -356,7 +374,17 @@ export default function Settings() {
         }
 
         if (window.confirm('¿Estás seguro de que quieres desvincular tu cuenta de Google?')) {
-            disconnectGoogle();
+            const actionLabel = "Desvincular Google";
+            setVerificationStep({
+                active: false,
+                action: 'disconnect-google',
+                actionLabel,
+                code: "",
+                transactionId: ""
+            });
+            requestCode({
+                data: { actionName: 'disconnect-google' }
+            });
         }
     };
 
@@ -791,24 +819,6 @@ export default function Settings() {
                                 </p>
 
                                 <div className="space-y-6">
-                                    {user.is_password_set && (
-                                        <div className="space-y-2">
-                                            <label className="text-sm font-bold text-content-muted ml-1">Contraseña actual</label>
-                                            <div className="relative">
-                                                <input
-                                                    type={showPasswords ? "text" : "password"}
-                                                    value={oldPassword}
-                                                    onChange={(e) => setOldPassword(e.target.value)}
-                                                    className="w-full px-4 py-3 bg-main border border-line rounded-2xl focus:ring-2 focus:ring-brand focus:border-brand outline-none transition-all pl-11"
-                                                    placeholder="••••••••"
-                                                />
-                                                <div className="absolute left-4 top-1/2 -translate-y-1/2 text-content-muted opacity-50 pointer-events-none">
-                                                    <Lock size={18} />
-                                                </div>
-                                            </div>
-                                        </div>
-                                    )}
-
                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                         <div className="space-y-2">
                                             <label className="text-sm font-bold text-content-muted ml-1">Nueva contraseña</label>
@@ -842,7 +852,7 @@ export default function Settings() {
                                         </div>
                                     </div>
 
-                                    <div className="flex justify-between items-center">
+                                    <div className="flex justify-start items-center">
                                         <button
                                             type="button"
                                             onClick={() => setShowPasswords(!showPasswords)}
@@ -850,14 +860,6 @@ export default function Settings() {
                                         >
                                             {showPasswords ? <EyeOff size={14} /> : <Eye size={14} />}
                                             {showPasswords ? "Ocultar contraseñas" : "Mostrar contraseñas"}
-                                        </button>
-
-                                        <button
-                                            type="button"
-                                            onClick={() => navigate("/forgot-password")}
-                                            className="text-xs font-bold text-content-muted hover:text-brand transition-colors underline decoration-dotted underline-offset-4 cursor-pointer"
-                                        >
-                                            ¿Has olvidado tu contraseña?
                                         </button>
                                     </div>
 
@@ -873,7 +875,7 @@ export default function Settings() {
                                     <div className="mt-6 flex justify-end flex-wrap gap-2">
                                         <button
                                             onClick={handleSavePassword}
-                                            disabled={isChangingPassword || isSettingPassword || (!user.is_password_set ? false : !oldPassword) || !newPassword || !confirmPassword}
+                                            disabled={isChangingPassword || isSettingPassword || !newPassword || !confirmPassword}
                                             className="px-6 py-3 bg-brand text-content-on-brand rounded-2xl text-sm font-bold hover:opacity-90 transition-all disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed flex items-center gap-2 hover:scale-[1.02] active:scale-95"
                                         >
                                             {(isChangingPassword || isSettingPassword) ? "Actualizando..." : (user.is_password_set ? "Actualizar contraseña" : "Establecer contraseña")}
@@ -938,10 +940,16 @@ export default function Settings() {
                                                     <GoogleLogin
                                                         onSuccess={credentialResponse => {
                                                             if (credentialResponse.credential) {
-                                                                connectGoogle({
-                                                                    data: {
-                                                                        credential: credentialResponse.credential
-                                                                    }
+                                                                const actionLabel = "Vincular Google";
+                                                                setVerificationStep({
+                                                                    active: false,
+                                                                    action: 'connect-google',
+                                                                    actionLabel,
+                                                                    code: "",
+                                                                    data: { credential: credentialResponse.credential }
+                                                                });
+                                                                requestCode({
+                                                                    data: { actionName: 'connect-google' }
                                                                 });
                                                             }
                                                         }}
@@ -1007,6 +1015,110 @@ export default function Settings() {
 
                 </div>
             </div >
+
+            {/* Modal de Verificación de Seguridad */}
+            {verificationStep.active && (
+                <div className="fixed inset-0 z-modal flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-300">
+                    <div className="bg-main border border-line w-full max-w-md rounded-[2.5rem] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300">
+                        <div className="p-8">
+                            <div className="flex flex-col items-center text-center gap-4 mb-8">
+                                <div className="p-4 bg-brand/10 text-brand rounded-3xl">
+                                    <ShieldCheck size={32} />
+                                </div>
+                                <div>
+                                    <h3 className="text-2xl font-bold">{verificationStep.actionLabel}</h3>
+                                    <p className="text-sm text-content-muted mt-2">
+                                        Por seguridad, introduce el código de 6 dígitos que hemos enviado a <span className="font-bold text-content">{user.email}</span>
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div className="space-y-6">
+                                <div className="flex flex-col gap-2">
+                                    <div className="relative">
+                                        <input
+                                            pattern="[0-9]*"
+                                            inputMode="numeric"
+                                            type="text"
+                                            maxLength={6}
+                                            value={verificationStep.code}
+                                            onChange={(e) => {
+                                                const numericValue = e.target.value.replace(/\D/g, '');
+                                                setVerificationStep(prev => ({ ...prev, code: numericValue }));
+                                            }}
+                                            className="w-full text-center text-3xl font-mono tracking-[0.5em] font-bold py-4 bg-surface border border-line rounded-2xl focus:ring-4 focus:ring-brand/20 focus:border-brand outline-none transition-all placeholder:text-content-muted/20"
+                                            placeholder="000000"
+                                            autoFocus
+                                        />
+                                    </div>
+                                    <button
+                                        onClick={() => requestCode({ data: { actionName: verificationStep.action || "" } })}
+                                        disabled={isRequestingCode}
+                                        className="text-xs font-bold text-brand hover:underline disabled:opacity-50 cursor-pointer"
+                                    >
+                                        ¿No has recibido el código? Reenviar
+                                    </button>
+                                </div>
+
+                                <div className="flex gap-3 pt-2">
+                                    <button
+                                        onClick={() => setVerificationStep({ active: false, action: null, actionLabel: "", code: "", transactionId: "" })}
+                                        className="flex-1 py-4 px-6 bg-surface border border-line text-content-muted rounded-2xl font-bold hover:bg-main transition-all active:scale-95 cursor-pointer"
+                                    >
+                                        Cancelar
+                                    </button>
+                                    <button
+                                        disabled={verificationStep.code.length !== 6 || isChangingPassword || isSettingPassword || isConnectingGoogle || isDisconnectingGoogle}
+                                        onClick={() => {
+                                            const { action, code, data, transactionId } = verificationStep;
+                                            if (action === 'change-password') {
+                                                changePassword({
+                                                    data: {
+                                                        newPassword: data.newPassword,
+                                                        verificationCode: code,
+                                                        transactionId: transactionId || ""
+                                                    }
+                                                });
+                                            } else if (action === 'set-password') {
+                                                setPassword({
+                                                    data: {
+                                                        password: data.newPassword,
+                                                        verificationCode: code,
+                                                        transactionId: transactionId || ""
+                                                    }
+                                                });
+                                            } else if (action === 'connect-google') {
+                                                connectGoogle({
+                                                    data: {
+                                                        credential: data.credential,
+                                                        verificationCode: code,
+                                                        transactionId: transactionId || ""
+                                                    }
+                                                });
+                                            } else if (action === 'disconnect-google') {
+                                                disconnectGoogle({
+                                                    data: {
+                                                        verificationCode: code,
+                                                        transactionId: transactionId || ""
+                                                    }
+                                                });
+                                            }
+                                        }}
+                                        className="flex-2 py-4 px-6 bg-brand text-content-on-brand rounded-2xl font-bold hover:opacity-90 transition-all active:scale-95 disabled:opacity-50 cursor-pointer flex items-center justify-center gap-2"
+                                    >
+                                        {(isChangingPassword || isSettingPassword || isConnectingGoogle || isDisconnectingGoogle) ? (
+                                            <>
+                                                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                                Confirmando...
+                                            </>
+                                        ) : "Confirmar acción"}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div >
     );
 }

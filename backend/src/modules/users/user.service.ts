@@ -1,14 +1,15 @@
 import { inject, singleton } from "tsyringe";
 import type { HydratedDocument } from "mongoose";
 import { MongoServerError } from "mongodb";
-import crypto from "node:crypto";
+import crypto, { randomUUID } from "node:crypto";
 import { fileTypeFromBuffer } from 'file-type';
 import type {
     InitiateRegistrationData,
     CompleteRegistrationData,
     InitiateEmailChangeData,
     CompleteEmailChangeData,
-    UpdateUserData
+    UpdateUserData,
+    VerificationTransactionResponse
 } from "./user.types.js";
 import { User, type IUser, type IUserDocument, type IUserPopulated, type IUserUnpopulated } from "./models/user.model.js";
 import { PreRegistration } from "./models/pre-registration.model.js";
@@ -52,7 +53,7 @@ export class UserService {
         @inject(AuditService) private auditService: AuditService
     ) { }
 
-    public async initiateRegistration(data: InitiateRegistrationData): Promise<void> {
+    public async initiateRegistration(data: InitiateRegistrationData): Promise<VerificationTransactionResponse> {
         // Check if user already exists
         const userExists = await User.findOne({ email: data.email.toLowerCase() });
         if (userExists) {
@@ -70,12 +71,14 @@ export class UserService {
 
         const verificationCode = EmailVerificationService.generateCode();
         const hashedCode = EmailVerificationService.generateHashedCode(verificationCode);
+        const transactionId = randomUUID();
 
         // Save or update pre-registration
         await PreRegistration.findOneAndUpdate(
             { email: data.email.toLowerCase() },
             {
                 code: hashedCode,
+                transaction_id: transactionId,
                 expires: new Date(Date.now() + 3600000)
             },
             { upsert: true, returnDocument: 'after' }
@@ -88,9 +91,12 @@ export class UserService {
             resource: "USER",
             action: "INITIATE_REGISTRATION",
             details: {
-                email: data.email
+                email: data.email,
+                transactionId
             }
         });
+
+        return { transactionId };
     }
 
     public async completeRegistration(data: CompleteRegistrationData): Promise<IUserUnpopulated> {
@@ -110,7 +116,7 @@ export class UserService {
         }
 
         const hashedCode = EmailVerificationService.generateHashedCode(data.code);
-        if (preReg.code !== hashedCode || preReg.expires < new Date()) {
+        if (preReg.code !== hashedCode || preReg.expires < new Date() || preReg.transaction_id !== data.transactionId) {
             const error = new EmailVerificationCodeInvalidOrExpiredError();
             this.auditService.register({
                 resource: "USER",
@@ -146,6 +152,9 @@ export class UserService {
                 }
             });
 
+            const welcomeTemplate = MailTemplates.welcomeEmail();
+            this.mailService.sendMail(user.email, welcomeTemplate.subject, welcomeTemplate.html);
+
             return this.sanitizeUser(user);
         } catch (error) {
             if (error instanceof MongoServerError && error.code === 11000) {
@@ -157,12 +166,12 @@ export class UserService {
         }
     }
 
-    public async initiateEmailChange(userId: string, data: InitiateEmailChangeData): Promise<void> {
+    public async initiateEmailChange(userId: string, data: InitiateEmailChangeData): Promise<VerificationTransactionResponse> {
         const user = await User.findById(userId);
         if (!user) throw new UserNotFoundError(userId);
 
         const newEmail = data.newEmail.toLowerCase();
-        if (newEmail === user.email) return;
+        if (newEmail === user.email) return { transactionId: "" }; // O lanzar error si prefieres
 
         // Check availability
         const emailInUse = await User.findOne({ email: newEmail });
@@ -182,6 +191,7 @@ export class UserService {
 
         const oldEmailCode = EmailVerificationService.generateCode();
         const newEmailCode = EmailVerificationService.generateCode();
+        const transactionId = randomUUID();
 
         user.email_change_request = {
             new_email: newEmail,
@@ -206,6 +216,8 @@ export class UserService {
                 newEmail: newEmail
             }
         });
+
+        return { transactionId };
     }
 
     public async cancelEmailChange(userId: string): Promise<void> {
@@ -224,7 +236,7 @@ export class UserService {
     }
 
     public async completeEmailChange(userId: string, data: CompleteEmailChangeData): Promise<IUserUnpopulated> {
-        const user = await User.findById(userId).select("+email_change_request.old_email_code +email_change_request.new_email_code");
+        const user = await User.findById(userId).select("+email_change_request.old_email_code +email_change_request.new_email_code +email_change_request.transaction_id");
         if (!user) throw new UserNotFoundError(userId);
         if (!user.email_change_request) throw new Error("No hay ninguna solicitud de cambio de email pendiente");
 
@@ -258,6 +270,10 @@ export class UserService {
         user.email_change_request = undefined;
         user.auth_version++;
         await user.save();
+
+        const successTemplate = MailTemplates.securityActionSuccess("Cambio de correo electrónico");
+        this.mailService.sendMail(oldEmail, successTemplate.subject, successTemplate.html);
+        this.mailService.sendMail(newEmail, successTemplate.subject, successTemplate.html);
 
         this.auditService.register({
             resource: "USER",
