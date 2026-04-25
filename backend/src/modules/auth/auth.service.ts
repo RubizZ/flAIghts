@@ -168,6 +168,9 @@ export class AuthService {
                 is_password_set: false
             });
             await user.save();
+
+            const welcomeTemplate = MailTemplates.welcomeEmail(this.config.FRONTEND_URL);
+            this.mailService.sendMail(user.email, welcomeTemplate.subject, welcomeTemplate.html);
         } else if (!user.google_id) {
             // Si el usuario existe por email pero no tiene vinculado el google_id,
             // verificamos si tiene contraseña establecida.

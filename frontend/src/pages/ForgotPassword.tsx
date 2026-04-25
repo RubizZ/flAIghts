@@ -7,8 +7,10 @@ import { useState, useRef } from "react";
 import { toast } from "sonner";
 import Logo from "@/components/ui/Logo";
 import TurnstileWidget, { type TurnstileWidgetRef } from "@/components/ui/TurnstileWidget";
+import { useNavigate } from "react-router-dom";
 
 export default function ForgotPassword(): JSX.Element {
+    const navigate = useNavigate();
     const [email, setEmail] = useState('');
     const [turnstileToken, setTurnstileToken] = useState<string>('');
     const turnstileRef = useRef<TurnstileWidgetRef>(null);
@@ -59,6 +61,11 @@ export default function ForgotPassword(): JSX.Element {
             return;
         }
 
+        if (!turnstileToken) {
+            toast.error("Por favor, completa la verificación de seguridad.");
+            return;
+        }
+
         forgotPassword({ data: { email, turnstileToken } });
     }
 
@@ -92,14 +99,23 @@ export default function ForgotPassword(): JSX.Element {
                             }
                         }}
                     />
-                    <button 
-                        disabled={isPending || !email} 
-                        onClick={handleSubmit} 
-                        type="button" 
-                        className="mt-2 rounded-lg bg-brand p-3 text-content-on-brand font-bold enabled:hover:scale-[1.02] enabled:active:scale-95 transition-all shadow-lg shadow-brand/20 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                        {isPending ? 'Enviando...' : 'Enviar'}
-                    </button>
+                    <div className="flex gap-3 mt-2">
+                        <button
+                            type="button"
+                            onClick={() => navigate("/login")}
+                            className="flex-1 px-4 py-3 rounded-lg bg-surface/50 border border-line text-content-muted hover:text-content hover:bg-surface/80 font-bold transition-all cursor-pointer text-sm"
+                        >
+                            Volver
+                        </button>
+                        <button 
+                            disabled={isPending} 
+                            onClick={handleSubmit} 
+                            type="button" 
+                            className="flex-[2] rounded-lg bg-brand p-3 text-content-on-brand font-bold enabled:hover:scale-[1.02] enabled:active:scale-95 transition-all shadow-lg shadow-brand/20 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            {isPending ? 'Enviando...' : 'Enviar'}
+                        </button>
+                    </div>
                 </form>
             </AuthCard>
             <TurnstileWidget 

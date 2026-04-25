@@ -9,12 +9,8 @@ interface AuthLayoutProps {
 export default function AuthLayout({ children }: AuthLayoutProps) {
     const navigate = useNavigate();
 
-    const handleBack = () => {
-        if (window.history.length > 1) {
-            window.history.back();
-        } else {
-            navigate("/");
-        }
+    const handleExit = () => {
+        navigate("/");
     };
 
     return (
@@ -36,7 +32,7 @@ export default function AuthLayout({ children }: AuthLayoutProps) {
                     {/* Back Button */}
                     <div className="flex justify-start">
                         <button
-                            onClick={handleBack}
+                            onClick={handleExit}
                             className="z-20 flex items-center gap-2 px-4 py-2 rounded-full bg-linear-to-br from-main to-surface border-3 border-line text-content hover:bg-surface transition-all group cursor-pointer shadow-lg opacity-95"
                         >
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="size-5 group-hover:-translate-x-1 transition-transform">

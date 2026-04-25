@@ -155,7 +155,7 @@ export class UserService {
                 }
             });
 
-            const welcomeTemplate = MailTemplates.welcomeEmail();
+            const welcomeTemplate = MailTemplates.welcomeEmail(this.config.FRONTEND_URL);
             this.mailService.sendMail(user.email, welcomeTemplate.subject, welcomeTemplate.html);
 
             return this.sanitizeUser(user);

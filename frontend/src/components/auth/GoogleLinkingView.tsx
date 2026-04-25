@@ -21,6 +21,12 @@ export default function GoogleLinkingView({ linkData, turnstileToken, onCancel, 
     const [confirmNewPassword, setConfirmNewPassword] = useState("");
     const [verificationCode, setVerificationCode] = useState("");
     const [transactionId, setTransactionId] = useState("");
+    const [errors, setErrors] = useState({
+        linkPassword: "",
+        newPassword: "",
+        confirmNewPassword: "",
+        verificationCode: ""
+    });
 
     const { mutate: performGoogleLogin, isPending: isGooglePending } = useLoginWithGoogleWeb({
         mutation: {
@@ -57,7 +63,16 @@ export default function GoogleLinkingView({ linkData, turnstileToken, onCancel, 
     });
 
     const handleConfirmLink = () => {
-        if (!linkPassword) return;
+        const newErrors = { ...errors, linkPassword: !linkPassword ? "Introduce tu contraseña" : "" };
+        setErrors(newErrors);
+        
+        if (newErrors.linkPassword) return;
+
+        if (!turnstileToken) {
+            toast.error("Por favor, completa la verificación de seguridad.");
+            return;
+        }
+
         performGoogleLogin({
             data: {
                 credential: linkData.credential,
@@ -68,18 +83,24 @@ export default function GoogleLinkingView({ linkData, turnstileToken, onCancel, 
     };
 
     const handleResetAndLink = () => {
-        if (newPassword.length < 8) {
-            toast.error("La contraseña debe tener al menos 8 caracteres");
+        const newErrors = {
+            ...errors,
+            newPassword: !newPassword ? "La contraseña es obligatoria" : newPassword.length < 8 ? "Mínimo 8 caracteres" : "",
+            confirmNewPassword: !confirmNewPassword ? "Debes confirmar la contraseña" : newPassword !== confirmNewPassword ? "Las contraseñas no coinciden" : "",
+            verificationCode: verificationCode.length !== 6 ? "Introduce el código de 6 dígitos" : ""
+        };
+        setErrors(newErrors);
+
+        if (newErrors.newPassword || newErrors.confirmNewPassword || newErrors.verificationCode) {
+            toast.error("Por favor completa todos los campos correctamente");
             return;
         }
-        if (newPassword !== confirmNewPassword) {
-            toast.error("Las contraseñas no coinciden");
+
+        if (!turnstileToken) {
+            toast.error("Por favor, completa la verificación de seguridad.");
             return;
         }
-        if (verificationCode.length !== 6) {
-            toast.error("Introduce el código de verificación de 6 dígitos");
-            return;
-        }
+
         performGoogleLogin({
             data: {
                 credential: linkData.credential,
@@ -112,13 +133,17 @@ export default function GoogleLinkingView({ linkData, turnstileToken, onCancel, 
                     <>
                         <FloatingLabelInput
                             value={linkPassword}
-                            onChange={(e) => setLinkPassword(e.target.value)}
+                            onChange={(e) => {
+                                setLinkPassword(e.target.value);
+                                if (errors.linkPassword) setErrors({ ...errors, linkPassword: "" });
+                            }}
                             type="password"
                             id="linkPassword"
                             name="linkPassword"
                             label="Contraseña de flAIghts"
+                            error={errors.linkPassword}
                             onKeyDown={(e) => {
-                                if (e.key === "Enter" && linkPassword) handleConfirmLink();
+                                if (e.key === "Enter") handleConfirmLink();
                             }}
                         />
 
@@ -152,7 +177,7 @@ export default function GoogleLinkingView({ linkData, turnstileToken, onCancel, 
                             <button
                                 type="button"
                                 onClick={handleConfirmLink}
-                                disabled={!linkPassword || isGooglePending || !turnstileToken}
+                                disabled={isGooglePending}
                                 className="flex-1 rounded-lg bg-brand p-3 text-content-on-brand font-bold enabled:hover:scale-[1.02] enabled:active:scale-95 transition-all shadow-lg shadow-brand/20 cursor-pointer disabled:opacity-50"
                             >
                                 {isGooglePending ? "Vinculando..." : "Confirmar y Vincular"}
@@ -163,24 +188,35 @@ export default function GoogleLinkingView({ linkData, turnstileToken, onCancel, 
                     <>
                         <FloatingLabelInput
                             value={newPassword}
-                            onChange={(e) => setNewPassword(e.target.value)}
+                            onChange={(e) => {
+                                setNewPassword(e.target.value);
+                                if (errors.newPassword) setErrors({ ...errors, newPassword: "" });
+                            }}
                             type="password"
                             id="newPassword"
                             name="newPassword"
                             label="Nueva contraseña"
+                            error={errors.newPassword}
                         />
                         <FloatingLabelInput
                             value={confirmNewPassword}
-                            onChange={(e) => setConfirmNewPassword(e.target.value)}
+                            onChange={(e) => {
+                                setConfirmNewPassword(e.target.value);
+                                if (errors.confirmNewPassword) setErrors({ ...errors, confirmNewPassword: "" });
+                            }}
                             type="password"
                             id="confirmNewPassword"
                             name="confirmNewPassword"
                             label="Confirmar nueva contraseña"
+                            error={errors.confirmNewPassword}
                         />
                         <div className="pt-2">
                             <FloatingLabelInput
                                 value={verificationCode}
-                                onChange={(e) => setVerificationCode(e.target.value.replace(/\D/g, '').substring(0, 6))}
+                                onChange={(e) => {
+                                    setVerificationCode(e.target.value.replace(/\D/g, '').substring(0, 6));
+                                    if (errors.verificationCode) setErrors({ ...errors, verificationCode: "" });
+                                }}
                                 type="text"
                                 inputMode="numeric"
                                 pattern="[0-9]*"
@@ -189,6 +225,7 @@ export default function GoogleLinkingView({ linkData, turnstileToken, onCancel, 
                                 name="verificationCode"
                                 label="Código de verificación (6 dígitos)"
                                 placeholder="123456"
+                                error={errors.verificationCode}
                             />
                             <p className="text-[10px] text-content-muted mt-1 px-1">
                                 Te hemos enviado un código a tu email para confirmar el cambio.
@@ -210,7 +247,7 @@ export default function GoogleLinkingView({ linkData, turnstileToken, onCancel, 
                             <button
                                 type="button"
                                 onClick={handleResetAndLink}
-                                disabled={!newPassword || !confirmNewPassword || verificationCode.length !== 6 || isGooglePending || !turnstileToken}
+                                disabled={isGooglePending}
                                 className="flex-1 rounded-lg bg-brand p-3 text-content-on-brand font-bold enabled:hover:scale-[1.02] enabled:active:scale-95 transition-all shadow-lg shadow-brand/20 cursor-pointer disabled:opacity-50"
                             >
                                 {isGooglePending ? "Vinculando..." : "Restablecer y Vincular"}
