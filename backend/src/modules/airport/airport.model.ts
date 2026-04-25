@@ -9,7 +9,7 @@ export interface IAirport {
   importance_score: number;
   location: {
     type: "Point";
-    coordinates: [number, number];
+    coordinates: number[];
   };
   created_at: Date;
   updated_at: Date;

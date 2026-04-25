@@ -1,8 +1,18 @@
 import { model, Schema } from "mongoose";
-import type { AuditDetails, AuditEntry } from "./audit.types.js";
 import idValidator from "@/utils/mongoose-id-validator.js";
 
-export interface IAudit extends AuditEntry<keyof AuditDetails, keyof AuditDetails[keyof AuditDetails]> { }
+export interface IAudit {
+    timestamp: Date;
+    user: {
+        id: string | null;
+        username: string | null;
+        ip: string;
+        userAgent: string;
+    };
+    resource: string;
+    action: string;
+    details: any;
+}
 
 const AuditSchema = new Schema<IAudit>({
     timestamp: { type: Date, default: Date.now },

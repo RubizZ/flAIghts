@@ -16,6 +16,8 @@ export interface AuditDetails {
         UPDATE: {
             username?: string;
             public?: boolean;
+            role?: string;
+            userId?: string;
             preferences?: {
                 price_weight?: number;
                 duration_weight?: number;
@@ -129,6 +131,7 @@ export interface AuditDetails {
 
 export type AuditUser = {
     id: string | null
+    username?: string | null
     ip: string
     userAgent: string
 }

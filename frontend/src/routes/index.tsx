@@ -11,6 +11,7 @@ import ResetPassword from "@/pages/ResetPassword.tsx";
 import UserProfile from "@/pages/UserProfile.tsx";
 import Friends from "@/pages/Friends.tsx";
 import UserSearch from "@/pages/UserSearch.tsx";
+import AdminDashboard from "@/pages/AdminDashboard.tsx";
 import Settings from "@/pages/Settings.tsx";
 import Home from "@/pages/Home.tsx";
 import Chats from "@/pages/Chats.tsx";
@@ -38,6 +39,7 @@ export const routes: RouteObject[] = [
                     { path: "/friends", element: <Friends /> },
                     { path: "/user/:id", element: <UserProfile /> },
                     { path: "/user/search", element: <UserSearch /> },
+                    { path: "/admin", element: <AdminDashboard /> },
                     { path: "/chats", element: <Chats /> },
                     { path: "/chats/:userId", element: <Chat /> },
                     { path: "/settings", element: <Settings /> },

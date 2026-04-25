@@ -62,8 +62,8 @@ export class AirportService {
                 const countryInfo = COUNTRY_NAMES[a.country];
                 const countryName = (countryInfo && countryInfo[1]) || a.country;
                 this.citiesCache.set(cityKey, {
-                    lat: a.location.coordinates[1],
-                    lon: a.location.coordinates[0],
+                    lat: a.location.coordinates[1]!,
+                    lon: a.location.coordinates[0]!,
                     display_name: `${a.city}, ${countryName}`,
                     country: countryName
                 });
@@ -115,7 +115,7 @@ export class AirportService {
 
             if (userLat !== undefined && userLon !== undefined) {
                 const [lon, lat] = airport.location.coordinates;
-                distance_km = this.haversine(userLat, userLon, lat, lon);
+                distance_km = this.haversine(userLat, userLon, lat!, lon!);
                 distanceScore = Math.max(0, 1 - (distance_km / 5000));
             }
 
@@ -222,6 +222,52 @@ export class AirportService {
         return { items, total, page, totalPages };
     }
 
+    public async listAirports(page: number = 1, limit: number = 10, query?: string, sortBy: string = 'importance_score', sortOrder: 'asc' | 'desc' = 'desc'): Promise<AirportSearchPaginatedResult> {
+        const airports = this.isInitialized ? this.airportsCache : (await Airport.find({}).lean() as any[]);
+
+        let filtered = airports;
+        if (query?.trim()) {
+            const q = this.normalize(query.trim());
+            filtered = airports.filter(a =>
+                (a._normIata || this.normalize(a.iata_code)).includes(q) ||
+                (a._normName || this.normalize(a.name)).includes(q) ||
+                (a._normCity || this.normalize(a.city)).includes(q) ||
+                (a._normCountry || this.normalize(a.country)).includes(q)
+            );
+        }
+
+        const sorted = filtered.sort((a, b) => {
+            const valA = a[sortBy] ?? '';
+            const valB = b[sortBy] ?? '';
+            return sortOrder === 'asc' ? (valA > valB ? 1 : -1) : (valB > valA ? 1 : -1);
+        });
+        const total = sorted.length;
+        const start = (page - 1) * limit;
+        const items = sorted.slice(start, start + limit).map(a => this.toAirportResponse(a));
+
+        return { items, total, page, totalPages: Math.ceil(total / limit) };
+    }
+
+    public updateAirportInCache(updatedAirport: IAirport) {
+        if (!this.isInitialized) return;
+
+        const index = this.airportsCache.findIndex(a => a.iata_code === updatedAirport.iata_code);
+        if (index !== -1) {
+            const names = COUNTRY_NAMES[updatedAirport.country] || [];
+
+            this.airportsCache[index] = {
+                ...updatedAirport,
+                _normIata: this.normalize(updatedAirport.iata_code),
+                _normCity: this.normalize(updatedAirport.city),
+                _normName: this.normalize(updatedAirport.name),
+                _normCountry: this.normalize(updatedAirport.country),
+                _normCountryNames: names.map(n => this.normalize(n)).join(" ")
+            } as CachedAirport;
+
+            logger.info(`Airport cache updated in memory for: ${updatedAirport.iata_code}`);
+        }
+    }
+
     private async geocodeCity(query: string): Promise<{ lat: number, lon: number, display_name: string, country: string } | null> {
         const cacheKey = query.toLowerCase().trim();
         const normalizedQuery = this.normalize(cacheKey);
@@ -301,8 +347,8 @@ export class AirportService {
             i: a.iata_code,
             n: a.name,
             ci: a.city || a.name,
-            la: a.location.coordinates[1],
-            lo: a.location.coordinates[0],
+            la: a.location.coordinates[1]!,
+            lo: a.location.coordinates[0]!,
             s: a.importance_score,
             c: a.country
         }));
@@ -365,7 +411,7 @@ export class AirportService {
             name: a.name,
             city: a.city,
             country: a.country,
-            type: "airport",
+            type: a.type,
             importance_score: a.importance_score,
             location: a.location,
             combined_score: a.combined_score,
@@ -402,10 +448,10 @@ export class AirportService {
             const [oLon, oLat] = origin.location.coordinates;
             const [dLon, dLat] = destination.location.coordinates;
 
-            const totalDistance = this.haversine(oLat, oLon, dLat, dLon);
+            const totalDistance = this.haversine(oLat!, oLon!, dLat!, dLon!);
             const radius = this.computeAdaptiveRadius(totalDistance);
-            const midLat = (oLat + dLat) / 2;
-            const midLon = (oLon + dLon) / 2;
+            const midLat = (oLat! + dLat!) / 2;
+            const midLon = (oLon! + dLon!) / 2;
 
             const candidates = await Airport.find({
                 iata_code: { $nin: [originIata, destinationIata] },
@@ -418,8 +464,8 @@ export class AirportService {
 
             const scored = candidates.map((a: IAirport): ScoredAirport => {
                 const [lon, lat] = a.location.coordinates;
-                const dOrigin = this.haversine(oLat, oLon, lat, lon);
-                const dDest = this.haversine(dLat, dLon, lat, lon);
+                const dOrigin = this.haversine(oLat!, oLon!, lat!, lon!);
+                const dDest = this.haversine(dLat!, dLon!, lat!, lon!);
 
                 return {
                     iata: a.iata_code,
