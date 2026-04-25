@@ -14,7 +14,7 @@ const MissionRoadmap: React.FC<MissionRoadmapProps> = ({ onClose, onMissionClick
         x1: number; y1: number; x2: number; y2: number;
         completed: boolean; unlocked: boolean;
         levelDiff: number;
-    } & { toId: string }>>([]);
+    } & { toId: string, hasObstacle?: boolean }>>([]);
     const [hoveredMissionId, setHoveredMissionId] = useState<string | null>(null);
     const graphRef = useRef<HTMLDivElement>(null);
     const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -59,18 +59,42 @@ const MissionRoadmap: React.FC<MissionRoadmapProps> = ({ onClose, onMissionClick
                     if (fromEl && toEl) {
                         const fromRect = fromEl.getBoundingClientRect();
                         const toRect = toEl.getBoundingClientRect();
+                        const x1 = fromRect.left + fromRect.width / 2 - graphRect.left;
+                        const x2 = toRect.left + toRect.width / 2 - graphRect.left;
                         const fromLevel = missionLevels[depId] ?? 0;
                         const toLevel = missionLevels[mission.id] ?? 0;
 
+                        // Detección de obstáculos entre niveles
+                        const hasObstacle = missions.some(m => {
+                            const mLevel = missionLevels[m.id] ?? 0;
+                            if (mLevel > fromLevel && mLevel < toLevel) {
+                                const el = document.getElementById(`roadmap-mission-${m.id}`);
+                                if (el) {
+                                    const r = el.getBoundingClientRect();
+                                    const left = r.left - graphRect.left;
+                                    const right = r.right - graphRect.left;
+
+                                    // Interpolación simple de X para este nivel
+                                    const t = (mLevel - fromLevel) / (toLevel - fromLevel);
+                                    const lineX = x1 + (x2 - x1) * t;
+
+                                    // Si la línea pasa por encima de la card (con margen)
+                                    return lineX >= (left - 20) && lineX <= (right + 20);
+                                }
+                            }
+                            return false;
+                        });
+
                         newConnections.push({
-                            x1: fromRect.left + fromRect.width / 2 - graphRect.left,
+                            x1,
                             y1: fromRect.bottom - graphRect.top,
-                            x2: toRect.left + toRect.width / 2 - graphRect.left,
+                            x2,
                             y2: toRect.top - graphRect.top,
                             completed: isMissionCompleted(depId),
                             unlocked: isMissionUnlocked(mission.id),
                             levelDiff: toLevel - fromLevel,
-                            toId: mission.id
+                            toId: mission.id,
+                            hasObstacle
                         });
                     }
                 });
@@ -274,23 +298,19 @@ const MissionRoadmap: React.FC<MissionRoadmapProps> = ({ onClose, onMissionClick
                         {/* SVG Connections Overlay */}
                         {/* SVG Connections Overlay - Markers removed to allow smooth transitions */}
                         <svg
-                            className={`absolute inset-0 pointer-events-none z-base w-full h-full min-w-full min-h-full overflow-visible transition-opacity duration-500 ${isGraphReady ? 'opacity-100' : 'opacity-0'}`}
+                            className={`absolute inset-0 pointer-events-none z-behind w-full h-full min-w-full min-h-full overflow-visible transition-opacity duration-500 ${isGraphReady ? 'opacity-100' : 'opacity-0'}`}
                         >
                             {connections.map((conn, i) => {
                                 // Bezier points para una curva más orgánica y fluida
                                 const distY = conn.y2 - conn.y1;
                                 const tension = distY * 0.4;
-                                // Routing condicional:
-                                // - Niveles adyacentes: Curva suave directa
-                                // - Saltos largos: Pasillo lateral para esquivar cards
-                                const isLongJump = conn.levelDiff > 1;
                                 let d = "";
 
-                                if (!isLongJump) {
-                                    const tension = distY * 0.4;
+                                if (!conn.hasObstacle) {
                                     d = `M ${conn.x1},${conn.y1} 
                                          C ${conn.x1},${conn.y1 + tension} ${conn.x2},${conn.y2 - tension} ${conn.x2},${conn.y2 - 8}`;
                                 } else {
+                                    // Si hay obstáculo, usamos el pasillo lateral
                                     const railX = Math.max(conn.x1, conn.x2) + 280;
                                     const midY = conn.y1 + (distY / 2);
                                     d = `M ${conn.x1},${conn.y1} 
