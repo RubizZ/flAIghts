@@ -21,6 +21,7 @@ export class AuditService {
             timestamp: new Date(),
             user: {
                 id: entry.user?.id || context?.userId || null,
+                username: entry.user?.username || null,
                 ip: entry.user?.ip || context?.ip || "unknown",
                 userAgent: entry.user?.userAgent || context?.userAgent || "unknown"
             }
@@ -38,7 +39,7 @@ export class AuditService {
     async getAll(options: {
         filters: {
             resource?: keyof AuditDetails;
-            action?: keyof AuditDetails[keyof AuditDetails];
+            action?: string; // Simplificado para TSOA
             user?: { id?: string; ip?: string; userAgent?: string };
         },
         pagination: {
@@ -61,7 +62,10 @@ export class AuditService {
         totalPages: number;
     }> {
         const { filters, pagination, sort } = options;
-        const query: QueryFilter<IAudit> = { resource: filters.resource, action: filters.action };
+        const query: QueryFilter<IAudit> = {};
+
+        if (filters.resource) query.resource = filters.resource;
+        if (filters.action) query.action = filters.action;
 
         if (filters.user) {
             // Use dot-notation to filter specific fields of the nested "user" object

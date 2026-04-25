@@ -57,6 +57,13 @@ export async function expressAuthentication(
             store.userId = user._id.toString();
         }
 
+        // Verificación de roles (scopes)
+        if (securityName === 'jwt' && _scopes && _scopes.length > 0) {
+            if (!user.role || !_scopes.includes(user.role)) {
+                throw new InvalidTokenError("Insufficient permissions");
+            }
+        }
+
         const safeUser: AuthenticatedUser = {
             _id: user._id.toString(),
             username: user.username,

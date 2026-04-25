@@ -348,7 +348,7 @@ export default function AirportAutocomplete({ value, onChange, placeholder, clas
                                             </div>
                                         )}
                                         {items.map((item, idx) => {
-                                            if (item.type === 'city') return renderCity(item, `grouped-${idx}`);
+                                            if (item.type === 'city') return renderCity(item as CityResponse, `grouped-${idx}`);
                                             return renderAirport(item as AirportResponse);
                                         })}
                                     </div>
@@ -392,7 +392,7 @@ export default function AirportAutocomplete({ value, onChange, placeholder, clas
                                 </div>
 
                                 {suggestions.map((item, idx) => {
-                                    if (item.type === 'city') return renderCity(item, `flat-${idx}`);
+                                    if (item.type === 'city') return renderCity(item as CityResponse, `flat-${idx}`);
                                     return renderAirport(item as AirportResponse);
                                 })}
 

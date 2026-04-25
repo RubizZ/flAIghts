@@ -1057,8 +1057,7 @@
             "type": "string"
           },
           "type": {
-            "type": "string",
-            "const": "airport"
+            "type": "string"
           },
           "importance_score": {
             "type": "number"

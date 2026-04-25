@@ -22,7 +22,7 @@ export interface AirportResponse {
     name: string;
     city: string;
     country: string;
-    type: "airport";
+    type: string;
     importance_score: number;
     location: {
         type: "Point";

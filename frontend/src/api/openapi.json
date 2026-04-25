@@ -210,7 +210,8 @@
             "type": "string",
             "enum": [
               "user",
-              "admin"
+              "admin",
+              "superadmin"
             ]
           },
           "preferences": {
@@ -689,7 +690,8 @@
             "type": "string",
             "enum": [
               "user",
-              "admin"
+              "admin",
+              "superadmin"
             ]
           },
           "created_at": {
@@ -739,7 +741,8 @@
             "type": "string",
             "enum": [
               "user",
-              "admin"
+              "admin",
+              "superadmin"
             ]
           },
           "created_at": {
@@ -842,7 +845,8 @@
             "type": "string",
             "enum": [
               "user",
-              "admin"
+              "admin",
+              "superadmin"
             ]
           },
           "created_at": {
@@ -950,7 +954,8 @@
             "type": "string",
             "enum": [
               "user",
-              "admin"
+              "admin",
+              "superadmin"
             ]
           },
           "created_at": {
@@ -1252,7 +1257,8 @@
             "type": "string",
             "enum": [
               "user",
-              "admin"
+              "admin",
+              "superadmin"
             ]
           },
           "auth_version": {
@@ -4651,11 +4657,7 @@
             "type": "string"
           },
           "type": {
-            "type": "string",
-            "enum": [
-              "airport"
-            ],
-            "nullable": false
+            "type": "string"
           },
           "importance_score": {
             "type": "number",
@@ -5439,6 +5441,910 @@
         },
         "required": [
           "messages"
+        ],
+        "type": "object",
+        "additionalProperties": false
+      },
+      "AdminStats": {
+        "properties": {
+          "users": {
+            "type": "number",
+            "format": "double"
+          },
+          "pendingReports": {
+            "type": "number",
+            "format": "double"
+          },
+          "totalEvaluations": {
+            "type": "number",
+            "format": "double"
+          },
+          "airports": {
+            "type": "number",
+            "format": "double"
+          },
+          "audits": {
+            "type": "number",
+            "format": "double"
+          }
+        },
+        "required": [
+          "users",
+          "pendingReports",
+          "totalEvaluations",
+          "airports",
+          "audits"
+        ],
+        "type": "object",
+        "additionalProperties": false
+      },
+      "SuccessResponseType_AdminStats_": {
+        "description": "Wrapper de éxito JSend (aplicado por el middleware global).",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "success"
+            ],
+            "nullable": false
+          },
+          "data": {
+            "$ref": "#/components/schemas/AdminStats"
+          }
+        },
+        "required": [
+          "status",
+          "data"
+        ],
+        "type": "object",
+        "additionalProperties": false
+      },
+      "IFriendUnpopulated": {
+        "properties": {
+          "user": {
+            "type": "string"
+          },
+          "friend_since": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "user",
+          "friend_since"
+        ],
+        "type": "object",
+        "additionalProperties": false
+      },
+      "Pick_IUserFields.Exclude_keyofIUserFields.password__": {
+        "properties": {
+          "email": {
+            "type": "string"
+          },
+          "username": {
+            "type": "string"
+          },
+          "preferences": {
+            "properties": {
+              "airline_quality_weight": {
+                "type": "number",
+                "format": "double"
+              },
+              "stops_weight": {
+                "type": "number",
+                "format": "double"
+              },
+              "duration_weight": {
+                "type": "number",
+                "format": "double"
+              },
+              "price_weight": {
+                "type": "number",
+                "format": "double"
+              }
+            },
+            "required": [
+              "airline_quality_weight",
+              "stops_weight",
+              "duration_weight",
+              "price_weight"
+            ],
+            "type": "object"
+          },
+          "_id": {
+            "type": "string"
+          },
+          "public": {
+            "type": "boolean"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "user",
+              "admin",
+              "superadmin"
+            ]
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "last_seen_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "auth_version": {
+            "type": "number",
+            "format": "double"
+          },
+          "profile_picture": {
+            "type": "string"
+          },
+          "password_reset_token": {
+            "type": "string"
+          },
+          "password_reset_expires": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "email_change_request": {
+            "properties": {
+              "expires": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "new_email_code": {
+                "type": "string"
+              },
+              "old_email_code": {
+                "type": "string"
+              },
+              "new_email": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "expires",
+              "new_email_code",
+              "old_email_code",
+              "new_email"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "email",
+          "username",
+          "preferences",
+          "_id",
+          "public",
+          "role",
+          "created_at",
+          "last_seen_at",
+          "auth_version"
+        ],
+        "type": "object",
+        "description": "From T, pick a set of properties whose keys are in the union K"
+      },
+      "IUserUnpopulated": {
+        "properties": {
+          "email": {
+            "type": "string"
+          },
+          "username": {
+            "type": "string"
+          },
+          "preferences": {
+            "properties": {
+              "airline_quality_weight": {
+                "type": "number",
+                "format": "double"
+              },
+              "stops_weight": {
+                "type": "number",
+                "format": "double"
+              },
+              "duration_weight": {
+                "type": "number",
+                "format": "double"
+              },
+              "price_weight": {
+                "type": "number",
+                "format": "double"
+              }
+            },
+            "required": [
+              "airline_quality_weight",
+              "stops_weight",
+              "duration_weight",
+              "price_weight"
+            ],
+            "type": "object"
+          },
+          "_id": {
+            "type": "string"
+          },
+          "public": {
+            "type": "boolean"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "user",
+              "admin",
+              "superadmin"
+            ]
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "last_seen_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "auth_version": {
+            "type": "number",
+            "format": "double"
+          },
+          "profile_picture": {
+            "type": "string"
+          },
+          "password_reset_token": {
+            "type": "string"
+          },
+          "password_reset_expires": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "email_change_request": {
+            "properties": {
+              "expires": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "new_email_code": {
+                "type": "string"
+              },
+              "old_email_code": {
+                "type": "string"
+              },
+              "new_email": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "expires",
+              "new_email_code",
+              "old_email_code",
+              "new_email"
+            ],
+            "type": "object"
+          },
+          "friends": {
+            "items": {
+              "$ref": "#/components/schemas/IFriendUnpopulated"
+            },
+            "type": "array"
+          },
+          "sent_friend_requests": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "received_friend_requests": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "email",
+          "username",
+          "preferences",
+          "_id",
+          "public",
+          "role",
+          "created_at",
+          "last_seen_at",
+          "auth_version",
+          "friends",
+          "sent_friend_requests",
+          "received_friend_requests"
+        ],
+        "type": "object",
+        "additionalProperties": false
+      },
+      "PaginatedUsersResponse": {
+        "properties": {
+          "users": {
+            "items": {
+              "$ref": "#/components/schemas/IUserUnpopulated"
+            },
+            "type": "array"
+          },
+          "total": {
+            "type": "number",
+            "format": "double"
+          },
+          "page": {
+            "type": "number",
+            "format": "double"
+          },
+          "totalPages": {
+            "type": "number",
+            "format": "double"
+          }
+        },
+        "required": [
+          "users",
+          "total",
+          "page",
+          "totalPages"
+        ],
+        "type": "object",
+        "additionalProperties": false
+      },
+      "SuccessResponseType_PaginatedUsersResponse_": {
+        "description": "Wrapper de éxito JSend (aplicado por el middleware global).",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "success"
+            ],
+            "nullable": false
+          },
+          "data": {
+            "$ref": "#/components/schemas/PaginatedUsersResponse"
+          }
+        },
+        "required": [
+          "status",
+          "data"
+        ],
+        "type": "object",
+        "additionalProperties": false
+      },
+      "PaginatedAirportsResponse": {
+        "$ref": "#/components/schemas/AirportSearchPaginatedResult"
+      },
+      "SuccessResponseType_PaginatedAirportsResponse_": {
+        "description": "Wrapper de éxito JSend (aplicado por el middleware global).",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "success"
+            ],
+            "nullable": false
+          },
+          "data": {
+            "$ref": "#/components/schemas/PaginatedAirportsResponse"
+          }
+        },
+        "required": [
+          "status",
+          "data"
+        ],
+        "type": "object",
+        "additionalProperties": false
+      },
+      "IAudit": {
+        "properties": {
+          "timestamp": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "user": {
+            "properties": {
+              "userAgent": {
+                "type": "string"
+              },
+              "ip": {
+                "type": "string"
+              },
+              "username": {
+                "type": "string",
+                "nullable": true
+              },
+              "id": {
+                "type": "string",
+                "nullable": true
+              }
+            },
+            "required": [
+              "userAgent",
+              "ip",
+              "username",
+              "id"
+            ],
+            "type": "object"
+          },
+          "resource": {
+            "type": "string"
+          },
+          "action": {
+            "type": "string"
+          },
+          "details": {}
+        },
+        "required": [
+          "timestamp",
+          "user",
+          "resource",
+          "action",
+          "details"
+        ],
+        "type": "object",
+        "additionalProperties": false
+      },
+      "PaginatedAuditsResponse": {
+        "properties": {
+          "audits": {
+            "items": {
+              "$ref": "#/components/schemas/IAudit"
+            },
+            "type": "array"
+          },
+          "page": {
+            "type": "number",
+            "format": "double"
+          },
+          "total": {
+            "type": "number",
+            "format": "double"
+          },
+          "totalPages": {
+            "type": "number",
+            "format": "double"
+          }
+        },
+        "required": [
+          "audits",
+          "page",
+          "total",
+          "totalPages"
+        ],
+        "type": "object",
+        "additionalProperties": false
+      },
+      "SuccessResponseType_PaginatedAuditsResponse_": {
+        "description": "Wrapper de éxito JSend (aplicado por el middleware global).",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "success"
+            ],
+            "nullable": false
+          },
+          "data": {
+            "$ref": "#/components/schemas/PaginatedAuditsResponse"
+          }
+        },
+        "required": [
+          "status",
+          "data"
+        ],
+        "type": "object",
+        "additionalProperties": false
+      },
+      "Pick_IUserUnpopulated._id-or-username-or-email_": {
+        "properties": {
+          "email": {
+            "type": "string"
+          },
+          "username": {
+            "type": "string"
+          },
+          "_id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "email",
+          "username",
+          "_id"
+        ],
+        "type": "object",
+        "description": "From T, pick a set of properties whose keys are in the union K"
+      },
+      "PopulatedUserRef": {
+        "$ref": "#/components/schemas/Pick_IUserUnpopulated._id-or-username-or-email_"
+      },
+      "IAirport": {
+        "properties": {
+          "iata_code": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "city": {
+            "type": "string"
+          },
+          "country": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          },
+          "importance_score": {
+            "type": "number",
+            "format": "double"
+          },
+          "location": {
+            "properties": {
+              "coordinates": {
+                "items": {
+                  "type": "number",
+                  "format": "double"
+                },
+                "type": "array"
+              },
+              "type": {
+                "type": "string",
+                "enum": [
+                  "Point"
+                ],
+                "nullable": false
+              }
+            },
+            "required": [
+              "coordinates",
+              "type"
+            ],
+            "type": "object"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "iata_code",
+          "name",
+          "city",
+          "country",
+          "type",
+          "importance_score",
+          "location",
+          "created_at",
+          "updated_at"
+        ],
+        "type": "object",
+        "additionalProperties": false
+      },
+      "Pick_IAirportReport.Exclude_keyofIAirportReport.user_id-or-airport_iata__": {
+        "properties": {
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "reason": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "resolved",
+              "rejected"
+            ]
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "created_at",
+          "reason",
+          "status",
+          "updated_at"
+        ],
+        "type": "object",
+        "description": "From T, pick a set of properties whose keys are in the union K"
+      },
+      "PopulatedAirportReport": {
+        "properties": {
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "reason": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "resolved",
+              "rejected"
+            ]
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "user_id": {
+            "$ref": "#/components/schemas/PopulatedUserRef"
+          },
+          "airport_iata": {
+            "$ref": "#/components/schemas/IAirport"
+          }
+        },
+        "required": [
+          "created_at",
+          "reason",
+          "status",
+          "updated_at",
+          "airport_iata"
+        ],
+        "type": "object",
+        "additionalProperties": false
+      },
+      "SuccessResponseType_PopulatedAirportReport-Array_": {
+        "description": "Wrapper de éxito JSend (aplicado por el middleware global).",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "success"
+            ],
+            "nullable": false
+          },
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/PopulatedAirportReport"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "status",
+          "data"
+        ],
+        "type": "object",
+        "additionalProperties": false
+      },
+      "IAirportReport": {
+        "properties": {
+          "airport_iata": {
+            "type": "string"
+          },
+          "reason": {
+            "type": "string"
+          },
+          "user_id": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "resolved",
+              "rejected"
+            ]
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "airport_iata",
+          "reason",
+          "status",
+          "created_at",
+          "updated_at"
+        ],
+        "type": "object",
+        "additionalProperties": false
+      },
+      "SuccessResponseType_IAirportReport-or-null_": {
+        "description": "Wrapper de éxito JSend (aplicado por el middleware global).",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "success"
+            ],
+            "nullable": false
+          },
+          "data": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/IAirportReport"
+              }
+            ],
+            "nullable": true
+          }
+        },
+        "required": [
+          "status",
+          "data"
+        ],
+        "type": "object",
+        "additionalProperties": false
+      },
+      "SuccessResponseType_IUserUnpopulated-or-null_": {
+        "description": "Wrapper de éxito JSend (aplicado por el middleware global).",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "success"
+            ],
+            "nullable": false
+          },
+          "data": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/IUserUnpopulated"
+              }
+            ],
+            "nullable": true
+          }
+        },
+        "required": [
+          "status",
+          "data"
+        ],
+        "type": "object",
+        "additionalProperties": false
+      },
+      "SuccessResponseType_IAirport-or-null_": {
+        "description": "Wrapper de éxito JSend (aplicado por el middleware global).",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "success"
+            ],
+            "nullable": false
+          },
+          "data": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/IAirport"
+              }
+            ],
+            "nullable": true
+          }
+        },
+        "required": [
+          "status",
+          "data"
+        ],
+        "type": "object",
+        "additionalProperties": false
+      },
+      "UpdateAirportRequest": {
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "city": {
+            "type": "string"
+          },
+          "importance_score": {
+            "type": "number",
+            "format": "double"
+          },
+          "type": {
+            "type": "string"
+          },
+          "latitude": {
+            "type": "number",
+            "format": "double"
+          },
+          "longitude": {
+            "type": "number",
+            "format": "double"
+          }
+        },
+        "type": "object",
+        "additionalProperties": false
+      },
+      "Pick_IEvaluationDocument.Exclude_keyofIEvaluationDocument.userId__": {
+        "properties": {
+          "_id": {
+            "type": "string"
+          },
+          "results": {
+            "items": {
+              "$ref": "#/components/schemas/SurveyResult"
+            },
+            "type": "array"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "fullName": {
+            "type": "string"
+          },
+          "receivedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "_id",
+          "results",
+          "timestamp",
+          "receivedAt"
+        ],
+        "type": "object",
+        "description": "From T, pick a set of properties whose keys are in the union K"
+      },
+      "PopulatedEvaluationDocument": {
+        "properties": {
+          "_id": {
+            "type": "string"
+          },
+          "results": {
+            "items": {
+              "$ref": "#/components/schemas/SurveyResult"
+            },
+            "type": "array"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "fullName": {
+            "type": "string"
+          },
+          "receivedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "userId": {
+            "$ref": "#/components/schemas/PopulatedUserRef"
+          }
+        },
+        "required": [
+          "_id",
+          "results",
+          "timestamp",
+          "receivedAt"
+        ],
+        "type": "object",
+        "additionalProperties": false
+      },
+      "SuccessResponseType_PopulatedEvaluationDocument-Array_": {
+        "description": "Wrapper de éxito JSend (aplicado por el middleware global).",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "success"
+            ],
+            "nullable": false
+          },
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/PopulatedEvaluationDocument"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "status",
+          "data"
         ],
         "type": "object",
         "additionalProperties": false
@@ -7853,6 +8759,562 @@
             }
           }
         }
+      }
+    },
+    "/admin/stats": {
+      "get": {
+        "operationId": "GetStats",
+        "responses": {
+          "200": {
+            "description": "Ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponseType_AdminStats_"
+                }
+              }
+            }
+          }
+        },
+        "description": "Obtener estadísticas generales del sistema.",
+        "tags": [
+          "Admin"
+        ],
+        "security": [
+          {
+            "jwt": [
+              "admin",
+              "superadmin"
+            ]
+          }
+        ],
+        "parameters": []
+      }
+    },
+    "/admin/users": {
+      "get": {
+        "operationId": "ListUsers",
+        "responses": {
+          "200": {
+            "description": "Ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponseType_PaginatedUsersResponse_"
+                }
+              }
+            }
+          }
+        },
+        "description": "Listar todos los usuarios (Solo Admin).",
+        "tags": [
+          "Admin"
+        ],
+        "security": [
+          {
+            "jwt": [
+              "admin",
+              "superadmin"
+            ]
+          }
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page",
+            "required": false,
+            "schema": {
+              "default": 1,
+              "format": "double",
+              "type": "number"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "format": "double",
+              "type": "number"
+            }
+          },
+          {
+            "in": "query",
+            "name": "q",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "role",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "user",
+                "admin",
+                "superadmin"
+              ]
+            }
+          },
+          {
+            "in": "query",
+            "name": "sortBy",
+            "required": false,
+            "schema": {
+              "default": "created_at",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "sortOrder",
+            "required": false,
+            "schema": {
+              "default": "desc",
+              "type": "string",
+              "enum": [
+                "asc",
+                "desc"
+              ]
+            }
+          }
+        ]
+      }
+    },
+    "/admin/airports": {
+      "get": {
+        "operationId": "ListAirports",
+        "responses": {
+          "200": {
+            "description": "Ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponseType_PaginatedAirportsResponse_"
+                }
+              }
+            }
+          }
+        },
+        "description": "Listar todos los aeropuertos con paginación y búsqueda simple (Solo Admin).",
+        "tags": [
+          "Admin"
+        ],
+        "security": [
+          {
+            "jwt": [
+              "admin",
+              "superadmin"
+            ]
+          }
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page",
+            "required": false,
+            "schema": {
+              "default": 1,
+              "format": "double",
+              "type": "number"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "format": "double",
+              "type": "number"
+            }
+          },
+          {
+            "in": "query",
+            "name": "q",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "sortBy",
+            "required": false,
+            "schema": {
+              "default": "importance_score",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "sortOrder",
+            "required": false,
+            "schema": {
+              "default": "desc",
+              "type": "string",
+              "enum": [
+                "asc",
+                "desc"
+              ]
+            }
+          }
+        ]
+      }
+    },
+    "/admin/audits": {
+      "get": {
+        "operationId": "ListAudits",
+        "responses": {
+          "200": {
+            "description": "Ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponseType_PaginatedAuditsResponse_"
+                }
+              }
+            }
+          }
+        },
+        "description": "Listar auditorías del sistema.",
+        "tags": [
+          "Admin"
+        ],
+        "security": [
+          {
+            "jwt": [
+              "admin",
+              "superadmin"
+            ]
+          }
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page",
+            "required": false,
+            "schema": {
+              "default": 1,
+              "format": "double",
+              "type": "number"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "format": "double",
+              "type": "number"
+            }
+          },
+          {
+            "in": "query",
+            "name": "resource",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "USER",
+                "AUTH",
+                "SEARCH",
+                "AGENT"
+              ]
+            }
+          },
+          {
+            "in": "query",
+            "name": "action",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/admin/airport-reports": {
+      "get": {
+        "operationId": "ListAirportReports",
+        "responses": {
+          "200": {
+            "description": "Ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponseType_PopulatedAirportReport-Array_"
+                }
+              }
+            }
+          }
+        },
+        "description": "Listar reportes de errores en aeropuertos.",
+        "tags": [
+          "Admin"
+        ],
+        "security": [
+          {
+            "jwt": [
+              "admin",
+              "superadmin"
+            ]
+          }
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "pending",
+                "resolved",
+                "rejected"
+              ]
+            }
+          }
+        ]
+      }
+    },
+    "/admin/airport-reports/{id}": {
+      "patch": {
+        "operationId": "UpdateReportStatus",
+        "responses": {
+          "200": {
+            "description": "Ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponseType_IAirportReport-or-null_"
+                }
+              }
+            }
+          }
+        },
+        "description": "Actualizar el estado de un reporte de aeropuerto.",
+        "tags": [
+          "Admin"
+        ],
+        "security": [
+          {
+            "jwt": [
+              "admin",
+              "superadmin"
+            ]
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "status": {
+                    "type": "string",
+                    "enum": [
+                      "resolved",
+                      "rejected"
+                    ]
+                  }
+                },
+                "required": [
+                  "status"
+                ],
+                "type": "object"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/users/{id}": {
+      "delete": {
+        "operationId": "DeleteUser",
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        },
+        "description": "Eliminar un usuario permanentemente (Solo Admin).",
+        "tags": [
+          "Admin"
+        ],
+        "security": [
+          {
+            "jwt": [
+              "admin",
+              "superadmin"
+            ]
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/admin/users/{id}/role": {
+      "patch": {
+        "operationId": "UpdateUserRole",
+        "responses": {
+          "200": {
+            "description": "Ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponseType_IUserUnpopulated-or-null_"
+                }
+              }
+            }
+          }
+        },
+        "description": "Cambiar el rol de un usuario.",
+        "tags": [
+          "Admin"
+        ],
+        "security": [
+          {
+            "jwt": [
+              "admin",
+              "superadmin"
+            ]
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "role": {
+                    "type": "string",
+                    "enum": [
+                      "user",
+                      "admin",
+                      "superadmin"
+                    ]
+                  }
+                },
+                "required": [
+                  "role"
+                ],
+                "type": "object"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/airports/{iata}": {
+      "patch": {
+        "operationId": "UpdateAirport",
+        "responses": {
+          "200": {
+            "description": "Ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponseType_IAirport-or-null_"
+                }
+              }
+            }
+          }
+        },
+        "description": "Modificar datos de un aeropuerto.",
+        "tags": [
+          "Admin"
+        ],
+        "security": [
+          {
+            "jwt": [
+              "admin",
+              "superadmin"
+            ]
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "iata",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateAirportRequest"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/evaluations": {
+      "get": {
+        "operationId": "ListEvaluations",
+        "responses": {
+          "200": {
+            "description": "Ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponseType_PopulatedEvaluationDocument-Array_"
+                }
+              }
+            }
+          }
+        },
+        "description": "Ver resultados de las evaluaciones del TFG.",
+        "tags": [
+          "Admin"
+        ],
+        "security": [
+          {
+            "jwt": [
+              "admin",
+              "superadmin"
+            ]
+          }
+        ],
+        "parameters": []
       }
     }
   },

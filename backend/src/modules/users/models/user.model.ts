@@ -7,7 +7,7 @@ export interface IUserFields {
   email: string;
   password: string;
   public: boolean;
-  role: "user" | "admin";
+  role: "user" | "admin" | "superadmin";
   preferences: {
     price_weight: number;
     duration_weight: number;
@@ -90,7 +90,7 @@ const UserSchema = new Schema<IUserDocument>({
     type: Boolean,
     default: false
   },
-  role: { type: String, enum: ["user", "admin"], default: "user" },
+  role: { type: String, enum: ["user", "admin", "superadmin"], default: "user" },
   preferences: {
     price_weight: {
       type: Number,
