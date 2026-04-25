@@ -585,7 +585,7 @@
     "select": "Seleccionar",
     "finalArrival": "Llegada final a {{airport}}:",
     "atTime": " a las {{time}}",
-    "scale": "{{count}}ª Escala",
+    "scale": "{{number}}ª Escala",
     "overnightScale": "Escala nocturna",
     "shortScale": "Escala muy corta",
     "travelClassFallback": "Turista",

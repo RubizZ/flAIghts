@@ -117,43 +117,66 @@ export default function FlightCard({ itinerary, formatTime, formatDuration, airp
             {isExpanded && (
                 <div className="px-5 border-t border-line animate-in fade-in duration-300">
                     <div className="pt-4 space-y-6">
-                        {groupedLegs.map((group, groupIndex) => (
-                            <div key={groupIndex} className="space-y-4">
-                                {isGeneticTrip && (
-                                    <div className="flex items-center gap-2 mb-2">
-                                        <div className="h-px bg-linear-to-r from-brand/50 to-transparent flex-1" />
-                                        <span className="text-[10px] font-black uppercase tracking-widest text-brand bg-brand/5 px-2 py-0.5 rounded-md border border-brand/10">
-                                            {t('flightCard.flight')} {groupIndex + 1}: {group[0]?.origin} → {group[group.length - 1]?.destination}
-                                        </span>
-                                        <div className="h-px bg-linear-to-l from-brand/50 to-transparent flex-1" />
-                                    </div>
-                                )}
+                        {(() => {
+                            let scaleCounter = 0;
+                            let currentFlightId = "";
 
-                                {group.map((leg, legIndex) => (
-                                    <Fragment key={legIndex}>
-                                        {legIndex > 0 && leg.wait_time !== undefined && leg.wait_time > 0 && (
+                            return itinerary.legs.map((leg, index) => {
+                                const prevLeg = index > 0 ? itinerary.legs[index - 1] : null;
+                                const isNewFlight = index === 0 || leg.flight_id !== prevLeg?.flight_id;
+                                
+                                // Resetear contador de escalas si es un nuevo vuelo o cambio de ID
+                                if (isNewFlight) scaleCounter = 0;
+                                if (index > 0 && leg.wait_time && leg.wait_time > 0) scaleCounter++;
+
+                                // Encontrar el índice del vuelo para el encabezado
+                                const flightIndex = isGeneticTrip 
+                                    ? Array.from(new Set(itinerary.legs.slice(0, index + 1).map(l => l.flight_id))).length - 1
+                                    : 0;
+
+                                const totalPoints = itinerary.legs.length * 2;
+                                const getPointColor = (pointIdx: number) => 
+                                    `color-mix(in srgb, var(--color-origin), var(--color-destination) ${(pointIdx / (totalPoints - 1)) * 100}%)`;
+
+                                return (
+                                    <Fragment key={index}>
+                                        {/* Encabezado de Vuelo (Solo para viajes genéticos y cuando cambia el ID) */}
+                                        {isGeneticTrip && isNewFlight && (
+                                            <div className="flex items-center gap-2 mb-4 mt-6 first:mt-2">
+                                                <div className="h-px bg-linear-to-r from-brand/50 to-transparent flex-1" />
+                                                <span className="text-[10px] font-black uppercase tracking-widest text-brand bg-brand/5 px-2 py-0.5 rounded-md border border-brand/10">
+                                                    {t('flightCard.flight')} {flightIndex + 1}: {leg.origin} → {itinerary.legs.filter(l => l.flight_id === leg.flight_id).at(-1)?.destination}
+                                                </span>
+                                                <div className="h-px bg-linear-to-l from-brand/50 to-transparent flex-1" />
+                                            </div>
+                                        )}
+
+                                        {/* Escala: Siempre que haya tiempo de espera */}
+                                        {index > 0 && leg.wait_time !== undefined && leg.wait_time > 0 && (
                                             <StopoverDetails
                                                 leg={leg}
                                                 airportsMap={airportsMap}
                                                 formatDuration={formatDuration}
-                                                index={legIndex}
-                                                totalSteps={group.length - 1}
-                                                previousLeg={group[legIndex - 1]!}
+                                                index={scaleCounter} 
+                                                previousLeg={prevLeg!}
+                                                stopoverColor={getPointColor((index * 2) - 1)}
                                             />
                                         )}
+
                                         <LegDetails
                                             leg={leg}
                                             airportsMap={airportsMap}
                                             formatDuration={formatDuration}
                                             formatTime={formatTime}
                                             itineraryStart={firstDepartureTime}
-                                            originColor={groupIndex === 0 && legIndex === 0 ? 'var(--color-origin)' : `color-mix(in srgb, var(--color-origin), var(--color-destination) ${((groupIndex * 2 + legIndex) / (groupedLegs.length * 2)) * 100}%)`}
-                                            destinationColor={groupIndex === groupedLegs.length - 1 && legIndex === group.length - 1 ? 'var(--color-destination)' : `color-mix(in srgb, var(--color-origin), var(--color-destination) ${((groupIndex * 2 + legIndex + 1) / (groupedLegs.length * 2)) * 100}%)`}
+                                            isGeneticTrip={isGeneticTrip}
+                                            originColor={getPointColor(index * 2)}
+                                            destinationColor={getPointColor(index * 2 + 1)}
                                         />
                                     </Fragment>
-                                ))}
-                            </div>
-                        ))}
+                                );
+                            });
+                        })()}
 
                         {/* Final arrival summary notice */}
                         <div className="mt-4 border-t border-line flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-content-muted bg-surface/20 -mx-5 px-5 py-4">
@@ -180,15 +203,13 @@ export default function FlightCard({ itinerary, formatTime, formatDuration, airp
 
 interface StopoverDetailsPropsWithParams extends StopoverDetailsProps {
     index: number;
-    totalSteps: number;
     previousLeg: LegResponse;
+    stopoverColor: string;
 }
 
-function StopoverDetails({ leg, formatDuration, airportsMap, index, totalSteps, previousLeg }: StopoverDetailsPropsWithParams) {
+function StopoverDetails({ leg, formatDuration, airportsMap, index, previousLeg, stopoverColor }: StopoverDetailsPropsWithParams) {
     const { t } = useTranslation();
     const airport = airportsMap.get(leg.origin);
-    const time = index / (totalSteps + 1);
-    const stopoverColor = `color-mix(in srgb, var(--color-origin), var(--color-destination) ${time * 100}%)`;
 
     const isOvernight = useMemo(() => {
         const arrivalDate = new Date(previousLeg.arrival_time).getDate();
@@ -213,9 +234,9 @@ function StopoverDetails({ leg, formatDuration, airportsMap, index, totalSteps, 
                     {index}
                 </div>
                 <div className="flex flex-col">
-                    <div className="flex items-center gap-2 mb-3">
+                    <div className="flex items-center gap-2 mb-1">
                         <span className="text-[10px] font-black text-brand uppercase tracking-widest px-2 py-0.5 bg-brand/10 rounded-md">
-                            {t('flightCard.scale', { count: index })} - {formatDuration(leg.wait_time || 0)}
+                            {t('flightCard.scale', { number: index })} - {formatDuration(leg.wait_time || 0)}
                         </span>
                     </div>
                     <div className="flex flex-col gap-0.5 mt-0.5">
@@ -250,9 +271,10 @@ function StopoverDetails({ leg, formatDuration, airportsMap, index, totalSteps, 
 interface LegDetailsPropsWithColors extends LegDetailsProps {
     originColor: string;
     destinationColor: string;
+    isGeneticTrip?: boolean;
 }
 
-function LegDetails({ leg, airportsMap, formatDuration, formatTime, itineraryStart, originColor, destinationColor }: LegDetailsPropsWithColors) {
+function LegDetails({ leg, airportsMap, formatDuration, formatTime, itineraryStart, originColor, destinationColor, isGeneticTrip }: LegDetailsPropsWithColors) {
     const originAirport = airportsMap.get(leg.origin);
     const destinationAirport = airportsMap.get(leg.destination);
 
@@ -264,6 +286,12 @@ function LegDetails({ leg, airportsMap, formatDuration, formatTime, itinerarySta
         const endDay = new Date(end.getFullYear(), end.getMonth(), end.getDate());
         const diff = endDay.getTime() - startDay.getTime();
         return Math.round(diff / (1000 * 60 * 60 * 24));
+    };
+
+    const formatDateSuperscript = (targetTime?: string) => {
+        if (!targetTime) return null;
+        const date = new Date(targetTime);
+        return date.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' }).replace('.', '');
     };
 
     const departureDayDiff = useMemo(() =>
@@ -293,7 +321,11 @@ function LegDetails({ leg, airportsMap, formatDuration, formatTime, itinerarySta
                     <div className="flex flex-col">
                         <span className="font-bold text-content">
                             {formatTime(leg.departure_time)} - {leg.origin}
-                            {departureDayDiff > 0 && <sup className="text-[12px] text-brand ml-0.5 font-bold">+{departureDayDiff}</sup>}
+                            {departureDayDiff > 0 && (
+                                <sup className="text-[10px] text-brand ml-0.5 font-bold">
+                                    {isGeneticTrip ? formatDateSuperscript(leg.departure_time) : `+${departureDayDiff}`}
+                                </sup>
+                            )}
                         </span>
                         <span className="text-xs text-content-muted">
                             {originAirport?.ci}, {originAirport?.c && (COUNTRY_NAMES[originAirport.c]?.[1] || originAirport.c)} • {originAirport?.n}
@@ -306,7 +338,11 @@ function LegDetails({ leg, airportsMap, formatDuration, formatTime, itinerarySta
                     <div className="flex flex-col">
                         <span className="font-bold text-content">
                             {formatTime(leg.arrival_time)} - {leg.destination}
-                            {arrivalDayDiff > 0 && <sup className="text-[12px] text-brand ml-0.5 font-bold">+{arrivalDayDiff}</sup>}
+                            {arrivalDayDiff > 0 && (
+                                <sup className="text-[10px] text-brand ml-0.5 font-bold">
+                                    {isGeneticTrip ? formatDateSuperscript(leg.arrival_time) : `+${arrivalDayDiff}`}
+                                </sup>
+                            )}
                         </span>
                         <span className="text-xs text-content-muted">
                             {destinationAirport?.ci}, {destinationAirport?.c && (COUNTRY_NAMES[destinationAirport.c]?.[1] || destinationAirport.c)} • {destinationAirport?.n}

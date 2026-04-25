@@ -585,7 +585,7 @@
     "select": "Select",
     "finalArrival": "Final arrival at {{airport}}:",
     "atTime": " at {{time}}",
-    "scale": "{{count}}Âª Layover",
+    "scale": "Stopover #{{number}}",
     "overnightScale": "Overnight layover",
     "shortScale": "Very short layover",
     "travelClassFallback": "Economy",
