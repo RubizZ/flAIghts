@@ -29,6 +29,7 @@ const FinalEvaluationModal: React.FC = () => {
     const [gender, setGender] = useState<string>('');
     const [educationLevel, setEducationLevel] = useState<string>('');
     const [showThanks, setShowThanks] = useState(false);
+    const [originalUrl, setOriginalUrl] = useState<string | null>(null);
     const { user, isAuthenticated } = useAuth();
 
     // Solo se muestra si todas las misiones están completas y se han respondido todos los tests
@@ -53,12 +54,30 @@ const FinalEvaluationModal: React.FC = () => {
         });
         setIsSubmitting(false);
         setShowThanks(true);
+        // Guardamos la URL actual antes de "limpiarla"
+        setOriginalUrl(window.location.pathname + window.location.search + window.location.hash);
+        window.history.replaceState(null, '', '/');
     };
 
     const handleClose = async () => {
         setIsClosing(true);
         await new Promise(resolve => setTimeout(resolve, 500));
+        
+        // Al cerrar "normalmente", restauramos la URL original si existe
+        if (showThanks && originalUrl) {
+            window.history.replaceState(null, '', originalUrl);
+        }
+        
         setShowThanks(false);
+        setIsClosing(false);
+    };
+
+    const handleGoHome = async () => {
+        setIsClosing(true);
+        await new Promise(resolve => setTimeout(resolve, 500));
+        navigate('/', { replace: true });
+        setShowThanks(false);
+        setIsClosing(false);
     };
 
     return (
@@ -143,6 +162,17 @@ const FinalEvaluationModal: React.FC = () => {
                                         <span className="text-[8px] font-bold text-white/20 uppercase">Pantalla de inicio</span>
                                     </div>
                                 </button>
+
+                                <button
+                                    onClick={handleGoHome}
+                                    className="flex items-center gap-3 px-6 py-4 bg-white/5 hover:bg-white/10 border border-white/10 rounded-2xl transition-all group cursor-pointer"
+                                >
+                                    <Send size={18} className="text-white/40 group-hover:text-blue-400 transition-colors" />
+                                    <div className="flex flex-col items-start gap-0.5">
+                                        <span className="text-[10px] font-black uppercase tracking-widest text-white/80">Página de Inicio</span>
+                                        <span className="text-[8px] font-bold text-white/20 uppercase">Limpiar búsqueda</span>
+                                    </div>
+                                </button>
                             </div>
 
                             <button
@@ -151,7 +181,7 @@ const FinalEvaluationModal: React.FC = () => {
                                 style={{ animationDelay: '400ms' }}
                             >
                                 <div className="absolute inset-0 bg-linear-to-r from-transparent via-blue-500/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
-                                <span>Volver al inicio</span>
+                                <span>Seguir explorando</span>
                             </button>
                         </div>
                     ) : (

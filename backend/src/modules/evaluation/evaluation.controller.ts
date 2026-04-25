@@ -1,14 +1,24 @@
-import { Body, Controller, Post, Route, Tags, Security, RequestProp } from 'tsoa';
-import { injectable } from 'tsyringe';
+import { Body, Controller, Post, Route, Tags, Request, Security, RequestProp } from 'tsoa';
+import { inject, singleton, injectable } from 'tsyringe';
 import type { EvaluationPayload } from './evaluation.types.js';
 import { Evaluation } from './evaluation.model.js';
 import { User } from '../users/models/user.model.js';
 import type { AuthenticatedUser } from '../auth/auth.types.js';
+import { MailService } from '../../services/mail.service.js';
+import { MailTemplates } from '../../services/mail.templates.js';
+import { ServerConfig } from '../../config/server.config.js';
 
 @injectable()
 @Route('evaluation')
 @Tags('Evaluation')
+@singleton()
 export class EvaluationController extends Controller {
+    constructor(
+        @inject(MailService) private mailService: MailService,
+        @inject(ServerConfig) private config: ServerConfig
+    ) {
+        super();
+    }
     @Security('jwt-optional') // Opcional para permitir anónimos
     @Post('results')
     public async submitResults(
@@ -41,6 +51,19 @@ export class EvaluationController extends Controller {
                             }
                         } 
                     }
+                );
+            }
+
+            // Enviar email de agradecimiento
+            if (currentUser?.email) {
+                const template = MailTemplates.evaluationCompleted(
+                    this.config.FRONTEND_URL,
+                    currentUser.username
+                );
+                await this.mailService.sendMail(
+                    currentUser.email,
+                    template.subject,
+                    template.html
                 );
             }
         }
