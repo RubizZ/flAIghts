@@ -1,4 +1,4 @@
-﻿{
+{
   "forgotPassword": {
     "title": "Olvidé mi contraseña",
     "description": "Introduce tu email y te enviaremos un enlace para restablecer tu contraseña.",
@@ -588,7 +588,10 @@
     "scale": "{{count}}ª Escala",
     "overnightScale": "Escala nocturna",
     "shortScale": "Escala muy corta",
-    "travelClassFallback": "Turista"
+    "travelClassFallback": "Turista",
+    "flight": "Vuelo",
+    "tripCompletion": "Finalización del viaje",
+    "arrivingAt": "Llegando a {{airport}}"
   },
   "agentChat": {
     "recommendedFlight": "Vuelo Recomendado",
@@ -880,7 +883,8 @@
     "direct": "Directo",
     "stopover": "{{count}} {{label}} ({{airports}})",
     "stopoverSingular": "escala",
-    "stopoverPlural": "escalas"
+    "stopoverPlural": "escalas",
+    "multiCityTour": "Tour Multi-ciudad"
   },
   "airportAutocomplete": {
     "fromCity": "A {{distance}} km de la ciudad",

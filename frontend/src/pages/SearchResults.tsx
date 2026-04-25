@@ -259,7 +259,11 @@ export default function SearchResults() {
     const departureItineraries = sortItineraries(searchData?.departure_itineraries);
     const returnItineraries = sortItineraries(searchData?.return_itineraries);
 
-    const isOneWay = !searchData?.return_date || !returnItineraries || returnItineraries.length === 0;
+    const isOneWay = useMemo(() => {
+        if (!searchData?.return_date) return true;
+        if (searchData.status === 'searching') return false;
+        return !returnItineraries || returnItineraries.length === 0;
+    }, [searchData?.return_date, searchData?.status, returnItineraries]);
 
     const handleSelectItinerary = (itinerary: ItineraryResponse, type: 'departure' | 'return') => {
         setExpandedItinerary(null);
@@ -572,6 +576,14 @@ export default function SearchResults() {
                                             </div>
                                         </div>
                                     </>
+                                )}
+
+                                {selectionStep === 'return' && searchData.status === 'searching' && (!returnItineraries || returnItineraries.length === 0) && (
+                                    <div className="flex flex-col items-center justify-center py-20 bg-main/40 backdrop-blur-md rounded-3xl border border-line text-center text-content-muted mx-4">
+                                        <Loader2 size={48} className="mb-4 opacity-50 text-brand animate-spin" />
+                                        <h3 className="text-xl font-semibold text-content mb-2">{t('searchResultsPage.searchingMore')}</h3>
+                                        <p className="text-sm opacity-70">{t('searchResultsPage.searchingBestRoutes')}</p>
+                                    </div>
                                 )}
 
                                 {selectionStep === 'departure' && searchData.status === 'searching' && !departureItineraries?.length && (

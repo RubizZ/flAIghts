@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { Fragment, useMemo } from "react";
 import { Plane } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import type { ItineraryResponse } from "@/api/generated/openapi/model";
@@ -39,6 +39,12 @@ export default function FlightRouteInfo({ itinerary, formatTime, formatDuration 
         return Math.round(diff / (1000 * 60 * 60 * 24));
     }, [firstLeg?.departure_time, lastLeg?.arrival_time]);
 
+    const isGeneticTrip = useMemo(() =>
+        itinerary.city_order &&
+        itinerary.city_order.length > 2 &&
+        itinerary.city_order[0] === itinerary.city_order[itinerary.city_order.length - 1],
+        [itinerary.city_order]);
+
     return (
         <div className="flex-1 w-full flex flex-col gap-4">
             <div className="flex items-center gap-3 overflow-hidden">
@@ -52,45 +58,66 @@ export default function FlightRouteInfo({ itinerary, formatTime, formatDuration 
                     </div>
                 ))}
                 <span className="text-sm font-semibold text-content/90 truncate">
-                    {uniqueAirlines.map(([name]) => name).join(', ')}
+                    {isGeneticTrip ? t("flightRoute.multiCityTour") : uniqueAirlines.map(([name]) => name).join(', ')}
                 </span>
             </div>
 
-            <div className="flex items-center gap-4 sm:gap-6 w-full">
-                <div className="text-center min-w-[70px]">
-                    <div className="text-2xl font-bold text-content tracking-tight">{formatTime(firstLeg?.departure_time)}</div>
-                    <div className="text-xs font-bold text-content-muted/80 bg-surface/30 px-2 py-0.5 rounded-full inline-block mt-1">{firstLeg?.origin}</div>
+            {isGeneticTrip ? (
+                <div className="flex items-center gap-2 w-full overflow-x-auto no-scrollbar py-1">
+                    {itinerary.city_order.map((city, index) => (
+                        <Fragment key={index}>
+                            {index > 0 && (
+                                <div className="flex flex-col items-center min-w-[30px] opacity-40">
+                                    <div className="w-full h-[1px] bg-line relative">
+                                        <div className="absolute -top-[3px] right-0 w-1.5 h-1.5 border-t border-r border-line rotate-45" />
+                                    </div>
+                                </div>
+                            )}
+                            <div className="flex flex-col items-center">
+                                <span className={`text-sm font-black tracking-tighter ${index === 0 || index === itinerary.city_order.length - 1 ? 'text-brand' : 'text-content'}`}>
+                                    {city}
+                                </span>
+                            </div>
+                        </Fragment>
+                    ))}
                 </div>
-
-                <div className="flex flex-col items-center flex-1 px-2 relative min-w-[100px]">
-                    <span className="text-[10px] uppercase font-bold text-content-muted mb-1.5 tracking-wider">{formatDuration(itinerary.total_duration)}</span>
-                    <div className="w-full h-[2px] bg-line relative flex items-center justify-center">
-                        <div className="absolute w-1.5 h-1.5 rounded-full bg-line left-0" />
-                        {stopovers > 0 && Array.from({ length: stopovers }).map((_, i) => (
-                            <div
-                                key={i}
-                                className="w-1.5 h-1.5 rounded-full bg-orange-400"
-                                style={{
-                                    position: 'absolute',
-                                    left: `calc(${(100 / (stopovers + 1)) * (i + 1)}% - 3px)`
-                                }}
-                            />
-                        ))}
-                        <div className="absolute w-1.5 h-1.5 rounded-full bg-line right-0" />
+            ) : (
+                <div className="flex items-center gap-4 sm:gap-6 w-full">
+                    <div className="text-center min-w-[70px]">
+                        <div className="text-2xl font-bold text-content tracking-tight">{formatTime(firstLeg?.departure_time)}</div>
+                        <div className="text-xs font-bold text-content-muted/80 bg-surface/30 px-2 py-0.5 rounded-full inline-block mt-1">{firstLeg?.origin}</div>
                     </div>
-                    <span className={`text-[10px] font-bold mt-1.5 text-center ${stopovers > 0 ? 'text-orange-400' : 'text-emerald-400'}`}>
-                        {stopovers === 0 ? t("flightRoute.direct") : t("flightRoute.stopover", { count: stopovers, label: stopovers === 1 ? t("flightRoute.stopoverSingular") : t("flightRoute.stopoverPlural"), airports: stopoverAirports })}
-                    </span>
-                </div>
 
-                <div className="text-center min-w-[70px]">
-                    <div className="text-2xl font-bold text-content tracking-tight">
-                        {formatTime(lastLeg?.arrival_time)}
-                        {dayDiff > 0 && <sup className="text-[12px] text-brand ml-0.5 font-bold">+{dayDiff}</sup>}
+                    <div className="flex flex-col items-center flex-1 px-2 relative min-w-[100px]">
+                        <span className="text-[10px] uppercase font-bold text-content-muted mb-1.5 tracking-wider">{formatDuration(itinerary.total_duration)}</span>
+                        <div className="w-full h-[2px] bg-line relative flex items-center justify-center">
+                            <div className="absolute w-1.5 h-1.5 rounded-full bg-line left-0" />
+                            {stopovers > 0 && Array.from({ length: stopovers }).map((_, i) => (
+                                <div
+                                    key={i}
+                                    className="w-1.5 h-1.5 rounded-full bg-orange-400"
+                                    style={{
+                                        position: 'absolute',
+                                        left: `calc(${(100 / (stopovers + 1)) * (i + 1)}% - 3px)`
+                                    }}
+                                />
+                            ))}
+                            <div className="absolute w-1.5 h-1.5 rounded-full bg-line right-0" />
+                        </div>
+                        <span className={`text-[10px] font-bold mt-1.5 text-center ${stopovers > 0 ? 'text-orange-400' : 'text-emerald-400'}`}>
+                            {stopovers === 0 ? t("flightRoute.direct") : t("flightRoute.stopover", { count: stopovers, label: stopovers === 1 ? t("flightRoute.stopoverSingular") : t("flightRoute.stopoverPlural"), airports: stopoverAirports })}
+                        </span>
                     </div>
-                    <div className="text-xs font-bold text-content-muted/80 bg-surface/30 px-2 py-0.5 rounded-full inline-block mt-1">{lastLeg?.destination}</div>
+
+                    <div className="text-center min-w-[70px]">
+                        <div className="text-2xl font-bold text-content tracking-tight">
+                            {formatTime(lastLeg?.arrival_time)}
+                            {dayDiff > 0 && <sup className="text-[12px] text-brand ml-0.5 font-bold">+{dayDiff}</sup>}
+                        </div>
+                        <div className="text-xs font-bold text-content-muted/80 bg-surface/30 px-2 py-0.5 rounded-full inline-block mt-1">{lastLeg?.destination}</div>
+                    </div>
                 </div>
-            </div>
+            )}
         </div>
     );
 }

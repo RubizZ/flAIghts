@@ -379,6 +379,12 @@ export class SearchService {
         const destination = criteria.destinations[0]!;
         const allEdges: EnrichedFlightEdge[] = [];
 
+
+        if (preferences.stops_weight >= 1.0) {
+            logger.info({ origin, destination, stops_weight: preferences.stops_weight }, `[Search] Omitiendo búsqueda de escalas por máxima prioridad a vuelos directos`);
+            return [];
+        }
+
         const departureDate = new Date(criteria.departure_date);
         const dateStr = departureDate.toISOString().split("T")[0]!;
         const nextDayStr = addDays(dateStr, 1);
@@ -432,7 +438,7 @@ export class SearchService {
                 logger.error({ error }, "Error recolectando aristas de Hubs");
             }
         } else {
-            logger.info({ stops_weight: preferences.stops_weight }, `[Search] Omitiendo Algoritmo de Pinza por alta importancia de escalas`);
+            logger.info({ stops_weight: preferences.stops_weight }, `[Search] Omitiendo Algoritmo de Pinza por importancia de escalas mayor a 0.1`);
         }
 
         return allEdges;
@@ -699,11 +705,6 @@ export class SearchService {
                             const prevArrival = parseEdgeDateTime(prevSegment.arrival_airport.time);
                             const currDeparture = parseEdgeDateTime(seg.departure_airport.time);
                             wait_time = Math.max(0, Math.round((currDeparture.getTime() - prevArrival.getTime()) / 60000));
-                        } else if (i > 0) {
-                            // Este es el primer segmento de un vuelo intermedio.
-                            // El "tiempo de espera" aquí es en realidad la estancia en la ciudad anterior.
-                            // Lo ponemos en minutos para mantener consistencia, aunque sean días.
-                            wait_time = data.daysPerCity * 24 * 60;
                         }
 
                         legs.push({
@@ -726,11 +727,6 @@ export class SearchService {
                         });
                     }
                 } else {
-                    let wait_time = 0;
-                    if (i > 0) {
-                        wait_time = data.daysPerCity * 24 * 60;
-                    }
-
                     legs.push({
                         order: currentOrder++,
                         flight_id: bestEdge.id,
@@ -742,7 +738,7 @@ export class SearchService {
                         airline_logo: bestEdge.airline_logo ?? "",
                         departure_time: bestEdge.departure_time,
                         arrival_time: bestEdge.arrival_time,
-                        wait_time: wait_time,
+                        wait_time: 0,
                         airplane: bestEdge.airplane,
                         flight_number: bestEdge.flight_number,
                         travel_class: bestEdge.travel_class,

@@ -36,6 +36,29 @@ export default function FlightCard({ itinerary, formatTime, formatDuration, airp
     const firstDepartureTime = itinerary.legs[0]?.departure_time;
     const lastArrivalLeg = itinerary.legs[itinerary.legs.length - 1];
 
+    const isGeneticTrip = useMemo(() =>
+        itinerary.city_order &&
+        itinerary.city_order.length > 2 &&
+        itinerary.city_order[0] === itinerary.city_order[itinerary.city_order.length - 1],
+        [itinerary.city_order]);
+
+    const groupedLegs = useMemo(() => {
+        const groups: LegResponse[][] = [];
+        let currentGroup: LegResponse[] = [];
+
+        itinerary.legs.forEach((leg, i) => {
+            if (i > 0 && leg.flight_id !== itinerary.legs[i - 1]?.flight_id) {
+                groups.push(currentGroup);
+                currentGroup = [];
+            }
+            currentGroup.push(leg);
+        });
+        if (currentGroup.length > 0) {
+            groups.push(currentGroup);
+        }
+        return groups;
+    }, [itinerary.legs]);
+
     return (
         <div
             className="bg-main/80 dark:bg-main/60 backdrop-blur-xl border border-line rounded-2xl shadow-lg transition-all duration-300 hover:border-brand/40 hover:bg-surface overflow-hidden"
@@ -93,39 +116,56 @@ export default function FlightCard({ itinerary, formatTime, formatDuration, airp
 
             {isExpanded && (
                 <div className="px-5 border-t border-line animate-in fade-in duration-300">
-                    <div className="pt-4 space-y-4">
-                        {itinerary.legs.map((leg, legIndex) => (
-                            <Fragment key={legIndex}>
-                                {legIndex > 0 && leg.wait_time !== undefined && leg.wait_time > 0 && (
-                                    <StopoverDetails
-                                        leg={leg}
-                                        airportsMap={airportsMap}
-                                        formatDuration={formatDuration}
-                                        index={legIndex}
-                                        totalSteps={itinerary.legs.length - 1}
-                                        previousLeg={itinerary.legs[legIndex - 1]!}
-                                    />
+                    <div className="pt-4 space-y-6">
+                        {groupedLegs.map((group, groupIndex) => (
+                            <div key={groupIndex} className="space-y-4">
+                                {isGeneticTrip && (
+                                    <div className="flex items-center gap-2 mb-2">
+                                        <div className="h-px bg-linear-to-r from-brand/50 to-transparent flex-1" />
+                                        <span className="text-[10px] font-black uppercase tracking-widest text-brand bg-brand/5 px-2 py-0.5 rounded-md border border-brand/10">
+                                            {t('flightCard.flight')} {groupIndex + 1}: {group[0]?.origin} → {group[group.length - 1]?.destination}
+                                        </span>
+                                        <div className="h-px bg-linear-to-l from-brand/50 to-transparent flex-1" />
+                                    </div>
                                 )}
-                                <LegDetails
-                                    leg={leg}
-                                    airportsMap={airportsMap}
-                                    formatDuration={formatDuration}
-                                    formatTime={formatTime}
-                                    itineraryStart={firstDepartureTime}
-                                    originColor={legIndex === 0 ? 'var(--color-origin)' : `color-mix(in srgb, var(--color-origin), var(--color-destination) ${(legIndex / itinerary.legs.length) * 100}%)`}
-                                    destinationColor={legIndex === itinerary.legs.length - 1 ? 'var(--color-destination)' : `color-mix(in srgb, var(--color-origin), var(--color-destination) ${((legIndex + 1) / itinerary.legs.length) * 100}%)`}
-                                />
-                            </Fragment>
+
+                                {group.map((leg, legIndex) => (
+                                    <Fragment key={legIndex}>
+                                        {legIndex > 0 && leg.wait_time !== undefined && leg.wait_time > 0 && (
+                                            <StopoverDetails
+                                                leg={leg}
+                                                airportsMap={airportsMap}
+                                                formatDuration={formatDuration}
+                                                index={legIndex}
+                                                totalSteps={group.length - 1}
+                                                previousLeg={group[legIndex - 1]!}
+                                            />
+                                        )}
+                                        <LegDetails
+                                            leg={leg}
+                                            airportsMap={airportsMap}
+                                            formatDuration={formatDuration}
+                                            formatTime={formatTime}
+                                            itineraryStart={firstDepartureTime}
+                                            originColor={groupIndex === 0 && legIndex === 0 ? 'var(--color-origin)' : `color-mix(in srgb, var(--color-origin), var(--color-destination) ${((groupIndex * 2 + legIndex) / (groupedLegs.length * 2)) * 100}%)`}
+                                            destinationColor={groupIndex === groupedLegs.length - 1 && legIndex === group.length - 1 ? 'var(--color-destination)' : `color-mix(in srgb, var(--color-origin), var(--color-destination) ${((groupIndex * 2 + legIndex + 1) / (groupedLegs.length * 2)) * 100}%)`}
+                                        />
+                                    </Fragment>
+                                ))}
+                            </div>
                         ))}
 
                         {/* Final arrival summary notice */}
                         <div className="mt-4 border-t border-line flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-content-muted bg-surface/20 -mx-5 px-5 py-4">
                             <div className="flex items-center gap-2">
                                 <Clock size={16} className="text-brand" />
-                                <span>Llegada final a <strong>{lastArrivalLeg?.destination}</strong>:</span>
+                                <span>{isGeneticTrip ? t('flightCard.tripCompletion') : t('flightCard.finalArrival', { airport: lastArrivalLeg?.destination })}:</span>
                             </div>
                             <span className="text-xs font-bold text-content leading-none">
-                                {t('flightCard.finalArrival', { airport: lastArrivalLeg?.destination })}
+                                {isGeneticTrip
+                                    ? t('flightCard.arrivingAt', { airport: lastArrivalLeg?.destination })
+                                    : t('flightCard.finalArrival', { airport: lastArrivalLeg?.destination })
+                                }
                                 <span className="text-brand ml-1">
                                     {t('flightCard.atTime', { time: formatTime(lastArrivalLeg?.arrival_time) })}
                                 </span>

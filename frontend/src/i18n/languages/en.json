@@ -1,4 +1,4 @@
-﻿{
+{
   "forgotPassword": {
     "title": "Forgot Password",
     "description": "Enter your email and we will send you a password reset link.",
@@ -588,7 +588,10 @@
     "scale": "{{count}}Âª Layover",
     "overnightScale": "Overnight layover",
     "shortScale": "Very short layover",
-    "travelClassFallback": "Economy"
+    "travelClassFallback": "Economy",
+    "flight": "Flight",
+    "tripCompletion": "Trip Completion",
+    "arrivingAt": "Arriving at {{airport}}"
   },
   "agentChat": {
     "recommendedFlight": "Recommended Flight",
@@ -880,7 +883,8 @@
     "direct": "Direct",
     "stopover": "{{count}} {{label}} ({{airports}})",
     "stopoverSingular": "stopover",
-    "stopoverPlural": "stopovers"
+    "stopoverPlural": "stopovers",
+    "multiCityTour": "Multi-city Tour"
   },
   "airportAutocomplete": {
     "fromCity": "{{distance}} km from city",
