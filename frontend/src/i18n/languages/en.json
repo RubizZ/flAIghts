@@ -1,7 +1,29 @@
 {
+  "aboutUs": {
+    "title": "About Us",
+    "backToHome": "Back to Home",
+    "sections": {
+      "mission": {
+        "title": "Our Mission",
+        "content": "flAIghts was born as a Final Degree Project with the goal of revolutionizing flight searching using artificial intelligence. We want planning your next trip to be as simple as having a conversation."
+      },
+      "vision": {
+        "title": "Our Vision",
+        "content": "To become the leading intelligent travel assistant, removing technical barriers and facilitating access to the best flight options through the power of AI."
+      },
+      "values": {
+        "title": "Our Values",
+        "content": "Innovation, transparency, and accessibility. We believe in technology as a bridge to connect people and destinations intelligently."
+      },
+      "team": {
+        "title": "The Team",
+        "content": "We are a team passionate about technology and travel, focused on creating tools that provide real value to users."
+      }
+    }
+  },
   "acknowledgements": {
     "backToHome": "Back to Home",
-    "content": "We thank SerpApi for the use of its API to carry out this project.",
+    "content": "We would like to express our most sincere gratitude to <1>SerpApi</1> for their generosity in providing us with the necessary credits free of charge for this academic project. Their support has been fundamental to the development of this Final Degree Project, allowing us to integrate real-time flight searches that would otherwise not have been possible due to infrastructure costs. Thank you for supporting university talent.",
     "title": "Acknowledgements"
   },
   "admin": {
@@ -156,6 +178,25 @@
     "returnFlights": "Return Flights",
     "select": "Select",
     "tfg": "Final Degree Project"
+  },
+  "contact": {
+    "title": "Contact",
+    "backToHome": "Back to Home",
+    "subtitle": "Do you have any questions or suggestions? We are here to help.",
+    "sections": {
+      "support": {
+        "title": "Technical Support",
+        "content": "For technical issues with the platform, you can write to us at: support@flaights.com"
+      },
+      "feedback": {
+        "title": "Feedback and Suggestions",
+        "content": "We highly value your opinion. If you have ideas to improve flAIghts, do not hesitate to contact us."
+      },
+      "university": {
+        "title": "Academic Project",
+        "content": "This project was carried out within the framework of the Complutense University of Madrid."
+      }
+    }
   },
   "errorBoundary": {
     "copyError": "Copy error",
