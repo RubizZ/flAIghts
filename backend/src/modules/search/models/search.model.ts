@@ -22,6 +22,7 @@ export interface ISearch {
   departure_itineraries?: IItinerary[];
   return_itineraries?: IItinerary[];
   created_at: Date;
+  last_error?: string;
 }
 
 const SearchSchema = new Schema<ISearch>({
@@ -63,7 +64,8 @@ const SearchSchema = new Schema<ISearch>({
   source: { type: String, enum: ["manual", "agent"], default: "manual" },
   departure_itineraries: [{ type: Schema.Types.ObjectId, ref: 'Itinerary' }],
   return_itineraries: [{ type: Schema.Types.ObjectId, ref: 'Itinerary' }],
-  created_at: { type: Date, default: Date.now }
+  created_at: { type: Date, default: Date.now },
+  last_error: { type: String, required: false }
 }, {
   toJSON: {
     versionKey: false

@@ -35,7 +35,9 @@ export class Yen {
             const lastPath = A[i - 1]!;
 
             for (let j = 0; j < lastPath.length; j++) {
-                const spurNode = lastPath[j]!.from;
+                const spurNode = lastPath[j]?.from;
+                if (!spurNode) continue;
+                
                 const rootPath = lastPath.slice(0, j);
 
                 const deletedEdges = new Set<string>();

@@ -170,12 +170,16 @@ export interface AuditDetails {
                 max_price?: number;
             }
         }
-        COMPLETE: {
+        EXPLORATION_START: {
             id: string;
-            itinerary_id: string;
         }
-        FAIL: {
+        EXPLORATION_COMPLETED: {
             id: string;
+            itinerary_count: number;
+        }
+        EXPLORATION_FAILED: {
+            id: string;
+            reason: string;
         }
         SHARE: {
             id: string;

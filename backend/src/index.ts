@@ -84,10 +84,21 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
+if (config.TRUST_PROXY) {
+    app.set('trust proxy', 1);
+}
+
 // Request Context Middleware for auditing and tracking
 app.use((req, res, next) => {
+    // Si no confiamos en el proxy, ignoramos los encabezados que puedan ser spoofed
+    let detectedIp = req.ip || req.socket.remoteAddress || '';
+
+    if (config.TRUST_PROXY && req.headers['cf-connecting-ip']) {
+        detectedIp = req.headers['cf-connecting-ip'] as string;
+    }
+
     const store: RequestContext = {
-        ip: (req.ip || req.socket.remoteAddress || '').replace('::ffff:', ''),
+        ip: detectedIp.replace('::ffff:', ''),
         userAgent: req.headers['user-agent'] || '',
         userId: null // Puede actualizarse en el middleware de autenticación si es necesario
     };

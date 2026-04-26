@@ -159,16 +159,21 @@ export class Dijkstra {
     ): DijkstraFlightEdge[] | null {
         const path: DijkstraFlightEdge[] = [];
         let curr: string | null = target;
-        while (curr !== null && prevEdge[curr] !== null) {
+        let safety = 0;
+        while (curr !== null && prevEdge[curr] !== undefined && prevEdge[curr] !== null && safety < 100) {
             const edge: DijkstraFlightEdge = prevEdge[curr]!;
             path.unshift(edge);
             curr = edge.from;
+            safety++;
         }
         return path.length > 0 ? path : null;
     }
 }
 
-export function parseEdgeDateTime(input: string): Date {
+export function parseEdgeDateTime(input: any): Date {
+    if (!input || typeof input !== "string") {
+        return new Date(NaN);
+    }
     let normalized = input;
     if (input.includes(" ") && !input.includes("T")) {
         normalized = input.replace(" ", "T");

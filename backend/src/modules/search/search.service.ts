@@ -175,6 +175,12 @@ export class SearchService {
                 stops_weight: 0.2,
                 airline_quality_weight: 0.2
             };
+            await this.auditService.register({
+                resource: "SEARCH",
+                action: "EXPLORATION_START",
+                details: { id: searchId },
+                user: { id: userId }
+            });
 
             if (userId) {
                 const targetUser = await this.userService.getUser(userId);
@@ -299,8 +305,18 @@ export class SearchService {
                 };
             }
 
+            await this.auditService.register({
+                resource: "SEARCH",
+                action: "EXPLORATION_COMPLETED",
+                details: {
+                    id: searchId,
+                    itinerary_count: (finalSearch?.departure_itineraries?.length || 0) + (finalSearch?.return_itineraries?.length || 0)
+                },
+                user: { id: userId }
+            });
+
         } catch (error: any) {
-            logger.error({ error, searchId }, `Error en exploración ${searchId}`);
+            logger.error(error, `Error en exploración ${searchId} (searchId: ${searchId})`);
 
             await Search.updateOne(
                 { _id: searchId },
@@ -309,6 +325,16 @@ export class SearchService {
                     $set: { last_error: error.message || String(error) }
                 }
             );
+
+            await this.auditService.register({
+                resource: "SEARCH",
+                action: "EXPLORATION_FAILED",
+                details: {
+                    id: searchId,
+                    reason: error.message || String(error)
+                },
+                user: { id: userId }
+            });
 
             yield { type: "failed", message: error.message || "Error interno durante la exploración." };
         }
@@ -496,6 +522,8 @@ export class SearchService {
             let totalPrice = 0;
             let totalDuration = 0;
             let totalWaitTime = 0;
+            
+            if (!path || path.length === 0) return null;
             const stops = path.length - 1;
 
             for (let i = 0; i < path.length; i++) {
@@ -507,13 +535,17 @@ export class SearchService {
                     const wait = Math.max(0, Math.round((currDeparture.getTime() - prevArrival.getTime()) / 60000));
                     totalWaitTime += wait;
                 }
-                totalDuration += edge.duration;
+                totalDuration += (edge.duration || 0);
             }
 
+            totalPrice = isNaN(totalPrice) ? 0 : totalPrice;
+            totalDuration = isNaN(totalDuration) ? 0 : totalDuration;
+            totalWaitTime = isNaN(totalWaitTime) ? 0 : totalWaitTime;
+
             const totalJourneyDuration = totalDuration + totalWaitTime;
-            const weightedCost = (totalPrice * preferences.price_weight) +
-                (totalJourneyDuration * preferences.duration_weight) +
-                (stops * 100 * preferences.stops_weight);
+            const weightedCost = (totalPrice * (preferences.price_weight || 0.4)) +
+                (totalJourneyDuration * (preferences.duration_weight || 0.2)) +
+                (stops * 100 * (preferences.stops_weight || 0.2));
 
             return {
                 path,
@@ -529,7 +561,7 @@ export class SearchService {
         const uniquePaths = [];
         const seen = new Set();
         for (const p of pathData) {
-            if (!seen.has(p.key)) {
+            if (p && !seen.has(p.key)) {
                 seen.add(p.key);
                 uniquePaths.push(p);
             }
@@ -639,11 +671,12 @@ export class SearchService {
         return itineraryIds;
     }
 
-
     private mapResponseToEdges(flights: FlightRoute[], outboundDate: string): EnrichedFlightEdge[] {
-        return flights.map((flight): EnrichedFlightEdge => {
-            const firstSegment = flight.flights[0];
-            const lastSegment = flight.flights[flight.flights.length - 1];
+        return flights.map((flight): EnrichedFlightEdge | null => {
+            if (!flight.flights || flight.flights.length === 0) return null;
+
+            const firstSegment = flight.flights[0]!;
+            const lastSegment = flight.flights[flight.flights.length - 1]!;
 
             return {
                 id: flight.booking_token,
@@ -682,11 +715,19 @@ export class SearchService {
                     extensions: f.extensions
                 }))
             };
-        });
+        }).filter((e): e is EnrichedFlightEdge => e !== null);
     }
 
     private async runGeneticTrip(searchId: string, data: { origin: string, cities: string[], startDate: Date, daysPerCity: number }, userId?: string) {
         logger.info({ searchId, origin: data.origin, cities: data.cities, startDate: data.startDate, daysPerCity: data.daysPerCity }, `[Genetic] Iniciando runGeneticTrip`);
+        
+        await this.auditService.register({
+            resource: "SEARCH",
+            action: "EXPLORATION_START",
+            details: { id: searchId },
+            user: { id: userId }
+        });
+
         try {
             const result = await this.geneticOptimizer.findBestTrip(
                 data.origin,
@@ -809,9 +850,29 @@ export class SearchService {
                 }
             );
 
+            await this.auditService.register({
+                resource: "SEARCH",
+                action: "EXPLORATION_COMPLETED",
+                details: {
+                    id: searchId,
+                    itinerary_count: 1
+                },
+                user: { id: userId }
+            });
+
         } catch (error: any) {
             logger.error({ error, searchId, message: error?.message, stack: error?.stack }, `[Genetic] Error inesperado en runGeneticTrip`);
             await Search.updateOne({ _id: searchId }, { status: "failed" });
+
+            await this.auditService.register({
+                resource: "SEARCH",
+                action: "EXPLORATION_FAILED",
+                details: {
+                    id: searchId,
+                    reason: error.message || String(error)
+                },
+                user: { id: userId }
+            });
         }
     }
 
