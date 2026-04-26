@@ -105,6 +105,7 @@ export default function Login() {
                         credential: googleCredentialRef.current || "",
                         email: error.details.email
                     });
+                    turnstileRef.current?.reset();
                     toast.info(t("login.toast.googleAccountDetected"));
                 } else if (error.code === "INVALID_RESET_CODE") {
                     toast.error(t("login.toast.googleInvalidCode"));
@@ -178,8 +179,10 @@ export default function Login() {
                 {googleLinkData ? (
                     <GoogleLinkingView
                         linkData={googleLinkData}
-                        turnstileToken={turnstileToken}
-                        onCancel={() => setGoogleLinkData(null)}
+                        onCancel={() => {
+                            setGoogleLinkData(null);
+                            turnstileRef.current?.reset();
+                        }}
                         onSuccess={() => setGoogleLinkData(null)}
                     />
                 ) : (
@@ -220,7 +223,7 @@ export default function Login() {
                         <button
                             type="button"
                             onClick={login}
-                            disabled={isPending}
+                            disabled={isPending || !turnstileToken}
                             className={`mt-2 rounded-lg bg-brand p-3 text-content-on-brand font-bold enabled:hover:scale-[1.02] enabled:active:scale-95 transition-all shadow-lg shadow-brand/20 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed`}
                         >
                             {isPending ? t("login.actions.loggingIn") : t("login.actions.login")}
@@ -232,7 +235,7 @@ export default function Login() {
                             <div className="grow border-t border-content-muted/30"></div>
                         </div>
 
-                        <div className="flex justify-center">
+                        <div className={`flex justify-center transition-opacity duration-300 ${!turnstileToken ? "opacity-50 pointer-events-none" : ""}`}>
                             <GoogleLogin
                                 onSuccess={credentialResponse => {
                                     if (credentialResponse.credential) {

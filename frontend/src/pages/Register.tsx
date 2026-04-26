@@ -80,6 +80,7 @@ export default function Register() {
                         credential: googleCredentialRef.current || "",
                         email: error.details.email
                     });
+                    turnstileRef.current?.reset();
                     toast.info(t("login.toast.googleAccountDetected"));
                 } else if (error.code === "TURNSTILE_MISSING_TOKEN" || error.code === "TURNSTILE_INVALID_TOKEN" || error.code === "TURNSTILE_TOKEN_ALREADY_SPENT" || error.code === "TURNSTILE_VERIFICATION_FAILED") {
                     toast.error(t("login.toast.googleVerificationFailed"));
@@ -260,8 +261,10 @@ export default function Register() {
                 {googleLinkData ? (
                     <GoogleLinkingView
                         linkData={googleLinkData}
-                        turnstileToken={formData.turnstileToken}
-                        onCancel={() => setGoogleLinkData(null)}
+                        onCancel={() => {
+                            setGoogleLinkData(null);
+                            turnstileRef.current?.reset();
+                        }}
                         onSuccess={() => setGoogleLinkData(null)}
                     />
                 ) : (
@@ -287,7 +290,7 @@ export default function Register() {
                                 <button
                                     type="button"
                                     onClick={handleNextStep}
-                                    disabled={isInitiating}
+                                    disabled={isInitiating || !formData.turnstileToken}
                                     className="mt-4 rounded-lg bg-brand p-3 text-content-on-brand font-bold enabled:hover:scale-[1.02] enabled:active:scale-95 transition-all shadow-lg shadow-brand/20 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
                                     {isInitiating ? t("register.actions.sendingCode") : t("register.actions.nextStep")}
@@ -299,7 +302,7 @@ export default function Register() {
                                     <div className="grow border-t border-content-muted/30"></div>
                                 </div>
 
-                                <div className="flex justify-center">
+                                <div className={`flex justify-center transition-opacity duration-300 ${!formData.turnstileToken ? "opacity-50 pointer-events-none" : ""}`}>
                                     <GoogleLogin
                                         onSuccess={credentialResponse => {
                                             if (credentialResponse.credential) {
@@ -451,7 +454,7 @@ export default function Register() {
                                 <button
                                     type="button"
                                     onClick={handleRegister}
-                                    disabled={isCompleting}
+                                    disabled={isCompleting || !formData.turnstileTokenStep2}
                                     className="mt-4 rounded-lg bg-brand p-3 text-content-on-brand font-bold enabled:hover:scale-[1.02] enabled:active:scale-95 transition-all shadow-lg shadow-brand/20 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
                                     {isCompleting ? t("register.actions.creatingAccount") : t("register.actions.completeRegistration")}

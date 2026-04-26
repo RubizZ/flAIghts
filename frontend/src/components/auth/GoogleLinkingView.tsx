@@ -5,15 +5,16 @@ import { useLoginWithGoogleWeb, useRequestLinkingResetCode } from "@/api/generat
 import FloatingLabelInput from "@/components/ui/FloatingLabelInput";
 import { useAuth } from "@/context/AuthContext";
 import { useNavigate } from "react-router-dom";
+import TurnstileWidget, { type TurnstileWidgetRef } from "@/components/ui/TurnstileWidget";
+import { useRef } from "react";
 
 interface GoogleLinkingViewProps {
     linkData: { credential: string; email: string };
-    turnstileToken: string;
     onCancel: () => void;
     onSuccess?: () => void;
 }
 
-export default function GoogleLinkingView({ linkData, turnstileToken, onCancel, onSuccess }: GoogleLinkingViewProps) {
+export default function GoogleLinkingView({ linkData, onCancel, onSuccess }: GoogleLinkingViewProps) {
     const { t } = useTranslation();
     const navigate = useNavigate();
     const { refetch } = useAuth();
@@ -23,6 +24,8 @@ export default function GoogleLinkingView({ linkData, turnstileToken, onCancel, 
     const [confirmNewPassword, setConfirmNewPassword] = useState("");
     const [verificationCode, setVerificationCode] = useState("");
     const [transactionId, setTransactionId] = useState("");
+    const [turnstileToken, setTurnstileToken] = useState("");
+    const turnstileRef = useRef<TurnstileWidgetRef>(null);
     const [errors, setErrors] = useState({
         linkPassword: "",
         newPassword: "",
@@ -41,10 +44,15 @@ export default function GoogleLinkingView({ linkData, turnstileToken, onCancel, 
             onError: (error) => {
                 if (error.code === "INVALID_PASSWORD") {
                     toast.error(t("googleLinking.toast.invalidPassword"));
+                    setLinkPassword("");
                 } else if (error.code === "INVALID_RESET_CODE") {
                     toast.error(t("googleLinking.toast.invalidCode"));
+                    setVerificationCode("");
                 } else if (error.code === "TURNSTILE_MISSING_TOKEN" || error.code === "TURNSTILE_INVALID_TOKEN" || error.code === "TURNSTILE_TOKEN_ALREADY_SPENT" || error.code === "TURNSTILE_VERIFICATION_FAILED") {
                     toast.error(t("googleLinking.toast.verificationFailed"));
+                    turnstileRef.current?.reset();
+                } else if (error.code === "REQUEST_VALIDATION_ERROR") {
+                    toast.error("Datos inválidos. Por favor, revisa el formulario.");
                 } else {
                     toast.error(t("googleLinking.toast.error"));
                 }
@@ -58,8 +66,13 @@ export default function GoogleLinkingView({ linkData, turnstileToken, onCancel, 
                 toast.success(t("googleLinking.toast.codeSent"));
                 setTransactionId(response.transactionId);
             },
-            onError: () => {
-                toast.error(t("googleLinking.toast.codeError"));
+            onError: (error) => {
+                if (error.code === "TURNSTILE_MISSING_TOKEN" || error.code === "TURNSTILE_INVALID_TOKEN" || error.code === "TURNSTILE_TOKEN_ALREADY_SPENT" || error.code === "TURNSTILE_VERIFICATION_FAILED") {
+                    toast.error("La verificación de seguridad ha fallado o caducado. Inténtalo de nuevo.");
+                    turnstileRef.current?.reset();
+                } else {
+                    toast.error(t("googleLinking.toast.codeError"));
+                }
             }
         }
     });
@@ -67,7 +80,7 @@ export default function GoogleLinkingView({ linkData, turnstileToken, onCancel, 
     const handleConfirmLink = () => {
         const newErrors = { ...errors, linkPassword: !linkPassword ? t("googleLinking.validation.passwordRequired") : "" };
         setErrors(newErrors);
-        
+
         if (newErrors.linkPassword) return;
 
         if (!turnstileToken) {
@@ -159,8 +172,8 @@ export default function GoogleLinkingView({ linkData, turnstileToken, onCancel, 
                                         }
                                     });
                                 }}
-                                className="text-xs text-brand hover:underline font-medium cursor-pointer"
-                                disabled={isRequestingCode}
+                                className="text-xs text-brand hover:underline font-medium cursor-pointer disabled:opacity-50 disabled:no-underline"
+                                disabled={isRequestingCode || !turnstileToken}
                             >
                                 {isRequestingCode ? t("googleLinking.actions.sendingCode") : t("googleLinking.actions.forgotPassword")}
                             </button>
@@ -177,7 +190,7 @@ export default function GoogleLinkingView({ linkData, turnstileToken, onCancel, 
                             <button
                                 type="button"
                                 onClick={handleConfirmLink}
-                                disabled={isGooglePending}
+                                disabled={isGooglePending || !turnstileToken}
                                 className="flex-1 rounded-lg bg-brand p-3 text-content-on-brand font-bold enabled:hover:scale-[1.02] enabled:active:scale-95 transition-all shadow-lg shadow-brand/20 cursor-pointer disabled:opacity-50"
                             >
                                 {isGooglePending ? t("googleLinking.actions.linking") : t("googleLinking.actions.confirmAndLink")}
@@ -247,7 +260,7 @@ export default function GoogleLinkingView({ linkData, turnstileToken, onCancel, 
                             <button
                                 type="button"
                                 onClick={handleResetAndLink}
-                                disabled={isGooglePending}
+                                disabled={isGooglePending || !turnstileToken}
                                 className="flex-1 rounded-lg bg-brand p-3 text-content-on-brand font-bold enabled:hover:scale-[1.02] enabled:active:scale-95 transition-all shadow-lg shadow-brand/20 cursor-pointer disabled:opacity-50"
                             >
                                 {isGooglePending ? t("googleLinking.actions.linking") : t("googleLinking.actions.resetAndLink")}
@@ -256,6 +269,12 @@ export default function GoogleLinkingView({ linkData, turnstileToken, onCancel, 
                     </>
                 )}
             </div>
+            <TurnstileWidget
+                ref={turnstileRef}
+                onVerify={setTurnstileToken}
+                onExpire={() => setTurnstileToken("")}
+                onError={() => setTurnstileToken("")}
+            />
         </div>
     );
 }
