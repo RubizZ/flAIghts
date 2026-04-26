@@ -86,6 +86,17 @@ export default function Login() {
                     case "TURNSTILE_VERIFICATION_FAILED":
                         toast.error("La verificación de seguridad ha fallado. Por favor, inténtalo de nuevo.");
                         break;
+                    case "TURNSTILE_MISSING_TOKEN":
+                        toast.error("Por favor, completa la verificación de seguridad.");
+                        break;
+                    case "TURNSTILE_INVALID_TOKEN":
+                    case "TURNSTILE_TOKEN_ALREADY_SPENT":
+                        toast.error("La verificación ha caducado o es inválida. Por favor, verifica de nuevo.");
+                        turnstileRef.current?.reset();
+                        break;
+                    case "TURNSTILE_VERIFICATION_FAILED":
+                        toast.error("La verificación de seguridad ha fallado. Por favor, inténtalo de nuevo.");
+                        break;
                 }
             }
         }

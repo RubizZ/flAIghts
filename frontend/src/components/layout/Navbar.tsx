@@ -42,6 +42,15 @@ export default function Navbar({ variant = 'floating', logoRef }: { variant?: 'f
 
     const unreadMessagesCount = conversationsData?.items?.reduce((acc: number, conv: any) => acc + (conv.unreadCount || 0), 0) || 0;
 
+    const { data: conversationsData } = useGetConversations(undefined, {
+        query: {
+            enabled: isAuthenticated,
+            staleTime: 30000, // No necesitamos frescura absoluta en el navbar
+        }
+    });
+
+    const unreadMessagesCount = conversationsData?.items?.reduce((acc: number, conv: any) => acc + (conv.unreadCount || 0), 0) || 0;
+
     const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
     const [isOptionsMenuOpen, setIsOptionsMenuOpen] = useState(false);
     const [isNotificationsMenuOpen, setIsNotificationsMenuOpen] = useState(false);
@@ -229,9 +238,9 @@ export default function Navbar({ variant = 'floating', logoRef }: { variant?: 'f
                             <span className="leading-none">{t("navbar.settings")}</span>
                         </div>
                     </button>
-                    {user?.role === 'admin' && (
-                        <button className="w-full flex items-center justify-between px-4 py-3 text-sm rounded-xl transition-all cursor-not-allowed group text-left">
-                            <div className="flex items-center gap-3 opacity-20 text-amber-500">
+                    {(user?.role === 'admin' || user?.role === 'superadmin') && (
+                        <button onClick={() => { setIsOpen(false); navigate('/admin') }} className="w-full flex items-center justify-between px-4 py-3 text-sm rounded-xl transition-all group text-left hover:bg-surface/70 cursor-pointer font-medium">
+                            <div className="flex items-center gap-3 text-amber-500">
                                 <ShieldCheck size={20} />
                                 Panel Admin
                             </div>

@@ -119,8 +119,8 @@ export default function HomeCard({
                     {/* Title & Subtitle - ONLY VISIBLE ON DESKTOP */}
                     <div className={`order-2 lg:order-1 pt-4 lg:pt-0 hidden lg:grid grid-cols-1 grid-rows-1 ${localMode === 'ai' ? 'grid' : 'grid'}`}>
                         <div className={`col-start-1 row-start-1 flex flex-col gap-0.5 items-center lg:items-start text-center lg:text-left transition-all duration-300 ${localMode === 'manual' ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4 pointer-events-none'}`}>
-                            <h1 className="font-bold text-content tracking-tight text-3xl">t('homeCard.manualTitle')</h1>
-                            <p className="text-content-muted text-[13px]"> {t('homeCard.manualSubtitle')}<span className="text-brand">AI</span>ghts.</p>
+                            <h1 className="font-bold text-content tracking-tight text-3xl">{t('homeCard.manualTitle')}</h1>
+                            <p className="text-content-muted text-[13px]">{t('homeCard.manualSubtitle')}<span className="text-brand">AI</span>ghts.</p>
                         </div>
 
                         <div className={`col-start-1 row-start-1 flex flex-col gap-0.5 items-center lg:items-start text-center lg:text-left transition-all duration-300 ${localMode === 'ai' ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4 pointer-events-none'}`}>
@@ -181,7 +181,6 @@ export default function HomeCard({
                             today={today}
                             onHoverChange={onHoverChange}
                         />
-                        {/*
                         <div className="flex items-center justify-center gap-4 text-xs text-content-muted pb-2 shrink-0">
                             <div className="flex items-center gap-1">
                                 <Plus size={12} className="text-brand" />
@@ -193,7 +192,6 @@ export default function HomeCard({
                                 <span>{t('homeCard.advancedFilters')}</span>
                             </div>
                         </div>
-                        */}
                     </div>
                 ) : (
                     <div className="flex flex-col flex-1 min-h-0 w-full h-full relative group">
