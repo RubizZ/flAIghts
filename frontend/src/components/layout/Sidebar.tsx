@@ -32,16 +32,16 @@ export default function Sidebar({ isOpen, onClose, onToggle, variant = 'classic'
             show: true,
         },
         {
-            label: "Chats",
-            path: "/chats",
-            icon: <MessageSquare size={20} />,
-            show: isAuthenticated,
-        },
-        {
             label: t("sidebar.geneticTrip"),
             path: "/genetic-trip",
             icon: <Zap size={20} />,
             show: true,
+        },
+        {
+            label: "Chats",
+            path: "/chats",
+            icon: <MessageSquare size={20} />,
+            show: isAuthenticated,
         },
         {
             label: t("sidebar.friends"),
