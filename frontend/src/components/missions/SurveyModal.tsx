@@ -87,12 +87,12 @@ const SurveyModal: React.FC = () => {
                                 </div>
                                 <div className="min-w-0 flex-1">
                                     <div className="flex items-center gap-2 mb-1">
-                                        <h4 className="text-white font-bold text-sm truncate">{mission.title}</h4>
+                                        <h4 className="text-white font-bold text-sm truncate">{t(mission.title)}</h4>
                                         <div className="bg-green-500/20 text-green-400 px-2 py-0.5 rounded-full text-[8px] font-black uppercase tracking-widest border border-green-500/10 flex items-center gap-1 shrink-0">
                                             <Sparkles size={8} /> {t('missions.survey.achieved')}
                                         </div>
                                     </div>
-                                    <p className="text-gray-400 text-xs leading-relaxed mb-3">{mission.description}</p>
+                                    <p className="text-gray-400 text-xs leading-relaxed mb-3">{t(mission.description)}</p>
 
                                     <div className="pt-3 border-t border-white/5 space-y-1.5">
                                         <p className="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-2">{t('missions.survey.validatedSteps')}</p>
@@ -101,7 +101,7 @@ const SurveyModal: React.FC = () => {
                                                 <div className="flex items-center justify-center h-4 w-4 rounded-full bg-emerald-500/20 text-emerald-400">
                                                     <Check size={10} strokeWidth={3} />
                                                 </div>
-                                                {step.title}
+                                                {t(step.title)}
                                             </div>
                                         ))}
                                     </div>

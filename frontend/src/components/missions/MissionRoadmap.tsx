@@ -259,7 +259,7 @@ const MissionRoadmap: React.FC<MissionRoadmapProps> = ({ onClose, onMissionClick
 
                     <div className="flex items-center gap-3 px-5 py-2 rounded-2xl bg-white/5 border border-white/10 shadow-xl backdrop-blur-md">
                         <div className="flex flex-col items-end">
-                            <span className="text-[8px] font-black uppercase tracking-widest text-white/30">{t('missions.roadmap.missions')}</span>
+                            <span className="text-[8px] font-black uppercase tracking-widest text-white/30">{t('navbar.missions')}</span>
                             <div className="flex items-baseline gap-1">
                                 <span className="text-xl sm:text-2xl font-black text-white">{missions.filter(m => isMissionCompleted(m.id)).length}</span>
                                 <span className="text-xs font-bold text-white/20">/ {missions.length}</span>
@@ -372,7 +372,7 @@ const MissionRoadmap: React.FC<MissionRoadmapProps> = ({ onClose, onMissionClick
                                                         </div>
                                                         <div className="min-w-0 flex-1">
                                                             <div className="flex items-center justify-between gap-2">
-                                                                <h4 className="font-bold text-white truncate text-base">{mission.title}</h4>
+                                                                <h4 className="font-bold text-white truncate text-base">{t(mission.title)}</h4>
                                                                 {needsRating && (
                                                                     <div className="bg-amber-500 text-black p-1 rounded-md animate-soft-pulse">
                                                                         <MessageSquareText size={14} />
@@ -387,7 +387,7 @@ const MissionRoadmap: React.FC<MissionRoadmapProps> = ({ onClose, onMissionClick
                                                         </div>
                                                     </div>
                                                     <p className="text-xs text-gray-400 leading-relaxed mb-5">
-                                                        {mission.description}
+                                                        {t(mission.description)}
                                                     </p>
 
                                                     <div className="flex gap-1.5 mt-auto">

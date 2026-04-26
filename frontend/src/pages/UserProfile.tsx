@@ -189,16 +189,16 @@ export default function UserProfile() {
                     <div className="relative self-center">
                         <UserAvatar user={user} className="w-32 h-32 lg:w-64 lg:h-64 border-4 border-line p-1 bg-main" />
                         {lastSeenAt + 5 * 60 * 1000 >= now ? (
-                            <div className="absolute bottom-2 right-2 lg:bottom-6 lg:right-6 w-6 h-6 lg:w-8 lg:h-8 bg-green-500 rounded-full border-4 border-line shadow-sm" title="Online"></div>
+                            <div className="absolute bottom-2 right-2 lg:bottom-6 lg:right-6 w-6 h-6 lg:w-8 lg:h-8 bg-green-500 rounded-full border-4 border-line shadow-sm" title={t("userProfile.status.online")}></div>
                         ) : (
-                            <div className="absolute bottom-2 right-2 lg:bottom-6 lg:right-6 w-6 h-6 lg:w-8 lg:h-8 bg-red-500 rounded-full border-4 border-line shadow-sm" title="Offline"></div>
+                            <div className="absolute bottom-2 right-2 lg:bottom-6 lg:right-6 w-6 h-6 lg:w-8 lg:h-8 bg-red-500 rounded-full border-4 border-line shadow-sm" title={t("userProfile.status.offline")}></div>
                         )}
                     </div>
                     <div className="flex flex-col gap-3">
                         <div className="flex items-center justify-center gap-2">
                             <h1 className="text-3xl font-black text-content tracking-tight leading-none">{user.username}</h1>
                             {user.role === 'admin' && (
-                                <div className="flex items-center gap-1 px-2 py-0.5 bg-amber-500/10 border border-amber-500/20 rounded-full text-amber-600 shadow-sm" title="Administrador de flAIghts">
+                                <div className="flex items-center gap-1 px-2 py-0.5 bg-amber-500/10 border border-amber-500/20 rounded-full text-amber-600 shadow-sm" title={t("userProfile.admin")}>
                                     <ShieldCheck size={12} className="fill-amber-500/10" />
                                     <span className="text-[10px] font-black uppercase tracking-wider">Admin</span>
                                 </div>
@@ -209,23 +209,23 @@ export default function UserProfile() {
                             {user.type === "friend" && 'friend_since' in user ? (
                                 <div className="flex items-center gap-2 px-3 py-1.5 bg-brand/5 border border-brand/10 rounded-xl">
                                     <Users size={12} className="text-brand" />
-                                    <span className="text-[10px] font-black uppercase tracking-widest text-brand">Amigos desde {new Date(user.friend_since).toLocaleDateString()}</span>
+                                    <span className="text-[10px] font-black uppercase tracking-widest text-brand">{t("userProfile.status.friendSince", { date: new Date(user.friend_since).toLocaleDateString() })}</span>
                                 </div>
                             ) : user.type === "public" && 'sent_friend_request' in user && user.sent_friend_request ? (
                                 <div className="flex items-center gap-2 px-3 py-1.5 bg-amber-500/5 border border-amber-500/10 rounded-xl">
                                     <Users size={12} className="text-amber-500" />
-                                    <span className="text-[10px] font-black uppercase tracking-widest text-amber-500">Solicitud enviada</span>
+                                    <span className="text-[10px] font-black uppercase tracking-widest text-amber-500">{t("userProfile.status.sentRequest")}</span>
                                 </div>
                             ) : user.type === "public" && 'received_friend_request' in user && user.received_friend_request ? (
                                 <div className="flex items-center gap-2 px-3 py-1.5 bg-green-500/5 border border-green-500/10 rounded-xl">
                                     <Users size={12} className="text-green-500" />
-                                    <span className="text-[10px] font-black uppercase tracking-widest text-green-500">Solicitud recibida</span>
+                                    <span className="text-[10px] font-black uppercase tracking-widest text-green-500">{t("userProfile.status.receivedRequest")}</span>
                                 </div>
                             ) : null}
 
                             <div className="flex items-center gap-2 px-3 py-1.5 bg-surface border border-line rounded-xl">
                                 <Calendar size={12} className="text-content-muted opacity-60" />
-                                <span className="text-[10px] font-bold uppercase tracking-widest text-content-muted opacity-80">En flAIghts desde {new Date(user.created_at).toLocaleDateString(undefined, { month: 'short', year: 'numeric' })}</span>
+                                <span className="text-[10px] font-bold uppercase tracking-widest text-content-muted opacity-80">{t("userProfile.status.memberSince", { date: new Date(user.created_at).toLocaleDateString(undefined, { month: 'short', year: 'numeric' }) })}</span>
                             </div>
                         </div>
                     </div>
@@ -264,7 +264,7 @@ export default function UserProfile() {
                     {/* Expositor de Badges */}
                     {user.badges && user.badges.length > 0 && (
                         <div className="mt-6 pt-6 border-t border-line">
-                            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-content-muted mb-4 opacity-50">Expositor de Logros</p>
+                            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-content-muted mb-4 opacity-50">{t("userProfile.badges.title")}</p>
                             <div className="flex flex-wrap lg:flex-col gap-3 justify-center lg:items-center bg-surface/50 p-4 rounded-2xl border border-line/50 shadow-inner">
                                 {user.badges.map((badge) => {
                                     const earnedDate = new Date(badge.earned_at);
@@ -283,7 +283,7 @@ export default function UserProfile() {
                                             {/* Tooltip Detallado (Hover & Focus) */}
                                             <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 px-3 py-2 bg-content text-main text-[10px] rounded-xl opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-all scale-90 group-hover:scale-100 group-focus-within:scale-100 whitespace-nowrap pointer-events-none z-50 shadow-2xl border border-line flex flex-col gap-0.5 items-center">
                                                 <span className="font-black uppercase tracking-tight text-brand">{badge.name}</span>
-                                                <span className="opacity-60 font-bold italic">Obtenida el {formattedDate}</span>
+                                                <span className="opacity-60 font-bold italic">{t("userProfile.badges.earnedOn", { date: formattedDate })}</span>
                                                 <div className="absolute top-full left-1/2 -translate-x-1/2 border-8 border-transparent border-t-content"></div>
                                             </div>
                                         </div>
@@ -301,7 +301,7 @@ export default function UserProfile() {
                         <div className="p-2 bg-amber-500/10 rounded-xl">
                             <Star className="w-6 h-6 text-amber-500" fill="currentColor" />
                         </div>
-                        <h1 className="text-2xl lg:text-3xl font-bold text-content tracking-tight">Búsquedas destacadas</h1>
+                        <h1 className="text-2xl lg:text-3xl font-bold text-content tracking-tight">{t("userProfile.searches.featured")}</h1>
                     </div>
 
                     {user.type === "self" && (
@@ -311,7 +311,7 @@ export default function UserProfile() {
                             onClick={() => window.dispatchEvent(new CustomEvent('flaights:mission:access-search-history'))}
                         >
                             <History size={16} />
-                            Ver historial completo
+                            {t("userProfile.searches.viewHistory")}
                         </Link>
                     )}
                 </div>
@@ -339,9 +339,9 @@ export default function UserProfile() {
                                     <Star className="w-8 h-8 text-content-muted opacity-20" />
                                 </div>
                                 <div className="flex flex-col gap-1">
-                                    <h3 className="text-lg font-bold text-content">Sin búsquedas destacadas</h3>
+                                    <h3 className="text-lg font-bold text-content">{t("userProfile.searches.emptyFeatured")}</h3>
                                     <p className="text-sm text-content-muted max-w-[250px]">
-                                        Este usuario aún no ha compartido ninguna de sus búsquedas de vuelos.
+                                        {t("userProfile.searches.emptyFeaturedDesc")}
                                     </p>
                                 </div>
                             </div>
@@ -368,7 +368,7 @@ export default function UserProfile() {
 
                                 {!hasNextPage && (searchesData?.pages[0]?.items?.length ?? 0) > 0 && (
                                     <div className="text-center p-8 text-[10px] text-content-muted/40 uppercase tracking-[0.2em] font-black">
-                                        Fin de las búsquedas destacadas
+                                        {t("userProfile.searches.end")}
                                     </div>
                                 )}
                             </>

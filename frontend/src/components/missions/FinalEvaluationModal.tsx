@@ -1,22 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useMissions } from '@/context/MissionContext';
 import { Trophy, CheckCircle, Send, Heart, User, ClipboardList, GraduationCap, ChevronDown, Bookmark, Smartphone, Star } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
-
-const SUS_QUESTIONS = [
-    "Creo que me gustará usar este sistema con frecuencia.",
-    "Encontré el sistema innecesariamente complejo.",
-    "Pensé que el sistema era fácil de usar.",
-    "Creo que necesitaría el apoyo de una persona técnica para ser capaz de usar este sistema.",
-    "Encontré que las diversas funciones de este sistema estaban bastante bien integradas.",
-    "Pensé que había demasiada inconsistencia en este sistema.",
-    "Imagino que la mayoría de las personas aprenderían a usar este sistema muy rápidamente.",
-    "Encontré el sistema muy engorroso de usar.",
-    "Me sentí muy seguro usando el sistema.",
-    "Necesité aprender muchas cosas antes de poder ponerme en marcha con este sistema."
-];
 
 const FinalEvaluationModal: React.FC = () => {
     const { t } = useTranslation();
@@ -34,6 +21,8 @@ const FinalEvaluationModal: React.FC = () => {
     const [originalUrl, setOriginalUrl] = useState<string | null>(null);
     const { user, isAuthenticated } = useAuth();
 
+    const SUS_QUESTIONS = useMemo(() => t('missions.finalEvaluation.sus_questions', { returnObjects: true }) as string[], [t]);
+
     // Solo se muestra si todas las misiones están completas y se han respondido todos los tests
     const allSurveysDone = missions.every(m => !m.isCompleted || surveyAnswers.some(a => a.missionId === m.id));
 
@@ -45,7 +34,7 @@ const FinalEvaluationModal: React.FC = () => {
 
     const handleSubmit = async () => {
         if (!allSusAnswered) return;
-        const nameToSubmit = isAnonymous ? 'Anónimo' : fullName.trim();
+        const nameToSubmit = isAnonymous ? (t('missions.finalEvaluation.anonymous')) : fullName.trim();
         if (!isAnonymous && !nameToSubmit) return;
 
         setIsSubmitting(true);
@@ -98,15 +87,14 @@ const FinalEvaluationModal: React.FC = () => {
                                 <Heart size={48} className="fill-current animate-pulse" />
                             </div>
 
-                            <h2 className="mb-4 text-4xl md:text-5xl font-black text-white tracking-tight uppercase italic animate-fade-in">¡MUCHAS GRACIAS!</h2>
+                            <h2 className="mb-4 text-4xl md:text-5xl font-black text-white tracking-tight uppercase italic animate-fade-in">{t('missions.finalEvaluation.thanks.title')}</h2>
 
                             <p className="mb-6 text-xl text-blue-200/80 font-medium max-w-2xl animate-fade-in" style={{ animationDelay: '100ms' }}>
-                                Tu participación ha sido clave para el éxito de nuestro Trabajo de Fin de Grado. Valoramos enormemente tu tiempo y esfuerzo.
+                                {t('missions.finalEvaluation.thanks.subtitle')}
                             </p>
 
                             <p className="mb-10 text-gray-400 text-lg leading-relaxed max-w-2xl animate-fade-in" style={{ animationDelay: '150ms' }}>
-                                Ahora que has explorado todas las capacidades de <strong>flAIghts</strong>, te animamos a que sigas usándolo en tu día a día.
-                                Deja que nuestra IA encuentre las mejores ofertas por ti y convierte cada búsqueda en una aventura.
+                                {t('missions.finalEvaluation.thanks.message').split('flAIghts')[0]}<strong>flAIghts</strong>{t('missions.finalEvaluation.thanks.message').split('flAIghts')[1]}
                             </p>
 
                             {/* Badge Reward Section */}
@@ -120,11 +108,11 @@ const FinalEvaluationModal: React.FC = () => {
                                             <Star size={10} className="text-blue-300 fill-blue-300 animate-pulse" />
                                         </div>
                                     </div>
-                                    <div className="absolute -top-3 -right-3 bg-blue-500 text-[9px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full shadow-2xl border border-white/20">Desbloqueado</div>
+                                    <div className="absolute -top-3 -right-3 bg-blue-500 text-[9px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full shadow-2xl border border-white/20">{t('missions.finalEvaluation.thanks.badge_unlocked')}</div>
                                 </div>
                                 <div className="flex flex-col items-center gap-1.5">
-                                    <h3 className="text-white font-black uppercase tracking-[0.2em] text-sm">Insignia de Evaluador</h3>
-                                    <p className="text-blue-200/50 text-[11px] font-bold">Has recibido una insignia exclusiva por completar el estudio.</p>
+                                    <h3 className="text-white font-black uppercase tracking-[0.2em] text-sm">{t('missions.finalEvaluation.thanks.badge_title')}</h3>
+                                    <p className="text-blue-200/50 text-[11px] font-bold">{t('missions.finalEvaluation.thanks.badge_description')}</p>
                                 </div>
                             </div>
 
@@ -137,31 +125,31 @@ const FinalEvaluationModal: React.FC = () => {
                                     >
                                         <User size={18} className="text-blue-400 group-hover:scale-110 transition-transform" />
                                         <div className="flex flex-col items-start gap-0.5">
-                                            <span className="text-[10px] font-black uppercase tracking-widest text-white">Ver en mi perfil</span>
-                                            <span className="text-[8px] font-bold text-blue-300/50 uppercase">Tus logros y medallas</span>
+                                            <span className="text-[10px] font-black uppercase tracking-widest text-white">{t('missions.finalEvaluation.thanks.actions.view_profile')}</span>
+                                            <span className="text-[8px] font-bold text-blue-300/50 uppercase">{t('missions.finalEvaluation.thanks.actions.view_profile_desc')}</span>
                                         </div>
                                     </button>
                                 )}
 
                                 <button
-                                    onClick={() => window.alert('Para añadir flAIghts a tus marcadores, pulsa Ctrl+D (Windows) o Cmd+D (Mac)')}
+                                    onClick={() => window.alert(t('common.bookmarkAlert'))}
                                     className="flex items-center gap-3 px-6 py-4 bg-white/5 hover:bg-white/10 border border-white/10 rounded-2xl transition-all group cursor-pointer"
                                 >
                                     <Bookmark size={18} className="text-white/40 group-hover:text-blue-400 group-hover:fill-blue-400/20 transition-all" />
                                     <div className="flex flex-col items-start gap-0.5">
-                                        <span className="text-[10px] font-black uppercase tracking-widest text-white/80">Guardar Marcador</span>
-                                        <span className="text-[8px] font-bold text-white/20 uppercase">Acceso rápido</span>
+                                        <span className="text-[10px] font-black uppercase tracking-widest text-white/80">{t('missions.finalEvaluation.thanks.actions.bookmark')}</span>
+                                        <span className="text-[8px] font-bold text-white/20 uppercase">{t('missions.finalEvaluation.thanks.actions.bookmark_desc')}</span>
                                     </div>
                                 </button>
 
                                 <button
-                                    onClick={() => window.alert('Para añadir flAIghts a tu pantalla de inicio, usa la opción "Añadir a pantalla de inicio" en el menú de tu navegador.')}
+                                    onClick={() => window.alert(t('common.installAlert'))}
                                     className="flex items-center gap-3 px-6 py-4 bg-white/5 hover:bg-white/10 border border-white/10 rounded-2xl transition-all group cursor-pointer"
                                 >
                                     <Smartphone size={18} className="text-white/40 group-hover:text-blue-400 transition-colors" />
                                     <div className="flex flex-col items-start gap-0.5">
-                                        <span className="text-[10px] font-black uppercase tracking-widest text-white/80">Instalar App</span>
-                                        <span className="text-[8px] font-bold text-white/20 uppercase">Pantalla de inicio</span>
+                                        <span className="text-[10px] font-black uppercase tracking-widest text-white/80">{t('missions.finalEvaluation.thanks.actions.install')}</span>
+                                        <span className="text-[8px] font-bold text-white/20 uppercase">{t('missions.finalEvaluation.thanks.actions.install_desc')}</span>
                                     </div>
                                 </button>
 
@@ -171,8 +159,8 @@ const FinalEvaluationModal: React.FC = () => {
                                 >
                                     <Send size={18} className="text-white/40 group-hover:text-blue-400 transition-colors" />
                                     <div className="flex flex-col items-start gap-0.5">
-                                        <span className="text-[10px] font-black uppercase tracking-widest text-white/80">Página de Inicio</span>
-                                        <span className="text-[8px] font-bold text-white/20 uppercase">Limpiar búsqueda</span>
+                                        <span className="text-[10px] font-black uppercase tracking-widest text-white/80">{t('missions.finalEvaluation.thanks.actions.home')}</span>
+                                        <span className="text-[8px] font-bold text-white/20 uppercase">{t('missions.finalEvaluation.thanks.actions.home_desc')}</span>
                                     </div>
                                 </button>
                             </div>
@@ -183,7 +171,7 @@ const FinalEvaluationModal: React.FC = () => {
                                 style={{ animationDelay: '400ms' }}
                             >
                                 <div className="absolute inset-0 bg-linear-to-r from-transparent via-blue-500/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
-                                <span>Seguir explorando</span>
+                                <span>{t('missions.finalEvaluation.thanks.actions.explore')}</span>
                             </button>
                         </div>
                     ) : (
@@ -192,24 +180,24 @@ const FinalEvaluationModal: React.FC = () => {
                                 <Trophy size={40} className="animate-bounce" />
                             </div>
 
-                            <h2 className="mb-2 text-3xl md:text-4xl font-black text-white tracking-tight uppercase italic">¡ENHORABUENA!</h2>
-                            <h3 className="mb-6 text-lg md:text-xl font-bold text-blue-300">Has completado las misiones del programa de evaluación</h3>
+                            <h2 className="mb-2 text-3xl md:text-4xl font-black text-white tracking-tight uppercase italic">{t('missions.finalEvaluation.congrats')}</h2>
+                            <h3 className="mb-6 text-lg md:text-xl font-bold text-blue-300">{t('missions.finalEvaluation.subtitle')}</h3>
 
                             <div className="mb-8 space-y-6 text-gray-300">
                                 <div className="flex items-start gap-3 justify-center text-sm text-center">
-                                    <span>Has completado satisfactoriamente todas las misiones de usabilidad para nuestro <strong>Trabajo de Fin de Grado</strong>.<br /> Por favor, completa este cuestionario final para terminar.</span>
+                                    <span dangerouslySetInnerHTML={{ __html: t('missions.finalEvaluation.instructions').replace('Trabajo de Fin de Grado', '<strong>' + t('common.tfg') + '</strong>') }} />
                                 </div>
 
                                 <div className="p-6 rounded-2xl bg-white/5 border border-white/10 text-left">
-                                    <h4 className="text-lg font-bold text-white mb-2 flex items-center gap-2"><ClipboardList size={20} className="text-blue-400" /> Cuestionario de Usabilidad (10 preguntas)</h4>
-                                    <p className="text-sm text-gray-400 mb-6">Valora las siguientes afirmaciones de 1 (Totalmente en desacuerdo) a 5 (Totalmente de acuerdo).</p>
+                                    <h4 className="text-lg font-bold text-white mb-2 flex items-center gap-2"><ClipboardList size={20} className="text-blue-400" /> {t('missions.finalEvaluation.usability_title')}</h4>
+                                    <p className="text-sm text-gray-400 mb-6">{t('missions.finalEvaluation.usability_description')}</p>
 
                                     <div className="space-y-4">
                                         {SUS_QUESTIONS.map((q, idx) => (
                                             <div key={idx} className="p-4 rounded-xl bg-black/40 border border-white/5 hover:border-white/10 transition-colors">
                                                 <p className="text-sm md:text-base text-white mb-4 font-medium">{idx + 1}. {q}</p>
                                                 <div className="flex flex-col sm:flex-row items-center justify-between gap-4 max-w-2xl mx-auto">
-                                                    <span className="hidden sm:block text-xs text-gray-500 w-24 text-right font-medium uppercase tracking-wider leading-tight">Totalmente en<br />desacuerdo</span>
+                                                    <span className="hidden sm:block text-xs text-gray-500 w-24 text-right font-medium uppercase tracking-wider leading-tight" dangerouslySetInnerHTML={{ __html: t('missions.finalEvaluation.rating_labels.disagree').replace(' ', '<br />') }} />
                                                     <div className="flex justify-center gap-2 md:gap-4 flex-1">
                                                         {[1, 2, 3, 4, 5].map(val => (
                                                             <button
@@ -228,12 +216,12 @@ const FinalEvaluationModal: React.FC = () => {
                                                             </button>
                                                         ))}
                                                     </div>
-                                                    <span className="hidden sm:block text-xs text-gray-500 w-24 text-left font-medium uppercase tracking-wider leading-tight">Totalmente<br />de acuerdo</span>
+                                                    <span className="hidden sm:block text-xs text-gray-500 w-24 text-left font-medium uppercase tracking-wider leading-tight" dangerouslySetInnerHTML={{ __html: t('missions.finalEvaluation.rating_labels.agree').replace(' ', '<br />') }} />
 
                                                     {/* Mobile labels */}
                                                     <div className="flex sm:hidden justify-between w-full px-2 text-[10px] text-gray-500 uppercase font-bold tracking-wider">
-                                                        <span>Desacuerdo</span>
-                                                        <span>Acuerdo</span>
+                                                        <span>{t('missions.finalEvaluation.mobile_rating_labels.disagree')}</span>
+                                                        <span>{t('missions.finalEvaluation.mobile_rating_labels.agree')}</span>
                                                     </div>
                                                 </div>
                                             </div>
@@ -242,10 +230,10 @@ const FinalEvaluationModal: React.FC = () => {
                                 </div>
 
                                 <div className="p-6 rounded-2xl bg-white/5 border border-white/10 text-left">
-                                    <h4 className="text-lg font-bold text-white mb-4 flex items-center gap-2"><User size={20} className="text-blue-400" /> Datos Demográficos</h4>
+                                    <h4 className="text-lg font-bold text-white mb-4 flex items-center gap-2"><User size={20} className="text-blue-400" /> {t('missions.finalEvaluation.demographics.title')}</h4>
                                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                                         <div className="space-y-2">
-                                            <label className="text-xs font-bold uppercase tracking-wider text-gray-400">Edad</label>
+                                            <label className="text-xs font-bold uppercase tracking-wider text-gray-400">{t('missions.finalEvaluation.demographics.age')}</label>
                                             <input
                                                 type="number"
                                                 value={age}
@@ -255,25 +243,24 @@ const FinalEvaluationModal: React.FC = () => {
                                             />
                                         </div>
                                         <div className="space-y-2">
-                                            <label className="text-xs font-bold uppercase tracking-wider text-gray-400">Sexo</label>
+                                            <label className="text-xs font-bold uppercase tracking-wider text-gray-400">{t('missions.finalEvaluation.demographics.gender')}</label>
                                             <div className="relative group/select">
                                                 <select
                                                     value={gender}
                                                     onChange={(e) => setGender(e.target.value)}
                                                     className={`w-full rounded-xl border border-white/10 bg-white/5 p-3 pr-10 focus:border-blue-500 focus:bg-white/10 focus:outline-hidden transition-all appearance-none cursor-pointer ${gender ? 'text-white' : 'text-gray-600'}`}
                                                 >
-                                                    <option value="" disabled className="bg-gray-900 text-gray-600">Seleccionar...</option>
-                                                    <option value="Masculino" className="bg-gray-900 text-white">Masculino</option>
-                                                    <option value="Femenino" className="bg-gray-900 text-white">Femenino</option>
-                                                    <option value="Otro" className="bg-gray-900 text-white">Otro</option>
-                                                    <option value="Prefiero no decirlo" className="bg-gray-900 text-white">Prefiero no decirlo</option>
+                                                    <option value="" disabled className="bg-gray-900 text-gray-600">{t('missions.finalEvaluation.demographics.select')}</option>
+                                                    {Object.entries(t('missions.finalEvaluation.demographics.genders', { returnObjects: true })).map(([key, label]) => (
+                                                        <option key={key} value={label as string} className="bg-gray-900 text-white">{label as string}</option>
+                                                    ))}
                                                 </select>
                                                 <ChevronDown size={14} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none transition-colors group-focus-within/select:text-blue-400" />
                                             </div>
                                         </div>
                                         <div className="space-y-2">
                                             <label className="text-xs font-bold uppercase tracking-wider text-gray-400 flex items-center gap-2">
-                                                <GraduationCap size={14} /> Nivel de Estudios
+                                                <GraduationCap size={14} /> {t('missions.finalEvaluation.demographics.education')}
                                             </label>
                                             <div className="relative group/select">
                                                 <select
@@ -281,13 +268,10 @@ const FinalEvaluationModal: React.FC = () => {
                                                     onChange={(e) => setEducationLevel(e.target.value)}
                                                     className={`w-full rounded-xl border border-white/10 bg-white/5 p-3 pr-10 focus:border-blue-500 focus:bg-white/10 focus:outline-hidden transition-all appearance-none cursor-pointer ${educationLevel ? 'text-white' : 'text-gray-600'}`}
                                                 >
-                                                    <option value="" disabled className="bg-gray-900 text-gray-600">Seleccionar...</option>
-                                                    <option value="Sin estudios" className="bg-gray-900 text-white">Sin estudios</option>
-                                                    <option value="Primaria" className="bg-gray-900 text-white">Primaria</option>
-                                                    <option value="Secundaria / ESO" className="bg-gray-900 text-white">Secundaria / ESO</option>
-                                                    <option value="Bachillerato / FP" className="bg-gray-900 text-white">Bachillerato / FP</option>
-                                                    <option value="Grado Universitario" className="bg-gray-900 text-white">Grado Universitario</option>
-                                                    <option value="Máster / Doctorado" className="bg-gray-900 text-white">Máster / Doctorado</option>
+                                                    <option value="" disabled className="bg-gray-900 text-gray-600">{t('missions.finalEvaluation.demographics.select')}</option>
+                                                    {Object.entries(t('missions.finalEvaluation.demographics.educationLevels', { returnObjects: true })).map(([key, label]) => (
+                                                        <option key={key} value={label as string} className="bg-gray-900 text-white">{label as string}</option>
+                                                    ))}
                                                 </select>
                                                 <ChevronDown size={14} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none transition-colors group-focus-within/select:text-blue-400" />
                                             </div>
@@ -297,20 +281,20 @@ const FinalEvaluationModal: React.FC = () => {
 
                                 <div className="p-4 rounded-2xl bg-white/5 border border-white/10 transition-all duration-300 overflow-hidden">
                                     <label className={`mb-3 text-left text-xs font-bold uppercase tracking-wider flex items-center gap-2 transition-colors ${isAnonymous ? 'text-white/20' : 'text-blue-400'}`}>
-                                        <User size={14} /> Tu nombre y apellidos
+                                        <User size={14} /> {t('missions.finalEvaluation.nameLabel')}
                                     </label>
                                     <input
                                         type="text"
                                         value={fullName}
                                         disabled={isAnonymous}
                                         onChange={(e) => setFullName(e.target.value)}
-                                        placeholder="Escribe aquí para los agradecimientos..."
+                                        placeholder={t('missions.finalEvaluation.namePlaceholder')}
                                         className={`w-full rounded-xl border p-4 text-white placeholder:text-gray-600 focus:outline-hidden transition-all ${isAnonymous ? 'bg-black/20 border-white/5 opacity-30 text-white/20 cursor-not-allowed' : 'bg-black/40 border-white/10 focus:border-blue-500'}`}
                                     />
 
                                     <div className="mt-4 flex items-center justify-between gap-4">
                                         <p className={`text-left text-[10px] italic transition-colors ${isAnonymous ? 'text-white/20' : 'text-gray-500'}`}>
-                                            Usaremos tu nombre para incluirte en los agradecimientos de nuestro TFG.
+                                            {t('missions.finalEvaluation.nameDisclaimer')}
                                         </p>
 
                                         <label className="flex items-center gap-2 cursor-pointer group">
@@ -324,7 +308,7 @@ const FinalEvaluationModal: React.FC = () => {
                                                 <div className="h-5 w-5 rounded-md border-2 border-white/10 bg-black/40 transition-all peer-checked:border-blue-500 peer-checked:bg-blue-500/20 group-hover:border-white/30" />
                                                 <CheckCircle size={14} className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-blue-400 opacity-0 transition-opacity peer-checked:opacity-100" />
                                             </div>
-                                            <span className={`text-[10px] font-bold uppercase tracking-wider transition-colors ${isAnonymous ? 'text-blue-400' : 'text-white/40 group-hover:text-white/60'}`}>Prefiero ser anónimo</span>
+                                            <span className={`text-[10px] font-bold uppercase tracking-wider transition-colors ${isAnonymous ? 'text-blue-400' : 'text-white/40 group-hover:text-white/60'}`}>{t('missions.finalEvaluation.anonymous')}</span>
                                         </label>
                                     </div>
                                 </div>
@@ -336,11 +320,11 @@ const FinalEvaluationModal: React.FC = () => {
                                 className="group relative flex w-full items-center justify-center gap-3 overflow-hidden rounded-2xl bg-linear-to-r from-blue-600 to-indigo-600 px-8 py-5 font-black text-white transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none disabled:hover:scale-100 shadow-2xl shadow-blue-600/30 cursor-pointer"
                             >
                                 {isSubmitting ? (
-                                    <span className="flex items-center gap-2">Enviando resultados...</span>
+                                    <span className="flex items-center gap-2">{t('missions.finalEvaluation.sending')}</span>
                                 ) : (
                                     <>
                                         <span className="relative z-10 text-lg uppercase tracking-wider">
-                                            {(!allSusAnswered || !allDemoAnswered) ? 'Completa el cuestionario' : 'Finalizar y Enviar'}
+                                            {(!allSusAnswered || !allDemoAnswered) ? t('missions.finalEvaluation.complete_survey') : t('missions.finalEvaluation.submit')}
                                         </span>
                                         {allSusAnswered && allDemoAnswered && <Send size={24} className="relative z-10 transition-transform group-hover:translate-x-1" />}
                                     </>
@@ -349,9 +333,9 @@ const FinalEvaluationModal: React.FC = () => {
                             </button>
 
                             <div className="mt-8 flex items-center justify-center gap-2 text-sm text-gray-500">
-                                <span>Hecho con</span>
+                                <span>{t('missions.finalEvaluation.madeWith')}</span>
                                 <Heart size={16} className="text-red-500 fill-current" />
-                                <span>por Rubén, Nicolás y Leonardo</span>
+                                <span>{t('missions.finalEvaluation.credits')}</span>
                             </div>
                         </>
                     )}

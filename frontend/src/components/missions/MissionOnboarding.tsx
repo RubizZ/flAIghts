@@ -372,8 +372,12 @@ const MissionOnboarding: React.FC = () => {
                                     )}
                                 </div>
                                 <div className="flex flex-col">
-                                    <h3 className="text-white font-black uppercase tracking-widest text-[9px]">Paso {displayState.activeTourStep} de {displayState.isSurveyTour ? 4 : 7}</h3>
-                                    <p className={`text-[8px] font-bold uppercase tracking-widest ${displayState.isSurveyTour ? 'text-amber-500' : 'text-blue-400'}`}>
+                                    <h3 className="text-white font-black uppercase tracking-widest text-[9px]">
+                                        {t("fixes.stepProgress", {
+                                            current: displayState.activeTourStep,
+                                            total: displayState.isSurveyTour ? 4 : 7
+                                        })}
+                                    </h3>                                    <p className={`text-[8px] font-bold uppercase tracking-widest ${displayState.isSurveyTour ? 'text-amber-500' : 'text-blue-400'}`}>
                                         {displayState.isSurveyTour ? t('missions.onboarding.surveyTour') : t('missions.onboarding.evaluationTour')}
                                     </p>
                                 </div>

@@ -810,13 +810,13 @@ export default function Settings() {
                                     <div className="p-2 bg-brand/10 text-brand rounded-xl">
                                         <Shield size={20} />
                                     </div>
-                                    <h2 className="text-xl font-bold">{user.is_password_set ? "Contraseña" : "Establecer contraseña"}</h2>
+                                    <h2 className="text-xl font-bold">{user.is_password_set ? t("settings.security.password.title") : t("settings.security.password.setTitle")}</h2>
                                 </div>
 
                                 <p className="text-sm text-content-muted mb-8 opacity-70 border-b border-line pb-4">
                                     {user.is_password_set
-                                        ? "Cambia tu contraseña periódicamente para mantener tu cuenta segura."
-                                        : "Aún no has establecido una contraseña manual. Te recomendamos hacerlo para poder acceder si pierdes el acceso a servicios externos."}
+                                        ? t("settings.security.password.description")
+                                        : t("settings.security.password.setDesc")}
                                 </p>
 
                                 <div className="space-y-6">
@@ -879,7 +879,7 @@ export default function Settings() {
                                             disabled={isChangingPassword || isSettingPassword || !newPassword || !confirmPassword}
                                             className="px-6 py-3 bg-brand text-content-on-brand rounded-2xl text-sm font-bold hover:opacity-90 transition-all disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed flex items-center gap-2 hover:scale-[1.02] active:scale-95"
                                         >
-                                            {(isChangingPassword || isSettingPassword) ? "Actualizando..." : (user.is_password_set ? "Actualizar contraseña" : "Establecer contraseña")}
+                                            {(isChangingPassword || isSettingPassword) ? t("settings.security.password.updating") : (user.is_password_set ? t("settings.security.password.update") : t("settings.security.password.set"))}
                                         </button>
                                     </div>
                                 </div>
@@ -890,11 +890,11 @@ export default function Settings() {
                                     <div className="p-2 bg-brand/10 text-brand rounded-xl">
                                         <LayoutGrid size={20} />
                                     </div>
-                                    <h2 className="text-xl font-bold">Aplicaciones conectadas</h2>
+                                    <h2 className="text-xl font-bold">{t("settings.security.apps.title")}</h2>
                                 </div>
 
                                 <p className="text-sm text-content-muted mb-8 opacity-70 border-b border-line pb-4">
-                                    Gestiona las cuentas de terceros vinculadas a tu cuenta de flAIghts.
+                                    {t("settings.security.apps.description")}
                                 </p>
 
                                 <div className="space-y-4">
@@ -912,8 +912,8 @@ export default function Settings() {
                                                 <h3 className="font-bold">Google</h3>
                                                 <p className="text-xs text-content-muted opacity-70">
                                                     {user.google_id
-                                                        ? (user.google_email || "Cuenta vinculada correctamente")
-                                                        : "No has vinculado tu cuenta de Google"}
+                                                        ? (user.google_email || t("settings.security.apps.google.linked"))
+                                                        : t("settings.security.apps.google.notLinked")}
                                                 </p>
                                             </div>
                                         </div>
@@ -921,12 +921,12 @@ export default function Settings() {
                                             {user.google_id ? (
                                                 <div className="flex items-center gap-3">
                                                     <span className="px-3 py-1 bg-green-500/10 text-green-500 text-[10px] font-black uppercase tracking-widest rounded-full border border-green-500/20">
-                                                        Conectado
+                                                        {t("settings.security.apps.google.connected")}
                                                     </span>
                                                     <button
                                                         onClick={handleDisconnectGoogle}
                                                         disabled={isDisconnectingGoogle}
-                                                        title="Desconectar cuenta de Google"
+                                                        title={t("settings.security.apps.google.disconnect")}
                                                         className="p-1.5 text-content-muted hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-all cursor-pointer disabled:opacity-50"
                                                     >
                                                         {isDisconnectingGoogle ? (
@@ -1052,7 +1052,7 @@ export default function Settings() {
                                 <div>
                                     <h3 className="text-2xl font-bold">{verificationStep.actionLabel}</h3>
                                     <p className="text-sm text-content-muted mt-2">
-                                        Por seguridad, introduce el código de 6 dígitos que hemos enviado a <span className="font-bold text-content">{user.email}</span>
+                                        {t("settings.verification.description", { email: user.email })}
                                     </p>
                                 </div>
                             </div>
@@ -1080,7 +1080,7 @@ export default function Settings() {
                                         disabled={isRequestingCode}
                                         className="text-xs font-bold text-brand hover:underline disabled:opacity-50 cursor-pointer"
                                     >
-                                        ¿No has recibido el código? Reenviar
+                                        {t("settings.verification.resend")}
                                     </button>
                                 </div>
 
@@ -1089,7 +1089,7 @@ export default function Settings() {
                                         onClick={() => setVerificationStep({ active: false, action: null, actionLabel: "", code: "", transactionId: "" })}
                                         className="flex-1 py-4 px-6 bg-surface border border-line text-content-muted rounded-2xl font-bold hover:bg-main transition-all active:scale-95 cursor-pointer"
                                     >
-                                        Cancelar
+                                        {t("settings.verification.cancel")}
                                     </button>
                                     <button
                                         disabled={verificationStep.code.length !== 6 || isChangingPassword || isSettingPassword || isConnectingGoogle || isDisconnectingGoogle}
@@ -1133,9 +1133,9 @@ export default function Settings() {
                                         {(isChangingPassword || isSettingPassword || isConnectingGoogle || isDisconnectingGoogle) ? (
                                             <>
                                                 <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                                                Confirmando...
+                                                {t("settings.verification.confirming")}
                                             </>
-                                        ) : "Confirmar acción"}
+                                        ) : t("settings.verification.confirm")}
                                     </button>
                                 </div>
                             </div>

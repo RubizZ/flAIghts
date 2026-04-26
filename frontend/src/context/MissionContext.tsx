@@ -334,7 +334,7 @@ export const MissionProvider: React.FC<{ children: ReactNode }> = ({ children })
                     const newSteps = m.steps.map((s: MissionStep) => {
                         if (s.id === stepId) {
                             // Toast con ID único para deduplicación automática
-                            toast.success(`¡Paso ${m.title}: ${s.title} completado!`, {
+                            toast.success(t("fixes.stepCompleted", { mission: t(m.title), step: t(s.title) }), {
                                 id: `step-${missionId}-${stepId}`,
                                 icon: '✨',
                                 style: {
@@ -357,7 +357,7 @@ export const MissionProvider: React.FC<{ children: ReactNode }> = ({ children })
                     const allStepsCompleted = newSteps.every(s => s.isCompleted);
 
                     if (allStepsCompleted && !m.isCompleted) {
-                        toast.success(`Misión completada: ${m.title}`, {
+                        toast.success(`${t('missions.dashboard.missionPassed')}: ${t(m.title)}`, {
                             id: `mission-${missionId}`,
                             icon: '🎉',
                             duration: 5000,
@@ -413,7 +413,7 @@ export const MissionProvider: React.FC<{ children: ReactNode }> = ({ children })
                 completedAt: mission.completedAt!,
                 steps: mission.steps.map(s => ({
                     id: s.id,
-                    title: s.title,
+                    title: t(s.title),
                     completedAt: s.completedAt!
                 }))
             }

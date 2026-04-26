@@ -213,7 +213,7 @@ export default function Chat() {
                 // Actualizamos localmente para evitar re-llamadas si el usuario vuelve a compartir rápido
                 search.shared = true;
             } catch (err) {
-                toast.error("No se pudo preparar la búsqueda para compartir");
+                toast.error(t("share.prepareShareError"));
                 return;
             }
         }
@@ -441,9 +441,9 @@ export default function Chat() {
                         <button
                             type="submit"
                             disabled={newMessage.trim() === "" || wsStatus !== 'open'}
-                            title={wsStatus !== 'open' ? 'Conectando al chat...' : 'Enviar mensaje'}
+                            title={wsStatus !== 'open' ? t('chat.connecting') : t('chat.sendMessage')}
                             className="p-3 bg-brand text-content-on-brand rounded-full hover:bg-brand/90 transition-all shadow-lg shadow-brand/20 active:scale-95 disabled:bg-brand/50 disabled:cursor-not-allowed disabled:scale-100 cursor-pointer"
-                            aria-label="Enviar mensaje"
+                            aria-label={t('chat.sendMessage')}
                         >
                             <Send size={20} />
                         </button>

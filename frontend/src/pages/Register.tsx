@@ -69,7 +69,7 @@ export default function Register() {
     const { mutate: performGoogleLogin, isPending: isGooglePending } = useLoginWithGoogleWeb({
         mutation: {
             onSuccess: () => {
-                toast.success(googleLinkData ? "Cuentas vinculadas correctamente" : "Sesión iniciada con Google");
+                toast.success(googleLinkData ? t("login.toast.googleLinked") : t("login.toast.googleSuccess"));
                 setGoogleLinkData(null);
                 queryClient.invalidateQueries({ queryKey: getGetSelfUserQueryKey() });
                 navigate("/");
@@ -80,13 +80,13 @@ export default function Register() {
                         credential: googleCredentialRef.current || "",
                         email: error.details.email
                     });
-                    toast.info("Cuenta existente detectada. Introduce tu contraseña para vincularla.");
+                    toast.info(t("login.toast.googleAccountDetected"));
                 } else if (error.code === "TURNSTILE_MISSING_TOKEN" || error.code === "TURNSTILE_INVALID_TOKEN" || error.code === "TURNSTILE_TOKEN_ALREADY_SPENT" || error.code === "TURNSTILE_VERIFICATION_FAILED") {
-                    toast.error("La verificación de seguridad ha fallado o caducado. Inténtalo de nuevo.");
+                    toast.error(t("login.toast.googleVerificationFailed"));
                     turnstileRef.current?.reset();
                 } else {
                     setGoogleLinkData(null);
-                    toast.error("Error al iniciar sesión o registrarse con Google");
+                    toast.error(t("login.toast.googleError"));
                 }
             }
         }
@@ -107,12 +107,12 @@ export default function Register() {
                 } else if (error.code === "REQUEST_VALIDATION_ERROR") {
                     if (error.details["body.email"]) newErrors.email = t("register.validation.emailInvalid");
                 } else if (error.code === "TURNSTILE_MISSING_TOKEN") {
-                    toast.error("Por favor, completa la verificación de seguridad.");
+                    toast.error(t("login.toast.turnstileRequired"));
                 } else if (error.code === "TURNSTILE_INVALID_TOKEN" || error.code === "TURNSTILE_TOKEN_ALREADY_SPENT") {
-                    toast.error("La verificación de seguridad ha caducado. Inténtalo de nuevo.");
+                    toast.error(t("login.toast.turnstileInvalid"));
                     turnstileRef.current?.reset();
                 } else if (error.code === "TURNSTILE_VERIFICATION_FAILED") {
-                    toast.error("La verificación de seguridad ha fallado. Por favor, inténtalo de nuevo.");
+                    toast.error(t("login.toast.turnstileFailed"));
                 }
                 setErrors(newErrors);
             }
@@ -131,7 +131,7 @@ export default function Register() {
                         }
                     });
                 } else {
-                    toast.success("¡Cuenta creada correctamente! Por favor, inicia sesión para continuar.");
+                    toast.success(t("register.toast.accountCreated"));
                     navigate("/login");
                 }
             },
@@ -142,10 +142,10 @@ export default function Register() {
                     if (error.details["body.username"]) {
                         switch (error.details["body.username"].message) {
                             case "minLength 3":
-                                newErrors.username = "Mínimo 3 caracteres";
+                                newErrors.username = t("register.validation.usernameMin");
                                 break;
                             case "maxLength 20":
-                                newErrors.username = "Máximo 20 caracteres";
+                                newErrors.username = t("register.validation.usernameMax");
                                 break;
                             default:
                                 newErrors.username = error.details["body.username"].message;
@@ -155,7 +155,7 @@ export default function Register() {
                     if (error.details["body.password"]) {
                         switch (error.details["body.password"].message) {
                             case "minLength 8":
-                                newErrors.password = "Mínimo 8 caracteres";
+                                newErrors.password = t("register.validation.passwordMin");
                                 break;
                             default:
                                 newErrors.password = error.details["body.password"].message;
@@ -165,10 +165,8 @@ export default function Register() {
                     if (error.details["body.code"]) {
                         switch (error.details["body.code"].message) {
                             case "minLength 6":
-                                newErrors.code = "Mínimo 6 caracteres";
-                                break;
                             case "maxLength 6":
-                                newErrors.code = "Máximo 6 caracteres";
+                                newErrors.code = t("register.validation.codeLength");
                                 break;
                             default:
                                 newErrors.code = error.details["body.code"].message;
@@ -195,7 +193,7 @@ export default function Register() {
         if (newErrors.email) return;
 
         if (!formData.turnstileToken) {
-            toast.error("Por favor, completa la verificación de seguridad.");
+            toast.error(t("login.toast.turnstileRequired"));
             return;
         }
 
@@ -279,7 +277,7 @@ export default function Register() {
                                     type="email"
                                     id="email"
                                     name="email"
-                                    label="Email"
+                                    label={t("register.labels.email")}
                                     error={errors.email}
                                     onKeyDown={enterKeyPress}
                                     icon={<Mail size={18} />}
@@ -292,12 +290,12 @@ export default function Register() {
                                     disabled={isInitiating}
                                     className="mt-4 rounded-lg bg-brand p-3 text-content-on-brand font-bold enabled:hover:scale-[1.02] enabled:active:scale-95 transition-all shadow-lg shadow-brand/20 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
-                                    {isInitiating ? "Enviando código..." : "Continuar"}
+                                    {isInitiating ? t("register.actions.sendingCode") : t("register.actions.nextStep")}
                                 </button>
 
                                 <div className="relative flex py-2 items-center">
                                     <div className="grow border-t border-content-muted/30"></div>
-                                    <span className="shrink-0 mx-4 text-content-muted text-sm">O continúa con</span>
+                                    <span className="shrink-0 mx-4 text-content-muted text-sm">{t("login.orContinueWith")}</span>
                                     <div className="grow border-t border-content-muted/30"></div>
                                 </div>
 
@@ -316,7 +314,7 @@ export default function Register() {
                                             }
                                         }}
                                         onError={() => {
-                                            toast.error('Error al conectar con Google');
+                                            toast.error(t("login.toast.googleConnectError"));
                                         }}
                                         theme='filled_blue'
                                         shape="circle"
@@ -334,9 +332,9 @@ export default function Register() {
                                         </div>
                                     </div>
                                     <div className="flex flex-col gap-1">
-                                        <h3 className="text-lg font-bold text-content">¡Código enviado!</h3>
+                                        <h3 className="text-lg font-bold text-content">{t("register.codeSentTitle")}</h3>
                                         <p className="text-sm text-center text-content-muted">
-                                            Hemos enviado un código a <span className="font-medium text-brand">{formData.email}</span>
+                                            {t("register.codeSent")} <span className="font-medium text-brand">{formData.email}</span>
                                         </p>
                                     </div>
                                 </div>
@@ -413,10 +411,10 @@ export default function Register() {
                                 />
 
                                 <div className="p-3 bg-brand/5 rounded-xl border border-line">
-                                    <h4 className="text-[10px] font-bold text-brand uppercase tracking-wider mb-1.5">Requisitos de seguridad:</h4>
+                                    <h4 className="text-[10px] font-bold text-brand uppercase tracking-wider mb-1.5">{t("settings.security.password.requirements.title")}</h4>
                                     <ul className="text-[10px] text-content-muted space-y-1 list-disc list-inside opacity-80">
-                                        <li>Mínimo 8 caracteres</li>
-                                        <li>Recomendamos incluir números y símbolos</li>
+                                        <li>{t("settings.security.password.requirements.minLength")}</li>
+                                        <li>{t("settings.security.password.requirements.recommended")}</li>
                                     </ul>
                                 </div>
 
@@ -443,7 +441,7 @@ export default function Register() {
                                             </div>
                                         </div>
                                         <span className="text-xs text-content-muted leading-tight select-none">
-                                            {t("register.iAccept")} <a href="/terms" target="_blank" rel="noopener noreferrer" className="text-brand hover:underline font-bold relative z-20" onClick={(e) => e.stopPropagation()} onMouseEnter={() => setIsHoveringLink(true)} onMouseLeave={() => setIsHoveringLink(false)}>{t("register.links.terms")}</a> y la <a href="/privacy" target="_blank" rel="noopener noreferrer" className="text-brand hover:underline font-bold relative z-20" onClick={(e) => e.stopPropagation()} onMouseEnter={() => setIsHoveringLink(true)} onMouseLeave={() => setIsHoveringLink(false)}>{t("register.links.privacy")}</a>
+                                            {t("register.iAccept")} <a href="/terms" target="_blank" rel="noopener noreferrer" className="text-brand hover:underline font-bold relative z-20" onClick={(e) => e.stopPropagation()} onMouseEnter={() => setIsHoveringLink(true)} onMouseLeave={() => setIsHoveringLink(false)}>{t("register.links.terms")}</a>{t("common.andThe")}<a href="/privacy" target="_blank" rel="noopener noreferrer" className="text-brand hover:underline font-bold relative z-20" onClick={(e) => e.stopPropagation()} onMouseEnter={() => setIsHoveringLink(true)} onMouseLeave={() => setIsHoveringLink(false)}>{t("register.links.privacy")}</a>
                                         </span>
                                     </label>
                                     {errors.acceptedTerms && <p className="text-[10px] text-red-500 ml-8 font-bold animate-shake">{errors.acceptedTerms}</p>}

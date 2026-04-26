@@ -70,7 +70,7 @@ const MissionDashboard: React.FC<MissionDashboardProps> = ({
                                     <div className="flex items-center gap-2 sm:gap-3 justify-center">
                                         <span className="text-sm sm:text-xs">{mission.icon}</span>
                                         <span className="text-[10px] sm:text-[9px] font-black uppercase tracking-[0.15em] sm:tracking-[0.2em] text-white truncate max-w-30 sm:max-w-none">
-                                            {mission.title}
+                                            {t(mission.title)}
                                         </span>
                                         <span className="text-[8px] sm:text-[9px] font-bold text-white/20 ml-1 sm:ml-2">
                                             {currentIndex + 1}/{totalAvailable}
@@ -125,7 +125,7 @@ const MissionDashboard: React.FC<MissionDashboardProps> = ({
                                     </div>
                                 )}
                                 <h3 className="text-2xl sm:text-3xl lg:text-4xl font-black text-white mb-2 sm:mb-3 tracking-tight leading-tight">
-                                    {mission.title}
+                                    {t(mission.title)}
                                 </h3>
                             </div>
 
@@ -135,7 +135,7 @@ const MissionDashboard: React.FC<MissionDashboardProps> = ({
 
                             <div className="space-y-3 sm:space-y-4 mb-6">
                                 <p className="text-base sm:text-lg text-white/90 leading-relaxed max-w-md">
-                                    {mission.description}
+                                    {t(mission.description)}
                                 </p>
                                 {mission.isCompleted && (
                                     <p className="text-[11px] sm:text-xs text-white/40 italic leading-relaxed max-w-md border-l-2 border-green-500/30 pl-4 py-1 mt-4">
@@ -194,18 +194,18 @@ const MissionDashboard: React.FC<MissionDashboardProps> = ({
 
                                             {/* Tooltip Detallado */}
                                             <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 px-4 py-2 bg-gray-900 text-white text-[10px] rounded-xl opacity-0 group-hover/tooltip:opacity-100 transition-all scale-90 group-hover/tooltip:scale-100 whitespace-nowrap pointer-events-none z-50 shadow-2xl border border-white/10 flex flex-col items-center gap-0.5">
-                                                <span className="font-black uppercase tracking-widest text-blue-400 text-[8px]">Detección Automática</span>
-                                                <span className="font-medium opacity-80">El sistema detectará automáticamente cuando completes esta tarea</span>
+                                                <span className="font-black uppercase tracking-widest text-blue-400 text-[8px]">{t('missions.dashboard.autoDetection')}</span>
+                                                <span className="font-medium opacity-80">{t('missions.dashboard.autoDetectionDesc')}</span>
                                                 <div className="absolute top-full left-1/2 -translate-x-1/2 border-8 border-transparent border-t-gray-900"></div>
                                             </div>
                                         </div>
 
                                         <div className="flex-1 min-w-0">
                                             <p className={`text-sm sm:text-base lg:text-lg font-bold mb-0.5 sm:mb-1 transition-all truncate ${step.isCompleted ? 'text-white/30 line-through' : 'text-white'}`}>
-                                                {step.title}
+                                                {t(step.title)}
                                             </p>
                                             <p className={`text-[10px] sm:text-xs lg:text-sm leading-relaxed font-medium transition-all ${step.isCompleted ? 'text-white/20' : 'text-white/40'}`}>
-                                                {step.description}
+                                                {t(step.description)}
                                             </p>
                                         </div>
                                     </div>

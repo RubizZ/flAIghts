@@ -1,4 +1,8 @@
 {
+  "fixes": {
+    "stepCompleted": "Step {{mission}}: {{step}} completed!",
+    "stepProgress": "Step {{current}} of {{total}}"
+  },
   "forgotPassword": {
     "title": "Forgot Password",
     "description": "Enter your email and we will send you a password reset link.",
@@ -40,6 +44,8 @@
       "accept": "Accept",
       "reject": "Reject"
     },
+    "searchPlaceholder": "Search among your friends...",
+    "noResults": "No friends found matching \"{{query}}\"",
     "requests": {
       "received": "Received Requests",
       "sent": "Sent Requests",
@@ -72,12 +78,26 @@
     "validation": {
       "identifierRequired": "Enter your email or username",
       "passwordRequired": "Enter your password",
-      "fillAllFields": "Please fill in all fields"
+      "fillAllFields": "Please fill in all fields",
+      "identifierMin": "Minimum 3 characters",
+      "passwordMin": "Minimum 8 characters"
     },
     "toast": {
       "welcome": "Welcome aboard!",
-      "invalidCredentials": "Invalid credentials"
-    }
+      "invalidCredentials": "Invalid credentials",
+      "turnstileRequired": "Please complete the security verification.",
+      "turnstileInvalid": "The verification has expired or is invalid. Please verify again.",
+      "turnstileFailed": "The security verification has failed. Please try again.",
+      "googleLinked": "Accounts linked successfully",
+      "googleSuccess": "Session started with Google",
+      "googleAccountDetected": "Existing account detected. Enter your password to link it.",
+      "googleInvalidCode": "The verification code is incorrect or has expired.",
+      "googleVerificationFailed": "The security verification has failed or expired. Try again.",
+      "googleError": "Error logging in with Google",
+      "googleConnectError": "Error connecting with Google"
+    },
+    "verifyingSession": "Verifying session...",
+    "orContinueWith": "Or continue with"
   },
   "notFound": {
     "title": "Oops! Page not found",
@@ -91,12 +111,14 @@
     "iAccept": "I accept the ",
     "alreadyHaveAccount": "Already have an account?",
     "codeSent": "We have sent a code to ",
+    "codeSentTitle": "Code sent!",
     "steps": {
       "step1Title": "Join flAIghts",
       "step1Description": "Enter your email to receive a verification code.",
       "step2Title": "Complete your profile"
     },
     "labels": {
+      "email": "Email",
       "code": "Verification code",
       "username": "Username",
       "password": "Password",
@@ -126,12 +148,16 @@
       "emailInUse": "This email is already registered",
       "usernameInUse": "Username is already in use",
       "invalidCode": "The code is invalid or has expired",
-      "emailInvalid": "Invalid email address"
+      "emailInvalid": "Invalid email address",
+      "usernameMin": "Minimum 3 characters",
+      "usernameMax": "Maximum 20 characters",
+      "codeLength": "Must have 6 characters"
     },
     "toast": {
       "verificationEmailSent": "Verification email sent. Check your inbox.",
       "welcome": "Welcome aboard!",
-      "loginError": "You have registered successfully, but there was an error logging in. Please login."
+      "loginError": "You have registered successfully, but there was an error logging in. Please login.",
+      "accountCreated": "Account created successfully! Please log in to continue."
     }
   },
   "resetPassword": {
@@ -253,7 +279,9 @@
       },
       "password": {
         "title": "Password",
+        "setTitle": "Set password",
         "description": "Change your password periodically to keep your account secure.",
+        "setDesc": "You haven't set a manual password yet. We recommend doing so to be able to access if you lose access to external services.",
         "current": "Current Password",
         "new": "New Password",
         "confirm": "Confirm New Password",
@@ -271,8 +299,20 @@
         "validation": {
           "allFieldsRequired": "Please fill in all fields",
           "passwordMismatch": "New passwords do not match",
-          "sameAsOld": "New password must be different from current",
-          "minLength": "New password must be at least 8 characters"
+          "sameAsOld": "The new password must be different from the current one",
+          "minLength": "The new password must be at least 8 characters long"
+        },
+        "set": "Set password"
+      },
+      "apps": {
+        "title": "Connected Apps",
+        "description": "Manage third-party accounts linked to your flAIghts account.",
+        "google": {
+          "connected": "Connected",
+          "linked": "Account linked successfully",
+          "notLinked": "You haven't linked your Google account",
+          "disconnect": "Disconnect Google account",
+          "error": "Error connecting with Google"
         }
       }
     },
@@ -297,7 +337,15 @@
     },
     "general": {
       "back": "Back",
-      "logout": "Log Out"
+      "logout": "Logout"
+    },
+    "verification": {
+      "title": "Security Verification",
+      "description": "For security, enter the 6-digit code we sent to {{email}}",
+      "resend": "Didn't receive the code? Resend",
+      "cancel": "Cancel",
+      "confirming": "Confirming...",
+      "confirm": "Confirm action"
     },
     "toast": {
       "pendingEmail": "You have an email change pending verification",
@@ -330,7 +378,14 @@
       "friendSince": "Friend since {{date}}",
       "sentRequest": "Friend request sent",
       "receivedRequest": "Friend request received",
-      "memberSince": "Member since {{date}}"
+      "memberSince": "Member since {{date}}",
+      "online": "Online",
+      "offline": "Offline"
+    },
+    "admin": "flAIghts Administrator",
+    "badges": {
+      "title": "Achievement Showcase",
+      "earnedOn": "Earned on {{date}}"
     },
     "actions": {
       "editProfile": "Edit my profile",
@@ -342,12 +397,17 @@
     },
     "searches": {
       "title": "Recent searches",
+      "featured": "Featured searches",
+      "viewHistory": "View full history",
       "private": "Private account",
       "privateDesc": "To view {{username}}'s searches, you must be their friend.",
       "empty": "This user has not saved any flight searches yet.",
+      "emptyFeatured": "No featured searches",
+      "emptyFeaturedDesc": "This user has not shared any of their flight searches yet.",
       "departure": "Departure: {{date}}",
       "return": "Return: {{date}}",
-      "noMore": "No more searches"
+      "noMore": "No more searches",
+      "end": "End of featured searches"
     },
     "toast": {
       "requestSent": "Friend request sent",
@@ -487,6 +547,20 @@
     "privacyPolicy": "Privacy Policy",
     "termsOfService": "Terms of Service",
     "acknowledgements": "Acknowledgements"
+  },
+  "globe": {
+    "loading": "Loading globe...",
+    "airportsInZone": "Airports in zone",
+    "found": "{{count}} found",
+    "airportZone": "Airport Zone",
+    "locations": "{{count}} locations",
+    "clickForList": "Click to view list",
+    "city": "City",
+    "linkedAirports": "Linked Airports",
+    "unknownLocation": "Unknown location",
+    "setAsOrigin": "Set as origin",
+    "setAsDestination": "Set as destination",
+    "deselectCity": "Deselect city"
   },
   "navbar": {
     "account": "Account",
@@ -702,11 +776,27 @@
       "feedbackSaved": "Feedback saved",
       "progress": "Progress",
       "taskStatus": "Task Status",
+      "autoDetection": "Auto Detection",
+      "autoDetectionDesc": "The system will automatically detect when you complete this task",
       "branding": "Research TFG flAIghts",
-      "footerHero": "ðŸš€ Exploring the future of travel with AI"
+      "footerHero": "🚀 Exploring the future of travel with AI"
     },
     "roadmap": {
-      "missions": "Missions"
+      "title": "Evaluation Roadmap",
+      "pendingFeedback": "Feedback Pending",
+      "subtitle": "Progress of usability challenges. Complete all missions and answer the questionnaires to finish the evaluation.",
+      "legend": {
+        "achieved": "Achieved",
+        "inProgress": "In Progress",
+        "available": "Available",
+        "feedback": "Feedback",
+        "blocked": "Blocked"
+      },
+      "status": {
+        "completed": "Completed",
+        "available": "Available",
+        "locked": "Locked"
+      }
     },
     "onboarding": {
       "title": "Evaluation Tutorial",
@@ -771,19 +861,77 @@
     "consent": {
       "title": "Participation in Evaluation",
       "title_prefix": "Evaluation of",
+      "welcome": "Welcome to flAIghts, an application that helps you find flights, it's your travel agent and much more!",
+      "tfg_notice": "We are currently developing this application as a Final Degree Project (TFG) and we need your collaboration to evaluate the user experience.",
+      "invitation": "Therefore, we invite you to perform the interactive evaluation of our website. It will only take a few minutes, and you will receive a badge for your collaboration!",
       "description": "This interactive evaluation system is part of a usability study for our Final Degree Project (TFG).",
+      "details_title": "Evaluation Details",
+      "details_description": "The evaluation consists of performing a series of missions that go through all the functionalities of the platform. Each mission has its own instructions and steps to perform.",
+      "feedback_process": "At the end of each mission, you will have to rate how easy it was for you, and give feedback or a general opinion on the functionality you have tried.<br />Once all missions are finished, you will have to complete a final questionnaire to finish the evaluation.",
       "missions_title": "Missions to perform",
       "privacy_notice": "To link results with your activity, we will collect data associated with your session. We will only use this information for academic purposes and usability analysis.",
+      "important_notice_title": "Important Notice",
+      "important_notice_description": "You must perform the evaluation on this same device, as progress is local and is not synchronized with your account between different browsers or computers.",
       "tutorial_title": "Recommended Tutorial",
       "tutorial_description": "Upon acceptance, an interactive guide will begin. We recommend following it to not miss any details of the mission system.",
       "checkbox_label_bold": "Mandatory consent:",
       "checkbox_label": "I consent to the processing of my interaction data linked to my user for the Final Degree Project.",
-      "accept": "I agree to participate",
-      "decline": "I prefer not to participate"
+      "accept": "Start now!",
+      "decline": "I prefer not to participate",
+      "actions": {
+        "continue": "Continue",
+        "start": "Start now!",
+        "back": "Back"
+      }
     },
     "finalEvaluation": {
       "congrats": "CONGRATULATIONS!",
       "title": "Evaluation Completed",
+      "subtitle": "You have completed the evaluation program missions",
+      "instructions": "You have successfully completed all the usability missions for our Final Degree Project.<br /> Please complete this final questionnaire to finish.",
+      "usability_title": "Usability Questionnaire (10 questions)",
+      "usability_description": "Rate the following statements from 1 (Strongly disagree) to 5 (Strongly agree).",
+      "rating_labels": {
+        "disagree": "Strongly disagree",
+        "agree": "Strongly agree"
+      },
+      "mobile_rating_labels": {
+        "disagree": "Disagree",
+        "agree": "Agree"
+      },
+      "sus_questions": [
+        "I think that I would like to use this system frequently.",
+        "I found the system unnecessarily complex.",
+        "I thought the system was easy to use.",
+        "I think that I would need the support of a technical person to be able to use this system.",
+        "I found the various functions in this system were well integrated.",
+        "I thought there was too much inconsistency in this system.",
+        "I would imagine that most people would learn to use this system very quickly.",
+        "I found the system very cumbersome to use.",
+        "I felt very confident using the system.",
+        "I needed to learn a lot of things before I could get going with this system."
+      ],
+      "demographics": {
+        "title": "Demographic Data",
+        "age": "Age",
+        "gender": "Gender",
+        "education": "Education Level",
+        "select": "Select...",
+        "genders": {
+          "male": "Male",
+          "female": "Female",
+          "other": "Other",
+          "none": "Prefer not to say"
+        },
+        "educationLevels": {
+          "none": "No studies",
+          "primary": "Primary",
+          "secondary": "Secondary",
+          "highschool": "High School / Vocational",
+          "university": "University Degree",
+          "master": "Master / Doctorate"
+        }
+      },
       "missionsCompleted": "Missions",
       "objectivesValidated": "Objectives",
       "gratitude": "Gratitude",
@@ -793,10 +941,161 @@
       "anonymous": "I prefer to be anonymous",
       "sending": "Sending results...",
       "submit": "Finish and Send",
+      "complete_survey": "Complete the survey",
       "madeWith": "Made with",
+      "credits": "by Rubén, Nicolás and Leonardo",
       "forTfg": "for the flAIghts TFG",
       "finalMessage": "You have successfully completed all the usability challenges proposed for this study. Your contribution is a fundamental pillar of our academic research.",
-      "closeAndExplore": "Close and keep exploring"
+      "closeAndExplore": "Close and keep exploring",
+      "thanks": {
+        "title": "THANK YOU VERY MUCH!",
+        "subtitle": "Your participation has been key to the success of our Final Degree Project. We greatly value your time and effort.",
+        "message": "Now that you have explored all the capabilities of flAIghts, we encourage you to continue using it in your daily life. Let our AI find the best deals for you and turn every search into an adventure.",
+        "badge_unlocked": "Unlocked",
+        "badge_title": "Evaluator Badge",
+        "badge_description": "You have received an exclusive badge for completing the study.",
+        "actions": {
+          "view_profile": "View in my profile",
+          "view_profile_desc": "Your achievements and medals",
+          "bookmark": "Save Bookmark",
+          "bookmark_desc": "Quick access",
+          "install": "Install App",
+          "install_desc": "Home screen",
+          "home": "Home Page",
+          "home_desc": "Clear search",
+          "explore": "Keep exploring"
+        }
+      }
+    },
+    "list": {
+      "registration": {
+        "title": "Sign up for flAIghts",
+        "description": "Sign up on the platform.",
+        "steps": {
+          "complete_registration": {
+            "title": "Create an account",
+            "description": "Complete the registration form to access all functionalities."
+          }
+        }
+      },
+      "profile": {
+        "title": "Customize your profile",
+        "description": "Upload a profile picture and configure your flight preferences.",
+        "steps": {
+          "upload_avatar": {
+            "title": "Upload a profile picture",
+            "description": "Update your profile and upload the photo you like best."
+          },
+          "edit_preferences": {
+            "title": "Customize your flight searches",
+            "description": "Edit your profile and adjust the search weights to better suit your preferences."
+          }
+        }
+      },
+      "social": {
+        "title": "Make friends",
+        "description": "Connect with other people.",
+        "steps": {
+          "view_user_profile": {
+            "title": "Visit a profile",
+            "description": "Search for a user and visit their public profile. You can search for the user \"flAIghts\""
+          },
+          "send_friend_request": {
+            "title": "Send a request",
+            "description": "Send a friend request to that user. The user \"flAIghts\" will accept it automatically."
+          },
+          "send_message": {
+            "title": "Write a message",
+            "description": "Send a direct message to say hello."
+          }
+        }
+      },
+      "manual_search": {
+        "title": "Use the flight search",
+        "description": "Perform a manual flight search using the airport selector.",
+        "steps": {
+          "open_airport_card": {
+            "title": "Open the airport search",
+            "description": "Click on the Origin or Destination field to open the search."
+          },
+          "add_airport": {
+            "title": "Select an airport",
+            "description": "Type the name of a city or airport of your choice and select it from the list."
+          },
+          "perform_manual_search": {
+            "title": "Manual search",
+            "description": "Complete the remaining fields and perform the search by clicking on \"Explore flights\"."
+          }
+        }
+      },
+      "map_search": {
+        "title": "Use the interactive map",
+        "description": "Perform an interactive search using the globe.",
+        "steps": {
+          "open_map": {
+            "title": "Open the interactive map",
+            "description": "Use the map button on the inputs or click directly on the globe to enter interaction mode."
+          },
+          "select_on_map": {
+            "title": "Select from the map",
+            "description": "Search for an airport on the globe and select it as origin or destination using the menu or the information card."
+          },
+          "perform_map_search": {
+            "title": "Search from the map",
+            "description": "Complete the remaining fields and perform the search by clicking on \"Explore flights\"."
+          }
+        }
+      },
+      "flight_results": {
+        "title": "Explore the results",
+        "description": "Interact with the flights found to find your ideal option.",
+        "steps": {
+          "view_flight_details": {
+            "title": "Flight details",
+            "description": "Select a flight to see its details."
+          },
+          "select_flight": {
+            "title": "Select a flight as outbound flight",
+            "description": "Select a flight as if it were going to be your outbound flight."
+          },
+          "buy_flight": {
+            "title": "\"Buy\" the flight",
+            "description": "Open the external provider to buy the selected flight and close the provider window. Don't worry, you don't have to pay anything or buy it."
+          }
+        }
+      },
+      "share": {
+        "title": "Share your trips",
+        "description": "Share your flight searches with your friends.",
+        "steps": {
+          "share_from_results": {
+            "title": "Share from results",
+            "description": "Use the share button on the search results page and share it with someone. You can send it to the user \"flAIghts\"."
+          },
+          "share_from_chat": {
+            "title": "Share from the chat",
+            "description": "Share a search directly in a conversation with a friend. You can send it to the user \"flAIghts\"."
+          }
+        }
+      },
+      "ai": {
+        "title": "Try the Artificial Intelligence",
+        "description": "Use the AI agent to plan a complex trip using natural language.",
+        "steps": {
+          "use_ai": {
+            "title": "Use the AI",
+            "description": "Write a message to the agent."
+          },
+          "get_search_history": {
+            "title": "Your history",
+            "description": "Ask the agent to consult your previous searches."
+          },
+          "receive_ai_flights": {
+            "title": "Receive flights from the AI",
+            "description": "Ask the agent to look for flights and have it recommend one of them."
+          }
+        }
+      }
     }
   },
   "booking": {
@@ -813,6 +1112,8 @@
     "close": "Close"
   },
   "common": {
+    "email": "Email",
+    "andThe": " and the ",
     "outbound": "Outbound",
     "return": "Return",
     "outboundFlights": "Outbound Flights",
@@ -825,7 +1126,14 @@
     "stopover_other": "{{count}} stopovers",
     "cities": "Cities",
     "select": "Select",
-    "add": "Add..."
+    "add": "Add...",
+    "exit": "Exit",
+    "back": "Back",
+    "tfg": "Final Degree Project",
+    "badge": "badge",
+    "evaluation": "Evaluation",
+    "bookmarkAlert": "To add flAIghts to your bookmarks, press Ctrl+D (Windows) or Cmd+D (Mac)",
+    "installAlert": "To add flAIghts to your home screen, use the \"Add to home screen\" option in your browser's menu."
   },
   "home": {
     "toast": {
@@ -846,13 +1154,6 @@
       "return": "Return"
     }
   },
-  "globe": {
-    "loading": "Loading globe...",
-    "airportsInZone": "Airports in zone",
-    "found": "{{count}} found",
-    "setAsOrigin": "Set as Origin",
-    "setAsDestination": "Set as Destination"
-  },
   "share": {
     "share": "Share",
     "shareWithFriend": "Share with friend",
@@ -860,6 +1161,7 @@
     "flightSharedSuccess": "Flight shared successfully",
     "shareError": "Error sharing",
     "shareFlightError": "Error sharing flight",
+    "prepareShareError": "Could not prepare search for sharing",
     "shareFlightSearch": "Share flight search",
     "viewTripDetails": "View trip details"
   },
@@ -881,6 +1183,18 @@
     "connecting": "Connecting to chat...",
     "sendMessage": "Send message"
   },
+  "chats": {
+    "title": "Chats",
+    "subtitle": "Your recent conversations.",
+    "newChat": "New chat",
+    "error": "Error loading conversations.",
+    "empty": {
+      "title": "You have no active chats",
+      "description": "Find friends and start a conversation.",
+      "action": "View my friends"
+    },
+    "sharedFlight": "✈️ Shared flight: {{origin}} → {{destination}}"
+  },
   "flightRoute": {
     "direct": "Direct",
     "stopover": "{{count}} {{label}} ({{airports}})",
@@ -897,7 +1211,7 @@
     "noResults": "No results",
     "tryOtherSearch": "Try another code or city name",
     "fromWhere": "From where?",
-    "toWhere": "Where to?"
+    "toWhere": "To where?"
   },
   "airportReport": {
     "title": "Report error",
@@ -918,6 +1232,64 @@
   "acknowledgements": {
     "title": "Acknowledgements",
     "backToHome": "Back to Home",
-    "content": "We would like to thank SerpApi for providing their API to carry out this project."
+    "content": "We thank SerpApi for the use of its API to carry out this project."
+  },
+  "turnstile": {
+    "title": "Verification",
+    "description": "We need to confirm you are human to keep the platform secure.",
+    "error": "Verification has failed. Please try again.",
+    "expired": "Verification has expired due to inactivity.",
+    "retry": "Retry now"
+  },
+  "admin": {
+    "dashboard": {
+      "title": "Control Panel",
+      "description": "Global management of the flAIghts system"
+    },
+    "tabs": {
+      "stats": "Statistics",
+      "users": "Users",
+      "airports": "Airports",
+      "reports": "Reports",
+      "evaluations": "Evaluations",
+      "audits": "Audits"
+    }
+  },
+  "googleLinking": {
+    "title": "Existing account",
+    "description": "We've detected that you already have an account with {{email}}. Enter your flAIghts password to link it.",
+    "labels": {
+      "password": "flAIghts password",
+      "newPassword": "New password",
+      "confirmPassword": "Confirm new password",
+      "verificationCode": "Verification code (6 digits)"
+    },
+    "actions": {
+      "forgotPassword": "I forgot my password",
+      "sendingCode": "Sending code...",
+      "back": "Back",
+      "confirmAndLink": "Confirm and Link",
+      "resetAndLink": "Reset and Link",
+      "linking": "Linking..."
+    },
+    "verificationSent": "We've sent a code to your email to confirm the change.",
+    "validation": {
+      "passwordRequired": "Enter your password",
+      "newPasswordRequired": "Password is required",
+      "passwordMin": "Minimum 8 characters",
+      "confirmPasswordRequired": "You must confirm the password",
+      "passwordsMismatch": "Passwords do not match",
+      "codeRequired": "Enter the 6-digit code",
+      "fillAllFields": "Please fill in all fields correctly"
+    },
+    "toast": {
+      "success": "Accounts linked successfully",
+      "invalidPassword": "Incorrect password to link the account.",
+      "invalidCode": "Verification code is invalid or has expired.",
+      "verificationFailed": "Security verification has failed or expired. Try again.",
+      "error": "Error linking the account.",
+      "codeSent": "Verification code sent to your email.",
+      "codeError": "Error sending verification code."
+    }
   }
 }

@@ -7,8 +7,9 @@ import { MessageSquare, Clock, UserPlus, Plus } from "lucide-react";
 import UserAvatar from "@/components/ui/UserAvatar";
 import { useEffect, useCallback } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-
+import { useTranslation } from "react-i18next";
 export default function Chats() {
+    const { t } = useTranslation();
     const { user, isAuthenticated, isLoading: isAuthLoading } = useAuth();
     const queryClient = useQueryClient();
 
@@ -47,9 +48,9 @@ export default function Chats() {
                 <div className="p-4 bg-red-50 rounded-full border border-red-100">
                     <UserPlus className="w-12 h-12 text-red-500" />
                 </div>
-                <h1 className="text-3xl font-bold text-content">No has iniciado sesión</h1>
+                <h1 className="text-3xl font-bold text-content">{t("friends.notLogged.title")}</h1>
                 <Link to="/login" className="px-8 py-3 bg-brand text-content-on-brand rounded-full hover:bg-brand/90 transition-all shadow-xl active:scale-95 font-bold hover:scale-[1.02]">
-                    Iniciar sesión
+                    {t("friends.notLogged.login")}
                 </Link>
             </div>
         );
@@ -60,7 +61,7 @@ export default function Chats() {
     const formatMessageContent = (content: string) => {
         if (content.startsWith("SHARE_SEARCH:")) {
             const [, , origin, destination] = content.split(":");
-            return `✈️ Vuelo compartido: ${origin} → ${destination}`;
+            return t("chats.sharedFlight", { origin, destination });
         }
         return content;
     };
@@ -69,15 +70,15 @@ export default function Chats() {
         <div className="flex flex-col max-w-5xl mx-auto w-full p-6 sm:p-8 gap-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
             <header className="flex justify-between items-end gap-4">
                 <div className="flex flex-col gap-2">
-                    <h1 className="text-4xl font-extrabold text-content tracking-tight">Chats</h1>
-                    <p className="text-content-muted text-lg">Tus conversaciones recientes.</p>
+                    <h1 className="text-4xl font-extrabold text-content tracking-tight">{t("chats.title")}</h1>
+                    <p className="text-content-muted text-lg">{t("chats.subtitle")}</p>
                 </div>
                 <Link
                     to="/friends"
                     className="mb-1 flex items-center gap-2 bg-brand text-content-on-brand px-4 py-2 rounded-xl font-bold hover:opacity-90 transition-all shadow-lg shadow-brand/20 hover:scale-105 active:scale-95 whitespace-nowrap"
                 >
                     <Plus size={20} />
-                    <span className="hidden sm:inline">Nuevo chat</span>
+                    <span className="hidden sm:inline">{t("chats.newChat")}</span>
                 </Link>
             </header>
 
@@ -88,15 +89,15 @@ export default function Chats() {
                     </div>
                 ) : isError ? (
                     <div className="flex justify-center p-10">
-                        <p className="text-red-500 font-medium">Error al cargar las conversaciones.</p>
+                        <p className="text-red-500 font-medium">{t("chats.error")}</p>
                     </div>
                 ) : conversations.length === 0 ? (
                     <div className="flex flex-col items-center justify-center py-20 bg-surface/10 rounded-3xl border border-dashed border-line">
                         <MessageSquare size={48} className="text-content-muted opacity-50 mb-4" />
-                        <h3 className="text-xl font-bold text-content">No tienes chats activos</h3>
-                        <p className="text-content-muted text-center mt-2 max-w-sm">Busca amigos e inicia una conversación.</p>
+                        <h3 className="text-xl font-bold text-content">{t("chats.empty.title")}</h3>
+                        <p className="text-content-muted text-center mt-2 max-w-sm">{t("chats.empty.description")}</p>
                         <Link to="/friends" className="mt-6 px-6 py-2 bg-brand text-content-on-brand rounded-full font-bold hover:bg-brand/90 transition-all shadow-lg hover:scale-105 active:scale-95">
-                            Ver mis amigos
+                            {t("chats.empty.action")}
                         </Link>
                     </div>
                 ) : (

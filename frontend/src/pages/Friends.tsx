@@ -101,7 +101,7 @@ export default function Friends() {
                     className="mb-1 flex items-center gap-2 bg-brand text-content-on-brand px-4 py-2 rounded-xl font-bold hover:opacity-90 transition-all shadow-lg shadow-brand/20 hover:scale-105 active:scale-95 whitespace-nowrap"
                 >
                     <UserSearch size={18} />
-                    <span className="hidden sm:inline">Añadir amigo</span>
+                    <span className="hidden sm:inline">{t("friends.addFriend")}</span>
                 </Link>
             </header>
             <div className="flex gap-4 border-b border-line overflow-x-auto no-scrollbar scroll-smooth">
@@ -148,7 +148,7 @@ export default function Friends() {
                                     </div>
                                     <input
                                         type="text"
-                                        placeholder="Buscar entre tus amigos..."
+                                        placeholder={t("friends.searchPlaceholder")}
                                         className="w-full bg-main placeholder-content-muted outline-none px-4 py-2 pl-10 rounded-xl font-medium border border-line focus:border-brand shadow-xs transition-all"
                                         value={searchQuery}
                                         onChange={(e) => setSearchQuery(e.target.value)}
@@ -165,7 +165,7 @@ export default function Friends() {
 
                                 {filteredFriends.length === 0 ? (
                                     <div className="flex flex-col items-center justify-center py-12 bg-surface/5 rounded-2xl border border-dashed border-line">
-                                        <p className="text-content-muted font-medium">No se han encontrado amigos que coincidan con &quot;<span className="text-content font-bold">{searchQuery}</span>&quot;</p>
+                                        <p className="text-content-muted font-medium">{t("friends.noResults", { query: searchQuery })}</p>
                                     </div>
                                 ) : (
                                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">

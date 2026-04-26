@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
     ShieldCheck,
     Users,
@@ -22,6 +23,7 @@ import AuditsTab from '@/components/admin/AuditsTab';
 type TabType = 'stats' | 'users' | 'airports' | 'reports' | 'evaluations' | 'audits';
 
 export default function AdminDashboard() {
+    const { t } = useTranslation();
     const [activeTab, setActiveTab] = useState<TabType>('stats');
 
     // Hook para estadísticas generales (se pasa a StatsView)
@@ -30,12 +32,12 @@ export default function AdminDashboard() {
     });
 
     const tabs = [
-        { id: 'stats', label: 'Estadísticas', icon: BarChart3 },
-        { id: 'users', label: 'Usuarios', icon: Users },
-        { id: 'airports', label: 'Aeropuertos', icon: Plane },
-        { id: 'reports', label: 'Reportes', icon: FileWarning },
-        { id: 'evaluations', label: 'Evaluaciones', icon: ClipboardCheck },
-        { id: 'audits', label: 'Auditoría', icon: History },
+        { id: 'stats', label: t('admin.tabs.stats'), icon: BarChart3 },
+        { id: 'users', label: t('admin.tabs.users'), icon: Users },
+        { id: 'airports', label: t('admin.tabs.airports'), icon: Plane },
+        { id: 'reports', label: t('admin.tabs.reports'), icon: FileWarning },
+        { id: 'evaluations', label: t('admin.tabs.evaluations'), icon: ClipboardCheck },
+        { id: 'audits', label: t('admin.tabs.audits'), icon: History },
     ];
 
     return (
@@ -47,8 +49,8 @@ export default function AdminDashboard() {
                         <ShieldCheck size={32} />
                     </div>
                     <div>
-                        <h1 className="text-3xl font-bold text-content">Panel de Control</h1>
-                        <p className="text-content-muted">Gestión global del sistema flAIghts</p>
+                        <h1 className="text-3xl font-bold text-content">{t('admin.dashboard.title')}</h1>
+                        <p className="text-content-muted">{t('admin.dashboard.description')}</p>
                     </div>
                 </div>
 
