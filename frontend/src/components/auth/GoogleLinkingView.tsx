@@ -7,6 +7,7 @@ import { useAuth } from "@/context/AuthContext";
 import { useNavigate } from "react-router-dom";
 import TurnstileWidget, { type TurnstileWidgetRef } from "@/components/ui/TurnstileWidget";
 import { useRef } from "react";
+import Tooltip from "@/components/ui/Tooltip";
 
 interface GoogleLinkingViewProps {
     linkData: { credential: string; email: string };
@@ -187,14 +188,16 @@ export default function GoogleLinkingView({ linkData, onCancel, onSuccess }: Goo
                             >
                                 {t("googleLinking.actions.back")}
                             </button>
-                            <button
-                                type="button"
-                                onClick={handleConfirmLink}
-                                disabled={isGooglePending || !turnstileToken}
-                                className="flex-1 rounded-lg bg-brand p-3 text-content-on-brand font-bold enabled:hover:scale-[1.02] enabled:active:scale-95 transition-all shadow-lg shadow-brand/20 cursor-pointer disabled:opacity-50"
-                            >
-                                {isGooglePending ? t("googleLinking.actions.linking") : t("googleLinking.actions.confirmAndLink")}
-                            </button>
+                            <Tooltip content={t("turnstile.verifying")} disabled={!!turnstileToken} position="top">
+                                <button
+                                    type="button"
+                                    onClick={handleConfirmLink}
+                                    disabled={isGooglePending || !turnstileToken}
+                                    className="flex-1 rounded-lg bg-brand p-3 text-content-on-brand font-bold enabled:hover:scale-[1.02] enabled:active:scale-95 transition-all shadow-lg shadow-brand/20 cursor-pointer disabled:opacity-50"
+                                >
+                                    {isGooglePending ? t("googleLinking.actions.linking") : t("googleLinking.actions.confirmAndLink")}
+                                </button>
+                            </Tooltip>
                         </div>
                     </>
                 ) : (
@@ -257,14 +260,16 @@ export default function GoogleLinkingView({ linkData, onCancel, onSuccess }: Goo
                             >
                                 {t("googleLinking.actions.back")}
                             </button>
-                            <button
-                                type="button"
-                                onClick={handleResetAndLink}
-                                disabled={isGooglePending || !turnstileToken}
-                                className="flex-1 rounded-lg bg-brand p-3 text-content-on-brand font-bold enabled:hover:scale-[1.02] enabled:active:scale-95 transition-all shadow-lg shadow-brand/20 cursor-pointer disabled:opacity-50"
-                            >
-                                {isGooglePending ? t("googleLinking.actions.linking") : t("googleLinking.actions.resetAndLink")}
-                            </button>
+                            <Tooltip content={t("turnstile.verifying")} disabled={!!turnstileToken} position="top">
+                                <button
+                                    type="button"
+                                    onClick={handleResetAndLink}
+                                    disabled={isGooglePending || !turnstileToken}
+                                    className="flex-1 rounded-lg bg-brand p-3 text-content-on-brand font-bold enabled:hover:scale-[1.02] enabled:active:scale-95 transition-all shadow-lg shadow-brand/20 cursor-pointer disabled:opacity-50"
+                                >
+                                    {isGooglePending ? t("googleLinking.actions.linking") : t("googleLinking.actions.resetAndLink")}
+                                </button>
+                            </Tooltip>
                         </div>
                     </>
                 )}

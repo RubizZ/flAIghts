@@ -12,6 +12,7 @@ import TurnstileWidget, { type TurnstileWidgetRef } from "@/components/ui/Turnst
 import GoogleLinkingView from "@/components/auth/GoogleLinkingView";
 import { useRef } from "react";
 import { useTranslation } from "react-i18next";
+import Tooltip from "@/components/ui/Tooltip";
 
 export default function Login() {
     const { t } = useTranslation();
@@ -220,14 +221,16 @@ export default function Login() {
                             <a href="/forgot-password" className="text-brand hover:underline">{t("login.links.forgotPassword")}</a>
                         </span>
 
-                        <button
-                            type="button"
-                            onClick={login}
-                            disabled={isPending || !turnstileToken}
-                            className={`mt-2 rounded-lg bg-brand p-3 text-content-on-brand font-bold enabled:hover:scale-[1.02] enabled:active:scale-95 transition-all shadow-lg shadow-brand/20 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed`}
-                        >
-                            {isPending ? t("login.actions.loggingIn") : t("login.actions.login")}
-                        </button>
+                        <Tooltip content={t("turnstile.verifying")} disabled={!!turnstileToken} position="top">
+                            <button
+                                type="button"
+                                onClick={login}
+                                disabled={isPending || !turnstileToken}
+                                className={`mt-2 rounded-lg bg-brand p-3 text-content-on-brand font-bold enabled:hover:scale-[1.02] enabled:active:scale-95 transition-all shadow-lg shadow-brand/20 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed`}
+                            >
+                                {isPending ? t("login.actions.loggingIn") : t("login.actions.login")}
+                            </button>
+                        </Tooltip>
 
                         <div className="relative flex py-2 items-center">
                             <div className="grow border-t border-content-muted/30"></div>
@@ -235,28 +238,32 @@ export default function Login() {
                             <div className="grow border-t border-content-muted/30"></div>
                         </div>
 
-                        <div className={`flex justify-center transition-opacity duration-300 ${!turnstileToken ? "opacity-50 pointer-events-none" : ""}`}>
-                            <GoogleLogin
-                                onSuccess={credentialResponse => {
-                                    if (credentialResponse.credential) {
-                                        const credential = credentialResponse.credential;
-                                        googleCredentialRef.current = credential;
-                                        performGoogleLogin({
-                                            data: {
-                                                credential,
-                                                turnstileToken
+                        <Tooltip content={t("turnstile.verifying")} disabled={!!turnstileToken} position="top">
+                            <div className={`w-full flex justify-center transition-opacity duration-300 ${!turnstileToken ? "opacity-50 cursor-not-allowed" : ""}`}>
+                                <div className={!turnstileToken ? "pointer-events-none" : ""}>
+                                    <GoogleLogin
+                                        onSuccess={credentialResponse => {
+                                            if (credentialResponse.credential) {
+                                                const credential = credentialResponse.credential;
+                                                googleCredentialRef.current = credential;
+                                                performGoogleLogin({
+                                                    data: {
+                                                        credential,
+                                                        turnstileToken
+                                                    }
+                                                });
                                             }
-                                        });
-                                    }
-                                }}
-                                onError={() => {
-                                    toast.error(t("login.toast.googleConnectError"));
-                                }}
-                                theme='filled_blue'
-                                shape="circle"
-                                text="continue_with"
-                            />
-                        </div>
+                                        }}
+                                        onError={() => {
+                                            toast.error(t("login.toast.googleConnectError"));
+                                        }}
+                                        theme='filled_blue'
+                                        shape="circle"
+                                        text="continue_with"
+                                    />
+                                </div>
+                            </div>
+                        </Tooltip>
 
                         <span className="text-sm text-content text-center">
                             {t("login.noAccount")} <a href="/register" className="text-brand font-bold hover:underline">{t("login.links.register")}</a>

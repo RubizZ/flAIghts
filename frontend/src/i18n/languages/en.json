@@ -1239,7 +1239,8 @@
     "description": "We need to confirm you are human to keep the platform secure.",
     "error": "Verification has failed. Please try again.",
     "expired": "Verification has expired due to inactivity.",
-    "retry": "Retry now"
+    "retry": "Retry now",
+    "verifying": "Verifying security..."
   },
   "admin": {
     "dashboard": {

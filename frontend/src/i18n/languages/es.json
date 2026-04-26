@@ -1290,6 +1290,7 @@
     "description": "Necesitamos confirmar que eres humano para mantener la plataforma segura.",
     "error": "La verificación ha fallado. Por favor, inténtalo de nuevo.",
     "expired": "La verificación ha caducado por inactividad.",
-    "retry": "Reintentar ahora"
+    "retry": "Reintentar ahora",
+    "verifying": "Verificando seguridad..."
   }
 }

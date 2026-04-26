@@ -15,6 +15,7 @@ import Logo from "@/components/ui/Logo";
 import TurnstileWidget, { type TurnstileWidgetRef } from "@/components/ui/TurnstileWidget";
 import GoogleLinkingView from "@/components/auth/GoogleLinkingView";
 import { useTranslation } from "react-i18next";
+import Tooltip from "@/components/ui/Tooltip";
 
 export default function Register() {
     const { t } = useTranslation();
@@ -287,14 +288,16 @@ export default function Register() {
                                 />
 
 
-                                <button
-                                    type="button"
-                                    onClick={handleNextStep}
-                                    disabled={isInitiating || !formData.turnstileToken}
-                                    className="mt-4 rounded-lg bg-brand p-3 text-content-on-brand font-bold enabled:hover:scale-[1.02] enabled:active:scale-95 transition-all shadow-lg shadow-brand/20 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-                                >
-                                    {isInitiating ? t("register.actions.sendingCode") : t("register.actions.nextStep")}
-                                </button>
+                                <Tooltip content={t("turnstile.verifying")} disabled={!!formData.turnstileToken} position="top">
+                                    <button
+                                        type="button"
+                                        onClick={handleNextStep}
+                                        disabled={isInitiating || !formData.turnstileToken}
+                                        className="mt-4 rounded-lg bg-brand p-3 text-content-on-brand font-bold enabled:hover:scale-[1.02] enabled:active:scale-95 transition-all shadow-lg shadow-brand/20 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                                    >
+                                        {isInitiating ? t("register.actions.sendingCode") : t("register.actions.nextStep")}
+                                    </button>
+                                </Tooltip>
 
                                 <div className="relative flex py-2 items-center">
                                     <div className="grow border-t border-content-muted/30"></div>
@@ -302,28 +305,32 @@ export default function Register() {
                                     <div className="grow border-t border-content-muted/30"></div>
                                 </div>
 
-                                <div className={`flex justify-center transition-opacity duration-300 ${!formData.turnstileToken ? "opacity-50 pointer-events-none" : ""}`}>
-                                    <GoogleLogin
-                                        onSuccess={credentialResponse => {
-                                            if (credentialResponse.credential) {
-                                                const credential = credentialResponse.credential;
-                                                googleCredentialRef.current = credential;
-                                                performGoogleLogin({
-                                                    data: {
-                                                        credential,
-                                                        turnstileToken: formData.turnstileToken
+                                <Tooltip content={t("turnstile.verifying")} disabled={!!formData.turnstileToken} position="top">
+                                    <div className={`w-full flex justify-center transition-opacity duration-300 ${!formData.turnstileToken ? "opacity-50 cursor-not-allowed" : ""}`}>
+                                        <div className={!formData.turnstileToken ? "pointer-events-none" : ""}>
+                                            <GoogleLogin
+                                                onSuccess={credentialResponse => {
+                                                    if (credentialResponse.credential) {
+                                                        const credential = credentialResponse.credential;
+                                                        googleCredentialRef.current = credential;
+                                                        performGoogleLogin({
+                                                            data: {
+                                                                credential,
+                                                                turnstileToken: formData.turnstileToken
+                                                            }
+                                                        });
                                                     }
-                                                });
-                                            }
-                                        }}
-                                        onError={() => {
-                                            toast.error(t("login.toast.googleConnectError"));
-                                        }}
-                                        theme='filled_blue'
-                                        shape="circle"
-                                        text="continue_with"
-                                    />
-                                </div>
+                                                }}
+                                                onError={() => {
+                                                    toast.error(t("login.toast.googleConnectError"));
+                                                }}
+                                                theme='filled_blue'
+                                                shape="circle"
+                                                text="continue_with"
+                                            />
+                                        </div>
+                                    </div>
+                                </Tooltip>
                             </>
                         ) : (
                             <>
@@ -451,14 +458,16 @@ export default function Register() {
                                 </div>
 
 
-                                <button
-                                    type="button"
-                                    onClick={handleRegister}
-                                    disabled={isCompleting || !formData.turnstileTokenStep2}
-                                    className="mt-4 rounded-lg bg-brand p-3 text-content-on-brand font-bold enabled:hover:scale-[1.02] enabled:active:scale-95 transition-all shadow-lg shadow-brand/20 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-                                >
-                                    {isCompleting ? t("register.actions.creatingAccount") : t("register.actions.completeRegistration")}
-                                </button>
+                                <Tooltip content={t("turnstile.verifying")} disabled={!!formData.turnstileTokenStep2} position="top">
+                                    <button
+                                        type="button"
+                                        onClick={handleRegister}
+                                        disabled={isCompleting || !formData.turnstileTokenStep2}
+                                        className="mt-4 rounded-lg bg-brand p-3 text-content-on-brand font-bold enabled:hover:scale-[1.02] enabled:active:scale-95 transition-all shadow-lg shadow-brand/20 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                                    >
+                                        {isCompleting ? t("register.actions.creatingAccount") : t("register.actions.completeRegistration")}
+                                    </button>
+                                </Tooltip>
                             </>
                         )}
 
