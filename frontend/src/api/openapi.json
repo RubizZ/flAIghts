@@ -7159,7 +7159,7 @@
             }
           }
         },
-        "description": "Prepara las opciones de reserva para un conjunto de tokens de vuelo.\nRecupera los enlaces de reserva y proveedores de SerpApi.",
+        "description": "Prepara las opciones de reserva para un conjunto de tokens de vuelo.\r\nRecupera los enlaces de reserva y proveedores de SerpApi.",
         "tags": [
           "Booking"
         ],

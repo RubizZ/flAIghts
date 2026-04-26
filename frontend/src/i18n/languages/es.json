@@ -916,6 +916,47 @@
   "acknowledgements": {
     "title": "Agradecimientos",
     "backToHome": "Volver al inicio",
-    "content": "Agradecemos a SerpApi el uso de su API para llevar a cabo este proyecto."
+    "content": "Queremos expresar nuestro más sincero agradecimiento a <1>SerpApi</1> por su generosidad al proporcionarnos los créditos necesarios de forma gratuita para este proyecto académico. Su apoyo ha sido fundamental para el desarrollo de este Trabajo de Fin de Grado, permitiéndonos integrar búsquedas de vuelos en tiempo real que, de otro modo, no habrían sido posibles debido a los costes de infraestructura. Gracias por apostar por el talento universitario."
+  },
+  "aboutUs": {
+    "title": "Sobre nosotros",
+    "backToHome": "Volver al inicio",
+    "sections": {
+      "mission": {
+        "title": "Nuestra Misión",
+        "content": "flAIghts nació como un Trabajo de Fin de Grado con el objetivo de revolucionar la búsqueda de vuelos utilizando inteligencia artificial. Queremos que planificar tu próximo viaje sea tan sencillo como mantener una conversación."
+      },
+      "vision": {
+        "title": "Nuestra Visión",
+        "content": "Convertirnos en el asistente de viajes inteligente de referencia, eliminando las barreras técnicas y facilitando el acceso a las mejores opciones de vuelo mediante el poder de la IA."
+      },
+      "values": {
+        "title": "Nuestros Valores",
+        "content": "Innovación, transparencia y accesibilidad. Creemos en la tecnología como un puente para conectar personas y destinos de forma inteligente."
+      },
+      "team": {
+        "title": "El Equipo",
+        "content": "Somos un equipo apasionado por la tecnología y los viajes, enfocados en crear herramientas que aporten valor real a los usuarios."
+      }
+    }
+  },
+  "contact": {
+    "title": "Contacto",
+    "backToHome": "Volver al inicio",
+    "subtitle": "¿Tienes alguna pregunta o sugerencia? Estamos aquí para ayudarte.",
+    "sections": {
+      "support": {
+        "title": "Soporte Técnico",
+        "content": "Para incidencias técnicas con la plataforma, puedes escribirnos a: support@flaights.com"
+      },
+      "feedback": {
+        "title": "Feedback y Sugerencias",
+        "content": "Valoramos mucho tu opinión. Si tienes ideas para mejorar flAIghts, no dudes en contactarnos."
+      },
+      "university": {
+        "title": "Proyecto Académico",
+        "content": "Este es un proyecto realizado en el marco de la Universidad Complutense de Madrid."
+      }
+    }
   }
 }

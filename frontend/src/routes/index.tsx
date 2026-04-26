@@ -19,6 +19,8 @@ import Acknowledgements from "@/pages/Acknowledgements.tsx";
 import GeneticTrip from "@/pages/GeneticTrip.tsx";
 import Chats from "@/pages/Chats.tsx";
 import Chat from "@/pages/Chat.tsx";
+import AboutUs from "@/pages/AboutUs.tsx";
+import Contact from "@/pages/Contact.tsx";
 
 export const routes: RouteObject[] = [
     {
@@ -49,6 +51,8 @@ export const routes: RouteObject[] = [
                     { path: "/terms", element: <TermsOfService /> },
                     { path: "/privacy", element: <PrivacyPolicy /> },
                     { path: "/acknowledgements", element: <Acknowledgements /> },
+                    { path: "/about", element: <AboutUs /> },
+                    { path: "/contact", element: <Contact /> },
                     { path: "*", element: <NotFound /> },
                 ]
             }
