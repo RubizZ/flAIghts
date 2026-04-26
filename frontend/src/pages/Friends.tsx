@@ -77,9 +77,9 @@ export default function Friends() {
     }
 
     // Assuming user's arrays have populated objects with at least _id and username
-    const friends = user?.friends || [];
-    const received = user?.received_friend_requests || [];
-    const sent = user?.sent_friend_requests || [];
+    const friends = user.friends;
+    const received = user.received_friend_requests;
+    const sent = user.sent_friend_requests;
 
     const filteredFriends = useMemo(() => {
         return friends.filter(f =>

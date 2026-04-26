@@ -424,7 +424,9 @@ const MissionOnboarding: React.FC = () => {
                                             {displayState.onboardingStep === 5 && t('missions.onboarding.descriptions.backToMap')}
                                             {displayState.onboardingStep === 6 && t('missions.onboarding.descriptions.lockedRoute')}
                                             {displayState.onboardingStep === 7 && t('missions.onboarding.descriptions.closePanel', {
-                                                missionName: t((activeMission || missions.find(m => !isMissionCompleted(m.id) && isMissionUnlocked(m.id)))?.title || '')
+                                                missionName: (activeMission || missions.find(m => !isMissionCompleted(m.id) && isMissionUnlocked(m.id)))?.title
+                                                    ? t((activeMission || missions.find(m => !isMissionCompleted(m.id) && isMissionUnlocked(m.id)))!.title)
+                                                    : t('missions.noMissionAvailable')
                                             })}
                                         </>
                                     )}

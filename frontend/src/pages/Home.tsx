@@ -63,6 +63,8 @@ export default function Home() {
         const ret = searchParams.get('ret');
         const m = searchParams.get('m');
 
+        const isValidDate = (d: string) => /^\d{4}-\d{2}-\d{2}$/.test(d) && !isNaN(new Date(d).getTime());
+
         if (o) {
             const parts = o.split(',');
             const found = parts.map(p => deserializeSelection(p, globeAirports)).filter(Boolean) as UnifiedSelection[];
@@ -75,9 +77,34 @@ export default function Home() {
             setDestinations(found);
         }
 
-        if (date) setDepartureDate(date);
-        if (ret) setReturnDate(ret);
-        if (m === 'manual' || m === 'ai') setSearchMode(m as 'manual' | 'ai');
+        let validatedDeparture = "";
+        if (date) {
+            if (isValidDate(date) && date >= today) {
+                validatedDeparture = date;
+                setDepartureDate(date);
+            } else {
+                setDepartureDate("");
+            }
+        } else {
+            setDepartureDate("");
+        }
+
+        if (ret) {
+            const minReturn = validatedDeparture || today;
+            // Solo permitimos returnDate si hay una departureDate válida y ret >= departureDate
+            if (isValidDate(ret) && validatedDeparture && ret >= validatedDeparture) {
+                setReturnDate(ret);
+            } else {
+                setReturnDate("");
+            }
+        } else {
+            setReturnDate("");
+        }
+
+        if (m) {
+            if (m === 'manual' || m === 'ai') setSearchMode(m as 'manual' | 'ai');
+            else setSearchMode('manual');
+        }
 
         initialParamsLoaded.current = true;
     }, [globeAirports, searchParams]);

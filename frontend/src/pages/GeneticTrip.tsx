@@ -86,7 +86,7 @@ export default function GeneticTrip() {
                         {t("searchFlight.geneticTrip.modalSubtitle")}
                     </p>
                 </div>
-                
+
                 <div className="flex items-center gap-2 bg-surface/50 border border-line px-4 py-2 rounded-xl text-xs font-bold text-content-muted uppercase tracking-widest hidden sm:flex">
                     <HelpCircle size={14} className="text-brand/60" />
                     <span>{t('geneticTripPage.betaBadge')}</span>
@@ -96,7 +96,7 @@ export default function GeneticTrip() {
             <main className="grid grid-cols-1 lg:grid-cols-12 gap-10">
                 {/* Left Side: Configuration (8 columns) */}
                 <div className="lg:col-span-8 flex flex-col gap-10">
-                    
+
                     {/* Step 1: Origin Selection */}
                     <section className="flex flex-col gap-5">
                         <div className="flex items-center gap-3 px-1">
@@ -125,7 +125,7 @@ export default function GeneticTrip() {
                                             <span className="text-content-muted font-medium truncate opacity-80">{origin.name}</span>
                                         </div>
                                     </div>
-                                    <button 
+                                    <button
                                         onClick={() => setOrigin(null)}
                                         className="p-3 bg-surface border border-line rounded-2xl text-content-muted hover:text-red-500 hover:border-red-500/30 hover:bg-red-500/5 transition-all cursor-pointer group/btn"
                                         title={t('geneticTripPage.changeOrigin')}
@@ -206,7 +206,7 @@ export default function GeneticTrip() {
                                     }
                                 />
                             </div>
-                            
+
                             <div className="flex flex-col gap-4">
                                 <label className="text-[10px] font-black text-content-muted uppercase tracking-[0.2em] px-2">{t("searchFlight.geneticTrip.daysPerCityLabel")}</label>
                                 <div className="flex items-center justify-between bg-surface/40 border border-line rounded-3xl px-6 py-5 transition-all group hover:bg-main hover:border-brand/40 shadow-sm hover:shadow-md">
@@ -298,8 +298,8 @@ export default function GeneticTrip() {
                                                     <span className="text-[10px] font-bold text-content-muted uppercase tracking-wider truncate opacity-70">{city.name}</span>
                                                 </div>
                                             </div>
-                                            <button 
-                                                onClick={() => handleRemoveCity(index)} 
+                                            <button
+                                                onClick={() => handleRemoveCity(index)}
                                                 className="p-2.5 bg-surface border border-line rounded-xl text-content-muted hover:text-red-500 hover:bg-red-500/5 hover:border-red-500/20 transition-all opacity-0 group-hover:opacity-100 cursor-pointer"
                                             >
                                                 <Trash2 size={16} />

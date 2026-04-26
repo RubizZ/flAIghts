@@ -28,7 +28,7 @@ export default function Chats() {
     }, [queryClient]));
 
     useEffect(() => {
-        if (isAuthenticated && user) {
+        if (isAuthenticated) {
             connect();
             return () => disconnect();
         }

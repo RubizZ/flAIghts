@@ -38,7 +38,22 @@ export default function Settings() {
     const queryClient = useQueryClient();
     const [searchParams, setSearchParams] = useSearchParams();
 
-    const activeTab = searchParams.get("tab") || "perfil";
+    const tabs = [
+        { id: 'profile', label: t("settings.tabs.profile"), icon: User },
+        { id: 'preferences', label: t("settings.tabs.preferences"), icon: Sliders },
+        { id: 'security', label: t("settings.tabs.security"), icon: Shield },
+        { id: 'appearance', label: t("settings.tabs.appearance"), icon: Sun },
+    ] as const;
+
+    const paramTab = searchParams.get("tab");
+    const activeTab = (paramTab && tabs.map((t) => t.id).includes(paramTab as typeof tabs[number]['id'])) ? paramTab as typeof tabs[number]['id'] : "profile";
+
+    useEffect(() => {
+        if (!paramTab || !tabs.map(t => t.id).includes(paramTab as typeof tabs[number]['id'])) {
+            setSearchParams({ tab: 'profile' }, { replace: true });
+        }
+    }, [paramTab, setSearchParams]);
+
     const mainContentRef = useRef<HTMLDivElement>(null);
 
     const setActiveTab = (tab: string) => {
@@ -87,7 +102,7 @@ export default function Settings() {
     const [newEmailCode, setNewEmailCode] = useState("");
     const isInitiatingRequest = useRef(false);
     useEffect(() => {
-        if (user?.pending_email && activeTab === 'seguridad') {
+        if (user?.pending_email && activeTab === 'security') {
             if (isInitiatingRequest.current) {
                 isInitiatingRequest.current = false;
                 return;
@@ -115,8 +130,8 @@ export default function Settings() {
             onSuccess: (_, variables) => {
                 toast.success(t("settings.toast.success"));
                 queryClient.invalidateQueries({ queryKey: getGetSelfUserQueryKey() });
-                if (user?._id) {
-                    queryClient.invalidateQueries({ queryKey: getGetUserByIdQueryKey(user._id) });
+                if (user!._id) {
+                    queryClient.invalidateQueries({ queryKey: getGetUserByIdQueryKey(user!._id) });
                 }
                 refetch();
 
@@ -158,8 +173,8 @@ export default function Settings() {
                 setOldEmailCode("");
                 setNewEmailCode("");
                 queryClient.invalidateQueries({ queryKey: getGetSelfUserQueryKey() });
-                if (user?._id) {
-                    queryClient.invalidateQueries({ queryKey: getGetUserByIdQueryKey(user._id) });
+                if (user!._id) {
+                    queryClient.invalidateQueries({ queryKey: getGetUserByIdQueryKey(user!._id) });
                 }
                 refetch();
             },
@@ -179,7 +194,7 @@ export default function Settings() {
                 toast.success(t("settings.toast.emailCancelError"));
                 setOldEmailCode("");
                 setNewEmailCode("");
-                setEmail(user?.email ?? "");
+                setEmail(user!.email);
                 queryClient.invalidateQueries({ queryKey: getGetSelfUserQueryKey() });
                 refetch();
             },
@@ -249,8 +264,8 @@ export default function Settings() {
             onSuccess: () => {
                 toast.success(t("settings.toast.avatarUpdatedSuccess"));
                 queryClient.invalidateQueries({ queryKey: getGetSelfUserQueryKey() });
-                if (user?._id) {
-                    queryClient.invalidateQueries({ queryKey: getGetUserByIdQueryKey(user._id) });
+                if (user!._id) {
+                    queryClient.invalidateQueries({ queryKey: getGetUserByIdQueryKey(user!._id) });
                 }
                 refetch();
             },
@@ -335,8 +350,8 @@ export default function Settings() {
             return;
         }
 
-        const action = user?.is_password_set ? 'change-password' : 'set-password';
-        const actionLabel = user?.is_password_set ? 'Cambio de contraseña' : 'Establecer contraseña';
+        const action = user!.is_password_set ? 'change-password' : 'set-password';
+        const actionLabel = user!.is_password_set ? 'Cambio de contraseña' : 'Establecer contraseña';
 
         setVerificationStep({
             active: false,
@@ -398,13 +413,6 @@ export default function Settings() {
         );
     }
 
-    const tabs = [
-        { id: 'perfil', label: t("settings.tabs.perfil"), icon: User },
-        { id: 'preferencias', label: t("settings.tabs.preferencias"), icon: Sliders },
-        { id: 'seguridad', label: t("settings.tabs.seguridad"), icon: Shield },
-        { id: 'apariencia', label: t("settings.tabs.apariencia"), icon: Sun },
-    ] as const;
-
     return (
         <div className="max-w-4xl mx-auto p-4 sm:p-8">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -445,7 +453,7 @@ export default function Settings() {
                                     >
                                         <div className="relative">
                                             <tab.icon size={18} />
-                                            {tab.id === 'seguridad' && user.pending_email && (
+                                            {tab.id === 'security' && user.pending_email && (
                                                 <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-brand border-2 border-white dark:border-slate-900 rounded-full animate-pulse shadow-sm" />
                                             )}
                                         </div>
@@ -469,7 +477,7 @@ export default function Settings() {
                 {/* Main Content */}
                 <div ref={mainContentRef} className="md:col-span-2 flex flex-col gap-8 min-h-[60vh] md:pt-15">
                     {/* Seccion Perfil */}
-                    {activeTab === 'perfil' && (
+                    {activeTab === 'profile' && (
                         <>
                             <section className="bg-main border border-line rounded-3xl shadow-sm p-6 sm:p-8 animate-fade-in animate-duration-300">
                                 <div className="flex items-center gap-3 mb-6">
@@ -580,7 +588,7 @@ export default function Settings() {
                     )}
 
                     {/* Seccion Preferencias de Vuelos */}
-                    {activeTab === 'preferencias' && (
+                    {activeTab === 'preferences' && (
                         <section className="bg-main border border-line rounded-3xl shadow-sm p-6 sm:p-8 animate-fade-in animate-duration-300">
                             <div className="flex items-center justify-between mb-2">
                                 <div className="flex items-center gap-3">
@@ -703,7 +711,7 @@ export default function Settings() {
                     )}
 
                     {/* Seccion Seguridad */}
-                    {activeTab === 'seguridad' && (
+                    {activeTab === 'security' && (
                         <div className="flex flex-col gap-8">
                             <section className="bg-main border border-line rounded-3xl shadow-sm p-6 sm:p-8 animate-fade-in animate-duration-300">
                                 <div className="flex items-center gap-3 mb-6">
@@ -975,7 +983,7 @@ export default function Settings() {
                     )}
 
                     {/* Seccion Apariencia */}
-                    {activeTab === 'apariencia' && (
+                    {activeTab === 'appearance' && (
                         <section className="bg-main border border-line rounded-3xl shadow-sm p-6 sm:p-8 animate-fade-in animate-duration-300">
                             <div className="flex items-center gap-3 mb-6">
                                 <div className="p-2 bg-brand/10 text-brand rounded-xl">

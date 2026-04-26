@@ -44,9 +44,9 @@
     "scales_other": "{{count}} escalas",
     "stop": "Detener",
     "suggestions": {
-      "suggestTrip": "Sugiéreme un viaje basado en mis gustos",
-      "whatIsMyHistory": "¿Cual es mi historial de busquedas?",
-      "whereToGo": "¿A dónde puedo ir en {{month}}?"
+      "londonAirports": "Dime los aeropuertos de Londres",
+      "searchFlight": "Quiero buscar un vuelo",
+      "whatIsMyHistory": "¿Cuál es mi historial de búsquedas?"
     },
     "toolStatus": {
       "accessingProfile": "Accediendo a tu perfil...",
@@ -345,8 +345,6 @@
     }
   },
   "homeCard": {
-    "addStop": "Añadir escala",
-    "advancedFilters": "Filtros avanzados",
     "aiAssistant": "Asistente IA",
     "aiSubtitle": "Tu copiloto inteligente para planificar viajes.",
     "exploreGlobe": "Explorar globo terráqueo",
@@ -659,6 +657,7 @@
         "title": "Haz amigos"
       }
     },
+    "noMissionAvailable": "Ninguna misión disponible",
     "onboarding": {
       "actions": {
         "directAction": "Requiere acción directa",
@@ -1068,10 +1067,10 @@
       }
     },
     "tabs": {
-      "apariencia": "Apariencia",
-      "perfil": "Perfil",
-      "preferencias": "Preferencias",
-      "seguridad": "Seguridad"
+      "appearance": "Apariencia",
+      "preferences": "Preferencias",
+      "profile": "Perfil",
+      "security": "Seguridad"
     },
     "title": "Ajustes",
     "toast": {

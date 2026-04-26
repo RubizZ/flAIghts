@@ -43,9 +43,9 @@
     "scales_other": "{{count}} stops",
     "stop": "Stop",
     "suggestions": {
-      "suggestTrip": "Suggest a trip based on my tastes",
-      "whatIsMyHistory": "What is my search history?",
-      "whereToGo": "Where can I go in {{month}}?"
+      "londonAirports": "Tell me the airports in London",
+      "searchFlight": "I want to search for a flight",
+      "whatIsMyHistory": "What is my search history?"
     },
     "toolStatus": {
       "accessingProfile": "Accessing your profile...",
@@ -340,8 +340,6 @@
     }
   },
   "homeCard": {
-    "addStop": "Add stop",
-    "advancedFilters": "Advanced filters",
     "aiAssistant": "AI Assistant",
     "aiSubtitle": "Your intelligent co-pilot for trip planning.",
     "exploreGlobe": "Explore globe",
@@ -654,6 +652,7 @@
         "title": "Make friends"
       }
     },
+    "noMissionAvailable": "No Mission Available",
     "onboarding": {
       "actions": {
         "directAction": "Direct action required",
@@ -1062,10 +1061,10 @@
       }
     },
     "tabs": {
-      "apariencia": "Appearance",
-      "perfil": "Profile",
-      "preferencias": "Preferences",
-      "seguridad": "Security"
+      "appearance": "Appearance",
+      "preferences": "Preferences",
+      "profile": "Profile",
+      "security": "Security"
     },
     "title": "Settings",
     "toast": {

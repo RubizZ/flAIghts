@@ -152,7 +152,7 @@ export const MissionProvider: React.FC<{ children: ReactNode }> = ({ children })
                         s.id === 'complete_registration' ? {
                             ...s,
                             isCompleted: true,
-                            completedBy: user?._id,
+                            completedBy: user._id,
                             completedAt: new Date().toISOString()
                         } : s
                     );
@@ -161,7 +161,7 @@ export const MissionProvider: React.FC<{ children: ReactNode }> = ({ children })
                         ...m,
                         steps: newSteps,
                         isCompleted: allStepsCompleted,
-                        completedBy: allStepsCompleted ? (user?._id || m.completedBy) : m.completedBy,
+                        completedBy: allStepsCompleted ? (user._id || m.completedBy) : m.completedBy,
                         completedAt: allStepsCompleted ? (new Date().toISOString() || m.completedAt) : m.completedAt
                     };
                 }

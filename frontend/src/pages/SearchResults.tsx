@@ -179,6 +179,18 @@ export default function SearchResults() {
         });
     };
 
+    const departureItineraries = sortItineraries(searchData?.departure_itineraries);
+    const returnItineraries = sortItineraries(searchData?.return_itineraries);
+
+    const isOneWay = useMemo(() => {
+        if (!searchData?.return_date) return true;
+        if (searchData.status === 'searching') return false;
+        return !returnItineraries || returnItineraries.length === 0;
+    }, [searchData?.return_date, searchData?.status, returnItineraries]);
+
+    const showLoading = (isLoading && !data) || (isLargeScreen && !isGlobeReady);
+
+
     const formatTime = (dateString?: string) => {
         if (!dateString) return "--:--";
         const date = new Date(dateString);
@@ -303,16 +315,6 @@ export default function SearchResults() {
         );
     }
 
-    const showLoading = (isLoading && !data) || (isLargeScreen && !isGlobeReady);
-
-    const departureItineraries = sortItineraries(searchData?.departure_itineraries);
-    const returnItineraries = sortItineraries(searchData?.return_itineraries);
-
-    const isOneWay = useMemo(() => {
-        if (!searchData?.return_date) return true;
-        if (searchData.status === 'searching') return false;
-        return !returnItineraries || returnItineraries.length === 0;
-    }, [searchData?.return_date, searchData?.status, returnItineraries]);
 
     const handleSelectItinerary = (itinerary: ItineraryResponse, type: 'departure' | 'return') => {
         setExpandedItinerary(null);
@@ -433,7 +435,7 @@ export default function SearchResults() {
 
                                     {/* Actions: Privacy Toggle & Share Button */}
                                     <div className="shrink-0 flex items-center gap-2">
-                                        {isAuthenticated && user?._id === data?.user_id && (
+                                        {isAuthenticated && user._id === data?.user_id && (
                                             <button
                                                 onClick={(e) => {
                                                     e.preventDefault();
@@ -476,7 +478,7 @@ export default function SearchResults() {
                                             }
                                         >
                                             <div className="p-2 flex flex-col gap-1 min-w-[240px]">
-                                                {!data?.shared && user?._id === data?.user_id && (
+                                                {!data?.shared && isAuthenticated && user._id === data?.user_id && (
                                                     <div className="px-3 py-2 border-b border-line mb-1">
                                                         <p className="text-[10px] text-amber-500 font-bold leading-tight">
                                                             Al compartir, la búsqueda se hará pública automáticamente.
@@ -484,7 +486,7 @@ export default function SearchResults() {
                                                     </div>
                                                 )}
 
-                                                {isAuthenticated && user && user.friends.length > 0 && (
+                                                {isAuthenticated && user.friends.length > 0 && (
                                                     <>
                                                         <p className="px-3 py-1.5 text-[9px] font-black uppercase tracking-widest text-content-muted/40">Enviar a amigos</p>
                                                         <div className="max-h-60 overflow-y-auto custom-scrollbar flex flex-col gap-1">
@@ -528,7 +530,7 @@ export default function SearchResults() {
                                                         window.dispatchEvent(new CustomEvent('flaights:mission:share-from-results'));
 
                                                         // Si es privada y soy el dueño, la hacemos pública antes de compartir
-                                                        if (!data?.shared && user?._id === data?.user_id) {
+                                                        if (!data?.shared && isAuthenticated && user._id === data?.user_id) {
                                                             try {
                                                                 await shareSearch({ searchId: id! });
                                                             } catch (err) {

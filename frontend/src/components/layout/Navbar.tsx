@@ -64,7 +64,7 @@ export default function Navbar({ variant = 'floating', logoRef }: { variant?: 'f
 
     const NotificationsMainView = ({ user, unreadMessagesCount }: { user: PopulatedUser, unreadMessagesCount: number }) => {
         const { pushMenu, setIsOpen } = useDropdown();
-        const hasFriendRequests = user?.received_friend_requests && user.received_friend_requests.length > 0;
+        const hasFriendRequests = user.received_friend_requests.length > 0;
         const hasUnreadMessages = unreadMessagesCount > 0;
 
         return (
@@ -129,7 +129,7 @@ export default function Navbar({ variant = 'floating', logoRef }: { variant?: 'f
                     {t("navbar.back")}
                 </button>
                 <div className="max-h-60 overflow-y-auto pr-1">
-                    {user?.received_friend_requests?.map((req) => (
+                    {user.received_friend_requests.map((req) => (
                         <div key={req._id} className="flex items-center justify-between p-2 hover:bg-surface/80 rounded-lg transition-colors cursor-pointer group" onClick={() => { setIsOpen(false); navigate(`/user/${req._id}`); }}>
                             <div className="flex items-center gap-2">
                                 <UserAvatar user={req} size={32} />
@@ -145,7 +145,7 @@ export default function Navbar({ variant = 'floating', logoRef }: { variant?: 'f
 
     const UserMainView = ({ user, logout, navigate, theme, themeLabels, unreadMessagesCount }: { user: PopulatedUser, logout: () => void, navigate: any, theme: Theme, themeLabels: Record<string, string>, unreadMessagesCount: number }) => {
         const { pushMenu, setIsOpen } = useDropdown();
-        const totalNotifications = (user?.received_friend_requests?.length || 0) + unreadMessagesCount;
+        const totalNotifications = user.received_friend_requests.length + unreadMessagesCount;
 
         return (
             <div className="w-64">
@@ -178,7 +178,7 @@ export default function Navbar({ variant = 'floating', logoRef }: { variant?: 'f
                 )}
                 <div className="p-3 border-b border-line bg-surface/50">
                     <p className="text-[10px] uppercase tracking-widest text-content-muted font-bold mb-1 opacity-50">{t("navbar.account")}</p>
-                    <p className="text-sm font-bold text-content truncate">{user?.email}</p>
+                    <p className="text-sm font-bold text-content truncate">{user.email}</p>
                 </div>
                 <div className="p-1">
                     {/* Sección de notificaciones - Solo visible en móvil/tablet si flotante */}
@@ -206,7 +206,7 @@ export default function Navbar({ variant = 'floating', logoRef }: { variant?: 'f
                     </div>
 
 
-                    <button onClick={() => { setIsOpen(false); navigate(`/user/${user?._id}`) }} className="w-full flex items-center justify-between text-content px-4 py-3 text-sm rounded-xl transition-all group text-left hover:bg-surface/70 hover:cursor-pointer font-medium">
+                    <button onClick={() => { setIsOpen(false); navigate(`/user/${user._id}`) }} className="w-full flex items-center justify-between text-content px-4 py-3 text-sm rounded-xl transition-all group text-left hover:bg-surface/70 hover:cursor-pointer font-medium">
                         <div className="flex items-center gap-3">
                             <User size={20} className="shrink-0" />
                             <span className="leading-none">{t("navbar.myProfile")}</span>
@@ -230,7 +230,7 @@ export default function Navbar({ variant = 'floating', logoRef }: { variant?: 'f
                             <span className="leading-none">{t("navbar.settings")}</span>
                         </div>
                     </button>
-                    {(user?.role === 'admin' || user?.role === 'superadmin') && (
+                    {(user.role === 'admin' || user.role === 'superadmin') && (
                         <button onClick={() => { setIsOpen(false); navigate('/admin') }} className="w-full flex items-center justify-between px-4 py-3 text-sm rounded-xl transition-all group text-left hover:bg-surface/70 cursor-pointer font-medium">
                             <div className="flex items-center gap-3 text-amber-500">
                                 <ShieldCheck size={20} />
@@ -433,7 +433,7 @@ export default function Navbar({ variant = 'floating', logoRef }: { variant?: 'f
                                 trigger={
                                     <NavIconButton
                                         variant={variant}
-                                        showBadge={!!(user?.received_friend_requests && user.received_friend_requests.length > 0) || unreadMessagesCount > 0}
+                                        showBadge={user.received_friend_requests.length > 0 || unreadMessagesCount > 0}
                                         className="hidden lg:flex"
                                     >
                                         <Bell size={20} className="text-content group-hover:text-brand transition-colors" />
@@ -442,13 +442,13 @@ export default function Navbar({ variant = 'floating', logoRef }: { variant?: 'f
                                 menus={{
                                     main: (
                                         <NotificationsMainView
-                                            user={user!}
+                                            user={user}
                                             unreadMessagesCount={unreadMessagesCount}
                                         />
                                     ),
                                     friend_requests: (
                                         <NotificationsFriendRequestsView
-                                            user={user!}
+                                            user={user}
                                             navigate={navigate}
                                         />
                                     )
@@ -467,7 +467,7 @@ export default function Navbar({ variant = 'floating', logoRef }: { variant?: 'f
                                     <NavIconButton
                                         id="nav-user-menu-trigger"
                                         variant={variant}
-                                        showBadge={!!(user?.received_friend_requests && user.received_friend_requests.length > 0) || unreadMessagesCount > 0}
+                                        showBadge={user.received_friend_requests.length > 0 || unreadMessagesCount > 0}
                                         badgeClassName="lg:hidden"
                                     >
                                         <UserAvatar user={user} size={32} />
@@ -476,7 +476,7 @@ export default function Navbar({ variant = 'floating', logoRef }: { variant?: 'f
                                 menus={{
                                     main: (
                                         <UserMainView
-                                            user={user!}
+                                            user={user}
                                             logout={logout}
                                             navigate={navigate}
                                             theme={theme}

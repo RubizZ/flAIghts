@@ -605,4 +605,6 @@ export const MISSIONS: BaseMission[] = [
  * t('missions.list.genetic.steps.add_itinerary_cities.description')
  * t('missions.list.genetic.steps.perform_genetic_search.title')
  * t('missions.list.genetic.steps.perform_genetic_search.description')
+ * 
+ * t('missions.noMissionAvailable')
  */

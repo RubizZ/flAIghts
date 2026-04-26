@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import ReactMarkdown from 'react-markdown';
 import { toast } from "sonner";
 import { Link, useNavigate } from "react-router-dom";
+import TextareaAutosize from "react-textarea-autosize";
 import type {
     SearchResponseData,
     ItineraryResponse,
@@ -379,9 +380,12 @@ const AgentChat = forwardRef<any, AgentChatProps>(({
     const [input, setInput] = useState("");
     const [isTyping, setIsTyping] = useState(false);
     const scrollRef = useRef<HTMLDivElement>(null);
+    const textareaRef = useRef<HTMLTextAreaElement>(null);
     const abortControllerRef = useRef<AbortController | null>(null);
 
-    const { data: availableModelsData, isLoading: isLoadingModels } = useModels();
+    const { data: availableModelsData, isLoading: isLoadingModels } = useModels({
+        query: { staleTime: 1000 * 60 * 60 } // 1 hour
+    });
     const availableModels = availableModelsData || [];
     const [selectedModel, setSelectedModel] = useState<string>("");
     const [isStreaming, setIsStreaming] = useState(false);
@@ -645,8 +649,8 @@ const AgentChat = forwardRef<any, AgentChatProps>(({
     const nextMonthName = nextMonth.toLocaleString('es-ES', { month: 'long' });
 
     const suggestions = [
-        t('agentChat.suggestions.whereToGo', { month: nextMonthName }),
-        t('agentChat.suggestions.suggestTrip'),
+        t('agentChat.suggestions.londonAirports'),
+        t('agentChat.suggestions.searchFlight'),
         t('agentChat.suggestions.whatIsMyHistory')
     ];
 
@@ -691,7 +695,7 @@ const AgentChat = forwardRef<any, AgentChatProps>(({
                     <span className="text-[10px] font-black uppercase tracking-widest text-content-muted">{t('agentChat.header')}</span>
                 </div>
                 <div className="flex items-center gap-3">
-                    {availableModels.length > 0 && (
+                    {availableModels.length > 1 && (
                         <div className="relative group/model">
                             <select
                                 value={selectedModel}
@@ -709,11 +713,18 @@ const AgentChat = forwardRef<any, AgentChatProps>(({
                             </div>
                         </div>
                     )}
-                    {availableModels.length === 0 && (
-                        <div className="flex items-center gap-1">
+                    {isLoadingModels ? (
+                        <div className="flex items-center gap-1.5">
+                            <div className="w-1 h-1 bg-brand/30 rounded-full animate-pulse" />
+                            <span className="text-[8px] font-bold uppercase text-content-muted/30 tracking-widest italic">
+                                {t('agentChat.connecting')}
+                            </span>
+                        </div>
+                    ) : availableModels.length === 0 && (
+                        <div className="flex items-center gap-1.5">
                             <div className="w-1 h-1 bg-orange-400 rounded-full animate-pulse" />
-                            <span className="text-[8px] font-bold uppercase text-content-muted/40 tracking-widest italic">
-                                {isLoadingModels ? t('agentChat.connecting') : t('agentChat.unavailable')}
+                            <span className="text-[8px] font-bold uppercase text-orange-400/60 tracking-widest italic">
+                                {t('agentChat.unavailable')}
                             </span>
                         </div>
                     )}
@@ -730,7 +741,7 @@ const AgentChat = forwardRef<any, AgentChatProps>(({
                             <Sparkles size={40} className="animate-pulse" />
                             <div className="absolute inset-0 bg-brand/10 blur-xl rounded-full scale-110 opacity-50" />
                         </div>
-                        <h2 className="text-xl font-black mb-2 text-content italic">{t('agentChat.welcome', { username: user?.username || t('agentChat.welcomeFallback') })}</h2>
+                        <h2 className="text-xl font-black mb-2 text-content italic">{t('agentChat.welcome', { username: user.username })}</h2>
                         <div className="text-sm text-content-muted max-w-64 leading-relaxed mb-8 font-medium prose-strong:text-brand">
                             <ReactMarkdown>{t('agentChat.emptyDescription')}</ReactMarkdown>
                         </div>
@@ -806,7 +817,7 @@ const AgentChat = forwardRef<any, AgentChatProps>(({
                                             ) : (
                                                 <div className={`prose prose-sm dark:prose-invert prose-p:my-1 prose-ul:my-2 prose-li:my-1 
                                                 prose-strong:text-brand prose-strong:font-black prose-headings:text-content prose-code:text-brand 
-                                                prose-code:bg-brand/10 prose-code:px-1 prose-code:rounded
+                                                prose-code:bg-brand/10 prose-code:px-1 prose-code:rounded break-words
                                                 ${msg.role === 'user' ? 'prose-p:text-white!' : ''}
                                                 ${msg.isStreaming ? 'streaming-cursor' : ''}`}
                                                 >
@@ -866,23 +877,39 @@ const AgentChat = forwardRef<any, AgentChatProps>(({
             </div>
 
             <div className="p-2 lg:p-4 border-t border-line/20 bg-white/5 backdrop-blur-md shrink-0">
-                {availableModels.length === 0 ? (
-                    <div className="relative w-full flex items-center justify-center gap-3 bg-orange-500/5 border border-orange-500/20 rounded-2xl py-3 px-4 shadow-sm animate-fade-in group overflow-hidden">
-                        <AlertCircle size={18} className="text-orange-500 animate-pulse relative z-10" />
+                {isLoadingModels ? (
+                    <div className="relative w-full flex items-center gap-2 bg-main/50 border border-line/50 rounded-2xl pl-4 pr-1.5 py-1.5 shadow-inner animate-pulse cursor-wait">
+                        <div className="flex-1 text-sm text-content-muted/30 italic font-medium">
+                            {t('agentChat.connecting')}
+                        </div>
+                        <div className="p-2 rounded-xl bg-line/10 text-content-muted/30">
+                            <Send size={16} />
+                        </div>
+                    </div>
+                ) : availableModels.length === 0 ? (
+                    <div className="relative w-full flex items-center justify-center gap-3 bg-orange-500/5 border border-orange-500/20 rounded-2xl py-3 px-4 shadow-sm group overflow-hidden">
+                        <AlertCircle size={18} className="text-orange-500 relative z-10" />
                         <span className="text-xs font-bold text-orange-500/80 uppercase tracking-widest italic relative z-10">
-                            {isLoadingModels ? t('agentChat.connecting') : t('agentChat.unavailable')}
+                            {t('agentChat.unavailable')}
                         </span>
                         <div className="absolute inset-0 bg-linear-to-r from-transparent via-orange-500/5 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
                     </div>
                 ) : (
                     <div className="relative w-full flex items-center gap-2 bg-main/50 border border-line/50 rounded-2xl pl-4 pr-1.5 py-1.5 focus-within:border-brand/50 focus-within:ring-4 focus-within:ring-brand/10 transition-all shadow-inner group">
-                        <input
-                            type="text"
+                        <TextareaAutosize
+                            ref={textareaRef}
                             value={input}
                             onChange={(e) => setInput(e.target.value)}
-                            onKeyDown={(e) => e.key === 'Enter' && handleSend()}
+                            onKeyDown={(e) => {
+                                if (e.key === 'Enter' && !e.shiftKey) {
+                                    e.preventDefault();
+                                    handleSend();
+                                }
+                            }}
                             placeholder={t('agentChat.inputPlaceholder')}
-                            className="flex-1 bg-transparent py-2 text-sm focus:outline-none placeholder:text-content-muted/40 placeholder:italic font-medium min-w-0"
+                            className="flex-1 bg-transparent py-1 text-sm focus:outline-none placeholder:text-content-muted/40 placeholder:italic font-medium min-w-0 resize-none max-h-32 overflow-y-auto custom-scrollbar"
+                            maxRows={5}
+                            minRows={1}
                         />
 
                         <div className="flex items-center gap-1.5 shrink-0">
@@ -897,7 +924,7 @@ const AgentChat = forwardRef<any, AgentChatProps>(({
                             ) : (
                                 <>
                                     {/* Compact Model Selector Dropdown - Hidden on mobile, shown on desktop */}
-                                    {availableModels.length > 0 && (
+                                    {availableModels.length > 1 && (
                                         <div className="hidden lg:block relative group/model">
                                             <select
                                                 value={selectedModel}

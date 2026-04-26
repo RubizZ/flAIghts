@@ -171,7 +171,7 @@ export default function Chat() {
     }, [selfUser?._id, userId, queryClient]));
 
     useEffect(() => {
-        if (isAuthenticated && selfUser && userId) {
+        if (isAuthenticated && userId) {
             connect();
             return () => disconnect();
         }
@@ -243,9 +243,6 @@ export default function Chat() {
         window.dispatchEvent(new CustomEvent('flaights:mission:send-message'));
 
         setNewMessage("");
-        // Reset height after sending
-        const textarea = document.getElementById('chat-textarea') as HTMLTextAreaElement;
-        if (textarea) textarea.style.height = '46px';
     };
 
     const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -343,7 +340,7 @@ export default function Chat() {
                                                     </div>
                                                 );
                                             }
-                                            return <p className="text-sm">{msg.content}</p>;
+                                            return <p className="text-sm wrap-break-word whitespace-pre-wrap">{msg.content}</p>;
                                         };
 
                                         return (
@@ -423,20 +420,16 @@ export default function Chat() {
                         >
                             <Plane size={20} className={isShareModalOpen ? '' : 'rotate-45'} />
                         </button>
-                        <textarea
+                        <TextareaAutosize
                             id="chat-textarea"
                             value={newMessage}
-                            onChange={(e: ChangeEvent<HTMLTextAreaElement>) => {
-                                setNewMessage(e.target.value);
-                                e.target.style.height = '46px';
-                                const newHeight = Math.min(e.target.scrollHeight, 120); // 120px is roughly 4-5 rows
-                                e.target.style.height = `${newHeight}px`;
-                            }}
+                            onChange={(e: ChangeEvent<HTMLTextAreaElement>) => setNewMessage(e.target.value)}
                             onKeyDown={handleKeyDown}
                             placeholder={t("chat.messagePlaceholder")}
-                            className="flex-1 bg-surface placeholder-content-muted outline-none px-4 py-3 rounded-xl font-medium border border-line focus:border-brand shadow-sm resize-none custom-scrollbar h-[46px] transition-[height] duration-100"
+                            className="flex-1 bg-surface placeholder-content-muted outline-none px-4 py-1.5 rounded-xl font-medium border border-line focus:border-brand shadow-sm resize-none custom-scrollbar max-h-32 transition-all duration-200"
                             autoComplete="off"
-                            rows={1}
+                            maxRows={5}
+                            minRows={1}
                         />
                         <button
                             type="submit"

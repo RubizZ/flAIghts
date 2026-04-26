@@ -53,12 +53,12 @@ const FinalEvaluationModal: React.FC = () => {
     const handleClose = async () => {
         setIsClosing(true);
         await new Promise(resolve => setTimeout(resolve, 500));
-        
+
         // Al cerrar "normalmente", restauramos la URL original si existe
         if (showThanks && originalUrl) {
             window.history.replaceState(null, '', originalUrl);
         }
-        
+
         setShowThanks(false);
         setIsClosing(false);
     };
@@ -120,7 +120,7 @@ const FinalEvaluationModal: React.FC = () => {
                             <div className="flex flex-wrap justify-center gap-3 mb-12 animate-fade-in-up" style={{ animationDelay: '300ms' }}>
                                 {isAuthenticated && (
                                     <button
-                                        onClick={() => { handleClose(); navigate('/user/' + user?.username); }}
+                                        onClick={() => { handleClose(); navigate('/user/' + user._id); }}
                                         className="flex items-center gap-3 px-6 py-4 bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/20 rounded-2xl transition-all group cursor-pointer"
                                     >
                                         <User size={18} className="text-blue-400 group-hover:scale-110 transition-transform" />
@@ -251,7 +251,7 @@ const FinalEvaluationModal: React.FC = () => {
                                                     className={`w-full rounded-xl border border-white/10 bg-white/5 p-3 pr-10 focus:border-blue-500 focus:bg-white/10 focus:outline-hidden transition-all appearance-none cursor-pointer ${gender ? 'text-white' : 'text-gray-600'}`}
                                                 >
                                                     <option value="" disabled className="bg-gray-900 text-gray-600">{t('missions.finalEvaluation.demographics.select')}</option>
-                                                    {Object.entries(t('missions.finalEvaluation.demographics.genders', { returnObjects: true })).map(([key, label]) => (
+                                                    {Object.entries(t('missions.finalEvaluation.demographics.genders', { returnObjects: true }) as Record<string, string>).map(([key, label]) => (
                                                         <option key={key} value={label as string} className="bg-gray-900 text-white">{label as string}</option>
                                                     ))}
                                                 </select>
@@ -269,7 +269,7 @@ const FinalEvaluationModal: React.FC = () => {
                                                     className={`w-full rounded-xl border border-white/10 bg-white/5 p-3 pr-10 focus:border-blue-500 focus:bg-white/10 focus:outline-hidden transition-all appearance-none cursor-pointer ${educationLevel ? 'text-white' : 'text-gray-600'}`}
                                                 >
                                                     <option value="" disabled className="bg-gray-900 text-gray-600">{t('missions.finalEvaluation.demographics.select')}</option>
-                                                    {Object.entries(t('missions.finalEvaluation.demographics.educationLevels', { returnObjects: true })).map(([key, label]) => (
+                                                    {Object.entries(t('missions.finalEvaluation.demographics.educationLevels', { returnObjects: true }) as Record<string, string>).map(([key, label]) => (
                                                         <option key={key} value={label as string} className="bg-gray-900 text-white">{label as string}</option>
                                                     ))}
                                                 </select>

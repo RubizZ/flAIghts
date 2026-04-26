@@ -181,17 +181,6 @@ export default function HomeCard({
                             today={today}
                             onHoverChange={onHoverChange}
                         />
-                        <div className="flex items-center justify-center gap-4 text-xs text-content-muted pb-2 shrink-0">
-                            <div className="flex items-center gap-1">
-                                <Plus size={12} className="text-brand" />
-                                <span>{t('homeCard.addStop')}</span>
-                            </div>
-                            <div className="w-1 h-1 bg-line rounded-full" />
-                            <div className="flex items-center gap-1">
-                                <SlidersHorizontal size={12} className="text-brand" />
-                                <span>{t('homeCard.advancedFilters')}</span>
-                            </div>
-                        </div>
                     </div>
                 ) : (
                     <div className="flex flex-col flex-1 min-h-0 w-full h-full relative group">

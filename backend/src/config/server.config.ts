@@ -86,9 +86,9 @@ const serverConfigSchema = z.object({
     SERPAPI_API_KEY: z.preprocess(emptyToUndefined, z.string()),
     OPENAI_API_KEY: z.preprocess(emptyToUndefined, z.string()),
     OPENAI_BASE_URL: z.preprocess(emptyToUndefined, z.url().optional()),
-    AVAILABLE_MODELS: z.preprocess(emptyToUndefined, z.string().optional().transform((val) =>
-        val ? val.split(",").map((o) => o.trim()) : []
-    )),
+    AVAILABLE_MODELS: z.string().optional().transform((val) =>
+        val === undefined ? undefined : (val.trim() === "" ? [] : val.split(",").map((o) => o.trim()))
+    ),
     GEOCODING_PROVIDER: z.preprocess(emptyToUndefined, z.enum(["nominatim", "google"]).default("nominatim")),
     GEOCODING_API_KEY: z.preprocess(emptyToUndefined, z.string().optional()),
     GEOCODE_CACHE_TTL: z.preprocess(emptyToUndefined, msSchema.default("7d")).transform(v => v as StringValue),
