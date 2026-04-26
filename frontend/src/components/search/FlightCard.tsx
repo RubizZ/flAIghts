@@ -59,6 +59,27 @@ export default function FlightCard({ itinerary, formatTime, formatDuration, airp
         return groups;
     }, [itinerary.legs]);
 
+    const calculateDayDiff = (startTime?: string, targetTime?: string) => {
+        if (!startTime || !targetTime) return 0;
+        const start = new Date(startTime);
+        const end = new Date(targetTime);
+        const startDay = new Date(start.getFullYear(), start.getMonth(), start.getDate());
+        const endDay = new Date(end.getFullYear(), end.getMonth(), end.getDate());
+        const diff = endDay.getTime() - startDay.getTime();
+        return Math.round(diff / (1000 * 60 * 60 * 24));
+    };
+
+    const formatDateSuperscript = (targetTime?: string) => {
+        if (!targetTime) return null;
+        const date = new Date(targetTime);
+        return date.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' }).replace('.', '');
+    };
+
+    const totalDayDiff = useMemo(() =>
+        calculateDayDiff(firstDepartureTime, lastArrivalLeg?.arrival_time),
+        [firstDepartureTime, lastArrivalLeg?.arrival_time]
+    );
+
     return (
         <div
             className="bg-main/80 dark:bg-main/60 backdrop-blur-xl border border-line rounded-2xl shadow-lg transition-all duration-300 hover:border-brand/40 hover:bg-surface overflow-hidden cursor-pointer group active:scale-[0.99] relative"
@@ -119,7 +140,6 @@ export default function FlightCard({ itinerary, formatTime, formatDuration, airp
                     <div className="pt-4 space-y-6">
                         {(() => {
                             let scaleCounter = 0;
-                            let currentFlightId = "";
 
                             return itinerary.legs.map((leg, index) => {
                                 const prevLeg = index > 0 ? itinerary.legs[index - 1] : null;
@@ -172,29 +192,34 @@ export default function FlightCard({ itinerary, formatTime, formatDuration, airp
                                             isGeneticTrip={isGeneticTrip}
                                             originColor={getPointColor(index * 2)}
                                             destinationColor={getPointColor(index * 2 + 1)}
+                                            calculateDayDiff={calculateDayDiff}
+                                            formatDateSuperscript={formatDateSuperscript}
                                         />
                                     </Fragment>
                                 );
                             });
                         })()}
 
-                        {/* Final arrival summary notice - Now contains the collapse button */}
                         <div className="mt-4 border-t border-line flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-content-muted bg-surface/20 -mx-5 px-5 py-4 relative">
                             <div className="flex items-center gap-2">
                                 <Clock size={16} className="text-brand" />
-                                <span>{isGeneticTrip ? t('flightCard.tripCompletion') : t('flightCard.finalArrival', { airport: lastArrivalLeg?.destination })}:</span>
-                            </div>
-                            <span className="text-xs font-bold text-content leading-none">
-                                {isGeneticTrip
-                                    ? t('flightCard.arrivingAt', { airport: lastArrivalLeg?.destination })
-                                    : t('flightCard.finalArrival', { airport: lastArrivalLeg?.destination })
-                                }
-                                <span className="text-brand ml-1">
-                                    {t('flightCard.atTime', { time: formatTime(lastArrivalLeg?.arrival_time) })}
+                                <span className="text-xs font-bold text-content leading-none">
+                                    {isGeneticTrip
+                                        ? t('flightCard.tripCompletion') + ': ' + t('flightCard.arrivingAt', { airport: lastArrivalLeg?.destination })
+                                        : t('flightCard.finalArrival', { airport: lastArrivalLeg?.destination })
+                                    }
+                                    <span className="text-brand ml-1">
+                                        {t('flightCard.atTime', { time: formatTime(lastArrivalLeg?.arrival_time) })}
+                                        {totalDayDiff > 0 && (
+                                            <sup className="text-[10px] text-brand ml-0.5 font-bold">
+                                                {isGeneticTrip ? formatDateSuperscript(lastArrivalLeg?.arrival_time) : `+${totalDayDiff}`}
+                                            </sup>
+                                        )}
+                                    </span>
                                 </span>
-                            </span>
+                            </div>
 
-                            {/* Collapse Button inside this section - now at the end for mobile ordering */}
+                            {/* Collapse Button inside this section - now centered or to the right */}
                             <div className="sm:absolute sm:left-1/2 sm:-translate-x-1/2 p-1 bg-surface/50 border border-line/20 rounded-full text-content-muted transition-colors order-last sm:order-none">
                                 <ChevronDown
                                     size={16}
@@ -281,35 +306,32 @@ interface LegDetailsPropsWithColors extends LegDetailsProps {
     originColor: string;
     destinationColor: string;
     isGeneticTrip?: boolean;
+    calculateDayDiff: (startTime?: string, targetTime?: string) => number;
+    formatDateSuperscript: (targetTime?: string) => string | null;
 }
 
-function LegDetails({ leg, airportsMap, formatDuration, formatTime, itineraryStart, originColor, destinationColor, isGeneticTrip }: LegDetailsPropsWithColors) {
+function LegDetails({
+    leg,
+    airportsMap,
+    formatDuration,
+    formatTime,
+    itineraryStart,
+    originColor,
+    destinationColor,
+    isGeneticTrip,
+    calculateDayDiff,
+    formatDateSuperscript
+}: LegDetailsPropsWithColors) {
     const originAirport = airportsMap.get(leg.origin);
     const destinationAirport = airportsMap.get(leg.destination);
 
-    const calculateDayDiff = (targetTime?: string) => {
-        if (!itineraryStart || !targetTime) return 0;
-        const start = new Date(itineraryStart);
-        const end = new Date(targetTime);
-        const startDay = new Date(start.getFullYear(), start.getMonth(), start.getDate());
-        const endDay = new Date(end.getFullYear(), end.getMonth(), end.getDate());
-        const diff = endDay.getTime() - startDay.getTime();
-        return Math.round(diff / (1000 * 60 * 60 * 24));
-    };
-
-    const formatDateSuperscript = (targetTime?: string) => {
-        if (!targetTime) return null;
-        const date = new Date(targetTime);
-        return date.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' }).replace('.', '');
-    };
-
     const departureDayDiff = useMemo(() =>
-        calculateDayDiff(leg.departure_time),
+        calculateDayDiff(itineraryStart, leg.departure_time),
         [itineraryStart, leg.departure_time]
     );
 
     const arrivalDayDiff = useMemo(() =>
-        calculateDayDiff(leg.arrival_time),
+        calculateDayDiff(itineraryStart, leg.arrival_time),
         [itineraryStart, leg.arrival_time]
     );
 
