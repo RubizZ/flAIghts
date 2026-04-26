@@ -42,15 +42,6 @@ export default function Navbar({ variant = 'floating', logoRef }: { variant?: 'f
 
     const unreadMessagesCount = conversationsData?.items?.reduce((acc: number, conv: any) => acc + (conv.unreadCount || 0), 0) || 0;
 
-    const { data: conversationsData } = useGetConversations(undefined, {
-        query: {
-            enabled: isAuthenticated,
-            staleTime: 30000, // No necesitamos frescura absoluta en el navbar
-        }
-    });
-
-    const unreadMessagesCount = conversationsData?.items?.reduce((acc: number, conv: any) => acc + (conv.unreadCount || 0), 0) || 0;
-
     const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
     const [isOptionsMenuOpen, setIsOptionsMenuOpen] = useState(false);
     const [isNotificationsMenuOpen, setIsNotificationsMenuOpen] = useState(false);

@@ -7,6 +7,7 @@ import Calendar from "@/components/ui/Calendar";
 import { AirportResponse } from "@/api/generated/openapi/model";
 import { toast } from "sonner";
 import { useGeneticTrip } from "@/api/generated/openapi/search";
+import { isAirport, UnifiedSelection } from "@/types/selection";
 
 export default function GeneticTrip() {
     const { t } = useTranslation();
@@ -134,13 +135,23 @@ export default function GeneticTrip() {
                                 <MapPin className="text-brand/60 shrink-0 group-focus-within:text-brand transition-colors" size={24} />
                                 <AirportAutocomplete
                                     value={[]}
-                                    onChange={(airports) => {
-                                        const airport = airports[airports.length - 1] || null;
-                                        if (airport && cities.some(c => c.iata_code === airport.iata_code)) {
+                                    onChange={(selections) => {
+                                        const selection = selections[selections.length - 1] || null;
+                                        if (!selection) {
+                                            setOrigin(null);
+                                            return;
+                                        }
+
+                                        if (!isAirport(selection)) {
+                                            toast.error(t("searchFlight.validation.onlyAirports"));
+                                            return;
+                                        }
+
+                                        if (cities.some(c => c.iata_code === selection.iata_code)) {
                                             toast.error(t("searchFlight.validation.sameOriginDestination"));
                                             return;
                                         }
-                                        setOrigin(airport);
+                                        setOrigin(selection);
                                     }}
                                     otherSelected={cities}
                                     placeholder={t("searchFlight.geneticTrip.originPlaceholder")}
@@ -298,9 +309,15 @@ export default function GeneticTrip() {
                                 <Plus className="text-brand shrink-0 group-hover:rotate-90 transition-transform duration-300" size={24} />
                                 <AirportAutocomplete
                                     value={[]}
-                                    onChange={(airports) => {
-                                        const airport = airports[airports.length - 1] || null;
-                                        if (airport) handleAddCity(airport);
+                                    onChange={(selections) => {
+                                        const selection = selections[selections.length - 1] || null;
+                                        if (selection) {
+                                            if (isAirport(selection)) {
+                                                handleAddCity(selection);
+                                            } else {
+                                                toast.error(t("searchFlight.validation.onlyAirports"));
+                                            }
+                                        }
                                         else setNewCity(null);
                                     }}
                                     otherSelected={origin ? [origin, ...cities] : cities}

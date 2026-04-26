@@ -438,7 +438,8 @@
       "sameOriginDestination": "Origin and destination cannot be the same",
       "completeFields": "Please complete origin, destination and departure date",
       "alreadySelectedOrigin": "That airport is already selected as origin",
-      "alreadySelectedDestination": "That airport is already selected as destination"
+      "alreadySelectedDestination": "That airport is already selected as destination",
+      "onlyAirports": "Only individual airports are allowed on this route"
     },
     "toast": {
       "searchStarted": "Search started",

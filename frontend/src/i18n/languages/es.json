@@ -438,7 +438,8 @@
       "sameOriginDestination": "El origen y el destino no pueden ser el mismo",
       "completeFields": "Por favor, completa origen, destino y fecha de salida",
       "alreadySelectedOrigin": "Ese aeropuerto ya está seleccionado como origen",
-      "alreadySelectedDestination": "Ese aeropuerto ya está seleccionado como destino"
+      "alreadySelectedDestination": "Ese aeropuerto ya está seleccionado como destino",
+      "onlyAirports": "Solo se permiten aeropuertos individuales en esta ruta"
     },
     "toast": {
       "searchStarted": "Búsqueda iniciada",
