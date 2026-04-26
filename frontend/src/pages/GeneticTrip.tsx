@@ -8,6 +8,7 @@ import { AirportResponse } from "@/api/generated/openapi/model";
 import { toast } from "sonner";
 import { useGeneticTrip } from "@/api/generated/openapi/search";
 import { isAirport, UnifiedSelection } from "@/types/selection";
+import { useEffect } from "react";
 
 export default function GeneticTrip() {
     const { t } = useTranslation();
@@ -21,9 +22,14 @@ export default function GeneticTrip() {
 
     const today = new Date().toISOString().split('T')[0];
 
+    useEffect(() => {
+        window.dispatchEvent(new CustomEvent('flaights:mission:genetic-trip-opened'));
+    }, []);
+
     const { mutate: geneticRequest, isPending } = useGeneticTrip({
         mutation: {
             onSuccess: (data) => {
+                window.dispatchEvent(new CustomEvent('flaights:mission:genetic-trip-performed'));
                 toast.success(t("searchFlight.geneticTrip.toast.success"));
                 navigate(`/search/${data._id}`);
             },
@@ -42,6 +48,7 @@ export default function GeneticTrip() {
             return false;
         }
         setCities([...cities, airport]);
+        window.dispatchEvent(new CustomEvent('flaights:mission:genetic-trip-city-added', { detail: { count: cities.length + 1 } }));
         setNewCity(null);
         return true;
     };

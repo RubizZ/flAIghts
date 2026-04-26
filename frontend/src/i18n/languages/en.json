@@ -830,7 +830,7 @@
         "checklistDesktop": "To the right you have the specific steps. flAIghts will detect them automatically.",
         "backToMap": "Tap here to go back to the overview of all missions.",
         "lockedRoute": "Some missions are locked. You must complete their dependencies first.",
-        "closePanel": "Finally, use the X to close the Roadmap and start browsing freely."
+        "closePanel": "Finally, use the X to close the Roadmap and start browsing freely. Your first mission is \"{{missionName}}\""
       },
       "actions": {
         "next": "Next Step",
@@ -1093,6 +1093,24 @@
           "receive_ai_flights": {
             "title": "Receive flights from the AI",
             "description": "Ask the agent to look for flights and have it recommend one of them."
+          }
+        }
+      },
+      "genetic": {
+        "title": "Genetic Optimizer",
+        "description": "Find the best multi-city route using advanced algorithms.",
+        "steps": {
+          "open_genetic_trip": {
+            "title": "Explore Genetic Trip",
+            "description": "Enter the Genetic Algorithm section to start planning."
+          },
+          "add_itinerary_cities": {
+            "title": "Plan itinerary",
+            "description": "Add at least 2 different cities to your route to optimize."
+          },
+          "perform_genetic_search": {
+            "title": "Optimize route",
+            "description": "Run the genetic algorithm to find the best prices and connections."
           }
         }
       }

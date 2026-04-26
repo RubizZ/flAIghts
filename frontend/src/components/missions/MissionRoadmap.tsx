@@ -226,6 +226,10 @@ const MissionRoadmap: React.FC<MissionRoadmapProps> = ({ onClose, onMissionClick
         level: getMissionDepth(m.id)
     }));
 
+    const activeOnboardingTargetId = missionsWithLevels.find(m => isMissionUnlocked(m.id) && !isMissionCompleted(m.id))?.id;
+    const surveyOnboardingTargetId = missionsWithLevels.find(m => isMissionCompleted(m.id) && !isMissionRated(m.id))?.id;
+    const lockedOnboardingTargetId = missionsWithLevels.find(m => !isMissionUnlocked(m.id))?.id;
+
     const maxLevel = Math.max(...missionsWithLevels.map(m => m.level), 0);
     const levels = Array.from({ length: maxLevel + 1 }, (_, i) => i);
 
@@ -348,6 +352,7 @@ const MissionRoadmap: React.FC<MissionRoadmapProps> = ({ onClose, onMissionClick
                                         return (
                                             <div
                                                 key={mission.id}
+                                                id={mission.id === surveyOnboardingTargetId ? 'onboarding-survey-mission' : mission.id === activeOnboardingTargetId ? 'onboarding-active-mission' : mission.id === lockedOnboardingTargetId ? 'roadmap-locked-mission' : undefined}
                                                 className={`relative group ${unlocked || completed ? 'cursor-pointer' : 'cursor-not-allowed'}`}
                                                 onClick={() => (unlocked || completed) && handleMissionClick(mission.id)}
                                                 onMouseEnter={() => setHoveredMissionId(mission.id)}
@@ -422,22 +427,24 @@ const MissionRoadmap: React.FC<MissionRoadmapProps> = ({ onClose, onMissionClick
                     </div>
                 </div>
 
-                <div className="p-4 grid grid-cols-2 sm:flex sm:items-center justify-center gap-x-8 gap-y-4 border-t border-white/5 bg-black/40">
-                    <div className="flex items-center gap-2 text-white/20">
-                        <Trophy size={12} className="text-green-500/50" />
-                        <span className="text-[9px] font-black uppercase tracking-widest">{t('missions.roadmap.legend.achieved')}</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-white/20">
-                        <Play size={12} className="text-blue-500/50" />
-                        <span className="text-[9px] font-black uppercase tracking-widest">{t('missions.roadmap.legend.inProgress')}</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-white/20">
-                        <ShieldAlert size={12} className="text-amber-500/50" />
-                        <span className="text-[9px] font-black uppercase tracking-widest">{t('missions.roadmap.legend.feedback')}</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-white/20">
-                        <Lock size={12} className="text-white/10" />
-                        <span className="text-[9px] font-black uppercase tracking-widest">{t('missions.roadmap.legend.blocked')}</span>
+                <div className="pt-4 sm:pt-6 border-t border-white/5 flex flex-col sm:flex-row justify-between items-center gap-4 text-[9px] sm:text-xs text-gray-500">
+                    <div className="flex flex-wrap justify-center gap-3 sm:gap-6">
+                        <div className="flex items-center gap-2">
+                            <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.5)]"></div>
+                            <span>{t('missions.roadmap.legend.achieved')}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.5)]"></div>
+                            <span>{t('missions.roadmap.legend.inProgress')}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.5)]"></div>
+                            <span>{t('missions.roadmap.legend.feedback')}</span>
+                        </div>
+                        <div className="flex items-center gap-2 opacity-50">
+                            <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-white/20"></div>
+                            <span>{t('missions.roadmap.legend.blocked')}</span>
+                        </div>
                     </div>
                 </div>
             </div>

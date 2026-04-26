@@ -189,14 +189,16 @@ export default function GoogleLinkingView({ linkData, onCancel, onSuccess }: Goo
                                 {t("googleLinking.actions.back")}
                             </button>
                             <Tooltip content={t("turnstile.verifying")} disabled={!!turnstileToken} position="top">
-                                <button
-                                    type="button"
-                                    onClick={handleConfirmLink}
-                                    disabled={isGooglePending || !turnstileToken}
-                                    className="flex-1 rounded-lg bg-brand p-3 text-content-on-brand font-bold enabled:hover:scale-[1.02] enabled:active:scale-95 transition-all shadow-lg shadow-brand/20 cursor-pointer disabled:opacity-50"
-                                >
-                                    {isGooglePending ? t("googleLinking.actions.linking") : t("googleLinking.actions.confirmAndLink")}
-                                </button>
+                                <div className={!turnstileToken || isGooglePending ? 'cursor-not-allowed' : ''}>
+                                    <button
+                                        type="button"
+                                        onClick={handleConfirmLink}
+                                        disabled={isGooglePending || !turnstileToken}
+                                        className="w-full rounded-lg bg-brand p-3 text-content-on-brand font-bold enabled:hover:scale-[1.02] enabled:active:scale-95 transition-all shadow-lg shadow-brand/20 cursor-pointer disabled:opacity-50"
+                                    >
+                                        {isGooglePending ? t("googleLinking.actions.linking") : t("googleLinking.actions.confirmAndLink")}
+                                    </button>
+                                </div>
                             </Tooltip>
                         </div>
                     </>
@@ -261,14 +263,16 @@ export default function GoogleLinkingView({ linkData, onCancel, onSuccess }: Goo
                                 {t("googleLinking.actions.back")}
                             </button>
                             <Tooltip content={t("turnstile.verifying")} disabled={!!turnstileToken} position="top">
-                                <button
-                                    type="button"
-                                    onClick={handleResetAndLink}
-                                    disabled={isGooglePending || !turnstileToken}
-                                    className="flex-1 rounded-lg bg-brand p-3 text-content-on-brand font-bold enabled:hover:scale-[1.02] enabled:active:scale-95 transition-all shadow-lg shadow-brand/20 cursor-pointer disabled:opacity-50"
-                                >
-                                    {isGooglePending ? t("googleLinking.actions.linking") : t("googleLinking.actions.resetAndLink")}
-                                </button>
+                                <div className={!turnstileToken || isGooglePending ? 'cursor-not-allowed' : ''}>
+                                    <button
+                                        type="button"
+                                        onClick={handleResetAndLink}
+                                        disabled={isGooglePending || !turnstileToken}
+                                        className="w-full rounded-lg bg-brand p-3 text-content-on-brand font-bold enabled:hover:scale-[1.02] enabled:active:scale-95 transition-all shadow-lg shadow-brand/20 cursor-pointer disabled:opacity-50"
+                                    >
+                                        {isGooglePending ? t("googleLinking.actions.linking") : t("googleLinking.actions.resetAndLink")}
+                                    </button>
+                                </div>
                             </Tooltip>
                         </div>
                     </>

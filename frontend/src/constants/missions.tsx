@@ -270,6 +270,40 @@ const OpenSearchFromHistoryListener: React.FC = () => {
     return null;
 };
 
+const OpenGeneticTripListener: React.FC = () => {
+    const { completeStep } = useMissions();
+    useEffect(() => {
+        const handle = () => completeStep('genetic_mission', 'open_genetic_trip');
+        window.addEventListener('flaights:mission:genetic-trip-opened', handle);
+        return () => window.removeEventListener('flaights:mission:genetic-trip-opened', handle);
+    }, [completeStep]);
+    return null;
+};
+
+const GeneticTripCityAddedListener: React.FC = () => {
+    const { completeStep } = useMissions();
+    useEffect(() => {
+        const handle = (e: any) => {
+            if (e.detail?.count >= 2) {
+                completeStep('genetic_mission', 'add_itinerary_cities');
+            }
+        };
+        window.addEventListener('flaights:mission:genetic-trip-city-added', handle);
+        return () => window.removeEventListener('flaights:mission:genetic-trip-city-added', handle);
+    }, [completeStep]);
+    return null;
+};
+
+const GeneticTripPerformedListener: React.FC = () => {
+    const { completeStep } = useMissions();
+    useEffect(() => {
+        const handle = () => completeStep('genetic_mission', 'perform_genetic_search');
+        window.addEventListener('flaights:mission:genetic-trip-performed', handle);
+        return () => window.removeEventListener('flaights:mission:genetic-trip-performed', handle);
+    }, [completeStep]);
+    return null;
+};
+
 // --- Configuración de Misiones ---
 
 export const MISSIONS: BaseMission[] = [
@@ -461,6 +495,33 @@ export const MISSIONS: BaseMission[] = [
                 title: 'missions.list.ai.steps.receive_ai_flights.title',
                 description: 'missions.list.ai.steps.receive_ai_flights.description',
                 listener: AIFlightsReturnedListener
+            }
+        ]
+    },
+    {
+        id: 'genetic_mission',
+        title: 'missions.list.genetic.title',
+        description: 'missions.list.genetic.description',
+        icon: '🧬',
+        dependsOn: ['map_search_mission'],
+        steps: [
+            {
+                id: 'open_genetic_trip',
+                title: 'missions.list.genetic.steps.open_genetic_trip.title',
+                description: 'missions.list.genetic.steps.open_genetic_trip.description',
+                listener: OpenGeneticTripListener
+            },
+            {
+                id: 'add_itinerary_cities',
+                title: 'missions.list.genetic.steps.add_itinerary_cities.title',
+                description: 'missions.list.genetic.steps.add_itinerary_cities.description',
+                listener: GeneticTripCityAddedListener
+            },
+            {
+                id: 'perform_genetic_search',
+                title: 'missions.list.genetic.steps.perform_genetic_search.title',
+                description: 'missions.list.genetic.steps.perform_genetic_search.description',
+                listener: GeneticTripPerformedListener
             }
         ]
     }

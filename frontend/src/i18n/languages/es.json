@@ -816,7 +816,7 @@
         "checklistDesktop": "A la derecha tienes los pasos específicos. flAIghts los detectará automáticamente.",
         "backToMap": "Pulsa aquí para volver a la vista general de todas las misiones.",
         "lockedRoute": "Algunas misiones están bloqueadas. Deberás completar sus dependencias primero.",
-        "closePanel": "Finalmente, usa la X para cerrar el Roadmap y empezar a navegar libremente."
+        "closePanel": "Finalmente, usa la X para cerrar el Roadmap y empezar a navegar libremente. Tu primera misión es \"{{missionName}}\""
       },
       "actions": {
         "next": "Siguiente Paso",
@@ -1079,6 +1079,24 @@
           "receive_ai_flights": {
             "title": "Recibe vuelos de la IA",
             "description": "Pídele al agente que te busque vuelos y haz que te recomiende uno de ellos."
+          }
+        }
+      },
+      "genetic": {
+        "title": "Optimizador Genético",
+        "description": "Encuentra la mejor ruta multi-ciudad usando algoritmos avanzados.",
+        "steps": {
+          "open_genetic_trip": {
+            "title": "Explorar Genetic Trip",
+            "description": "Entra en la sección de Algoritmo Genético para empezar a planificar."
+          },
+          "add_itinerary_cities": {
+            "title": "Planificar itinerario",
+            "description": "Añade al menos 2 ciudades diferentes a tu ruta para optimizar."
+          },
+          "perform_genetic_search": {
+            "title": "Optimizar ruta",
+            "description": "Ejecuta el algoritmo genético para encontrar los mejores precios y conexiones."
           }
         }
       }

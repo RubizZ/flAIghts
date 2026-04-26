@@ -937,32 +937,34 @@ export default function Settings() {
                                                     </button>
                                                 </div>
                                             ) : (
-                                                <div className="flex flex-col items-end gap-2">
-                                                    <GoogleLogin
-                                                        onSuccess={credentialResponse => {
-                                                            if (credentialResponse.credential) {
-                                                                const actionLabel = "Vincular Google";
-                                                                setVerificationStep({
-                                                                    active: false,
-                                                                    action: 'connect-google',
-                                                                    actionLabel,
-                                                                    code: "",
-                                                                    data: { credential: credentialResponse.credential }
-                                                                });
-                                                                requestCode({
-                                                                    data: { actionName: 'connect-google' }
-                                                                });
-                                                            }
-                                                        }}
-                                                        onError={() => {
-                                                            toast.error('Error al conectar con Google');
-                                                        }}
-                                                        useOneTap
-                                                        theme="outline"
-                                                        shape="pill"
-                                                        size="medium"
-                                                        text="signin_with"
-                                                    />
+                                                <div className={`flex flex-col items-end gap-2 ${isRequestingCode || isConnectingGoogle ? 'cursor-not-allowed' : ''}`}>
+                                                    <div className={isRequestingCode || isConnectingGoogle ? 'pointer-events-none opacity-50' : ''}>
+                                                        <GoogleLogin
+                                                            onSuccess={credentialResponse => {
+                                                                if (credentialResponse.credential) {
+                                                                    const actionLabel = "Vincular Google";
+                                                                    setVerificationStep({
+                                                                        active: false,
+                                                                        action: 'connect-google',
+                                                                        actionLabel,
+                                                                        code: "",
+                                                                        data: { credential: credentialResponse.credential }
+                                                                    });
+                                                                    requestCode({
+                                                                        data: { actionName: 'connect-google' }
+                                                                    });
+                                                                }
+                                                            }}
+                                                            onError={() => {
+                                                                toast.error('Error al conectar con Google');
+                                                            }}
+                                                            useOneTap
+                                                            theme="outline"
+                                                            shape="pill"
+                                                            size="medium"
+                                                            text="signin_with"
+                                                        />
+                                                    </div>
                                                 </div>
                                             )}
                                         </div>

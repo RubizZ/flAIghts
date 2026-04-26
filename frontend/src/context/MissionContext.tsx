@@ -194,7 +194,10 @@ export const MissionProvider: React.FC<{ children: ReactNode }> = ({ children })
         const seen = localStorage.getItem(ONBOARDING_KEY) === 'true';
         return seen ? 0 : 1;
     });
-    const [surveyOnboardingStep, setSurveyOnboardingStep] = useState<number>(0);
+    const [surveyOnboardingStep, setSurveyOnboardingStep] = useState<number>(() => {
+        const saved = localStorage.getItem('flaights_survey_onboarding_step');
+        return saved ? parseInt(saved, 10) : 0;
+    });
     const [hasSeenSurveyOnboarding, setHasSeenSurveyOnboarding] = useState(() => {
         return localStorage.getItem('onboarding_survey_seen') === 'true';
     });
@@ -221,6 +224,10 @@ export const MissionProvider: React.FC<{ children: ReactNode }> = ({ children })
     useEffect(() => {
         localStorage.setItem(FINISHED_KEY, evaluationFinished.toString());
     }, [evaluationFinished]);
+
+    useEffect(() => {
+        localStorage.setItem('flaights_survey_onboarding_step', surveyOnboardingStep.toString());
+    }, [surveyOnboardingStep]);
 
     const acceptConsent = () => {
         localStorage.setItem(CONSENT_KEY, 'true');

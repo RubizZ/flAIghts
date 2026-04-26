@@ -10,7 +10,7 @@ const MissionOnboarding: React.FC = () => {
     const {
         isEvaluationMode, hasConsented, onboardingStep, nextOnboardingStep,
         surveyOnboardingStep, nextSurveyOnboardingStep, showRoadmap, skipOnboarding,
-        activeMission, showSurveyMissionId
+        activeMission, showSurveyMissionId, missions, isMissionCompleted, isMissionUnlocked
     } = useMissions();
 
     const [spotlightRect, setSpotlightRect] = useState<DOMRect | null>(null);
@@ -75,11 +75,13 @@ const MissionOnboarding: React.FC = () => {
             const findTarget = (shouldScroll = false) => {
                 let currentId = '';
 
-                if (displayState.isSurveyTour) {
-                    switch (displayState.surveyOnboardingStep) {
+                // Usamos los valores reales, no los de displayState, para el ID del target
+                // Esto evita el lag de 300ms que puede hacer que no se encuentre el elemento
+                if (surveyOnboardingStep > 0) {
+                    switch (surveyOnboardingStep) {
                         case 1:
                             if (isMobileTarget) {
-                                currentId = displayState.subStep === 0 ? (document.getElementById('nav-user-menu-trigger') ? 'nav-user-menu-trigger' : 'nav-options-menu-trigger') : (document.getElementById('nav-missions-button-mobile') ? 'nav-missions-button-mobile' : 'nav-missions-button-mobile-alt');
+                                currentId = subStep === 0 ? (document.getElementById('nav-user-menu-trigger') ? 'nav-user-menu-trigger' : 'nav-options-menu-trigger') : (document.getElementById('nav-missions-button-mobile') ? 'nav-missions-button-mobile' : 'nav-missions-button-mobile-alt');
                             } else {
                                 currentId = 'nav-missions-button';
                             }
@@ -89,10 +91,10 @@ const MissionOnboarding: React.FC = () => {
                         case 4: currentId = 'dashboard-back-button'; break;
                     }
                 } else {
-                    switch (displayState.onboardingStep) {
+                    switch (onboardingStep) {
                         case 1:
                             if (isMobileTarget) {
-                                currentId = displayState.subStep === 0 ? (document.getElementById('nav-user-menu-trigger') ? 'nav-user-menu-trigger' : 'nav-options-menu-trigger') : (document.getElementById('nav-missions-button-mobile') ? 'nav-missions-button-mobile' : 'nav-missions-button-mobile-alt');
+                                currentId = subStep === 0 ? (document.getElementById('nav-user-menu-trigger') ? 'nav-user-menu-trigger' : 'nav-options-menu-trigger') : (document.getElementById('nav-missions-button-mobile') ? 'nav-missions-button-mobile' : 'nav-missions-button-mobile-alt');
                             } else {
                                 currentId = 'nav-missions-button';
                             }
@@ -141,8 +143,8 @@ const MissionOnboarding: React.FC = () => {
             if (dashboardContainer) dashboardContainer.addEventListener('scroll', handleUpdate);
 
             // Frequent check for dynamic transitions
-            const timer = setTimeout(() => findTarget(false), 400);
-            const interval = setInterval(() => findTarget(false), 800);
+            const timer = setTimeout(() => findTarget(false), 300);
+            const interval = setInterval(() => findTarget(false), 300);
 
             return () => {
                 clearTimeout(timer);
@@ -415,13 +417,15 @@ const MissionOnboarding: React.FC = () => {
                                         </>
                                     ) : (
                                         <>
-                                            {displayState.onboardingStep === 1 && (isMobileTarget && subStep === 0 ? t('missions.onboarding.descriptions.openMenuMobile') : t('missions.onboarding.descriptions.openMissions'))}
+                                            {displayState.onboardingStep === 1 && (isMobileTarget && displayState.subStep === 0 ? t('missions.onboarding.descriptions.openMenuMobile') : t('missions.onboarding.descriptions.openMissions'))}
                                             {displayState.onboardingStep === 2 && t('missions.onboarding.descriptions.selectChallenge')}
                                             {displayState.onboardingStep === 3 && (viewport.w < 1024 ? t('missions.onboarding.descriptions.missionSummaryMobile') : t('missions.onboarding.descriptions.missionSummaryDesktop'))}
                                             {displayState.onboardingStep === 4 && (viewport.w < 1024 ? t('missions.onboarding.descriptions.checklistMobile') : t('missions.onboarding.descriptions.checklistDesktop'))}
                                             {displayState.onboardingStep === 5 && t('missions.onboarding.descriptions.backToMap')}
                                             {displayState.onboardingStep === 6 && t('missions.onboarding.descriptions.lockedRoute')}
-                                            {displayState.onboardingStep === 7 && t('missions.onboarding.descriptions.closePanel')}
+                                            {displayState.onboardingStep === 7 && t('missions.onboarding.descriptions.closePanel', {
+                                                missionName: t((activeMission || missions.find(m => !isMissionCompleted(m.id) && isMissionUnlocked(m.id)))?.title || '')
+                                            })}
                                         </>
                                     )}
                                 </p>
