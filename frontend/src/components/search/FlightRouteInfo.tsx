@@ -105,7 +105,7 @@ export default function FlightRouteInfo({ itinerary, formatTime, formatDuration 
                             <div className="absolute w-1.5 h-1.5 rounded-full bg-line right-0" />
                         </div>
                         <span className={`text-[10px] font-bold mt-1.5 text-center ${stopovers > 0 ? 'text-orange-400' : 'text-emerald-400'}`}>
-                            {stopovers === 0 ? t("flightRoute.direct") : t("flightRoute.stopover", { count: stopovers, label: stopovers === 1 ? t("flightRoute.stopoverSingular") : t("flightRoute.stopoverPlural"), airports: stopoverAirports })}
+                            {stopovers === 0 ? t("flightRoute.direct") : t("flightRoute.stopover", { count: stopovers, airports: stopoverAirports })}
                         </span>
                     </div>
 
@@ -121,3 +121,10 @@ export default function FlightRouteInfo({ itinerary, formatTime, formatDuration 
         </div>
     );
 }
+
+/**
+ * i18next-parser hints
+ * 
+ * t("flightRoute.stopover_one")
+ * t("flightRoute.stopover_other")
+ */

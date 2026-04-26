@@ -111,11 +111,14 @@ export default function SearchResults() {
     };
     const { mutate: prepareBooking, isPending: isPreparingBooking, error: prepareError, data: bookingData } = usePrepareBooking();
 
+    const [outboundSegmentsCount, setOutboundSegmentsCount] = useState(0);
+
     const handleReserve = () => {
         window.dispatchEvent(new CustomEvent('flaights:mission:buy-flight'));
         const tokens: { token: string; origin: string; destination: string; departure_date: string }[] = [];
 
         const collectTokens = (legs: any[]) => {
+            let count = 0;
             legs.forEach(leg => {
                 if (leg.booking_token) {
                     tokens.push({
@@ -124,11 +127,14 @@ export default function SearchResults() {
                         destination: leg.destination,
                         departure_date: leg.departure_time.split(' ')[0] // Extract YYYY-MM-DD from YYYY-MM-DD HH:MM
                     });
+                    count++;
                 }
             });
+            return count;
         };
 
-        if (selectedDeparture) collectTokens(selectedDeparture.legs);
+        let outCount = 0;
+        if (selectedDeparture) outCount = collectTokens(selectedDeparture.legs);
         if (selectedReturn) collectTokens(selectedReturn.legs);
 
         if (tokens.length === 0) {
@@ -136,6 +142,7 @@ export default function SearchResults() {
             return;
         }
 
+        setOutboundSegmentsCount(outCount);
         setIsBookingModalOpen(true);
         prepareBooking({ data: { tokens: tokens as any } });
         window.dispatchEvent(new CustomEvent('app:buy-flight'));
@@ -334,6 +341,21 @@ export default function SearchResults() {
         }
     };
 
+    const handleEditDeparture = () => {
+        setExpandedItinerary(null);
+        setSelectionStep('departure');
+        setSelectedDeparture(null);
+        setSelectedReturn(null);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
+    const handleEditReturn = () => {
+        setExpandedItinerary(null);
+        setSelectionStep('return');
+        setSelectedReturn(null);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
     const handleGoBack = () => {
         setExpandedItinerary(null);
         if (selectionStep === 'return') {
@@ -392,7 +414,7 @@ export default function SearchResults() {
                                         <button
                                             onClick={selectionStep === 'departure' ? () => navigate(-1) : handleGoBack}
                                             className="shrink-0 p-2.5 bg-surface/50 hover:bg-surface border border-line/30 rounded-xl transition-all group active:scale-95 cursor-pointer"
-                                            title={selectionStep === 'departure' ? "Volver atrás" : "Paso anterior"}
+                                            title={selectionStep === 'departure' ? t('searchResultsPage.backToSearch') : t('searchResultsPage.previousStep')}
                                         >
                                             <ArrowLeft size={20} className="text-content-muted group-hover:text-content" />
                                         </button>
@@ -447,7 +469,7 @@ export default function SearchResults() {
                                                     ? 'bg-amber-500/10 text-amber-500 border-amber-500/20 hover:bg-amber-500/20'
                                                     : 'bg-surface/50 hover:bg-surface border-line/30 text-content-muted hover:text-brand'
                                                     }`}
-                                                title={data?.shared ? "Hacer privada" : "Hacer pública"}
+                                                title={data?.shared ? t('share.makePrivate') : t('share.makePublic')}
                                             >
                                                 {isSharingPublic || isPrivatizingPublic ? (
                                                     <Loader2 size={18} className="animate-spin" />
@@ -471,7 +493,7 @@ export default function SearchResults() {
                                                         setIsSharing(!isSharing);
                                                     }}
                                                     className={`p-2.5 border rounded-xl transition-all group active:scale-95 cursor-pointer ${isSharing ? 'bg-brand border-brand' : 'bg-surface/50 hover:bg-surface border-line/30'}`}
-                                                    title="Compartir búsqueda"
+                                                    title={t('share.shareFlightSearch')}
                                                 >
                                                     <Share2 size={18} className={isSharing ? 'text-white' : 'text-content-muted group-hover:text-brand'} />
                                                 </button>
@@ -481,7 +503,7 @@ export default function SearchResults() {
                                                 {!data?.shared && isAuthenticated && user._id === data?.user_id && (
                                                     <div className="px-3 py-2 border-b border-line mb-1">
                                                         <p className="text-[10px] text-amber-500 font-bold leading-tight">
-                                                            Al compartir, la búsqueda se hará pública automáticamente.
+                                                            {t('share.autoPublicDisclaimer')}
                                                         </p>
                                                     </div>
                                                 )}
@@ -633,6 +655,7 @@ export default function SearchResults() {
                                             formatTime={formatTime}
                                             formatDuration={formatDuration}
                                             title={t('searchResultsPage.selectedFlight', { type: t('common.outbound') })}
+                                            onEdit={handleEditDeparture}
                                         />
                                         {selectedReturn && (
                                             <SelectedFlightSummary
@@ -642,6 +665,7 @@ export default function SearchResults() {
                                                 formatTime={formatTime}
                                                 formatDuration={formatDuration}
                                                 title={t('searchResultsPage.selectedFlight', { type: t('common.return') })}
+                                                onEdit={handleEditReturn}
                                             />
                                         )}
                                         <div className="bg-main/80 dark:bg-main/60 backdrop-blur-xl border border-line rounded-2xl shadow-lg p-6 flex flex-col sm:flex-row items-center justify-between gap-4">
@@ -698,6 +722,7 @@ export default function SearchResults() {
                                                 formatTime={formatTime}
                                                 formatDuration={formatDuration}
                                                 title={t('searchResultsPage.selectedFlight', { type: t('common.outbound') })}
+                                                onEdit={handleEditDeparture}
                                             />
                                         )}
 
@@ -789,6 +814,7 @@ export default function SearchResults() {
                 onClose={() => setIsBookingModalOpen(false)}
                 isLoading={isPreparingBooking}
                 bookingData={bookingData || null}
+                outboundSegmentsCount={outboundSegmentsCount}
                 error={prepareError}
             />
         </div>

@@ -100,6 +100,7 @@
     "error": "Error getting booking options",
     "go": "Go to website",
     "loading": "Getting options...",
+    "multipleSegmentsWarning": "Multiple bookings required. You must complete all of them for this leg.",
     "noOptions": "No direct booking options found",
     "postNotice": "You will be redirected to an external page to complete the payment.",
     "segmentTitle": "Leg {{origin}} to {{destination}}",
@@ -187,8 +188,8 @@
   "flightRoute": {
     "direct": "Direct",
     "multiCityTour": "Multi-city Tour",
-    "stopover_one": "1 stop",
-    "stopover_other": "{{count}} stops"
+    "stopover_one": "1 stop ({{airports}})",
+    "stopover_other": "{{count}} stops ({{airports}})"
   },
   "floatingLabelInput": {
     "toast": {
@@ -916,9 +917,12 @@
     }
   },
   "searchResultsPage": {
+    "change": "Change",
+    "backToSearch": "Go back",
     "duration": "Duration",
     "orderBy": "Order by",
     "personalized": "Personalized",
+    "previousStep": "Previous step",
     "price": "Price",
     "reserve": "Book Flights",
     "searchingBestRoutes": "Searching for the best routes...",
@@ -1091,8 +1095,11 @@
     }
   },
   "share": {
+    "autoPublicDisclaimer": "When sharing, the search will be made public automatically.",
     "flightShared": "Shared flight",
     "flightSharedSuccess": "Flight shared successfully",
+    "makePrivate": "Make private",
+    "makePublic": "Make public",
     "prepareShareError": "Could not prepare search for sharing",
     "shareError": "Error sharing",
     "shareFlightError": "Error sharing flight",

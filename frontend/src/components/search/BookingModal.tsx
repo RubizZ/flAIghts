@@ -7,11 +7,12 @@ interface BookingModalProps {
     isOpen: boolean;
     onClose: () => void;
     bookingData: BookingResponse | null;
+    outboundSegmentsCount: number;
     isLoading: boolean;
     error: any;
 }
 
-const BookingModal: React.FC<BookingModalProps> = ({ isOpen, onClose, bookingData, isLoading, error }) => {
+const BookingModal: React.FC<BookingModalProps> = ({ isOpen, onClose, bookingData, outboundSegmentsCount, isLoading, error }) => {
     const { t } = useTranslation();
     const backdropMouseDown = useRef(false);
 
@@ -83,16 +84,36 @@ const BookingModal: React.FC<BookingModalProps> = ({ isOpen, onClose, bookingDat
                             <AlertCircle className="w-12 h-12 text-rose-500" />
                             <p className="text-white font-bold">{t('booking.error')}</p>
                         </div>
-                    ) : bookingData?.segments.map((segment, idx) => (
-                        <div key={idx} className="mb-8 last:mb-0">
-                            <div className="flex items-center gap-3 mb-4">
-                                <div className="h-8 w-8 rounded-xl bg-brand/20 flex items-center justify-center text-brand">
-                                    <Plane size={18} />
+                    ) : bookingData?.segments.map((segment, idx) => {
+                        const isReturn = idx >= outboundSegmentsCount;
+                        const isFirstOfGroup = idx === 0 || idx === outboundSegmentsCount;
+                        const returnSegmentsCount = (bookingData?.segments.length || 0) - outboundSegmentsCount;
+                        const hasMultipleInGroup = !isReturn ? outboundSegmentsCount > 1 : returnSegmentsCount > 1;
+
+                        return (
+                            <div key={idx} className="mb-10 last:mb-0">
+                                {isFirstOfGroup && (bookingData?.segments.length || 0) > 1 && (
+                                    <div className="flex flex-wrap items-center gap-3 mb-6">
+                                        <div className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${!isReturn ? 'bg-brand/20 text-brand border border-brand/30 shadow-[0_0_15px_rgba(59,130,246,0.2)]' : 'bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 shadow-[0_0_15px_rgba(99,102,241,0.2)]'}`}>
+                                            {!isReturn ? t('common.outbound') : t('common.return')}
+                                        </div>
+                                        {hasMultipleInGroup && (
+                                            <div className="flex items-center gap-1.5 px-3 py-1 rounded-lg bg-amber-500/10 text-amber-500 border border-amber-500/20 animate-in fade-in slide-in-from-left-2 duration-500">
+                                                <AlertCircle size={12} className="animate-pulse" />
+                                                <span className="text-[10px] font-bold">{t('booking.multipleSegmentsWarning')}</span>
+                                            </div>
+                                        )}
+                                        <div className="h-px flex-1 min-w-[20px] bg-linear-to-r from-white/10 to-transparent" />
+                                    </div>
+                                )}
+                                <div className="flex items-center gap-3 mb-4">
+                                    <div className={`h-8 w-8 rounded-xl flex items-center justify-center ${!isReturn ? 'bg-brand/20 text-brand' : 'bg-indigo-500/20 text-indigo-400'}`}>
+                                        <Plane size={18} className={isReturn ? "rotate-[135deg]" : "-rotate-45"} />
+                                    </div>
+                                    <h3 className="text-lg font-bold text-white">
+                                        {t('booking.segmentTitle', { origin: segment.origin, destination: segment.destination })}
+                                    </h3>
                                 </div>
-                                <h3 className="text-lg font-bold text-white">
-                                    {t('booking.segmentTitle', { origin: segment.origin, destination: segment.destination })}
-                                </h3>
-                            </div>
 
                             <div className="grid gap-3">
                                 {segment.options.length > 0 ? segment.options.map((option, optIdx) => (
@@ -158,7 +179,7 @@ const BookingModal: React.FC<BookingModalProps> = ({ isOpen, onClose, bookingDat
                                 )}
                             </div>
                         </div>
-                    ))}
+                    )})}
                 </div>
 
                 {/* Footer Accent */}

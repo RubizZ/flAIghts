@@ -101,6 +101,7 @@
     "error": "Error al obtener opciones de reserva",
     "go": "Ir a la web",
     "loading": "Obteniendo opciones...",
+    "multipleSegmentsWarning": "Requiere varias reservas. Debes completarlas todas para este trayecto.",
     "noOptions": "No se han encontrado opciones de reserva directa",
     "postNotice": "Serás redirigido a una página externa para completar el pago.",
     "segmentTitle": "Tramo {{origin}} a {{destination}}",
@@ -189,9 +190,8 @@
   "flightRoute": {
     "direct": "Directo",
     "multiCityTour": "Tour Multi-ciudad",
-    "stopover_one": "1 escala",
-    "stopover_many": "{{count}} escalas",
-    "stopover_other": "{{count}} escalas"
+    "stopover_one": "1 escala ({{airports}})",
+    "stopover_other": "{{count}} escalas ({{airports}})"
   },
   "floatingLabelInput": {
     "toast": {
@@ -922,9 +922,12 @@
     }
   },
   "searchResultsPage": {
+    "change": "Cambiar",
+    "backToSearch": "Volver atrás",
     "duration": "Duración",
     "orderBy": "Ordenar por",
     "personalized": "Personalizado",
+    "previousStep": "Paso anterior",
     "price": "Precio",
     "reserve": "Reservar Vuelos",
     "searchingBestRoutes": "Buscando las mejores rutas...",
@@ -1097,8 +1100,11 @@
     }
   },
   "share": {
+    "autoPublicDisclaimer": "Al compartir, la búsqueda se hará pública automáticamente.",
     "flightShared": "Vuelo compartido",
     "flightSharedSuccess": "Vuelo compartido con éxito",
+    "makePrivate": "Hacer privada",
+    "makePublic": "Hacer pública",
     "prepareShareError": "No se pudo preparar la búsqueda para compartir",
     "shareError": "Error al compartir",
     "shareFlightError": "Error al compartir el vuelo",
