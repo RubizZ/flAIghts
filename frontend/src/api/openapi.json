@@ -6970,10 +6970,52 @@
           "profile_picture": {
             "type": "string"
           },
-          "password_reset_token": {
+          "google_id": {
             "type": "string"
           },
-          "password_reset_expires": {
+          "google_email": {
+            "type": "string"
+          },
+          "is_password_set": {
+            "type": "boolean"
+          },
+          "badges": {
+            "items": {
+              "properties": {
+                "earned_at": {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                "icon": {
+                  "type": "string"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "id": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "earned_at",
+                "icon",
+                "name",
+                "id"
+              ],
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "security_code": {
+            "type": "string"
+          },
+          "security_code_id": {
+            "type": "string"
+          },
+          "security_code_action": {
+            "type": "string"
+          },
+          "security_code_expires": {
             "type": "string",
             "format": "date-time"
           },
@@ -7011,7 +7053,8 @@
           "role",
           "created_at",
           "last_seen_at",
-          "auth_version"
+          "auth_version",
+          "is_password_set"
         ],
         "type": "object",
         "description": "From T, pick a set of properties whose keys are in the union K"
@@ -7080,10 +7123,52 @@
           "profile_picture": {
             "type": "string"
           },
-          "password_reset_token": {
+          "google_id": {
             "type": "string"
           },
-          "password_reset_expires": {
+          "google_email": {
+            "type": "string"
+          },
+          "is_password_set": {
+            "type": "boolean"
+          },
+          "badges": {
+            "items": {
+              "properties": {
+                "earned_at": {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                "icon": {
+                  "type": "string"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "id": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "earned_at",
+                "icon",
+                "name",
+                "id"
+              ],
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "security_code": {
+            "type": "string"
+          },
+          "security_code_id": {
+            "type": "string"
+          },
+          "security_code_action": {
+            "type": "string"
+          },
+          "security_code_expires": {
             "type": "string",
             "format": "date-time"
           },
@@ -7140,6 +7225,7 @@
           "created_at",
           "last_seen_at",
           "auth_version",
+          "is_password_set",
           "friends",
           "sent_friend_requests",
           "received_friend_requests"
@@ -7418,9 +7504,6 @@
             "type": "string",
             "format": "date-time"
           },
-          "reason": {
-            "type": "string"
-          },
           "status": {
             "type": "string",
             "enum": [
@@ -7429,6 +7512,9 @@
               "rejected"
             ]
           },
+          "reason": {
+            "type": "string"
+          },
           "updated_at": {
             "type": "string",
             "format": "date-time"
@@ -7436,8 +7522,8 @@
         },
         "required": [
           "created_at",
-          "reason",
           "status",
+          "reason",
           "updated_at"
         ],
         "type": "object",
@@ -7449,9 +7535,6 @@
             "type": "string",
             "format": "date-time"
           },
-          "reason": {
-            "type": "string"
-          },
           "status": {
             "type": "string",
             "enum": [
@@ -7459,6 +7542,9 @@
               "resolved",
               "rejected"
             ]
+          },
+          "reason": {
+            "type": "string"
           },
           "updated_at": {
             "type": "string",
@@ -7473,8 +7559,8 @@
         },
         "required": [
           "created_at",
-          "reason",
           "status",
+          "reason",
           "updated_at",
           "airport_iata"
         ],
@@ -7659,11 +7745,63 @@
             },
             "type": "array"
           },
+          "susResults": {
+            "items": {
+              "type": "number",
+              "format": "double"
+            },
+            "type": "array"
+          },
           "timestamp": {
             "type": "string",
             "format": "date-time"
           },
           "fullName": {
+            "type": "string"
+          },
+          "age": {
+            "type": "number",
+            "format": "double"
+          },
+          "gender": {
+            "type": "string"
+          },
+          "educationLevel": {
+            "type": "string"
+          },
+          "screenInfo": {
+            "properties": {
+              "devicePixelRatio": {
+                "type": "number",
+                "format": "double"
+              },
+              "innerHeight": {
+                "type": "number",
+                "format": "double"
+              },
+              "innerWidth": {
+                "type": "number",
+                "format": "double"
+              },
+              "height": {
+                "type": "number",
+                "format": "double"
+              },
+              "width": {
+                "type": "number",
+                "format": "double"
+              }
+            },
+            "required": [
+              "devicePixelRatio",
+              "innerHeight",
+              "innerWidth",
+              "height",
+              "width"
+            ],
+            "type": "object"
+          },
+          "userAgent": {
             "type": "string"
           },
           "receivedAt": {
@@ -7675,6 +7813,7 @@
           "_id",
           "results",
           "timestamp",
+          "userAgent",
           "receivedAt"
         ],
         "type": "object",
@@ -7691,11 +7830,63 @@
             },
             "type": "array"
           },
+          "susResults": {
+            "items": {
+              "type": "number",
+              "format": "double"
+            },
+            "type": "array"
+          },
           "timestamp": {
             "type": "string",
             "format": "date-time"
           },
           "fullName": {
+            "type": "string"
+          },
+          "age": {
+            "type": "number",
+            "format": "double"
+          },
+          "gender": {
+            "type": "string"
+          },
+          "educationLevel": {
+            "type": "string"
+          },
+          "screenInfo": {
+            "properties": {
+              "devicePixelRatio": {
+                "type": "number",
+                "format": "double"
+              },
+              "innerHeight": {
+                "type": "number",
+                "format": "double"
+              },
+              "innerWidth": {
+                "type": "number",
+                "format": "double"
+              },
+              "height": {
+                "type": "number",
+                "format": "double"
+              },
+              "width": {
+                "type": "number",
+                "format": "double"
+              }
+            },
+            "required": [
+              "devicePixelRatio",
+              "innerHeight",
+              "innerWidth",
+              "height",
+              "width"
+            ],
+            "type": "object"
+          },
+          "userAgent": {
             "type": "string"
           },
           "receivedAt": {
@@ -7710,6 +7901,7 @@
           "_id",
           "results",
           "timestamp",
+          "userAgent",
           "receivedAt"
         ],
         "type": "object",
@@ -9531,7 +9723,7 @@
             }
           }
         },
-        "description": "Prepara las opciones de reserva para un conjunto de tokens de vuelo.\nRecupera los enlaces de reserva y proveedores de SerpApi.",
+        "description": "Prepara las opciones de reserva para un conjunto de tokens de vuelo.\r\nRecupera los enlaces de reserva y proveedores de SerpApi.",
         "tags": [
           "Booking"
         ],
@@ -11006,7 +11198,8 @@
                 "USER",
                 "AUTH",
                 "SEARCH",
-                "AGENT"
+                "AGENT",
+                "BOOKING"
               ]
             }
           },
