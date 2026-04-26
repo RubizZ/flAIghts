@@ -1,3 +1,6 @@
 # Generated API client
 src/api/generated
 .vite
+
+# i18n temporary files
+src/i18n/languages/*_old.json

@@ -526,3 +526,83 @@ export const MISSIONS: BaseMission[] = [
         ]
     }
 ];
+
+/**
+ * i18next-parser hints
+ * 
+ * This block ensures that the parser detects the keys used in the MISSIONS constant,
+ * as they are defined as static strings and not direct t() calls.
+ * 
+ * t('missions.list.registration.title')
+ * t('missions.list.registration.description')
+ * t('missions.list.registration.steps.complete_registration.title')
+ * t('missions.list.registration.steps.complete_registration.description')
+ * 
+ * t('missions.list.profile.title')
+ * t('missions.list.profile.description')
+ * t('missions.list.profile.steps.upload_avatar.title')
+ * t('missions.list.profile.steps.upload_avatar.description')
+ * t('missions.list.profile.steps.edit_preferences.title')
+ * t('missions.list.profile.steps.edit_preferences.description')
+ * 
+ * t('missions.list.social.title')
+ * t('missions.list.social.description')
+ * t('missions.list.social.steps.view_user_profile.title')
+ * t('missions.list.social.steps.view_user_profile.description')
+ * t('missions.list.social.steps.send_friend_request.title')
+ * t('missions.list.social.steps.send_friend_request.description')
+ * t('missions.list.social.steps.send_message.title')
+ * t('missions.list.social.steps.send_message.description')
+ * 
+ * t('missions.list.manual_search.title')
+ * t('missions.list.manual_search.description')
+ * t('missions.list.manual_search.steps.open_airport_card.title')
+ * t('missions.list.manual_search.steps.open_airport_card.description')
+ * t('missions.list.manual_search.steps.add_airport.title')
+ * t('missions.list.manual_search.steps.add_airport.description')
+ * t('missions.list.manual_search.steps.perform_manual_search.title')
+ * t('missions.list.manual_search.steps.perform_manual_search.description')
+ * 
+ * t('missions.list.map_search.title')
+ * t('missions.list.map_search.description')
+ * t('missions.list.map_search.steps.open_map.title')
+ * t('missions.list.map_search.steps.open_map.description')
+ * t('missions.list.map_search.steps.select_on_map.title')
+ * t('missions.list.map_search.steps.select_on_map.description')
+ * t('missions.list.map_search.steps.perform_map_search.title')
+ * t('missions.list.map_search.steps.perform_map_search.description')
+ * 
+ * t('missions.list.flight_results.title')
+ * t('missions.list.flight_results.description')
+ * t('missions.list.flight_results.steps.view_flight_details.title')
+ * t('missions.list.flight_results.steps.view_flight_details.description')
+ * t('missions.list.flight_results.steps.select_flight.title')
+ * t('missions.list.flight_results.steps.select_flight.description')
+ * t('missions.list.flight_results.steps.buy_flight.title')
+ * t('missions.list.flight_results.steps.buy_flight.description')
+ * 
+ * t('missions.list.share.title')
+ * t('missions.list.share.description')
+ * t('missions.list.share.steps.share_from_results.title')
+ * t('missions.list.share.steps.share_from_results.description')
+ * t('missions.list.share.steps.share_from_chat.title')
+ * t('missions.list.share.steps.share_from_chat.description')
+ * 
+ * t('missions.list.ai.title')
+ * t('missions.list.ai.description')
+ * t('missions.list.ai.steps.use_ai.title')
+ * t('missions.list.ai.steps.use_ai.description')
+ * t('missions.list.ai.steps.get_search_history.title')
+ * t('missions.list.ai.steps.get_search_history.description')
+ * t('missions.list.ai.steps.receive_ai_flights.title')
+ * t('missions.list.ai.steps.receive_ai_flights.description')
+ * 
+ * t('missions.list.genetic.title')
+ * t('missions.list.genetic.description')
+ * t('missions.list.genetic.steps.open_genetic_trip.title')
+ * t('missions.list.genetic.steps.open_genetic_trip.description')
+ * t('missions.list.genetic.steps.add_itinerary_cities.title')
+ * t('missions.list.genetic.steps.add_itinerary_cities.description')
+ * t('missions.list.genetic.steps.perform_genetic_search.title')
+ * t('missions.list.genetic.steps.perform_genetic_search.description')
+ */

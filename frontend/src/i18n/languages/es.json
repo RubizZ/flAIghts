@@ -1,529 +1,197 @@
 {
+  "acknowledgements": {
+    "backToHome": "Volver al inicio",
+    "content": "Agradecemos a SerpApi el uso de su API para llevar a cabo este proyecto.",
+    "title": "Agradecimientos"
+  },
+  "admin": {
+    "dashboard": {
+      "description": "Gestión global del sistema flAIghts",
+      "title": "Panel de Control"
+    },
+    "tabs": {
+      "airports": "Aeropuertos",
+      "audits": "Auditoría",
+      "evaluations": "Evaluaciones",
+      "reports": "Reportes",
+      "stats": "Estadísticas",
+      "users": "Usuarios"
+    }
+  },
+  "agentChat": {
+    "connecting": "Conectando...",
+    "connectionError": "Error al conectar con el servidor",
+    "continueAnalyzing": "Seguir analizando",
+    "direct": "Directo",
+    "emptyDescription": "Soy fl**AI**ghts. No solo busco vuelos, aprendo de ti para sugerirte tu próximo destino.",
+    "generationError": "Error en la generación, por favor, intenta de nuevo",
+    "header": "Agente flAIghts",
+    "historyCleared": "Historial de aventura borrado",
+    "inputPlaceholder": "Pregunta lo que quieras...",
+    "interruptedByUser": "Generación interrumpida por el usuario",
+    "legalNotice": "IA Experimental • flAIghts puede cometer errores. Verifica la información importante.",
+    "moreSteps": "( + {{count}} pasos )",
+    "notAuthenticated": {
+      "description": "Nuestro asistente **flAIghts** utiliza IA para aprender de tus gustos y sugerirte destinos únicos.\n\nPara interactuar con él y ver recomendaciones, necesitas estar identificado.",
+      "login": "Iniciar Sesión",
+      "register": "¿No tienes cuenta? Únete aquí",
+      "title": "Inteligencia Exclusiva"
+    },
+    "rawResult": "Resultado Raw",
+    "recommendedFlight": "Vuelo Recomendado",
+    "scales_one": "1 escala",
+    "scales_many": "{{count}} escalas",
+    "scales_other": "{{count}} escalas",
+    "stop": "Detener",
+    "suggestions": {
+      "suggestTrip": "Sugiéreme un viaje basado en mis gustos",
+      "whatIsMyHistory": "¿Cual es mi historial de busquedas?",
+      "whereToGo": "¿A dónde puedo ir en {{month}}?"
+    },
+    "toolStatus": {
+      "accessingProfile": "Accediendo a tu perfil...",
+      "airlinesLocated": "Aerolíneas localizadas con éxito",
+      "airportsLocated": "Aeropuertos localizados con éxito",
+      "consultingHistory": "Consultando tu historial...",
+      "dataFromHistory": "Datos obtenidos de tu historial",
+      "dataFromProfile": "Datos obtenidos de tu perfil",
+      "executing": "Ejecutando",
+      "locatingAirports": "Localizando aeropuertos para \"{{query}}\"...",
+      "processing": "Procesando...",
+      "searchCompleted": "Búsqueda de vuelos completada",
+      "searchCreated": "Búsqueda creada con éxito",
+      "searchFailed": "Error: {{message}}",
+      "searchingAirlines": "Buscando aerolíneas para \"{{query}}\"...",
+      "thinking": "Pensando...",
+      "trackingFlights": "Rastreando vuelos desde {{origins}} a {{destinations}}..."
+    },
+    "totalPrice": "Precio Total",
+    "unavailable": "Sin Servicio",
+    "welcome": "¡Hola, {{username}}!",
+    "you": "Tú"
+  },
+  "airportAutocomplete": {
+    "backToFeatured": "Volver a resultados destacados",
+    "fromCity": "A {{distance}} km de {{location}}",
+    "fromWhere": "¿Desde dónde?",
+    "noMoreResults": "No hay más resultados",
+    "noResults": "No hay resultados",
+    "seeAllResults": "Ver todos los resultados",
+    "seeMoreAirports": "Ver más aeropuertos",
+    "toWhere": "¿A dónde?",
+    "tryOtherSearch": "Prueba con otro código o nombre de ciudad"
+  },
+  "airportReport": {
+    "cancel": "Cancelar",
+    "description": "Ayúdanos a mejorar los datos de {{iata}}",
+    "errorDescription": "Descripción del error",
+    "minimum": "mínimo {{min}}",
+    "placeholder": "Ej: El nombre está mal escrito, la ubicación es incorrecta o es una base militar...",
+    "selectedAirport": "Aeropuerto seleccionado",
+    "sending": "Enviando...",
+    "sendReport": "Enviar reporte",
+    "title": "Reportar error",
+    "toast": {
+      "describeError": "Por favor, describe el error antes de enviar",
+      "error": "Error al enviar el reporte. Inténtalo de nuevo.",
+      "success": "¡Gracias! Tu reporte ha sido enviado."
+    }
+  },
+  "booking": {
+    "error": "Error al obtener opciones de reserva",
+    "go": "Ir a la web",
+    "loading": "Obteniendo opciones...",
+    "noOptions": "No se han encontrado opciones de reserva directa",
+    "postNotice": "Serás redirigido a una página externa para completar el pago.",
+    "segmentTitle": "Tramo {{origin}} a {{destination}}",
+    "subtitle": "Selecciona el proveedor para cada segmento de tu viaje.",
+    "title": "Opciones de Reserva"
+  },
+  "chat": {
+    "backToChats": "Volver a Chats",
+    "cities_one": "{{count}} ciudad",
+    "cities_many": "{{count}} ciudades",
+    "cities_other": "{{count}} ciudades",
+    "connecting": "Conectando al chat...",
+    "error": "Error",
+    "lastSeen": "Últ. vez {{time}}",
+    "lastSeenDate": "{{date}} a las {{time}}",
+    "lastSeenToday": "hoy a las {{time}}",
+    "lastSeenYesterday": "ayer a las {{time}}",
+    "loadError": "No se pudo cargar el chat.",
+    "messagePlaceholder": "Escribe un mensaje...",
+    "noSearchesToShare": "No tienes búsquedas para compartir.",
+    "online": "En línea",
+    "recentSearches": "Tus búsquedas recientes",
+    "sendMessage": "Enviar mensaje",
+    "today": "Hoy",
+    "yesterday": "Ayer"
+  },
+  "chats": {
+    "empty": {
+      "action": "Ver mis amigos",
+      "description": "Busca amigos e inicia una conversación.",
+      "title": "No tienes chats activos"
+    },
+    "error": "Error al cargar las conversaciones.",
+    "newChat": "Nuevo chat",
+    "sharedFlight": "✈️ Vuelo compartido: {{origin}} → {{destination}}",
+    "subtitle": "Tus conversaciones recientes.",
+    "title": "Chats"
+  },
+  "common": {
+    "add": "Añadir...",
+    "airport": "Aeropuerto",
+    "andThe": " y la ",
+    "badge": "insignia",
+    "bookmarkAlert": "Para añadir flAIghts a tus marcadores, pulsa Ctrl+D (Windows) o Cmd+D (Mac)",
+    "cities": "Ciudades",
+    "destination": "Destino",
+    "evaluation": "Evaluación",
+    "exit": "Salir",
+    "installAlert": "Para añadir flAIghts a tu pantalla de inicio, usa la opción \"Añadir a pantalla de inicio\" en el menú de tu navegador.",
+    "origin": "Origen",
+    "outbound": "Ida",
+    "outboundFlights": "Vuelos de Ida",
+    "return": "Vuelta",
+    "returnFlights": "Vuelos de Vuelta",
+    "select": "Seleccionar",
+    "tfg": "Trabajo de Fin de Grado"
+  },
+  "errorBoundary": {
+    "copyError": "Copiar error",
+    "errorDesc": "Parece que hemos encontrado una turbulencia inesperada en el sistema. No hemos podido completar tu solicitud.",
+    "errorTitle": "Vuelo interrumpido",
+    "hideDetails": "Ocultar detalles técnicos",
+    "homeButton": "Volver al inicio",
+    "loginButton": "Iniciar sesión",
+    "reloadButton": "Recargar la página",
+    "sessionExpired": "Sesión expirada",
+    "sessionExpiredDesc": "Tu sesión ha expirado o no tienes permisos para acceder a este recurso. Por favor, inicia sesión de nuevo.",
+    "showDetails": "Ver detalles técnicos"
+  },
   "fixes": {
     "stepCompleted": "¡Paso {{mission}}: {{step}} completado!",
     "stepProgress": "Paso {{current}} de {{total}}"
   },
-  "forgotPassword": {
-    "title": "Olvidé mi contraseña",
-    "description": "Introduce tu email y te enviaremos un enlace para restablecer tu contraseña.",
-    "actions": {
-      "send": "Enviar",
-      "sending": "Enviando..."
-    },
-    "validation": {
-      "emailRequired": "El email es obligatorio",
-      "emailInvalid": "El email es inválido"
-    },
-    "toast": {
-      "resetLinkSent": "Se ha enviado un correo con un enlace para restablecer tu contraseña",
-      "unknownError": "Error desconocido al enviar el correo"
-    }
+  "flightCard": {
+    "arrivingAt": "Llegando a {{airport}}",
+    "atTime": " a las {{time}}",
+    "finalArrival": "Llegada final a {{airport}}:",
+    "flight": "Vuelo",
+    "overnightScale": "Escala nocturna",
+    "scale": "{{number}}ª Escala",
+    "select": "Seleccionar",
+    "shortScale": "Escala muy corta",
+    "totalPrice": "Precio total",
+    "tripCompletion": "Finalización del viaje"
   },
-  "friends": {
-    "title": "Amigos",
-    "subtitle": "Gestiona a las personas con las que compartes tus viajes.",
-    "tabs": {
-      "friends": "Mis Amigos",
-      "requests": "Solicitudes"
-    },
-    "addFriend": "Añadir amigo",
-    "removeFriend": "Eliminar amigo",
-    "sendMessage": "Enviar mensaje",
-    "notLogged": {
-      "title": "No has iniciado sesión",
-      "login": "Iniciar sesión"
-    },
-    "emptyFriends": {
-      "title": "Aún no tienes amigos",
-      "description": "Busca a otros viajeros conectando con ellos y agregándolos a tu lista para planear viajes juntos."
-    },
-    "actions": {
-      "message": "Mensaje",
-      "remove": "Eliminar",
-      "cancel": "Cancelar",
-      "accept": "Aceptar",
-      "reject": "Rechazar"
-    },
-    "searchPlaceholder": "Buscar entre tus amigos...",
-    "noResults": "No se han encontrado amigos que coincidan con \"{{query}}\"",
-    "requests": {
-      "received": "Solicitudes Recibidas",
-      "sent": "Solicitudes Enviadas",
-      "noneReceived": "No tienes solicitudes de amistad pendientes.",
-      "noneSent": "No has enviado solicitudes de amistad.",
-      "waiting": "Esperando respuesta..."
-    },
-    "toast": {
-      "accepted": "Solicitud aceptada",
-      "rejected": "Solicitud rechazada",
-      "cancelled": "Solicitud cancelada",
-      "removed": "Amigo eliminado"
-    }
-  },
-  "login": {
-    "noAccount": "¿No tienes cuenta?",
-    "title": "Inicio de sesión",
-    "labels": {
-      "identifier": "Email o nombre de usuario",
-      "password": "Contraseña"
-    },
-    "actions": {
-      "login": "Inicia sesión",
-      "loggingIn": "Conectando..."
-    },
-    "links": {
-      "forgotPassword": "¿Olvidaste tu contraseña?",
-      "register": "Regístrate"
-    },
-    "validation": {
-      "identifierRequired": "Introduce tu email o nombre de usuario",
-      "passwordRequired": "Introduce tu contraseña",
-      "fillAllFields": "Por favor completa todos los campos",
-      "identifierMin": "Mínimo 3 caracteres",
-      "passwordMin": "Mínimo 8 caracteres"
-    },
-    "toast": {
-      "welcome": "¡Bienvenido a bordo!",
-      "invalidCredentials": "Credenciales inválidas",
-      "turnstileRequired": "Por favor, completa la verificación de seguridad.",
-      "turnstileInvalid": "La verificación ha caducado o es inválida. Por favor, verifica de nuevo.",
-      "turnstileFailed": "La verificación de seguridad ha fallado. Por favor, inténtalo de nuevo.",
-      "googleLinked": "Cuentas vinculadas correctamente",
-      "googleSuccess": "Sesión iniciada con Google",
-      "googleAccountDetected": "Cuenta existente detectada. Introduce tu contraseña para vincularla.",
-      "googleInvalidCode": "El código de verificación es incorrecto o ha caducado.",
-      "googleVerificationFailed": "La verificación de seguridad ha fallado o caducado. Inténtalo de nuevo.",
-      "googleError": "Error al iniciar sesión con Google",
-      "googleConnectError": "Error al conectar con Google"
-    },
-    "verifyingSession": "Verificando sesión...",
-    "orContinueWith": "O continúa con"
-  },
-  "notFound": {
-    "title": "¡Oops! Página no encontrada",
-    "description": "La página que buscas no existe o ha sido movida.",
-    "actions": {
-      "goBack": "Página anterior",
-      "home": "Volver al inicio"
-    }
-  },
-  "register": {
-    "iAccept": "Acepto los ",
-    "alreadyHaveAccount": "¿Ya tienes cuenta?",
-    "codeSent": "Hemos enviado un código a ",
-    "codeSentTitle": "¡Código enviado!",
-    "steps": {
-      "step1Title": "Únete a flAIghts",
-      "step1Description": "Introduce tu email para recibir un código de verificación.",
-      "step2Title": "Completa tu perfil"
-    },
-    "labels": {
-      "email": "Email",
-      "code": "Código de verificación",
-      "username": "Nombre de usuario",
-      "password": "Contraseña",
-      "confirmPassword": "Confirmar contraseña",
-      "acceptedTerms": "Acepto los Términos de Servicio y la Política de Privacidad"
-    },
-    "actions": {
-      "nextStep": "Continuar",
-      "sendingCode": "Enviando código...",
-      "completeRegistration": "Completar Registro",
-      "creatingAccount": "Creando cuenta...",
-      "changeEmail": "Cambiar email"
-    },
-    "links": {
-      "terms": "Términos de Servicio",
-      "privacy": "Política de Privacidad",
-      "login": "Inicia sesión"
-    },
-    "validation": {
-      "emailRequired": "El email es obligatorio",
-      "codeRequired": "El código es obligatorio",
-      "usernameRequired": "El nombre de usuario es obligatorio",
-      "passwordRequired": "La contraseña es obligatoria",
-      "passwordMin": "Mínimo 8 caracteres",
-      "confirmPasswordRequired": "Las contraseñas no coinciden",
-      "acceptedTerms": "Debes aceptar los términos y condiciones",
-      "emailInUse": "Este email ya está registrado",
-      "usernameInUse": "El nombre de usuario ya está en uso",
-      "invalidCode": "El código es inválido o ha expirado",
-      "emailInvalid": "El email no es válido",
-      "usernameMin": "Mínimo 3 caracteres",
-      "usernameMax": "Máximo 20 caracteres",
-      "codeLength": "Debe tener 6 caracteres"
-    },
-    "toast": {
-      "verificationEmailSent": "Email de verificación enviado. Revisa tu bandeja de entrada.",
-      "welcome": "¡Bienvenido a bordo!",
-      "loginError": "Te has registrado correctamente, pero hubo un error al iniciar sesión. Por favor, identifícate.",
-      "accountCreated": "¡Cuenta creada correctamente! Por favor, inicia sesión para continuar."
-    }
-  },
-  "resetPassword": {
-    "title": "Restablecer contraseña",
-    "labels": {
-      "newPassword": "Nueva contraseña",
-      "confirmPassword": "Confirmar contraseña"
-    },
-    "actions": {
-      "reset": "Restablecer contraseña",
-      "resetting": "Restableciendo contraseña..."
-    },
-    "validation": {
-      "passwordRequired": "Introduce una contraseña",
-      "confirmPasswordMismatch": "Las contraseñas no coinciden",
-      "tokenMissing": "Token de restablecimiento no encontrado"
-    },
-    "toast": {
-      "success": "Contraseña restablecida correctamente",
-      "tokenInvalid": "El token de restablecimiento es inválido o ha expirado",
-      "correctErrors": "Por favor corrige los errores"
-    }
-  },
-  "searchResults": {
-    "error": {
-      "backToHome": "Volver al inicio",
-      "noFlights": "No se han encontrado vuelos",
-      "tryAgain": "Inténtalo de nuevo",
-      "fetch": "Error al obtener los resultados de búsqueda"
-    },
-    "toast": {
-      "noBookingOptions": "No se han encontrado opciones de reserva para este vuelo"
-    }
-  },
-  "settings": {
-    "title": "Ajustes",
-    "tabs": {
-      "perfil": "Perfil",
-      "preferencias": "Preferencias",
-      "seguridad": "Seguridad",
-      "apariencia": "Apariencia"
-    },
-    "profile": {
-      "title": "Información del Perfil",
-      "username": "Nombre de usuario",
-      "usernamePlaceholder": "Tu nombre de usuario",
-      "profileVisibility": "Visibilidad del perfil",
-      "public": "Perfil Público",
-      "publicDesc": "Otros usuarios pueden ver tus búsquedas recientes y estadísticas.",
-      "private": "Perfil Privado",
-      "privateDesc": "Tus búsquedas y estadísticas son totalmente privadas.",
-      "save": "Guardar cambios del perfil",
-      "saving": "Guardando..."
-    },
-    "preferences": {
-      "title": "Pesos de búsqueda",
-      "description": "Ajusta el nivel de importancia de los factores al buscar vuelos.",
-      "infoTitle": "¿Cómo ajustar los pesos?",
-      "weightsInfo": "Ten en cuenta que si le das mucha más importancia a uno de los campos, debes representarlo correctamente en relación a los demás. Es decir, si te importa que el vuelo sea corto, pero te importa mucho más que el precio sea barato, no pongas la duración a 1, déjala en un valor menor para que el algoritmo priorice el precio.",
-      "fields": {
-        "price": "Precio",
-        "duration": "Duración",
-        "stops": "Escalas",
-        "airline": "Calidad Aerolínea"
-      },
-      "descriptions": {
-        "price": {
-          "0": "El precio me es indiferente",
-          "low": "Pagaría más por un mejor vuelo",
-          "medium": "Busco un equilibrio razonable en el precio",
-          "high": "Suelo priorizar que el precio sea bajo",
-          "max": "Cuanto más barato mejor"
-        },
-        "duration": {
-          "0": "El tiempo de viaje me es indiferente",
-          "low": "No me importa si el vuelo dura más",
-          "medium": "Prefiero no estar demasiadas horas de viaje",
-          "high": "Intento llegar lo antes posible a mi destino",
-          "max": "Quiero el vuelo más rápido posible"
-        },
-        "stops": {
-          "0": "Me da igual hacer muchas escalas",
-          "low": "Hacer varias paradas no me supone un problema",
-          "medium": "Prefiero rutas con pocas escalas si es posible",
-          "high": "Intento evitar hacer transbordos",
-          "max": "Busco vuelos directos sin paradas"
-        },
-        "airline": {
-          "0": "Me da igual con qué aerolínea volar",
-          "low": "Me adapto a aerolíneas de bajo coste sin problema",
-          "medium": "Valoro un servicio aceptable a bordo",
-          "high": "Prefiero aerolíneas tradicionales y cómodas",
-          "max": "Busco siempre las aerolíneas mejor valoradas"
-        }
-      },
-      "save": "Guardar preferencias",
-      "saving": "Guardando..."
-    },
-    "security": {
-      "email": {
-        "title": "Dirección de correo electrónico",
-        "description": "Utilizamos este correo principal para identificarte y para enviarte notificaciones.",
-        "placeholder": "tu@email.com",
-        "update": "Actualizar correo electrónico",
-        "updating": "Actualizando...",
-        "pending": "Cambio de email pendiente",
-        "pendingMessage": "Hemos enviado códigos a tu email actual y al nuevo",
-        "codes": {
-          "old": "Código email actual",
-          "new": "Código nuevo email"
-        },
-        "verify": "Confirmar cambio",
-        "verifying": "Verificando...",
-        "cancel": "Cancelar",
-        "cancelling": "Cancelando...",
-        "validation": {
-          "codesRequired": "Por favor, introduce ambos códigos"
-        }
-      },
-      "password": {
-        "title": "Contraseña",
-        "setTitle": "Establecer contraseña",
-        "description": "Cambia tu contraseña periódicamente para mantener tu cuenta segura.",
-        "setDesc": "Aún no has establecido una contraseña manual. Te recomendamos hacerlo para poder acceder si pierdes el acceso a servicios externos.",
-        "current": "Contraseña actual",
-        "new": "Nueva contraseña",
-        "confirm": "Confirmar nueva contraseña",
-        "show": "Mostrar contraseñas",
-        "hide": "Ocultar contraseñas",
-        "forgot": "¿Has olvidado tu contraseña?",
-        "requirements": {
-          "title": "Requisitos:",
-          "minLength": "Mínimo 8 caracteres",
-          "different": "Debe ser diferente a la actual",
-          "recommended": "Recomendamos incluir números y símbolos"
-        },
-        "update": "Actualizar contraseña",
-        "updating": "Actualizando...",
-        "validation": {
-          "allFieldsRequired": "Por favor, rellena todos los campos",
-          "passwordMismatch": "Las contraseñas nuevas no coinciden",
-          "sameAsOld": "La nueva contraseña debe ser diferente a la actual",
-          "minLength": "La nueva contraseña debe tener al menos 8 caracteres"
-        },
-        "set": "Establecer contraseña"
-      },
-      "apps": {
-        "title": "Aplicaciones conectadas",
-        "description": "Gestiona las cuentas de terceros vinculadas a tu cuenta de flAIghts.",
-        "google": {
-          "connected": "Conectado",
-          "linked": "Cuenta vinculada correctamente",
-          "notLinked": "No has vinculado tu cuenta de Google",
-          "disconnect": "Desconectar cuenta de Google",
-          "error": "Error al conectar con Google"
-        }
-      }
-    },
-    "appearance": {
-      "title": "Apariencia",
-      "themeLabel": "Tema",
-      "light": "Modo Claro",
-      "dark": "Modo Oscuro",
-      "system": "Sistema",
-      "languageLabel": "Idioma",
-      "spanish": "Español",
-      "english": "Inglés"
-    },
-    "avatar": {
-      "title": "Tu foto de perfil",
-      "maxSize": "Máximo 5MB",
-      "selectNew": "Seleccionar nueva foto",
-      "uploading": "Subiendo...",
-      "validation": {
-        "fileTooBig": "La imagen es demasiado grande (máx. 5MB)"
-      }
-    },
-    "general": {
-      "back": "Volver",
-      "logout": "Cerrar sesión"
-    },
-    "verification": {
-      "title": "Verificación de Seguridad",
-      "description": "Por seguridad, introduce el código de 6 dígitos que hemos enviado a {{email}}",
-      "resend": "¿No has recibido el código? Reenviar",
-      "cancel": "Cancelar",
-      "confirming": "Confirmando...",
-      "confirm": "Confirmar acción"
-    },
-    "toast": {
-      "pendingEmail": "Tienes un cambio de email pendiente de verificación",
-      "success": "Perfil actualizado con éxito",
-      "error": "Error al actualizar el perfil",
-      "pending": "Solicitud de cambio de email iniciada. Introduce los códigos enviados.",
-      "invalidEmail": "El nuevo email es inválido",
-      "emailInUse": "El nuevo email ya está en uso",
-      "emailUpdatedSuccess": "Email actualizado correctamente",
-      "emailVerificationCodeInvalidOrExpired": "El código de verificación del email es inválido o ha expirado",
-      "emailUpdateError": "Error al actualizar el email",
-      "emailCancelError": "Cambio de email cancelado",
-      "passwordUpdatedSuccess": "Contraseña actualizada correctamente",
-      "passwordUpdateError": "Error al actualizar la contraseña",
-      "avatarUpdatedSuccess": "Foto de perfil actualizada correctamente"
-    }
-  },
-  "userProfile": {
-    "notAuthenticated": {
-      "title": "Inicia sesión para ver perfiles",
-      "description": "Debes tener una cuenta en flAIghts para ver el perfil de otros viajeros y contactar con ellos.",
-      "login": "Iniciar sesión"
-    },
-    "notFound": {
-      "title": "Usuario no encontrado",
-      "description": "Lo sentimos, el perfil con ID {{id}} no pudo ser localizado.",
-      "home": "Volver al inicio"
-    },
-    "status": {
-      "friendSince": "Amigo desde {{date}}",
-      "sentRequest": "Solicitud de amistad enviada",
-      "receivedRequest": "Solicitud de amistad recibida",
-      "memberSince": "Miembro desde {{date}}",
-      "online": "En línea",
-      "offline": "Desconectado"
-    },
-    "admin": "Administrador de flAIghts",
-    "badges": {
-      "title": "Expositor de Logros",
-      "earnedOn": "Obtenida el {{date}}"
-    },
-    "actions": {
-      "editProfile": "Editar mi perfil",
-      "message": "Mensaje",
-      "remove": "Eliminar",
-      "acceptRequest": "Aceptar solicitud de amistad",
-      "cancelRequest": "Cancelar solicitud de amistad",
-      "sendRequest": "Enviar solicitud de amistad"
-    },
-    "searches": {
-      "title": "Últimas búsquedas",
-      "featured": "Búsquedas destacadas",
-      "viewHistory": "Ver historial completo",
-      "private": "Cuenta privada",
-      "privateDesc": "Para ver las búsquedas de {{username}} debes ser su amigo.",
-      "empty": "Este usuario aún no tiene búsquedas de vuelos guardadas.",
-      "emptyFeatured": "Sin búsquedas destacadas",
-      "emptyFeaturedDesc": "Este usuario aún no ha compartido ninguna de sus búsquedas de vuelos.",
-      "departure": "Salida: {{date}}",
-      "return": "Regreso: {{date}}",
-      "noMore": "No hay más búsquedas",
-      "end": "Fin de las búsquedas destacadas"
-    },
-    "toast": {
-      "requestSent": "Solicitud de amistad enviada",
-      "requestAccepted": "Solicitud de amistad aceptada",
-      "requestCancelled": "Solicitud de amistad cancelada",
-      "friendRemoved": "Amigo eliminado"
-    }
-  },
-  "userSearch": {
-    "title": "Buscar usuarios",
-    "subtitle": "Encuentra a tus amigos por nombre de usuario.",
-    "placeholder": "Buscar por usuario...",
-    "emptyState": "Escribe un nombre de usuario para comenzar a buscar.",
-    "loading": "Buscando...",
-    "noResults": "No se han encontrado usuarios que coincidan con \"{{query}}\".",
-    "status": {
-      "pending": "Pendiente",
-      "respond": "Responder solicitud"
-    }
-  },
-  "searchFlight": {
-    "title": "Vuela más allá.",
-    "subtitle": "Explora destinos mundiales con flAIghts.",
-    "labels": {
-      "origin": "Origen",
-      "destination": "Destino",
-      "departure": "Salida",
-      "return": "Regreso",
-      "selectOnMap": "Seleccionar en el mapa",
-      "layover": "Escala"
-    },
-    "placeholders": {
-      "origin": "¿Desde dónde?",
-      "destination": "¿A dónde vas?",
-      "selectDate": "Seleccionar"
-    },
-    "tooltips": {
-      "selectFirstDate": "Selecciona primero la fecha de salida",
-      "expandMap": "Expandir mapa",
-      "selectMapTitle": "Búsqueda manual",
-      "selectAssistant": "Asistente IA"
-    },
-    "mapSelection": {
-      "selectingOrigin": "Selecciona el aeropuerto de origen en el mapa",
-      "selectingDestination": "Selecciona el aeropuerto de destino en el mapa",
-      "selectingLayover": "Selecciona el aeropuerto de escala en el mapa",
-      "exploring": "Explorando el globo terráqueo",
-      "closeMap": "Cerrar mapa",
-      "cancelSelection": "Cancelar"
-    },
-    "loading": {
-      "loadingGlobe": "flAIghts está despegando..."
-    },
-    "mapButtons": {
-      "viewMap3D": "Ver mapa 3D",
-      "defineAsOrigin": "Definir como Origen",
-      "defineAsDestination": "Definir como Destino",
-      "reportError": "Reportar error en los datos"
-    },
-    "chatbot": {
-      "title": "Asistente flAIghts",
-      "comingSoon": "Próximamente — describe tu viaje ideal con IA",
-      "placeholder": "Ej: \"Quiero ir a Tokio en verano por menos de 600€\"",
-      "askAssistant": "Preguntar al asistente"
-    },
-    "additionalOptions": {
-      "addStop": "Añadir escala",
-      "advancedFilters": "Filtros avanzados"
-    },
-    "labels2": {
-      "name": "Nombre",
-      "city": "Ciudad / Región",
-      "latitude": "Latitud",
-      "longitude": "Longitud",
-      "airport": "Aeropuerto"
-    },
-    "tripType": {
-      "oneWay": "Ida simple",
-      "roundTrip": "Ida y vuelta"
-    },
-    "actions": {
-      "addStop": "Añadir parada",
-      "search": "Buscar",
-      "exploreFlights": "Explorar vuelos",
-      "searching": "Buscando..."
-    },
-    "validation": {
-      "sameOriginDestination": "El origen y el destino no pueden ser el mismo",
-      "completeFields": "Por favor, completa origen, destino y fecha de salida",
-      "alreadySelectedOrigin": "Ese aeropuerto ya está seleccionado como origen",
-      "alreadySelectedDestination": "Ese aeropuerto ya está seleccionado como destino",
-      "onlyAirports": "Solo se permiten aeropuertos individuales en esta ruta"
-    },
-    "toast": {
-      "searchStarted": "Búsqueda iniciada",
-      "searchError": "Error al buscar vuelos"
-    },
-    "geneticTrip": {
-      "modalTitle": "Ruta Optimizada (Genética)",
-      "modalSubtitle": "Encontraremos el mejor orden para visitar tus ciudades",
-      "originLabel": "Origen del Viaje",
-      "originPlaceholder": "Ciudad de salida y llegada",
-      "startDateLabel": "Fecha de Inicio",
-      "startDatePlaceholder": "Seleccionar fecha",
-      "daysPerCityLabel": "Días por Ciudad",
-      "visitCitiesLabel": "Ciudades a Visitar",
-      "addCityPlaceholder": "Añadir ciudad al viaje...",
-      "optimizeButton": "Optimizar mi Viaje Geneticamente",
-      "algorithmDesc": "Nuestro algoritmo probará miles de combinaciones para darte el precio más bajo",
-      "actionTitle": "Viaje Genético",
-      "tooltip": "Planear viaje multi-ciudad inteligente",
-      "toast": {
-        "success": "Búsqueda genética iniciada con éxito",
-        "error": "Error al iniciar la búsqueda genética"
-      }
-    }
+  "flightRoute": {
+    "direct": "Directo",
+    "multiCityTour": "Tour Multi-ciudad",
+    "stopover_one": "1 escala",
+    "stopover_many": "{{count}} escalas",
+    "stopover_other": "{{count}} escalas"
   },
   "floatingLabelInput": {
     "toast": {
@@ -531,360 +199,284 @@
       "cannotCutPassword": "Por seguridad, no se puede cortar en campos de contraseña"
     }
   },
-  "sidebar": {
-    "menu": "Menú",
-    "openMenu": "Abrir menú",
-    "closeMenu": "Cerrar menú",
-    "searchFlights": "Buscar Vuelos",
-    "geneticTrip": "Viaje Genético",
-    "friends": "Amigos"
-  },
   "footer": {
-    "branding": "flAIghts",
-    "copyright": "© {{year}} flAIghts. Innovando la forma en que vuelas.",
     "aboutUs": "Sobre nosotros",
+    "acknowledgements": "Agradecimientos",
+    "branding": "flAIghts",
     "contact": "Contacto",
+    "copyright": "© {{year}} flAIghts. Innovando la forma en que vuelas.",
     "privacyPolicy": "Política de Privacidad",
-    "termsOfService": "Términos de Servicio",
-    "acknowledgements": "Agradecimientos"
+    "termsOfService": "Términos de Servicio"
   },
-  "errorBoundary": {
-    "sessionExpired": "Sesión expirada",
-    "sessionExpiredDesc": "Tu sesión ha expirado o no tienes permisos para acceder a este recurso. Por favor, inicia sesión de nuevo.",
-    "loginButton": "Iniciar sesión",
-    "homeButton": "Volver al inicio",
-    "reloadButton": "Recargar la página",
-    "errorTitle": "Vuelo interrumpido",
-    "errorDesc": "Parece que hemos encontrado una turbulencia inesperada en el sistema. No hemos podido completar tu solicitud.",
-    "showDetails": "Ver detalles técnicos",
-    "hideDetails": "Ocultar detalles técnicos",
-    "copyError": "Copiar error"
-  },
-  "navbar": {
-    "account": "Cuenta",
-    "notifications": "Notificaciones",
-    "friendRequests": "Solicitudes de amistad",
-    "newFriendRequests": "{{count}} nueva{{plural}} solicitud{{plural}}",
-    "noNotifications": "No hay notificaciones nuevas",
-    "back": "Volver",
-    "view": "Ver",
-    "myProfile": "Mi Perfil",
-    "settings": "Configuración",
-    "adminPanel": "Panel de Administración",
-    "soon": "Próximamente",
-    "theme": "Tema",
-    "missions": "Misiones",
-    "evaluationMissions": "Misiones de Evaluación",
-    "authentication": "Autenticación",
-    "options": "Opciones"
-  },
-  "termsOfService": {
-    "title": "Términos de Servicio",
-    "backToHome": "Volver al inicio",
-    "lastUpdated": "Última actualización",
-    "sections": {
-      "acceptance": {
-        "title": "1. Aceptación de los Términos",
-        "content": "Al acceder y utilizar este sitio web, usted acepta y se compromete a estar sujeto a los términos y disposiciones de este acuerdo. Además, al utilizar estos servicios en particular, estará sujeto a las pautas o reglas publicadas aplicables a dichos servicios. Cualquier participación en este servicio constituirá la aceptación de este acuerdo. Si no acepta cumplir con lo anterior, no utilice este servicio."
-      },
-      "privacy": {
-        "title": "2. Política de Privacidad",
-        "content": "Nuestra Política de Privacidad, que establece cómo utilizaremos su información, se puede encontrar en ",
-        "link": "Política de Privacidad",
-        "contentAfter": ". Al utilizar este Sitio, usted consiente el procesamiento descrito en la misma y garantiza que todos los datos proporcionados por usted son exactos."
-      },
-      "useSite": {
-        "title": "3. Uso del Sitio",
-        "content": "Se le permite utilizar nuestro sitio web para sus propios fines y para imprimir y descargar material de este Sitio siempre que no modifique ningún contenido sin nuestro consentimiento. El material de este sitio web no debe ser republicado en línea o fuera de línea sin nuestro permiso."
-      },
-      "liability": {
-        "title": "4. Limitación de Responsabilidad",
-        "content": "No seremos responsables ante usted respecto de ninguna pérdida que surja de cualquier evento o eventos fuera de nuestro control razonable. No seremos responsables ante usted respecto de ninguna pérdida de negocio, incluyendo (sin limitación) pérdida o daño a los beneficios, ingresos, producción, ahorros anticipados, negocios, contratos, oportunidades comerciales o fondos de comercio."
-      },
-      "changes": {
-        "title": "5. Cambios en los Términos",
-        "content": "Nos reservamos el derecho de modificar estos términos en cualquier momento. Lo hacemos publicando y atrayendo la atención a los términos actualizados en el Sitio. Su decisión de continuar visitando y utilizando el Sitio después de que se hayan realizado dichos cambios constituye su aceptación formal de los nuevos Términos de Servicio."
-      }
+  "forgotPassword": {
+    "description": "Introduce tu email y te enviaremos un enlace para restablecer tu contraseña.",
+    "title": "Olvidé mi contraseña",
+    "toast": {
+      "resetLinkSent": "Se ha enviado un correo con un enlace para restablecer tu contraseña",
+      "unknownError": "Error desconocido al enviar el correo"
+    },
+    "validation": {
+      "emailInvalid": "El email es inválido",
+      "emailRequired": "El email es obligatorio"
     }
   },
-  "privacyPolicy": {
-    "title": "Política de Privacidad",
-    "backToHome": "Volver al inicio",
-    "lastUpdated": "Última actualización",
-    "sections": {
-      "information": {
-        "title": "1. Información que Recopilamos",
-        "content": "Recopilamos información que nos proporciona directamente. Por ejemplo, recopilamos información cuando crea una cuenta, participa en cualquier función interactiva de nuestros servicios, completa un formulario, solicita asistencia al cliente o se comunica con nosotros de otra manera. Los tipos de información que podemos recopilar incluyen su nombre, dirección de correo electrónico, dirección postal, contraseña, preferencias de vuelo, historial de búsqueda y otra información de contacto o identificación que elija proporcionar."
-      },
-      "howWeUse": {
-        "title": "2. Cómo Utilizamos la Información",
-        "content": "Podemos utilizar la información que recopilamos de usted y sobre usted para:",
-        "items": {
-          "item1": "Proporcionar, mantener y mejorar nuestros servicios;",
-          "item2": "Procesar transacciones y enviar información relacionada, incluyendo confirmaciones y facturas;",
-          "item3": "Enviarle avisos técnicos, actualizaciones, alertas de seguridad y mensajes de soporte y administrativos;",
-          "item4": "Responder a sus comentarios, preguntas y solicitudes, y proporcionar servicio al cliente;",
-          "item5": "Comunicarnos con usted sobre productos, servicios, ofertas, promociones y eventos."
-        }
-      },
-      "security": {
-        "title": "3. Seguridad de los Datos",
-        "content": "Tomamos medidas razonables para ayudar a proteger la información sobre usted de la pérdida, robo, uso indebido y acceso no autorizado, divulgación, alteración y destrucción. Sin embargo, ningún sistema de seguridad es impenetrable y no podemos garantizar la seguridad de nuestros sistemas al 100%. En el caso de que cualquier información bajo nuestro control se vea comprometida como resultado de una violación de seguridad, tomaremos medidas razonables para investigar la situación y, cuando proceda, notificaremos a aquellas personas cuya información pueda haber sido comprometida y tomaremos otras medidas, de acuerdo con cualquier ley y regulación aplicable."
-      },
-      "cookies": {
-        "title": "4. Cookies y Seguimiento",
-        "content": "Nuestro sitio web puede utilizar \"cookies\" para mejorar la experiencia del usuario. El navegador web del usuario coloca cookies en su disco duro para fines de mantenimiento de registros y, a veces, para rastrear información sobre ellos. El usuario puede elegir configurar su navegador web para rechazar las cookies, o para alertarle cuando se envíen cookies. Si lo hacen, tenga en cuenta que algunas partes del Sitio pueden no funcionar correctamente."
-      },
-      "contact": {
-        "title": "5. Contáctenos",
-        "content": "Si tiene alguna pregunta sobre esta Política de Privacidad, contáctenos a través de los formularios disponibles en nuestra aplicación o a través de nuestro correo de soporte. Al utilizar este Sitio, significa que acepta esta política. Si no está de acuerdo con esta política, por favor no utilice nuestro Sitio."
-      }
+  "friends": {
+    "actions": {
+      "accept": "Aceptar",
+      "cancel": "Cancelar",
+      "message": "Mensaje",
+      "reject": "Rechazar",
+      "remove": "Eliminar"
+    },
+    "addFriend": "Añadir amigo",
+    "emptyFriends": {
+      "description": "Busca a otros viajeros conectando con ellos y agregándolos a tu lista para planear viajes juntos.",
+      "title": "Aún no tienes amigos"
+    },
+    "noResults": "No se han encontrado amigos que coincidan con \"{{query}}\"",
+    "notLogged": {
+      "login": "Iniciar sesión",
+      "title": "No has iniciado sesión"
+    },
+    "removeFriend": "Eliminar amigo",
+    "requests": {
+      "noneReceived": "No tienes solicitudes de amistad pendientes.",
+      "noneSent": "No has enviado solicitudes de amistad.",
+      "received": "Solicitudes Recibidas",
+      "sent": "Solicitudes Enviadas",
+      "waiting": "Esperando respuesta..."
+    },
+    "searchPlaceholder": "Buscar entre tus amigos...",
+    "subtitle": "Gestiona a las personas con las que compartes tus viajes.",
+    "tabs": {
+      "friends": "Mis Amigos",
+      "requests": "Solicitudes"
+    },
+    "title": "Amigos",
+    "toast": {
+      "accepted": "Solicitud aceptada",
+      "cancelled": "Solicitud cancelada",
+      "rejected": "Solicitud rechazada",
+      "removed": "Amigo eliminado"
     }
-  },
-  "flightCard": {
-    "totalPrice": "Precio total",
-    "select": "Seleccionar",
-    "finalArrival": "Llegada final a {{airport}}:",
-    "atTime": " a las {{time}}",
-    "scale": "{{number}}ª Escala",
-    "overnightScale": "Escala nocturna",
-    "shortScale": "Escala muy corta",
-    "travelClassFallback": "Turista",
-    "flight": "Vuelo",
-    "tripCompletion": "Finalización del viaje",
-    "arrivingAt": "Llegando a {{airport}}"
-  },
-  "agentChat": {
-    "recommendedFlight": "Vuelo Recomendado",
-    "totalPrice": "Precio Total",
-    "scales_one": "1 escala",
-    "scales_other": "{{count}} escalas",
-    "direct": "Directo",
-    "connecting": "Conectando...",
-    "unavailable": "Sin Servicio",
-    "toolStatus": {
-      "searchCompleted": "Búsqueda de vuelos completada",
-      "searchFailed": "Error: {{message}}",
-      "accessingProfile": "Accediendo a tu perfil...",
-      "consultingHistory": "Consultando tu historial...",
-      "locatingAirports": "Localizando aeropuertos para \"{{query}}\"...",
-      "searchingAirlines": "Buscando aerolíneas para \"{{query}}\"...",
-      "trackingFlights": "Rastreando vuelos desde {{origins}} a {{destinations}}...",
-      "dataFromProfile": "Datos obtenidos de tu perfil",
-      "dataFromHistory": "Datos obtenidos de tu historial",
-      "airportsLocated": "Aeropuertos localizados con éxito",
-      "airlinesLocated": "Aerolíneas localizadas con éxito",
-      "searchCreated": "Búsqueda creada con éxito",
-      "thinking": "Pensando...",
-      "completed": "Búsqueda completada",
-      "processing": "Procesando...",
-      "executing": "Ejecutando"
-    },
-    "rawResult": "Resultado Raw",
-    "moreSteps": "( + {{count}} pasos )",
-    "interruptedByUser": "Generación interrumpida por el usuario",
-    "generationError": "Error en la generación, por favor, intenta de nuevo",
-    "historyCleared": "Historial de aventura borrado",
-    "connectionError": "Error al conectar con el servidor",
-    "suggestions": {
-      "whereToGo": "¿A dónde puedo ir en {{month}}?",
-      "suggestTrip": "Sugiéreme un viaje basado en mis gustos",
-      "whatIsMyHistory": "¿Cual es mi historial de busquedas?"
-    },
-    "notAuthenticated": {
-      "title": "Inteligencia Exclusiva",
-      "description": "Nuestro asistente **flAIghts** utiliza IA para aprender de tus gustos y sugerirte destinos únicos.\n\nPara interactuar con él y ver recomendaciones, necesitas estar identificado.",
-      "login": "Iniciar Sesión",
-      "register": "¿No tienes cuenta? Únete aquí"
-    },
-    "header": "Agente flAIghts",
-    "welcome": "¡Hola, {{username}}!",
-    "welcomeFallback": "explorador",
-    "emptyDescription": "Soy fl**AI**ghts. No solo busco vuelos, aprendo de ti para sugerirte tu próximo destino.",
-    "you": "Tú",
-    "continueAnalyzing": "Seguir analizando",
-    "inputPlaceholder": "Pregunta lo que quieras...",
-    "legalNotice": "IA Experimental • flAIghts puede cometer errores. Verifica la información importante."
-  },
-  "manualSearch": {
-    "selectDepartureFirst": "Selecciona primero la fecha de salida",
-    "searching": "Buscando...",
-    "search": "Buscar",
-    "exploreFlights": "Explorar vuelos"
   },
   "geneticTripPage": {
     "betaBadge": "Algoritmo Genético Beta",
-    "changeOrigin": "Cambiar origen",
     "change": "Cambiar",
-    "startingPoint": "Punto de partida",
-    "tripConfig": "Configuración del Viaje",
+    "changeOrigin": "Cambiar origen",
     "daysPerCity": "Días por Ciudad",
+    "itinerary": "Itinerario",
     "processing": "Procesando...",
-    "itinerary": "Itinerario"
+    "startingPoint": "Punto de partida",
+    "tripConfig": "Configuración del Viaje"
   },
-  "searchResultsPage": {
-    "searchingBestRoutes": "Buscando las mejores rutas...",
-    "searchingMore": "Buscando más vuelos...",
-    "reserve": "Reservar Vuelos",
-    "realTimeSearching": "Buscando en tiempo real...",
-    "departureResults": "{{count}} resultados de ida",
-    "returnResults": "{{count}} resultados de vuelta",
-    "summary": "Resumen de tu viaje",
-    "confirmSelection": "Confirma tu selección",
-    "sortBy": "Ordenar por:",
-    "personalized": "Personalizado",
-    "price": "Precio",
-    "duration": "Duración",
-    "back": "Volver atrás",
-    "prevStep": "Paso anterior",
-    "selectedFlight": "Vuelo de {{type}} Seleccionado",
-    "tripTotalPrice": "Precio total del viaje"
+  "globe": {
+    "airportsInZone": "Aeropuertos en zona",
+    "airportZone": "Zona de aeropuertos",
+    "city": "Ciudad",
+    "clickForList": "Haz clic para ver la lista",
+    "deselectCity": "Deseleccionar ciudad",
+    "found_one": "{{count}} destino encontrado",
+    "found_many": "{{count}} destinos encontrados",
+    "found_other": "{{count}} destinos encontrados",
+    "linkedAirports": "Aeropuertos vinculados",
+    "loading": "Cargando globo terráqueo...",
+    "locations_one": "{{count}} ubicación",
+    "locations_many": "{{count}} ubicaciones",
+    "locations_other": "{{count}} ubicaciones",
+    "setAsDestination": "Establecer como destino",
+    "setAsOrigin": "Establecer como origen",
+    "unknownLocation": "Ubicación desconocida"
+  },
+  "googleLinking": {
+    "actions": {
+      "back": "Volver",
+      "confirmAndLink": "Confirmar y Vincular",
+      "forgotPassword": "He olvidado mi contraseña",
+      "linking": "Vinculando...",
+      "resetAndLink": "Restablecer y Vincular",
+      "sendingCode": "Enviando código..."
+    },
+    "description": "Hemos detectado que ya tienes una cuenta con {{email}}. Introduce tu contraseña de flAIghts para vincularla.",
+    "labels": {
+      "confirmPassword": "Confirmar nueva contraseña",
+      "newPassword": "Nueva contraseña",
+      "password": "Contraseña de flAIghts",
+      "verificationCode": "Código de verificación (6 dígitos)"
+    },
+    "title": "Cuenta existente",
+    "toast": {
+      "codeError": "Error al enviar el código de verificación.",
+      "codeSent": "Código de verificación enviado a tu email.",
+      "error": "Error al vincular la cuenta.",
+      "invalidCode": "El código de verificación es inválido o ha expirado.",
+      "invalidPassword": "Contraseña incorrecta para vincular la cuenta.",
+      "success": "Cuentas vinculadas correctamente",
+      "verificationFailed": "La verificación de seguridad ha fallado o caducado. Inténtalo de nuevo."
+    },
+    "validation": {
+      "codeRequired": "Introduce el código de 6 dígitos",
+      "confirmPasswordRequired": "Debes confirmar la contraseña",
+      "fillAllFields": "Por favor completa todos los campos correctamente",
+      "newPasswordRequired": "La contraseña es obligatoria",
+      "passwordMin": "Mínimo 8 caracteres",
+      "passwordRequired": "Introduce tu contraseña",
+      "passwordsMismatch": "Las contraseñas no coinciden"
+    },
+    "verificationSent": "Te hemos enviado un código a tu email para confirmar el cambio."
+  },
+  "home": {
+    "globe": {
+      "cancelSelection": "Cancelar selección",
+      "clickToExplore": "Haz clic para explorar el mapa",
+      "closeMap": "Cerrar mapa",
+      "collapseSearch": "Plegar búsqueda",
+      "configureSearch": "Configura tu búsqueda",
+      "departure": "Salida",
+      "interaction3d": "Interacción 3D",
+      "missingDepartureDate": "Falta fecha de salida",
+      "reportDataError": "Reportar error en los datos",
+      "return": "Regreso",
+      "selectOnMap": "Seleccionar en el mapa",
+      "tripConfiguration": "Configuración del viaje"
+    },
+    "toast": {
+      "evaluationCompleted": "¡Evaluación completada!"
+    }
   },
   "homeCard": {
-    "aiAssistant": "Asistente IA",
-    "manual": "Manual",
-    "exploreGlobe": "Explorar globo terráqueo",
     "addStop": "Añadir escala",
     "advancedFilters": "Filtros avanzados",
-    "manualTitle": "Vuela más allá.",
-    "manualSubtitle": "Explora destinos mundiales con fl",
-    "aiTitle": "Agente flAIghts",
+    "aiAssistant": "Asistente IA",
     "aiSubtitle": "Tu copiloto inteligente para planificar viajes.",
-    "clearChat": "Limpiar chat"
+    "exploreGlobe": "Explorar globo terráqueo",
+    "manual": "Manual",
+    "manualSubtitle": "Explora destinos mundiales con fl",
+    "manualTitle": "Vuela más allá."
+  },
+  "login": {
+    "actions": {
+      "loggingIn": "Conectando...",
+      "login": "Inicia sesión"
+    },
+    "labels": {
+      "identifier": "Email o nombre de usuario",
+      "password": "Contraseña"
+    },
+    "links": {
+      "forgotPassword": "¿Olvidaste tu contraseña?",
+      "register": "Regístrate"
+    },
+    "noAccount": "¿No tienes cuenta?",
+    "orContinueWith": "O continúa con",
+    "title": "Inicio de sesión",
+    "toast": {
+      "googleAccountDetected": "Cuenta existente detectada. Introduce tu contraseña para vincularla.",
+      "googleConnectError": "Error al conectar con Google",
+      "googleError": "Error al iniciar sesión con Google",
+      "googleInvalidCode": "El código de verificación es incorrecto o ha caducado.",
+      "googleLinked": "Cuentas vinculadas correctamente",
+      "googleSuccess": "Sesión iniciada con Google",
+      "googleVerificationFailed": "La verificación de seguridad ha fallado o caducado. Inténtalo de nuevo.",
+      "invalidCredentials": "Credenciales inválidas",
+      "turnstileFailed": "La verificación de seguridad ha fallado. Por favor, inténtalo de nuevo.",
+      "turnstileInvalid": "La verificación ha caducado o es inválida. Por favor, verifica de nuevo.",
+      "turnstileRequired": "Por favor, completa la verificación de seguridad."
+    },
+    "validation": {
+      "fillAllFields": "Por favor completa todos los campos",
+      "identifierMin": "Mínimo 3 caracteres",
+      "identifierRequired": "Introduce tu email o nombre de usuario",
+      "passwordMin": "Mínimo 8 caracteres",
+      "passwordRequired": "Introduce tu contraseña"
+    },
+    "verifyingSession": "Verificando sesión..."
+  },
+  "manualSearch": {
+    "exploreFlights": "Explorar vuelos",
+    "search": "Buscar",
+    "searching": "Buscando...",
+    "selectDepartureFirst": "Selecciona primero la fecha de salida"
   },
   "missions": {
-    "dashboard": {
-      "backToRoadmap": "Volver al Roadmap",
-      "missionPassed": "Misión Superada",
-      "mainObjective": "Objetivo Principal",
-      "successMessage": "Has finalizado este desafío con éxito. Tu experiencia es vital para la investigación; por favor, comparte tus impresiones sobre la facilidad de uso.",
-      "giveFeedback": "Danos tu opinión",
-      "feedbackSaved": "Feedback guardado",
-      "progress": "Progreso",
-      "taskStatus": "Estatus de Tareas",
-      "autoDetection": "Detección Automática",
-      "autoDetectionDesc": "El sistema detectará automáticamente cuando completes esta tarea",
-      "branding": "Investigación TFG flAIghts",
-      "footerHero": "🚀 Explorando el futuro del viaje con IA"
-    },
-    "roadmap": {
-      "title": "Roadmap de Evaluación",
-      "pendingFeedback": "Pendiente de Feedback",
-      "subtitle": "Progreso de los retos de usabilidad. Completa todas las misiones y responde a los cuestionarios para terminar la evaluación.",
-      "legend": {
-        "achieved": "Conseguida",
-        "inProgress": "En Curso",
-        "available": "Disponible",
-        "feedback": "Feedback",
-        "blocked": "Bloqueado"
-      },
-      "status": {
-        "completed": "Completado",
-        "available": "Disponible",
-        "locked": "Bloqueado"
-      }
-    },
-    "onboarding": {
-      "title": "Tutorial de Evaluación",
-      "feedbackTitle": "Feedback de Misión",
-      "stepLabel": "Paso {{current}} de {{total}}",
-      "surveyTour": "Feedback de Misión",
-      "evaluationTour": "Tutorial de Evaluación",
-      "steps": {
-        "openMenu": "Abre el Menú",
-        "missionComplete": "¡Misión Cumplida!",
-        "readyToEvaluate": "Listo para evaluar",
-        "yourOpinionMatters": "Tu Opinión Importa",
-        "openMissions": "Abre las Misiones",
-        "selectChallenge": "Selecciona un Reto",
-        "missionSummary": "Resumen de Misión",
-        "checklist": "Checklist de Tareas",
-        "backToMap": "Volver al Mapa",
-        "lockedRoute": "Ruta Bloqueada",
-        "closePanel": "Cerrar Panel"
-      },
-      "descriptions": {
-        "openMenuMobile": "Pulsa en tu avatar para abrir las opciones de cuenta.",
-        "missionComplete": "Has completado un reto. Pulsa el trofeo para reclamar tu insignia y darnos feedback.",
-        "readyToEvaluate": "Esta misión brilla con un nuevo color. Pulsa en ella para completar la evaluación.",
-        "yourOpinionMatters": "¡Casi has terminado! Pulsa el botón de feedback para compartir tu experiencia.",
-        "openMissions": "Haz clic en el trofeo para ver el Roadmap de evaluación.",
-        "selectChallenge": "Esta es tu misión actual. Pulsa en la tarjeta para abrir los detalles.",
-        "missionSummaryMobile": "En la parte superior encontrarás el objetivo principal y tu progreso actual.",
-        "missionSummaryDesktop": "En la parte izquierda encontrarás el objetivo principal y tu progreso actual.",
-        "checklistMobile": "En la parte inferior tienes los pasos específicos. flAIghts los detectará automáticamente.",
-        "checklistDesktop": "A la derecha tienes los pasos específicos. flAIghts los detectará automáticamente.",
-        "backToMap": "Pulsa aquí para volver a la vista general de todas las misiones.",
-        "lockedRoute": "Algunas misiones están bloqueadas. Deberás completar sus dependencias primero.",
-        "closePanel": "Finalmente, usa la X para cerrar el Roadmap y empezar a navegar libremente. Tu primera misión es \"{{missionName}}\""
-      },
-      "actions": {
-        "next": "Siguiente Paso",
-        "skip": "Saltar Tutorial",
-        "directAction": "Requiere acción directa"
-      }
-    },
-    "survey": {
-      "title": "Feedback de Misión",
-      "subtitle": "Ayúdanos a mejorar flAIghts compartiendo tu experiencia.",
-      "achieved": "Conseguida",
-      "validatedSteps": "Pasos validados:",
-      "questionEase": "¿Cómo de fácil e intuitivo te ha parecido completar este reto?",
-      "ratings": {
-        "veryDifficult": "Muy difícil",
-        "difficult": "Difícil",
-        "neutral": "Normal",
-        "easy": "Fácil",
-        "veryEasy": "Muy fácil"
-      },
-      "suggestionsLabel": "Tus Sugerencias (Opcional)",
-      "placeholder": "Cuéntanos qué te ha gustado o qué mejorarías...",
-      "actions": {
-        "sending": "Enviando...",
-        "finish": "Finalizar Evaluación"
-      }
-    },
     "consent": {
-      "title": "Participación en Evaluación",
-      "title_prefix": "Evaluación de",
-      "welcome": "¡Bienvenido a flAIghts, una aplicación que te ayuda a buscar vuelos, es tu agente de viajes y mucho más!",
-      "tfg_notice": "Actualmente estamos desarrollando esta aplicación como Trabajo de Fin de Grado y necesitamos tu colaboración para poder evaluar la experiencia de usuario.",
-      "invitation": "Por ello te invitamos a que realices la evaluación interactiva de nuestra web. Solo te tomará unos minutos, y recibirás una insignia por tu colaboración!",
-      "description": "Este sistema de evaluación interactivo forma parte de un estudio de usabilidad para nuestro Trabajo de Fin de Grado (TFG).",
-      "details_title": "Detalles de la Evaluación",
+      "actions": {
+        "back": "Volver",
+        "continue": "Continuar",
+        "start": "¡Empezar ahora!"
+      },
+      "checkbox_label": "Consiento el procesamiento de mis datos de interacción vinculados a mi usuario para el Trabajo de Fin de Grado.",
+      "checkbox_label_bold": "Consentimiento obligatorio:",
+      "decline": "Prefiero no participar",
       "details_description": "La evaluación consiste en la relización de una serie de misiones que van recorriendo todas las funcionalidades de la plataforma. Cada misión cuenta con sus propias instrucciones y pasos a realizar.",
+      "details_title": "Detalles de la Evaluación",
       "feedback_process": "Al finalizar cada misión, tendrás que puntuar como de fácil te ha resultado, y dar feedback o una opinión general sobre la funcionalidad que has probado.<br />Una vez finalizadas todas las misiones, tendrás que completar un cuestionario final para terminar la evaluación.",
+      "important_notice_description": "Debes realizar la evaluación en este mismo dispositivo, ya que el progreso es local y no se sincroniza con tu cuenta entre diferentes navegadores o equipos.",
+      "important_notice_title": "Aviso Importante",
+      "invitation": "Por ello te invitamos a que realices la evaluación interactiva de nuestra web. Solo te tomará unos minutos, y recibirás una insignia por tu colaboración!",
       "missions_title": "Misiones a realizar",
       "privacy_notice": "Para vincular los resultados con tu actividad, recogeremos datos asociados a tu sesión. Solo utilizaremos esta información para fines académicos y análisis de usabilidad.",
-      "important_notice_title": "Aviso Importante",
-      "important_notice_description": "Debes realizar la evaluación en este mismo dispositivo, ya que el progreso es local y no se sincroniza con tu cuenta entre diferentes navegadores o equipos.",
-      "tutorial_title": "Tutorial Recomendado",
+      "tfg_notice": "Actualmente estamos desarrollando esta aplicación como Trabajo de Fin de Grado y necesitamos tu colaboración para poder evaluar la experiencia de usuario.",
+      "title_prefix": "Evaluación de",
       "tutorial_description": "Al aceptar, comenzará una guía interactiva. Te recomendamos seguirla para no perderte ningún detalle del sistema de misiones.",
-      "checkbox_label_bold": "Consentimiento obligatorio:",
-      "checkbox_label": "Consiento el procesamiento de mis datos de interacción vinculados a mi usuario para el Trabajo de Fin de Grado.",
-      "accept": "¡Empezar ahora!",
-      "decline": "Prefiero no participar",
-      "actions": {
-        "continue": "Continuar",
-        "start": "¡Empezar ahora!",
-        "back": "Volver"
-      }
+      "tutorial_title": "Tutorial Recomendado",
+      "welcome": "¡Bienvenido a flAIghts, una aplicación que te ayuda a buscar vuelos, es tu agente de viajes y mucho más!"
+    },
+    "dashboard": {
+      "autoDetection": "Detección Automática",
+      "autoDetectionDesc": "El sistema detectará automáticamente cuando completes esta tarea",
+      "backToRoadmap": "Volver al Roadmap",
+      "feedbackSaved": "Feedback guardado",
+      "footerHero": "🚀 Explorando el futuro del viaje con IA",
+      "giveFeedback": "Danos tu opinión",
+      "mainObjective": "Objetivo Principal",
+      "missionPassed": "Misión Superada",
+      "progress": "Progreso",
+      "successMessage": "Has finalizado este desafío con éxito. Tu experiencia es vital para la investigación; por favor, comparte tus impresiones sobre la facilidad de uso.",
+      "taskStatus": "Estatus de Tareas"
     },
     "finalEvaluation": {
+      "anonymous": "Prefiero ser anónimo",
+      "complete_survey": "Completa el cuestionario",
       "congrats": "¡ENHORABUENA!",
-      "title": "Evaluación Completada",
-      "subtitle": "Has completado las misiones del programa de evaluación",
+      "credits": "por Rubén, Nicolás y Leonardo",
+      "demographics": {
+        "age": "Edad",
+        "education": "Nivel de Estudios",
+        "educationLevels": {
+          "highschool": "Bachillerato / FP",
+          "master": "Máster / Doctorado",
+          "none": "Sin estudios",
+          "primary": "Primaria",
+          "secondary": "Secundaria / ESO",
+          "university": "Grado Universitario"
+        },
+        "gender": "Sexo",
+        "genders": {
+          "female": "Femenino",
+          "male": "Masculino",
+          "none": "Prefiero no decirlo",
+          "other": "Otro"
+        },
+        "select": "Seleccionar...",
+        "title": "Datos Demográficos"
+      },
       "instructions": "Has completado satisfactoriamente todas las misiones de usabilidad para nuestro Trabajo de Fin de Grado.<br /> Por favor, completa este cuestionario final para terminar.",
-      "usability_title": "Cuestionario de Usabilidad (10 preguntas)",
-      "usability_description": "Valora las siguientes afirmaciones de 1 (Totalmente en desacuerdo) a 5 (Totalmente de acuerdo).",
-      "rating_labels": {
-        "disagree": "Totalmente en desacuerdo",
-        "agree": "Totalmente de acuerdo"
-      },
+      "madeWith": "Hecho con",
       "mobile_rating_labels": {
-        "disagree": "Desacuerdo",
-        "agree": "Acuerdo"
+        "agree": "Acuerdo",
+        "disagree": "Desacuerdo"
       },
+      "nameDisclaimer": "Usaremos tu nombre para incluirte en los agradecimientos de nuestro TFG.",
+      "nameLabel": "Tu nombre y apellidos",
+      "namePlaceholder": "Escribe aquí para los agradecimientos...",
+      "rating_labels": {
+        "agree": "Totalmente de acuerdo",
+        "disagree": "Totalmente en desacuerdo"
+      },
+      "sending": "Enviando resultados...",
+      "submit": "Finalizar y Enviar",
+      "subtitle": "Has completado las misiones del programa de evaluación",
       "sus_questions": [
         "Creo que me gustará usar este sistema con frecuencia.",
         "Encontré el sistema innecesariamente complejo.",
@@ -897,418 +489,725 @@
         "Me sentí muy seguro usando el sistema.",
         "Necesité aprender muchas cosas antes de poder ponerme en marcha con este sistema."
       ],
-      "demographics": {
-        "title": "Datos Demográficos",
-        "age": "Edad",
-        "gender": "Sexo",
-        "education": "Nivel de Estudios",
-        "select": "Seleccionar...",
-        "genders": {
-          "male": "Masculino",
-          "female": "Femenino",
-          "other": "Otro",
-          "none": "Prefiero no decirlo"
-        },
-        "educationLevels": {
-          "none": "Sin estudios",
-          "primary": "Primaria",
-          "secondary": "Secundaria / ESO",
-          "highschool": "Bachillerato / FP",
-          "university": "Grado Universitario",
-          "master": "Máster / Doctorado"
-        }
-      },
-      "missionsCompleted": "Misiones",
-      "objectivesValidated": "Objetivos",
-      "gratitude": "Gratitud",
-      "nameLabel": "Tu nombre y apellidos",
-      "namePlaceholder": "Escribe aquí para los agradecimientos...",
-      "nameDisclaimer": "Usaremos tu nombre para incluirte en los agradecimientos de nuestro TFG.",
-      "anonymous": "Prefiero ser anónimo",
-      "sending": "Enviando resultados...",
-      "submit": "Finalizar y Enviar",
-      "complete_survey": "Completa el cuestionario",
-      "madeWith": "Hecho con",
-      "credits": "por Rubén, Nicolás y Leonardo",
-      "forTfg": "para el TFG de flAIghts",
-      "finalMessage": "Has completado con éxito todos los desafíos de usabilidad propuestos para este estudio. Tu contribución es un pilar fundamental de nuestra investigación académica.",
-      "closeAndExplore": "Cerrar y seguir explorando",
       "thanks": {
-        "title": "¡MUCHAS GRACIAS!",
-        "subtitle": "Tu participación ha sido clave para el éxito de nuestro Trabajo de Fin de Grado. Valoramos enormemente tu tiempo y esfuerzo.",
-        "message": "Ahora que has explorado todas las capacidades de flAIghts, te animamos a que sigas usándolo en tu día a día. Deja que nuestra IA encuentre las mejores ofertas por ti y convierte cada búsqueda en una aventura.",
-        "badge_unlocked": "Desbloqueado",
-        "badge_title": "Insignia de Evaluador",
-        "badge_description": "Has recibido una insignia exclusiva por completar el estudio.",
         "actions": {
-          "view_profile": "Ver en mi perfil",
-          "view_profile_desc": "Tus logros y medallas",
           "bookmark": "Guardar Marcador",
           "bookmark_desc": "Acceso rápido",
-          "install": "Instalar App",
-          "install_desc": "Pantalla de inicio",
+          "explore": "Seguir explorando",
           "home": "Página de Inicio",
           "home_desc": "Limpiar búsqueda",
-          "explore": "Seguir explorando"
-        }
-      }
+          "install": "Instalar App",
+          "install_desc": "Pantalla de inicio",
+          "view_profile": "Ver en mi perfil",
+          "view_profile_desc": "Tus logros y medallas"
+        },
+        "badge_description": "Has recibido una insignia exclusiva por completar el estudio.",
+        "badge_title": "Insignia de Evaluador",
+        "badge_unlocked": "Desbloqueado",
+        "message": "Ahora que has explorado todas las capacidades de flAIghts, te animamos a que sigas usándolo en tu día a día. Deja que nuestra IA encuentre las mejores ofertas por ti y convierte cada búsqueda en una aventura.",
+        "subtitle": "Tu participación ha sido clave para el éxito de nuestro Trabajo de Fin de Grado. Valoramos enormemente tu tiempo y esfuerzo.",
+        "title": "¡MUCHAS GRACIAS!"
+      },
+      "usability_description": "Valora las siguientes afirmaciones de 1 (Totalmente en desacuerdo) a 5 (Totalmente de acuerdo).",
+      "usability_title": "Cuestionario de Usabilidad (10 preguntas)"
     },
     "list": {
-      "registration": {
-        "title": "Regístrate en flAIghts",
-        "description": "Regístrate en la plataforma.",
+      "ai": {
+        "description": "Usa el agente de IA para planificar un viaje complejo mediante lenguaje natural.",
         "steps": {
-          "complete_registration": {
-            "title": "Crea una cuenta",
-            "description": "Completa el formulario de registro para acceder a todas las funcionalidades."
+          "get_search_history": {
+            "description": "Pídele al agente que consulte tus búsquedas anteriores.",
+            "title": "Tu historial"
+          },
+          "receive_ai_flights": {
+            "description": "Pídele al agente que te busque vuelos y haz que te recomiende uno de ellos.",
+            "title": "Recibe vuelos de la IA"
+          },
+          "use_ai": {
+            "description": "Escribe un mensaje al agente.",
+            "title": "Usa la IA"
           }
-        }
+        },
+        "title": "Prueba la Inteligencia Artificial"
       },
-      "profile": {
-        "title": "Personaliza tu perfil",
-        "description": "Sube una foto de perfil y configura tus preferencias de vuelo.",
+      "flight_results": {
+        "description": "Interactúa con los vuelos encontrados para encontrar tu opción ideal.",
         "steps": {
-          "upload_avatar": {
-            "title": "Sube una foto de perfil",
-            "description": "Actualiza tu perfil y sube la foto que más te guste."
+          "buy_flight": {
+            "description": "Abre el provedor externo para comprar el vuelo seleccionado y cierra la ventana del proveedor. No te preocupes, no tienes que pagar nada ni comprarlo.",
+            "title": "\"Compra\" el vuelo"
           },
-          "edit_preferences": {
-            "title": "Personaliza tus busquedas de vuelos",
-            "description": "Edita tu perfil y ajusta los pesos de búsqueda para que se adapten mejor a tus preferencias."
+          "select_flight": {
+            "description": "Selecciona un vuelo como si fuese a ser tu vuelo de ida.",
+            "title": "Selecciona un vuelo como vuelo de ida"
+          },
+          "view_flight_details": {
+            "description": "Selecciona un vuelo para ver sus detalles.",
+            "title": "Detalles del vuelo"
           }
-        }
+        },
+        "title": "Explora los resultados"
       },
-      "social": {
-        "title": "Haz amigos",
-        "description": "Conecta con otras personas.",
+      "genetic": {
+        "description": "Encuentra la mejor ruta multi-ciudad usando algoritmos avanzados.",
         "steps": {
-          "view_user_profile": {
-            "title": "Visita un perfil",
-            "description": "Busca a un usuario y visita su perfil público. Puedes buscar al usuario \"flAIghts\""
+          "add_itinerary_cities": {
+            "description": "Añade al menos 2 ciudades diferentes a tu ruta para optimizar.",
+            "title": "Planificar itinerario"
           },
-          "send_friend_request": {
-            "title": "Envía una solicitud",
-            "description": "Manda una solicitud de amistad a ese usuario. El usuario \"flAIghts\" la aceptará automáticamente."
+          "open_genetic_trip": {
+            "description": "Entra en la sección de Algoritmo Genético para empezar a planificar.",
+            "title": "Explorar Genetic Trip"
           },
-          "send_message": {
-            "title": "Escribe un mensaje",
-            "description": "Envíale un mensaje directo para saludar."
+          "perform_genetic_search": {
+            "description": "Ejecuta el algoritmo genético para encontrar los mejores precios y conexiones.",
+            "title": "Optimizar ruta"
           }
-        }
+        },
+        "title": "Optimizador Genético"
       },
       "manual_search": {
-        "title": "Usa el buscador de vuelos",
         "description": "Realiza una búsqueda manual de vuelos usando el selector de aeropuertos.",
         "steps": {
-          "open_airport_card": {
-            "title": "Abre el buscador de aeropuertos",
-            "description": "Haz clic en el campo de Origen o Destino para abrir el buscador."
-          },
           "add_airport": {
-            "title": "Selecciona un aeropuerto",
-            "description": "Escribe el nombre de una ciudad o aeropuerto de tu gusto y selecciónalo de la lista."
+            "description": "Escribe el nombre de una ciudad o aeropuerto de tu gusto y selecciónalo de la lista.",
+            "title": "Selecciona un aeropuerto"
+          },
+          "open_airport_card": {
+            "description": "Haz clic en el campo de Origen o Destino para abrir el buscador.",
+            "title": "Abre el buscador de aeropuertos"
           },
           "perform_manual_search": {
-            "title": "Búsqueda manual",
-            "description": "Completa los campos restantes y realiza la búsqueda pulsando en \"Explorar vuelos\"."
+            "description": "Completa los campos restantes y realiza la búsqueda pulsando en \"Explorar vuelos\".",
+            "title": "Búsqueda manual"
           }
-        }
+        },
+        "title": "Usa el buscador de vuelos"
       },
       "map_search": {
-        "title": "Usa el mapa interactivo",
         "description": "Realiza una búsqueda interactiva usando el globo terráqueo.",
         "steps": {
           "open_map": {
-            "title": "Abre el mapa interactivo",
-            "description": "Usa el botón de mapa en los inputs o haz clic directamente en el globo terráqueo para entrar en modo interacción."
-          },
-          "select_on_map": {
-            "title": "Selecciona desde el mapa",
-            "description": "Busca un aeropuerto en el globo terráqueo y selecciónalo como origen o destino usando el menú o la tarjeta de información."
+            "description": "Usa el botón de mapa en los inputs o haz clic directamente en el globo terráqueo para entrar en modo interacción.",
+            "title": "Abre el mapa interactivo"
           },
           "perform_map_search": {
-            "title": "Búsqueda desde el mapa",
-            "description": "Completa los campos restantes y realiza la búsqueda pulsando en \"Explorar vuelos\"."
+            "description": "Completa los campos restantes y realiza la búsqueda pulsando en \"Explorar vuelos\".",
+            "title": "Búsqueda desde el mapa"
+          },
+          "select_on_map": {
+            "description": "Busca un aeropuerto en el globo terráqueo y selecciónalo como origen o destino usando el menú o la tarjeta de información.",
+            "title": "Selecciona desde el mapa"
           }
-        }
+        },
+        "title": "Usa el mapa interactivo"
       },
-      "flight_results": {
-        "title": "Explora los resultados",
-        "description": "Interactúa con los vuelos encontrados para encontrar tu opción ideal.",
+      "profile": {
+        "description": "Sube una foto de perfil y configura tus preferencias de vuelo.",
         "steps": {
-          "view_flight_details": {
-            "title": "Detalles del vuelo",
-            "description": "Selecciona un vuelo para ver sus detalles."
+          "edit_preferences": {
+            "description": "Edita tu perfil y ajusta los pesos de búsqueda para que se adapten mejor a tus preferencias.",
+            "title": "Personaliza tus busquedas de vuelos"
           },
-          "select_flight": {
-            "title": "Selecciona un vuelo como vuelo de ida",
-            "description": "Selecciona un vuelo como si fuese a ser tu vuelo de ida."
-          },
-          "buy_flight": {
-            "title": "\"Compra\" el vuelo",
-            "description": "Abre el provedor externo para comprar el vuelo seleccionado y cierra la ventana del proveedor. No te preocupes, no tienes que pagar nada ni comprarlo."
+          "upload_avatar": {
+            "description": "Actualiza tu perfil y sube la foto que más te guste.",
+            "title": "Sube una foto de perfil"
           }
-        }
+        },
+        "title": "Personaliza tu perfil"
+      },
+      "registration": {
+        "description": "Regístrate en la plataforma.",
+        "steps": {
+          "complete_registration": {
+            "description": "Completa el formulario de registro para acceder a todas las funcionalidades.",
+            "title": "Crea una cuenta"
+          }
+        },
+        "title": "Regístrate en flAIghts"
       },
       "share": {
-        "title": "Comparte tus viajes",
         "description": "Comparte tus búsquedas de vuelos con tus amigos.",
         "steps": {
-          "share_from_results": {
-            "title": "Comparte desde resultados",
-            "description": "Usa el botón de compartir en la página de resultados de búsqueda y compártelo con alguien. Puedes enviarselo al usuario \"flAIghts\"."
-          },
           "share_from_chat": {
-            "title": "Comparte desde el chat",
-            "description": "Comparte una búsqueda directamente en una conversación con un amigo. Puedes enviarsela al usuario \"flAIghts\"."
+            "description": "Comparte una búsqueda directamente en una conversación con un amigo. Puedes enviarsela al usuario \"flAIghts\".",
+            "title": "Comparte desde el chat"
+          },
+          "share_from_results": {
+            "description": "Usa el botón de compartir en la página de resultados de búsqueda y compártelo con alguien. Puedes enviarselo al usuario \"flAIghts\".",
+            "title": "Comparte desde resultados"
           }
+        },
+        "title": "Comparte tus viajes"
+      },
+      "social": {
+        "description": "Conecta con otras personas.",
+        "steps": {
+          "send_friend_request": {
+            "description": "Manda una solicitud de amistad a ese usuario. El usuario \"flAIghts\" la aceptará automáticamente.",
+            "title": "Envía una solicitud"
+          },
+          "send_message": {
+            "description": "Envíale un mensaje directo para saludar.",
+            "title": "Escribe un mensaje"
+          },
+          "view_user_profile": {
+            "description": "Busca a un usuario y visita su perfil público. Puedes buscar al usuario \"flAIghts\"",
+            "title": "Visita un perfil"
+          }
+        },
+        "title": "Haz amigos"
+      }
+    },
+    "onboarding": {
+      "actions": {
+        "directAction": "Requiere acción directa",
+        "next": "Siguiente Paso",
+        "skip": "Saltar Tutorial"
+      },
+      "descriptions": {
+        "backToMap": "Pulsa aquí para volver a la vista general de todas las misiones.",
+        "checklistDesktop": "A la derecha tienes los pasos específicos. flAIghts los detectará automáticamente.",
+        "checklistMobile": "En la parte inferior tienes los pasos específicos. flAIghts los detectará automáticamente.",
+        "closePanel": "Finalmente, usa la X para cerrar el Roadmap y empezar a navegar libremente. Tu primera misión es \"{{missionName}}\"",
+        "lockedRoute": "Algunas misiones están bloqueadas. Deberás completar sus dependencias primero.",
+        "missionComplete": "Has completado un reto. Pulsa el trofeo para reclamar tu insignia y darnos feedback.",
+        "missionSummaryDesktop": "En la parte izquierda encontrarás el objetivo principal y tu progreso actual.",
+        "missionSummaryMobile": "En la parte superior encontrarás el objetivo principal y tu progreso actual.",
+        "openMenuMobile": "Pulsa en tu avatar para abrir las opciones de cuenta.",
+        "openMissions": "Haz clic en el trofeo para ver el Roadmap de evaluación.",
+        "readyToEvaluate": "Esta misión brilla con un nuevo color. Pulsa en ella para completar la evaluación.",
+        "selectChallenge": "Esta es tu misión actual. Pulsa en la tarjeta para abrir los detalles."
+      },
+      "evaluationTour": "Tutorial de Evaluación",
+      "steps": {
+        "backToMap": "Volver al Mapa",
+        "checklist": "Checklist de Tareas",
+        "closePanel": "Cerrar Panel",
+        "lockedRoute": "Ruta Bloqueada",
+        "missionComplete": "¡Misión Cumplida!",
+        "missionSummary": "Resumen de Misión",
+        "nextMission": "Siguiente Misión",
+        "openMenu": "Abre el Menú",
+        "openMissions": "Abre las Misiones",
+        "readyToEvaluate": "Listo para evaluar",
+        "selectChallenge": "Selecciona un Reto",
+        "yourOpinionMatters": "Tu Opinión Importa"
+      },
+      "surveyTour": "Feedback de Misión"
+    },
+    "roadmap": {
+      "legend": {
+        "achieved": "Conseguida",
+        "blocked": "Bloqueado",
+        "feedback": "Feedback",
+        "inProgress": "En Curso"
+      },
+      "pendingFeedback": "Pendiente de Feedback",
+      "status": {
+        "available": "Disponible",
+        "completed": "Completado",
+        "locked": "Bloqueado"
+      },
+      "subtitle": "Progreso de los retos de usabilidad. Completa todas las misiones y responde a los cuestionarios para terminar la evaluación.",
+      "title": "Roadmap de Evaluación"
+    },
+    "survey": {
+      "achieved": "Conseguida",
+      "actions": {
+        "finish": "Finalizar Evaluación",
+        "sending": "Enviando..."
+      },
+      "placeholder": "Cuéntanos qué te ha gustado o qué mejorarías...",
+      "questionEase": "¿Cómo de fácil e intuitivo te ha parecido completar este reto?",
+      "ratings": {
+        "difficult": "Difícil",
+        "easy": "Fácil",
+        "neutral": "Normal",
+        "veryDifficult": "Muy difícil",
+        "veryEasy": "Muy fácil"
+      },
+      "subtitle": "Ayúdanos a mejorar flAIghts compartiendo tu experiencia.",
+      "suggestionsLabel": "Tus Sugerencias (Opcional)",
+      "title": "Feedback de Misión",
+      "validatedSteps": "Pasos validados:"
+    }
+  },
+  "navbar": {
+    "account": "Cuenta",
+    "authentication": "Autenticación",
+    "back": "Volver",
+    "evaluationMissions": "Misiones de Evaluación",
+    "friendRequests": "Solicitudes de amistad",
+    "missions": "Misiones",
+    "myProfile": "Mi Perfil",
+    "newFriendRequests_one": "{{count}} nueva solicitud de amistad",
+    "newFriendRequests_many": "{{count}} nuevas solicitudes de amistad",
+    "newFriendRequests_other": "{{count}} nuevas solicitudes de amistad",
+    "noNotifications": "No hay notificaciones nuevas",
+    "notifications": "Notificaciones",
+    "settings": "Configuración",
+    "theme": "Tema",
+    "view": "Ver"
+  },
+  "notFound": {
+    "actions": {
+      "goBack": "Página anterior",
+      "home": "Volver al inicio"
+    },
+    "description": "La página que buscas no existe o ha sido movida.",
+    "title": "¡Oops! Página no encontrada"
+  },
+  "privacyPolicy": {
+    "backToHome": "Volver al inicio",
+    "lastUpdated": "Última actualización",
+    "sections": {
+      "contact": {
+        "content": "Si tiene alguna pregunta sobre esta Política de Privacidad, contáctenos a través de los formularios disponibles en nuestra aplicación o a través de nuestro correo de soporte. Al utilizar este Sitio, significa que acepta esta política. Si no está de acuerdo con esta política, por favor no utilice nuestro Sitio.",
+        "title": "5. Contáctenos"
+      },
+      "cookies": {
+        "content": "Nuestro sitio web puede utilizar \"cookies\" para mejorar la experiencia del usuario. El navegador web del usuario coloca cookies en su disco duro para fines de mantenimiento de registros y, a veces, para rastrear información sobre ellos. El usuario puede elegir configurar su navegador web para rechazar las cookies, o para alertarle cuando se envíen cookies. Si lo hacen, tenga en cuenta que algunas partes del Sitio pueden no funcionar correctamente.",
+        "title": "4. Cookies y Seguimiento"
+      },
+      "howWeUse": {
+        "content": "Podemos utilizar la información que recopilamos de usted y sobre usted para:",
+        "items": {
+          "item1": "Proporcionar, mantener y mejorar nuestros servicios;",
+          "item2": "Procesar transacciones y enviar información relacionada, incluyendo confirmaciones y facturas;",
+          "item3": "Enviarle avisos técnicos, actualizaciones, alertas de seguridad y mensajes de soporte y administrativos;",
+          "item4": "Responder a sus comentarios, preguntas y solicitudes, y proporcionar servicio al cliente;",
+          "item5": "Comunicarnos con usted sobre productos, servicios, ofertas, promociones y eventos."
+        },
+        "title": "2. Cómo Utilizamos la Información"
+      },
+      "information": {
+        "content": "Recopilamos información que nos proporciona directamente. Por ejemplo, recopilamos información cuando crea una cuenta, participa en cualquier función interactiva de nuestros servicios, completa un formulario, solicita asistencia al cliente o se comunica con nosotros de otra manera. Los tipos de información que podemos recopilar incluyen su nombre, dirección de correo electrónico, dirección postal, contraseña, preferencias de vuelo, historial de búsqueda y otra información de contacto o identificación que elija proporcionar.",
+        "title": "1. Información que Recopilamos"
+      },
+      "security": {
+        "content": "Tomamos medidas razonables para ayudar a proteger la información sobre usted de la pérdida, robo, uso indebido y acceso no autorizado, divulgación, alteración y destrucción. Sin embargo, ningún sistema de seguridad es impenetrable y no podemos garantizar la seguridad de nuestros sistemas al 100%. En el caso de que cualquier información bajo nuestro control se vea comprometida como resultado de una violación de seguridad, tomaremos medidas razonables para investigar la situación y, cuando proceda, notificaremos a aquellas personas cuya información pueda haber sido comprometida y tomaremos otras medidas, de acuerdo con cualquier ley y regulación aplicable.",
+        "title": "3. Seguridad de los Datos"
+      }
+    },
+    "title": "Política de Privacidad"
+  },
+  "register": {
+    "actions": {
+      "changeEmail": "Cambiar email",
+      "completeRegistration": "Completar Registro",
+      "creatingAccount": "Creando cuenta...",
+      "nextStep": "Continuar",
+      "sendingCode": "Enviando código..."
+    },
+    "alreadyHaveAccount": "¿Ya tienes cuenta?",
+    "codeSent": "Hemos enviado un código a ",
+    "codeSentTitle": "¡Código enviado!",
+    "iAccept": "Acepto los ",
+    "labels": {
+      "code": "Código de verificación",
+      "confirmPassword": "Confirmar contraseña",
+      "email": "Email",
+      "password": "Contraseña",
+      "username": "Nombre de usuario"
+    },
+    "links": {
+      "login": "Inicia sesión",
+      "privacy": "Política de Privacidad",
+      "terms": "Términos de Servicio"
+    },
+    "steps": {
+      "step1Description": "Introduce tu email para recibir un código de verificación.",
+      "step1Title": "Únete a flAIghts",
+      "step2Title": "Completa tu perfil"
+    },
+    "toast": {
+      "accountCreated": "¡Cuenta creada correctamente! Por favor, inicia sesión para continuar.",
+      "loginError": "Te has registrado correctamente, pero hubo un error al iniciar sesión. Por favor, identifícate.",
+      "verificationEmailSent": "Email de verificación enviado. Revisa tu bandeja de entrada."
+    },
+    "validation": {
+      "acceptedTerms": "Debes aceptar los términos y condiciones",
+      "codeLength": "Debe tener 6 caracteres",
+      "codeRequired": "El código es obligatorio",
+      "confirmPasswordRequired": "Las contraseñas no coinciden",
+      "emailInUse": "Este email ya está registrado",
+      "emailInvalid": "El email no es válido",
+      "emailRequired": "El email es obligatorio",
+      "invalidCode": "El código es inválido o ha expirado",
+      "passwordMin": "Mínimo 8 caracteres",
+      "passwordRequired": "La contraseña es obligatoria",
+      "usernameInUse": "El nombre de usuario ya está en uso",
+      "usernameMax": "Máximo 20 caracteres",
+      "usernameMin": "Mínimo 3 caracteres",
+      "usernameRequired": "El nombre de usuario es obligatorio"
+    }
+  },
+  "resetPassword": {
+    "actions": {
+      "reset": "Restablecer contraseña",
+      "resetting": "Restableciendo contraseña..."
+    },
+    "labels": {
+      "confirmPassword": "Confirmar contraseña",
+      "newPassword": "Nueva contraseña"
+    },
+    "title": "Restablecer contraseña",
+    "toast": {
+      "correctErrors": "Por favor corrige los errores",
+      "success": "Contraseña restablecida correctamente",
+      "tokenInvalid": "El token de restablecimiento es inválido o ha expirado"
+    },
+    "validation": {
+      "confirmPasswordMismatch": "Las contraseñas no coinciden",
+      "passwordRequired": "Introduce una contraseña",
+      "tokenMissing": "Token de restablecimiento no encontrado"
+    }
+  },
+  "searchFlight": {
+    "actions": {
+      "search": "Buscar",
+      "searching": "Buscando..."
+    },
+    "geneticTrip": {
+      "addCityPlaceholder": "Añadir ciudad al viaje...",
+      "algorithmDesc": "Nuestro algoritmo probará miles de combinaciones para darte el precio más bajo",
+      "daysPerCityLabel": "Días por Ciudad",
+      "modalSubtitle": "Encontraremos el mejor orden para visitar tus ciudades",
+      "modalTitle": "Ruta Optimizada (Genética)",
+      "optimizeButton": "Optimizar mi Viaje Geneticamente",
+      "originLabel": "Origen del Viaje",
+      "originPlaceholder": "Ciudad de salida y llegada",
+      "startDateLabel": "Fecha de Inicio",
+      "startDatePlaceholder": "Seleccionar fecha",
+      "toast": {
+        "error": "Error al iniciar la búsqueda genética",
+        "success": "Búsqueda genética iniciada con éxito"
+      },
+      "visitCitiesLabel": "Ciudades a Visitar"
+    },
+    "labels2": {
+      "airport": "Aeropuerto",
+      "city": "Ciudad / Región",
+      "latitude": "Latitud",
+      "longitude": "Longitud",
+      "name": "Nombre"
+    },
+    "loading": {
+      "loadingGlobe": "flAIghts está despegando..."
+    },
+    "mapButtons": {
+      "defineAsDestination": "Definir como Destino",
+      "defineAsOrigin": "Definir como Origen"
+    },
+    "toast": {
+      "searchError": "Error al buscar vuelos"
+    },
+    "validation": {
+      "alreadySelectedDestination": "Ese aeropuerto ya está seleccionado como destino",
+      "alreadySelectedOrigin": "Ese aeropuerto ya está seleccionado como origen",
+      "completeFields": "Por favor, completa origen, destino y fecha de salida",
+      "onlyAirports": "Solo se permiten aeropuertos individuales en esta ruta",
+      "sameOriginDestination": "El origen y el destino no pueden ser el mismo"
+    }
+  },
+  "searchResults": {
+    "error": {
+      "backToHome": "Volver al inicio",
+      "fetch": "Error al obtener los resultados de búsqueda",
+      "noFlights": "No se han encontrado vuelos",
+      "tryAgain": "Inténtalo de nuevo"
+    },
+    "toast": {
+      "noBookingOptions": "No se han encontrado opciones de reserva para este vuelo"
+    }
+  },
+  "searchResultsPage": {
+    "duration": "Duración",
+    "orderBy": "Ordenar por",
+    "personalized": "Personalizado",
+    "price": "Precio",
+    "reserve": "Reservar Vuelos",
+    "searchingBestRoutes": "Buscando las mejores rutas...",
+    "searchingMore": "Buscando más vuelos...",
+    "selectedFlight": "Vuelo de {{type}} Seleccionado",
+    "tripTotalPrice": "Precio total del viaje"
+  },
+  "settings": {
+    "appearance": {
+      "dark": "Modo Oscuro",
+      "english": "Inglés",
+      "languageLabel": "Idioma",
+      "light": "Modo Claro",
+      "spanish": "Español",
+      "system": "Sistema",
+      "themeLabel": "Tema",
+      "title": "Apariencia"
+    },
+    "avatar": {
+      "maxSize": "Máximo 5MB",
+      "selectNew": "Seleccionar nueva foto",
+      "title": "Tu foto de perfil",
+      "validation": {
+        "fileTooBig": "La imagen es demasiado grande (máx. 5MB)"
+      }
+    },
+    "general": {
+      "logout": "Cerrar sesión"
+    },
+    "preferences": {
+      "description": "Ajusta el nivel de importancia de los factores al buscar vuelos.",
+      "descriptions": {
+        "airline": {
+          "0": "Me da igual con qué aerolínea volar",
+          "high": "Prefiero aerolíneas tradicionales y cómodas",
+          "low": "Me adapto a aerolíneas de bajo coste sin problema",
+          "max": "Busco siempre las aerolíneas mejor valoradas",
+          "medium": "Valoro un servicio aceptable a bordo"
+        },
+        "duration": {
+          "0": "El tiempo de viaje me es indiferente",
+          "high": "Intento llegar lo antes posible a mi destino",
+          "low": "No me importa si el vuelo dura más",
+          "max": "Quiero el vuelo más rápido posible",
+          "medium": "Prefiero no estar demasiadas horas de viaje"
+        },
+        "price": {
+          "0": "El precio me es indiferente",
+          "high": "Suelo priorizar que el precio sea bajo",
+          "low": "Pagaría más por un mejor vuelo",
+          "max": "Cuanto más barato mejor",
+          "medium": "Busco un equilibrio razonable en el precio"
+        },
+        "stops": {
+          "0": "Me da igual hacer muchas escalas",
+          "high": "Intento evitar hacer transbordos",
+          "low": "Hacer varias paradas no me supone un problema",
+          "max": "Busco vuelos directos sin paradas",
+          "medium": "Prefiero rutas con pocas escalas si es posible"
         }
       },
-      "ai": {
-        "title": "Prueba la Inteligencia Artificial",
-        "description": "Usa el agente de IA para planificar un viaje complejo mediante lenguaje natural.",
-        "steps": {
-          "use_ai": {
-            "title": "Usa la IA",
-            "description": "Escribe un mensaje al agente."
-          },
-          "get_search_history": {
-            "title": "Tu historial",
-            "description": "Pídele al agente que consulte tus búsquedas anteriores."
-          },
-          "receive_ai_flights": {
-            "title": "Recibe vuelos de la IA",
-            "description": "Pídele al agente que te busque vuelos y haz que te recomiende uno de ellos."
-          }
-        }
+      "fields": {
+        "airline": "Calidad Aerolínea",
+        "duration": "Duración",
+        "price": "Precio",
+        "stops": "Escalas"
       },
-      "genetic": {
-        "title": "Optimizador Genético",
-        "description": "Encuentra la mejor ruta multi-ciudad usando algoritmos avanzados.",
-        "steps": {
-          "open_genetic_trip": {
-            "title": "Explorar Genetic Trip",
-            "description": "Entra en la sección de Algoritmo Genético para empezar a planificar."
-          },
-          "add_itinerary_cities": {
-            "title": "Planificar itinerario",
-            "description": "Añade al menos 2 ciudades diferentes a tu ruta para optimizar."
-          },
-          "perform_genetic_search": {
-            "title": "Optimizar ruta",
-            "description": "Ejecuta el algoritmo genético para encontrar los mejores precios y conexiones."
-          }
+      "infoTitle": "¿Cómo ajustar los pesos?",
+      "save": "Guardar preferencias",
+      "saving": "Guardando...",
+      "title": "Pesos de búsqueda",
+      "weightsInfo": "Ten en cuenta que si le das mucha más importancia a uno de los campos, debes representarlo correctamente en relación a los demás. Es decir, si te importa que el vuelo sea corto, pero te importa mucho más que el precio sea barato, no pongas la duración a 1, déjala en un valor menor para que el algoritmo priorice el precio."
+    },
+    "profile": {
+      "private": "Perfil Privado",
+      "privateDesc": "Tus búsquedas y estadísticas son totalmente privadas.",
+      "profileVisibility": "Visibilidad del perfil",
+      "public": "Perfil Público",
+      "publicDesc": "Otros usuarios pueden ver tus búsquedas recientes y estadísticas.",
+      "save": "Guardar cambios del perfil",
+      "saving": "Guardando...",
+      "title": "Información del Perfil",
+      "username": "Nombre de usuario",
+      "usernamePlaceholder": "Tu nombre de usuario"
+    },
+    "security": {
+      "apps": {
+        "description": "Gestiona las cuentas de terceros vinculadas a tu cuenta de flAIghts.",
+        "google": {
+          "connected": "Conectado",
+          "disconnect": "Desconectar cuenta de Google",
+          "linked": "Cuenta vinculada correctamente",
+          "notLinked": "No has vinculado tu cuenta de Google"
+        },
+        "title": "Aplicaciones conectadas"
+      },
+      "email": {
+        "cancel": "Cancelar",
+        "cancelling": "Cancelando...",
+        "codes": {
+          "new": "Código nuevo email",
+          "old": "Código email actual"
+        },
+        "description": "Utilizamos este correo principal para identificarte y para enviarte notificaciones.",
+        "pending": "Cambio de email pendiente",
+        "pendingMessage": "Hemos enviado códigos a tu email actual y al nuevo",
+        "placeholder": "tu@email.com",
+        "title": "Dirección de correo electrónico",
+        "update": "Actualizar correo electrónico",
+        "updating": "Actualizando...",
+        "validation": {
+          "codesRequired": "Por favor, introduce ambos códigos"
+        },
+        "verify": "Confirmar cambio",
+        "verifying": "Verificando..."
+      },
+      "password": {
+        "confirm": "Confirmar nueva contraseña",
+        "description": "Cambia tu contraseña periódicamente para mantener tu cuenta segura.",
+        "hide": "Ocultar contraseñas",
+        "new": "Nueva contraseña",
+        "requirements": {
+          "different": "Debe ser diferente a la actual",
+          "minLength": "Mínimo 8 caracteres",
+          "recommended": "Recomendamos incluir números y símbolos",
+          "title": "Requisitos:"
+        },
+        "set": "Establecer contraseña",
+        "setDesc": "Aún no has establecido una contraseña manual. Te recomendamos hacerlo para poder acceder si pierdes el acceso a servicios externos.",
+        "setTitle": "Establecer contraseña",
+        "show": "Mostrar contraseñas",
+        "title": "Contraseña",
+        "update": "Actualizar contraseña",
+        "updating": "Actualizando...",
+        "validation": {
+          "allFieldsRequired": "Por favor, rellena todos los campos",
+          "minLength": "La nueva contraseña debe tener al menos 8 caracteres",
+          "passwordMismatch": "Las contraseñas nuevas no coinciden"
         }
       }
-    }
-  },
-  "booking": {
-    "title": "Opciones de Reserva",
-    "subtitle": "Selecciona el proveedor para cada segmento de tu viaje.",
-    "segmentTitle": "Tramo {{origin}} a {{destination}}",
-    "bookWith": "Reservar con {{provider}}",
-    "atPrice": "por {{price}}€",
-    "go": "Ir a la web",
-    "loading": "Obteniendo opciones...",
-    "error": "Error al obtener opciones de reserva",
-    "noOptions": "No se han encontrado opciones de reserva directa",
-    "postNotice": "Serás redirigido a una página externa para completar el pago.",
-    "close": "Cerrar"
-  },
-  "common": {
-    "email": "Email",
-    "andThe": " y la ",
-    "outbound": "Ida",
-    "return": "Vuelta",
-    "outboundFlights": "Vuelos de Ida",
-    "returnFlights": "Vuelos de Vuelta",
-    "origin": "Origen",
-    "destination": "Destino",
-    "airport": "Aeropuerto",
-    "direct": "Directo",
-    "stopover_one": "{{count}} escala",
-    "stopover_other": "{{count}} escalas",
-    "cities": "Ciudades",
-    "select": "Seleccionar",
-    "add": "Añadir...",
-    "exit": "Salir",
-    "back": "Volver",
-    "tfg": "Trabajo de Fin de Grado",
-    "badge": "insignia",
-    "evaluation": "Evaluación",
-    "bookmarkAlert": "Para añadir flAIghts a tus marcadores, pulsa Ctrl+D (Windows) o Cmd+D (Mac)",
-    "installAlert": "Para añadir flAIghts a tu pantalla de inicio, usa la opción \"Añadir a pantalla de inicio\" en el menú de tu navegador."
-  },
-  "home": {
-    "toast": {
-      "evaluationCompleted": "¡Evaluación completada!"
     },
-    "globe": {
-      "interaction3d": "Interacción 3D",
-      "clickToExplore": "Haz clic para explorar el mapa",
-      "cancelSelection": "Cancelar selección",
-      "closeMap": "Cerrar mapa",
-      "configureSearch": "Configura tu búsqueda",
-      "tripConfiguration": "Configuración del viaje",
-      "collapseSearch": "Plegar búsqueda",
-      "missingDepartureDate": "Falta fecha de salida",
-      "reportDataError": "Reportar error en los datos",
-      "selectOnMap": "Seleccionar en el mapa",
-      "departure": "Salida",
-      "return": "Regreso"
+    "tabs": {
+      "apariencia": "Apariencia",
+      "perfil": "Perfil",
+      "preferencias": "Preferencias",
+      "seguridad": "Seguridad"
+    },
+    "title": "Ajustes",
+    "toast": {
+      "avatarUpdatedSuccess": "Foto de perfil actualizada correctamente",
+      "emailCancelError": "Cambio de email cancelado",
+      "emailInUse": "El nuevo email ya está en uso",
+      "emailUpdatedSuccess": "Email actualizado correctamente",
+      "emailUpdateError": "Error al actualizar el email",
+      "emailVerificationCodeInvalidOrExpired": "El código de verificación del email es inválido o ha expirado",
+      "error": "Error al actualizar el perfil",
+      "invalidEmail": "El nuevo email es inválido",
+      "passwordUpdatedSuccess": "Contraseña actualizada correctamente",
+      "passwordUpdateError": "Error al actualizar la contraseña",
+      "pending": "Solicitud de cambio de email iniciada. Introduce los códigos enviados.",
+      "pendingEmail": "Tienes un cambio de email pendiente de verificación",
+      "success": "Perfil actualizado con éxito"
+    },
+    "verification": {
+      "cancel": "Cancelar",
+      "confirm": "Confirmar acción",
+      "confirming": "Confirmando...",
+      "description": "Por seguridad, introduce el código de 6 dígitos que hemos enviado a {{email}}",
+      "resend": "¿No has recibido el código? Reenviar"
     }
-  },
-  "globe": {
-    "airportZone": "Zona de aeropuertos",
-    "locations": "{{count}} ubicaciones",
-    "clickForList": "Haz clic para ver la lista",
-    "city": "Ciudad",
-    "linkedAirports": "Aeropuertos vinculados",
-    "unknownLocation": "Ubicación desconocida",
-    "loading": "Cargando globo terráqueo...",
-    "airportsInZone": "Aeropuertos en zona",
-    "found": "{{count}} encontrados",
-    "setAsOrigin": "Establecer como origen",
-    "setAsDestination": "Establecer como destino",
-    "deselectCity": "Deseleccionar ciudad"
   },
   "share": {
-    "share": "Compartir",
-    "shareWithFriend": "Compartir con amigo",
     "flightShared": "Vuelo compartido",
     "flightSharedSuccess": "Vuelo compartido con éxito",
+    "prepareShareError": "No se pudo preparar la búsqueda para compartir",
     "shareError": "Error al compartir",
     "shareFlightError": "Error al compartir el vuelo",
-    "prepareShareError": "No se pudo preparar la búsqueda para compartir",
     "shareFlightSearch": "Compartir búsqueda de vuelo",
     "viewTripDetails": "Ver detalles del viaje"
   },
-  "chat": {
-    "error": "Error",
-    "loadError": "No se pudo cargar el chat.",
-    "backToChats": "Volver a Chats",
-    "online": "En línea",
-    "lastSeen": "Últ. vez {{time}}",
-    "lastSeenToday": "hoy a las {{time}}",
-    "lastSeenYesterday": "ayer a las {{time}}",
-    "lastSeenDate": "{{date}} a las {{time}}",
-    "today": "Hoy",
-    "yesterday": "Ayer",
-    "recentSearches": "Tus búsquedas recientes",
-    "noSearchesToShare": "No tienes búsquedas para compartir.",
-    "cities": "{{count}} ciudades",
-    "messagePlaceholder": "Escribe un mensaje...",
-    "connecting": "Conectando al chat...",
-    "sendMessage": "Enviar mensaje"
+  "sidebar": {
+    "closeMenu": "Cerrar menú",
+    "friends": "Amigos",
+    "geneticTrip": "Viaje Genético",
+    "openMenu": "Abrir menú",
+    "searchFlights": "Buscar Vuelos"
   },
-  "chats": {
-    "title": "Chats",
-    "subtitle": "Tus conversaciones recientes.",
-    "newChat": "Nuevo chat",
-    "error": "Error al cargar las conversaciones.",
-    "empty": {
-      "title": "No tienes chats activos",
-      "description": "Busca amigos e inicia una conversación.",
-      "action": "Ver mis amigos"
-    },
-    "sharedFlight": "✈️ Vuelo compartido: {{origin}} → {{destination}}"
-  },
-  "flightRoute": {
-    "direct": "Directo",
-    "stopover": "{{count}} {{label}} ({{airports}})",
-    "stopoverSingular": "escala",
-    "stopoverPlural": "escalas",
-    "multiCityTour": "Tour Multi-ciudad"
-  },
-  "airportAutocomplete": {
-    "fromCity": "A {{distance}} km de {{location}}",
-    "seeMoreAirports": "Ver más aeropuertos",
-    "seeAllResults": "Ver todos los resultados",
-    "noMoreResults": "No hay más resultados",
-    "backToFeatured": "Volver a resultados destacados",
-    "noResults": "No hay resultados",
-    "tryOtherSearch": "Prueba con otro código o nombre de ciudad",
-    "fromWhere": "¿Desde dónde?",
-    "toWhere": "¿A dónde?"
-  },
-  "admin": {
-    "dashboard": {
-      "title": "Panel de Control",
-      "description": "Gestión global del sistema flAIghts"
-    },
-    "tabs": {
-      "stats": "Estadísticas",
-      "users": "Usuarios",
-      "airports": "Aeropuertos",
-      "reports": "Reportes",
-      "evaluations": "Evaluaciones",
-      "audits": "Auditoría"
-    }
-  },
-  "googleLinking": {
-    "title": "Cuenta existente",
-    "description": "Hemos detectado que ya tienes una cuenta con {{email}}. Introduce tu contraseña de flAIghts para vincularla.",
-    "labels": {
-      "password": "Contraseña de flAIghts",
-      "newPassword": "Nueva contraseña",
-      "confirmPassword": "Confirmar nueva contraseña",
-      "verificationCode": "Código de verificación (6 dígitos)"
-    },
-    "actions": {
-      "forgotPassword": "He olvidado mi contraseña",
-      "sendingCode": "Enviando código...",
-      "back": "Volver",
-      "confirmAndLink": "Confirmar y Vincular",
-      "resetAndLink": "Restablecer y Vincular",
-      "linking": "Vinculando..."
-    },
-    "verificationSent": "Te hemos enviado un código a tu email para confirmar el cambio.",
-    "validation": {
-      "passwordRequired": "Introduce tu contraseña",
-      "newPasswordRequired": "La contraseña es obligatoria",
-      "passwordMin": "Mínimo 8 caracteres",
-      "confirmPasswordRequired": "Debes confirmar la contraseña",
-      "passwordsMismatch": "Las contraseñas no coinciden",
-      "codeRequired": "Introduce el código de 6 dígitos",
-      "fillAllFields": "Por favor completa todos los campos correctamente"
-    },
-    "toast": {
-      "success": "Cuentas vinculadas correctamente",
-      "invalidPassword": "Contraseña incorrecta para vincular la cuenta.",
-      "invalidCode": "El código de verificación es inválido o ha expirado.",
-      "verificationFailed": "La verificación de seguridad ha fallado o caducado. Inténtalo de nuevo.",
-      "error": "Error al vincular la cuenta.",
-      "codeSent": "Código de verificación enviado a tu email.",
-      "codeError": "Error al enviar el código de verificación."
-    }
-  },
-  "airportReport": {
-    "title": "Reportar error",
-    "description": "Ayúdanos a mejorar los datos de {{iata}}",
-    "selectedAirport": "Aeropuerto seleccionado",
-    "errorDescription": "Descripción del error",
-    "placeholder": "Ej: El nombre está mal escrito, la ubicación es incorrecta o es una base militar...",
-    "minimum": "mínimo {{min}}",
-    "cancel": "Cancelar",
-    "sending": "Enviando...",
-    "sendReport": "Enviar reporte",
-    "toast": {
-      "success": "¡Gracias! Tu reporte ha sido enviado.",
-      "error": "Error al enviar el reporte. Inténtalo de nuevo.",
-      "describeError": "Por favor, describe el error antes de enviar"
-    }
-  },
-  "acknowledgements": {
-    "title": "Agradecimientos",
+  "termsOfService": {
     "backToHome": "Volver al inicio",
-    "content": "Agradecemos a SerpApi el uso de su API para llevar a cabo este proyecto."
+    "lastUpdated": "Última actualización",
+    "sections": {
+      "acceptance": {
+        "content": "Al acceder y utilizar este sitio web, usted acepta y se compromete a estar sujeto a los términos y disposiciones de este acuerdo. Además, al utilizar estos servicios en particular, estará sujeto a las pautas o reglas publicadas aplicables a dichos servicios. Cualquier participación en este servicio constituirá la aceptación de este acuerdo. Si no acepta cumplir con lo anterior, no utilice este servicio.",
+        "title": "1. Aceptación de los Términos"
+      },
+      "changes": {
+        "content": "Nos reservamos el derecho de modificar estos términos en cualquier momento. Lo hacemos publicando y atrayendo la atención a los términos actualizados en el Sitio. Su decisión de continuar visitando y utilizando el Sitio después de que se hayan realizado dichos cambios constituye su aceptación formal de los nuevos Términos de Servicio.",
+        "title": "5. Cambios en los Términos"
+      },
+      "liability": {
+        "content": "No seremos responsables ante usted respecto de ninguna pérdida que surja de cualquier evento o eventos fuera de nuestro control razonable. No seremos responsables ante usted respecto de ninguna pérdida de negocio, incluyendo (sin limitación) pérdida o daño a los beneficios, ingresos, producción, ahorros anticipados, negocios, contratos, oportunidades comerciales o fondos de comercio.",
+        "title": "4. Limitación de Responsabilidad"
+      },
+      "privacy": {
+        "content": "Nuestra Política de Privacidad, que establece cómo utilizaremos su información, se puede encontrar en ",
+        "contentAfter": ". Al utilizar este Sitio, usted consiente el procesamiento descrito en la misma y garantiza que todos los datos proporcionados por usted son exactos.",
+        "link": "Política de Privacidad",
+        "title": "2. Política de Privacidad"
+      },
+      "useSite": {
+        "content": "Se le permite utilizar nuestro sitio web para sus propios fines y para imprimir y descargar material de este Sitio siempre que no modifique ningún contenido sin nuestro consentimiento. El material de este sitio web no debe ser republicado en línea o fuera de línea sin nuestro permiso.",
+        "title": "3. Uso del Sitio"
+      }
+    },
+    "title": "Términos de Servicio"
   },
   "turnstile": {
-    "title": "Verificación",
     "description": "Necesitamos confirmar que eres humano para mantener la plataforma segura.",
     "error": "La verificación ha fallado. Por favor, inténtalo de nuevo.",
     "expired": "La verificación ha caducado por inactividad.",
     "retry": "Reintentar ahora",
+    "title": "Verificación",
     "verifying": "Verificando seguridad..."
+  },
+  "userProfile": {
+    "actions": {
+      "acceptRequest": "Aceptar solicitud de amistad",
+      "cancelRequest": "Cancelar solicitud de amistad",
+      "editProfile": "Editar mi perfil",
+      "message": "Mensaje",
+      "remove": "Eliminar",
+      "sendRequest": "Enviar solicitud de amistad"
+    },
+    "admin": "Administrador de flAIghts",
+    "badges": {
+      "earnedOn": "Obtenida el {{date}}",
+      "title": "Expositor de Logros"
+    },
+    "notAuthenticated": {
+      "description": "Debes tener una cuenta en flAIghts para ver el perfil de otros viajeros y contactar con ellos.",
+      "login": "Iniciar sesión",
+      "title": "Inicia sesión para ver perfiles"
+    },
+    "notFound": {
+      "description": "Lo sentimos, el perfil con ID {{id}} no pudo ser localizado.",
+      "home": "Volver al inicio",
+      "title": "Usuario no encontrado"
+    },
+    "searches": {
+      "emptyFeatured": "Sin búsquedas destacadas",
+      "emptyFeaturedDesc": "Este usuario aún no ha compartido ninguna de sus búsquedas de vuelos.",
+      "end": "Fin de las búsquedas destacadas",
+      "featured": "Búsquedas destacadas",
+      "private": "Cuenta privada",
+      "privateDesc": "Para ver las búsquedas de {{username}} debes ser su amigo.",
+      "viewHistory": "Ver historial completo"
+    },
+    "status": {
+      "friendSince": "Amigo desde {{date}}",
+      "memberSince": "Miembro desde {{date}}",
+      "offline": "Desconectado",
+      "online": "En línea",
+      "receivedRequest": "Solicitud de amistad recibida",
+      "sentRequest": "Solicitud de amistad enviada"
+    },
+    "toast": {
+      "friendRemoved": "Amigo eliminado",
+      "requestAccepted": "Solicitud de amistad aceptada",
+      "requestCancelled": "Solicitud de amistad cancelada",
+      "requestSent": "Solicitud de amistad enviada"
+    }
+  },
+  "userSearch": {
+    "emptyState": "Escribe un nombre de usuario para comenzar a buscar.",
+    "loading": "Buscando...",
+    "noResults": "No se han encontrado usuarios que coincidan con \"{{query}}\".",
+    "placeholder": "Buscar por usuario...",
+    "status": {
+      "pending": "Pendiente",
+      "respond": "Responder solicitud"
+    },
+    "subtitle": "Encuentra a tus amigos por nombre de usuario.",
+    "title": "Buscar usuarios"
   }
 }

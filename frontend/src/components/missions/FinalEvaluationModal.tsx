@@ -346,3 +346,19 @@ const FinalEvaluationModal: React.FC = () => {
 };
 
 export default FinalEvaluationModal;
+
+/**
+ * i18next-parser hints
+ * 
+ * t('missions.finalEvaluation.demographics.educationLevels.highschool')
+ * t('missions.finalEvaluation.demographics.educationLevels.master')
+ * t('missions.finalEvaluation.demographics.educationLevels.none')
+ * t('missions.finalEvaluation.demographics.educationLevels.primary')
+ * t('missions.finalEvaluation.demographics.educationLevels.secondary')
+ * t('missions.finalEvaluation.demographics.educationLevels.university')
+ * 
+ * t('missions.finalEvaluation.demographics.genders.female')
+ * t('missions.finalEvaluation.demographics.genders.male')
+ * t('missions.finalEvaluation.demographics.genders.none')
+ * t('missions.finalEvaluation.demographics.genders.other')
+ */
