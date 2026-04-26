@@ -399,7 +399,7 @@
       "cancelSelection": "Cancel"
     },
     "loading": {
-      "loadingGlobe": "Loading globe..."
+      "loadingGlobe": "flAIghts is taking off..."
     },
     "mapButtons": {
       "viewMap3D": "View 3D Map",
@@ -847,7 +847,7 @@
     }
   },
   "globe": {
-    "loading": "Loading globe...",
+    "loading": "flAIghts is taking off...",
     "airportsInZone": "Airports in zone",
     "found": "{{count}} found",
     "setAsOrigin": "Set as Origin",
@@ -889,7 +889,7 @@
     "multiCityTour": "Multi-city Tour"
   },
   "airportAutocomplete": {
-    "fromCity": "{{distance}} km from city",
+    "fromCity": "{{distance}} km from {{location}}",
     "seeMoreAirports": "See more airports",
     "seeAllResults": "See all results",
     "noMoreResults": "No more results",

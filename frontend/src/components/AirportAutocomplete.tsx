@@ -315,7 +315,7 @@ export default function AirportAutocomplete({ value, onChange, placeholder, clas
             >
                 {/* Helper functions for unified rendering */}
                 {(() => {
-                    const renderAirport = (airport: AirportResponse, isSub: boolean = false) => {
+                    const renderAirport = (airport: AirportResponse, isSub: boolean = false, parentLocation?: string) => {
                         const airportIsSelected = selectedIatas.has(airport.iata_code);
                         const airportIsConflict = otherIatas.has(airport.iata_code);
 
@@ -342,7 +342,7 @@ export default function AirportAutocomplete({ value, onChange, placeholder, clas
                                         {isSub ? (
                                             <>
                                                 {airport.distance_km_to_city ? (
-                                                    <span className="text-brand/80 font-medium italic">{t("airportAutocomplete.fromCity", { distance: Math.round(airport.distance_km_to_city) })}</span>
+                                                    <span className="text-brand/80 font-medium italic">{t("airportAutocomplete.fromCity", { distance: Math.round(airport.distance_km_to_city), location: parentLocation })}</span>
                                                 ) : (
                                                     (airport.country && COUNTRY_NAMES[airport.country]?.[1]) || airport.country
                                                 )}
@@ -409,7 +409,13 @@ export default function AirportAutocomplete({ value, onChange, placeholder, clas
                                         )}
                                     </div>
                                 </div>
-                                {city.airports.map((sub: AirportResponse) => renderAirport(sub, true))}
+                                {(() => {
+                                    const referenceAirport = city.airports.find(a => a.distance_km_to_city === 0);
+                                    const reference = referenceAirport
+                                        ? `${referenceAirport.iata_code} ${t("searchFlight.labels2.airport")}`
+                                        : city.name.split(',')[0];
+                                    return city.airports.map((sub: AirportResponse) => renderAirport(sub, true, reference));
+                                })()}
                             </div>
                         );
                     };
