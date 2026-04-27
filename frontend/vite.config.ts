@@ -4,6 +4,7 @@ import tailwindcss from '@tailwindcss/vite'
 import tsconfigPaths from 'vite-tsconfig-paths'
 import checker from 'vite-plugin-checker';
 import run from 'vite-plugin-run';
+import Sitemap from 'vite-plugin-sitemap'
 
 export default defineConfig({
     plugins: [
@@ -12,6 +13,21 @@ export default defineConfig({
         tsconfigPaths(),
         checker({
             typescript: true
+        }),
+        Sitemap({
+            hostname: 'https://flaights.es',
+            dynamicRoutes: [
+                '/',
+                '/about',
+                '/contact',
+                '/genetic-trip',
+                '/login',
+                '/register',
+                '/forgot-password',
+                '/terms',
+                '/privacy',
+                '/acknowledgements',
+            ]
         }),
         run({
             run: ['npm', 'run', 'orval'],
