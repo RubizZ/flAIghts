@@ -285,6 +285,10 @@ export class SearchService {
 
                 const rUniqueItineraryIds = await this.saveOptimalPathsAsItineraries(rAllOptimalPaths, userPreferences);
 
+                if (rUniqueItineraryIds.length === 0) {
+                    throw new Error("No se encontraron vuelos de vuelta para los criterios seleccionados.");
+                }
+
                 await Search.findByIdAndUpdate(searchId, {
                     status: "completed",
                     return_itineraries: rUniqueItineraryIds
