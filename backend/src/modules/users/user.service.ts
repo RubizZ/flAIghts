@@ -330,9 +330,9 @@ export class UserService {
         let query = User.findById(userId);
         if (populate) {
             query = query
-                .populate('friends.user', 'username _id role last_seen_at created_at')
-                .populate('sent_friend_requests', 'username _id role last_seen_at created_at public')
-                .populate('received_friend_requests', 'username _id role last_seen_at created_at public');
+                .populate('friends.user', 'username _id role last_seen_at created_at profile_picture badges')
+                .populate('sent_friend_requests', 'username _id role last_seen_at created_at public profile_picture badges')
+                .populate('received_friend_requests', 'username _id role last_seen_at created_at public profile_picture badges');
         }
         const user = await query;
         if (!user) throw new UserNotFoundError(userId);
