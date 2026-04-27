@@ -956,6 +956,11 @@
       "backToHome": "Volver al inicio",
       "fetch": "Error al obtener los resultados de búsqueda",
       "noFlights": "No se han encontrado vuelos",
+      "noReturnFlights": "No hay vuelos de vuelta",
+      "noReturnFlightsDesc": "Hemos encontrado la ida, pero no hay vuelos disponibles para el regreso en la fecha seleccionada. Puedes volver atrás para cambiar las fechas o continuar con solo el vuelo de ida.",
+      "continueOneWay": "Continuar con solo ida",
+      "failedSearch": "Búsqueda no completada",
+      "failedSearchDesc": "No hemos podido encontrar vuelos para los criterios seleccionados. Por favor, prueba con otras fechas o aeropuertos cercanos.",
       "tryAgain": "Inténtalo de nuevo"
     },
     "toast": {
