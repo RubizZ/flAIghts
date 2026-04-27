@@ -315,8 +315,7 @@ export default function Register() {
                                                         googleCredentialRef.current = credential;
                                                         performGoogleLogin({
                                                             data: {
-                                                                credential,
-                                                                turnstileToken: formData.turnstileToken
+                                                                credential
                                                             }
                                                         });
                                                     }
