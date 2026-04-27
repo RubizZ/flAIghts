@@ -101,10 +101,7 @@ export interface GoogleLoginRequest {
     newPassword?: string;
     verificationCode?: string;
     transactionId?: string;
-    /**
-     * Cloudflare Turnstile token for bot protection.
-     */
-    turnstileToken: string;
+
 }
 
 export interface RequestLinkingResetRequest {
@@ -112,10 +109,7 @@ export interface RequestLinkingResetRequest {
      * @format email
      */
     email: string;
-    /**
-     * Cloudflare Turnstile token for bot protection.
-     */
-    turnstileToken: string;
+
 }
 
 export interface SecurityCodeResponse {

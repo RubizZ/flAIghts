@@ -106,9 +106,8 @@ export class AuthController extends Controller {
     @Response<GoogleLoginValidationFailResponse>(422, "Error de validación")
     @Response<GoogleLoginError401>(401, "Credenciales o token inválidos")
     @Response<AuthError403>(403, "Vinculación requerida o error de seguridad")
-    public async loginWithGoogle(@Body() body: GoogleLoginRequest, @Request() request: ExpressRequest): Promise<SuccessResponse<LoginResponseData>> {
-        const { credential, password, newPassword, turnstileToken, verificationCode, transactionId } = body;
-        await this.turnstileService.verifyToken(turnstileToken, request.ip);
+    public async loginWithGoogle(@Body() body: GoogleLoginRequest): Promise<SuccessResponse<LoginResponseData>> {
+        const { credential, password, newPassword, verificationCode, transactionId } = body;
         const result = await this.authService.loginWithGoogle(credential, password, newPassword, verificationCode, transactionId);
         return result satisfies LoginResponseData as any;
     }
@@ -125,9 +124,8 @@ export class AuthController extends Controller {
     @Response<GoogleLoginValidationFailResponse>(422, "Error de validación")
     @Response<GoogleLoginError401>(401, "Credenciales o token inválidos")
     @Response<AuthError403>(403, "Vinculación requerida o error de seguridad")
-    public async loginWithGoogleWeb(@Body() body: GoogleLoginRequest, @Request() request: ExpressRequest): Promise<SuccessResponse<MessageResponseData>> {
-        const { credential, password, newPassword, turnstileToken, verificationCode, transactionId } = body;
-        await this.turnstileService.verifyToken(turnstileToken, request.ip);
+    public async loginWithGoogleWeb(@Body() body: GoogleLoginRequest): Promise<SuccessResponse<MessageResponseData>> {
+        const { credential, password, newPassword, verificationCode, transactionId } = body;
         const result = await this.authService.loginWithGoogle(credential, password, newPassword, verificationCode, transactionId);
 
         logger.info(`Setting auth cookie for user: ${result.userId} via Google`);
@@ -301,10 +299,8 @@ export class AuthController extends Controller {
      * Solicita un código de verificación para restablecer la contraseña durante la vinculación de Google.
      */
     @Post("/google/link/request-reset")
-    @Response<TurnstileFailResponse>(403, "Verificación de seguridad fallida")
-    public async requestLinkingResetCode(@Body() body: RequestLinkingResetRequest, @Request() request: ExpressRequest): Promise<SuccessResponse<SecurityCodeResponse>> {
-        const { email, turnstileToken } = body;
-        await this.turnstileService.verifyToken(turnstileToken, request.ip);
+    public async requestLinkingResetCode(@Body() body: RequestLinkingResetRequest): Promise<SuccessResponse<SecurityCodeResponse>> {
+        const { email } = body;
         const result = await this.authService.requestLinkingResetCode(email);
         return result satisfies SecurityCodeResponse as any;
     }

@@ -5,7 +5,6 @@ import { useLoginWithGoogleWeb, useRequestLinkingResetCode } from "@/api/generat
 import FloatingLabelInput from "@/components/ui/FloatingLabelInput";
 import { useAuth } from "@/context/AuthContext";
 import { useNavigate } from "react-router-dom";
-import TurnstileWidget, { type TurnstileWidgetRef } from "@/components/ui/TurnstileWidget";
 import { useRef } from "react";
 import Tooltip from "@/components/ui/Tooltip";
 
@@ -25,8 +24,6 @@ export default function GoogleLinkingView({ linkData, onCancel, onSuccess }: Goo
     const [confirmNewPassword, setConfirmNewPassword] = useState("");
     const [verificationCode, setVerificationCode] = useState("");
     const [transactionId, setTransactionId] = useState("");
-    const [turnstileToken, setTurnstileToken] = useState("");
-    const turnstileRef = useRef<TurnstileWidgetRef>(null);
     const [errors, setErrors] = useState({
         linkPassword: "",
         newPassword: "",
@@ -49,9 +46,6 @@ export default function GoogleLinkingView({ linkData, onCancel, onSuccess }: Goo
                 } else if (error.code === "INVALID_RESET_CODE") {
                     toast.error(t("googleLinking.toast.invalidCode"));
                     setVerificationCode("");
-                } else if (error.code === "TURNSTILE_MISSING_TOKEN" || error.code === "TURNSTILE_INVALID_TOKEN" || error.code === "TURNSTILE_TOKEN_ALREADY_SPENT" || error.code === "TURNSTILE_VERIFICATION_FAILED") {
-                    toast.error(t("googleLinking.toast.verificationFailed"));
-                    turnstileRef.current?.reset();
                 } else if (error.code === "REQUEST_VALIDATION_ERROR") {
                     toast.error("Datos inválidos. Por favor, revisa el formulario.");
                 } else {
@@ -67,13 +61,8 @@ export default function GoogleLinkingView({ linkData, onCancel, onSuccess }: Goo
                 toast.success(t("googleLinking.toast.codeSent"));
                 setTransactionId(response.transactionId);
             },
-            onError: (error) => {
-                if (error.code === "TURNSTILE_MISSING_TOKEN" || error.code === "TURNSTILE_INVALID_TOKEN" || error.code === "TURNSTILE_TOKEN_ALREADY_SPENT" || error.code === "TURNSTILE_VERIFICATION_FAILED") {
-                    toast.error("La verificación de seguridad ha fallado o caducado. Inténtalo de nuevo.");
-                    turnstileRef.current?.reset();
-                } else {
-                    toast.error(t("googleLinking.toast.codeError"));
-                }
+            onError: () => {
+                toast.error(t("googleLinking.toast.codeError"));
             }
         }
     });
@@ -84,16 +73,10 @@ export default function GoogleLinkingView({ linkData, onCancel, onSuccess }: Goo
 
         if (newErrors.linkPassword) return;
 
-        if (!turnstileToken) {
-            toast.error(t("login.toast.turnstileRequired"));
-            return;
-        }
-
         performGoogleLogin({
             data: {
                 credential: linkData.credential,
                 password: linkPassword,
-                turnstileToken
             }
         });
     };
@@ -112,18 +95,12 @@ export default function GoogleLinkingView({ linkData, onCancel, onSuccess }: Goo
             return;
         }
 
-        if (!turnstileToken) {
-            toast.error(t("login.toast.turnstileRequired"));
-            return;
-        }
-
         performGoogleLogin({
             data: {
                 credential: linkData.credential,
                 newPassword,
                 verificationCode,
                 transactionId,
-                turnstileToken
             }
         });
     };
@@ -168,13 +145,12 @@ export default function GoogleLinkingView({ linkData, onCancel, onSuccess }: Goo
                                     setIsResettingPassword(true);
                                     requestResetCode({
                                         data: {
-                                            email: linkData.email,
-                                            turnstileToken
+                                            email: linkData.email
                                         }
                                     });
                                 }}
                                 className="text-xs text-brand hover:underline font-medium cursor-pointer disabled:opacity-50 disabled:no-underline"
-                                disabled={isRequestingCode || !turnstileToken}
+                                disabled={isRequestingCode}
                             >
                                 {isRequestingCode ? t("googleLinking.actions.sendingCode") : t("googleLinking.actions.forgotPassword")}
                             </button>
@@ -188,18 +164,14 @@ export default function GoogleLinkingView({ linkData, onCancel, onSuccess }: Goo
                             >
                                 {t("googleLinking.actions.back")}
                             </button>
-                            <Tooltip content={t("turnstile.verifying")} disabled={!!turnstileToken} position="top">
-                                <div className={!turnstileToken || isGooglePending ? 'cursor-not-allowed' : ''}>
-                                    <button
-                                        type="button"
-                                        onClick={handleConfirmLink}
-                                        disabled={isGooglePending || !turnstileToken}
-                                        className="w-full rounded-lg bg-brand p-3 text-content-on-brand font-bold enabled:hover:scale-[1.02] enabled:active:scale-95 transition-all shadow-lg shadow-brand/20 cursor-pointer disabled:opacity-50"
-                                    >
-                                        {isGooglePending ? t("googleLinking.actions.linking") : t("googleLinking.actions.confirmAndLink")}
-                                    </button>
-                                </div>
-                            </Tooltip>
+                            <button
+                                type="button"
+                                onClick={handleConfirmLink}
+                                disabled={isGooglePending}
+                                className="w-full rounded-lg bg-brand p-3 text-content-on-brand font-bold enabled:hover:scale-[1.02] enabled:active:scale-95 transition-all shadow-lg shadow-brand/20 cursor-pointer disabled:opacity-50"
+                            >
+                                {isGooglePending ? t("googleLinking.actions.linking") : t("googleLinking.actions.confirmAndLink")}
+                            </button>
                         </div>
                     </>
                 ) : (
@@ -262,28 +234,18 @@ export default function GoogleLinkingView({ linkData, onCancel, onSuccess }: Goo
                             >
                                 {t("googleLinking.actions.back")}
                             </button>
-                            <Tooltip content={t("turnstile.verifying")} disabled={!!turnstileToken} position="top">
-                                <div className={!turnstileToken || isGooglePending ? 'cursor-not-allowed' : ''}>
-                                    <button
-                                        type="button"
-                                        onClick={handleResetAndLink}
-                                        disabled={isGooglePending || !turnstileToken}
-                                        className="w-full rounded-lg bg-brand p-3 text-content-on-brand font-bold enabled:hover:scale-[1.02] enabled:active:scale-95 transition-all shadow-lg shadow-brand/20 cursor-pointer disabled:opacity-50"
-                                    >
-                                        {isGooglePending ? t("googleLinking.actions.linking") : t("googleLinking.actions.resetAndLink")}
-                                    </button>
-                                </div>
-                            </Tooltip>
+                            <button
+                                type="button"
+                                onClick={handleResetAndLink}
+                                disabled={isGooglePending}
+                                className="w-full rounded-lg bg-brand p-3 text-content-on-brand font-bold enabled:hover:scale-[1.02] enabled:active:scale-95 transition-all shadow-lg shadow-brand/20 cursor-pointer disabled:opacity-50"
+                            >
+                                {isGooglePending ? t("googleLinking.actions.linking") : t("googleLinking.actions.resetAndLink")}
+                            </button>
                         </div>
                     </>
                 )}
             </div>
-            <TurnstileWidget
-                ref={turnstileRef}
-                onVerify={setTurnstileToken}
-                onExpire={() => setTurnstileToken("")}
-                onError={() => setTurnstileToken("")}
-            />
         </div>
     );
 }

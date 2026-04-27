@@ -238,32 +238,29 @@ export default function Login() {
                             <div className="grow border-t border-content-muted/30"></div>
                         </div>
 
-                        <Tooltip content={t("turnstile.verifying")} disabled={!!turnstileToken} position="top">
-                            <div className={`w-full flex justify-center transition-opacity duration-300 ${!turnstileToken ? "opacity-50 cursor-not-allowed" : ""}`}>
-                                <div className={!turnstileToken ? "pointer-events-none" : ""}>
-                                    <GoogleLogin
-                                        onSuccess={credentialResponse => {
-                                            if (credentialResponse.credential) {
-                                                const credential = credentialResponse.credential;
-                                                googleCredentialRef.current = credential;
-                                                performGoogleLogin({
-                                                    data: {
-                                                        credential,
-                                                        turnstileToken
-                                                    }
-                                                });
-                                            }
-                                        }}
-                                        onError={() => {
-                                            toast.error(t("login.toast.googleConnectError"));
-                                        }}
-                                        theme='filled_blue'
-                                        shape="circle"
-                                        text="continue_with"
-                                    />
-                                </div>
+                        <div className={`w-full flex justify-center transition-opacity duration-300 ${isGooglePending ? "opacity-50 cursor-not-allowed" : ""}`}>
+                            <div className={isGooglePending ? "pointer-events-none" : ""}>
+                                <GoogleLogin
+                                    onSuccess={credentialResponse => {
+                                        if (credentialResponse.credential) {
+                                            const credential = credentialResponse.credential;
+                                            googleCredentialRef.current = credential;
+                                            performGoogleLogin({
+                                                data: {
+                                                    credential,
+                                                }
+                                            });
+                                        }
+                                    }}
+                                    onError={() => {
+                                        toast.error(t("login.toast.googleConnectError"));
+                                    }}
+                                    theme='filled_blue'
+                                    shape="circle"
+                                    text="continue_with"
+                                />
                             </div>
-                        </Tooltip>
+                        </div>
 
                         <span className="text-sm text-content text-center">
                             {t("login.noAccount")} <a href="/register" className="text-brand font-bold hover:underline">{t("login.links.register")}</a>

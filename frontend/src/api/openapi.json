@@ -4698,22 +4698,6 @@
             ],
             "type": "object"
           },
-          "body.turnstileToken": {
-            "properties": {
-              "value": {},
-              "message": {
-                "type": "string",
-                "enum": [
-                  "'turnstileToken' is required",
-                  "invalid string value"
-                ]
-              }
-            },
-            "required": [
-              "message"
-            ],
-            "type": "object"
-          },
           "body.password": {
             "properties": {
               "value": {},
@@ -5019,15 +5003,10 @@
           },
           "transactionId": {
             "type": "string"
-          },
-          "turnstileToken": {
-            "type": "string",
-            "description": "Cloudflare Turnstile token for bot protection."
           }
         },
         "required": [
-          "credential",
-          "turnstileToken"
+          "credential"
         ],
         "type": "object",
         "additionalProperties": false
@@ -6028,15 +6007,10 @@
           "email": {
             "type": "string",
             "format": "email"
-          },
-          "turnstileToken": {
-            "type": "string",
-            "description": "Cloudflare Turnstile token for bot protection."
           }
         },
         "required": [
-          "email",
-          "turnstileToken"
+          "email"
         ],
         "type": "object",
         "additionalProperties": false
@@ -10449,16 +10423,6 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/SuccessResponse_SecurityCodeResponse_"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Verificación de seguridad fallida",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/TurnstileFailResponse"
                 }
               }
             }
