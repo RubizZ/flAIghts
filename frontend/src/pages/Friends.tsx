@@ -54,6 +54,18 @@ export default function Friends() {
         }
     });
 
+    const friends = user?.friends || [];
+    const received = user?.received_friend_requests || [];
+    const sent = user?.sent_friend_requests || [];
+
+    const filteredFriends = useMemo(() => {
+        return friends.filter(f =>
+            f.username.toLowerCase().includes(searchQuery.toLowerCase())
+        );
+    }, [friends, searchQuery]);
+
+    const totalRequests = received.length + sent.length;
+
     if (isLoading) {
         return (
             <div className="flex h-[50vh] items-center justify-center relative">
@@ -76,18 +88,6 @@ export default function Friends() {
         );
     }
 
-    // Assuming user's arrays have populated objects with at least _id and username
-    const friends = user.friends;
-    const received = user.received_friend_requests;
-    const sent = user.sent_friend_requests;
-
-    const filteredFriends = useMemo(() => {
-        return friends.filter(f =>
-            f.username.toLowerCase().includes(searchQuery.toLowerCase())
-        );
-    }, [friends, searchQuery]);
-
-    const totalRequests = received.length + sent.length;
 
     return (
         <div className="flex flex-col max-w-5xl mx-auto w-full p-6 sm:p-8 gap-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
