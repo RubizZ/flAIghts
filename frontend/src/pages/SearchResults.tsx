@@ -770,23 +770,64 @@ export default function SearchResults() {
                                     <div className="flex flex-col items-center justify-center py-20 bg-main/40 backdrop-blur-md rounded-3xl border border-line text-center text-content-muted mx-4">
                                         <AlertCircle size={48} className="mb-4 opacity-50 text-content" />
                                         <h3 className="text-xl font-semibold text-content mb-2">{t("searchResults.error.noFlights")}</h3>
-                                        <p className="text-sm opacity-70 px-4">{t("searchResults.error.tryAgain")}</p>
+                                        <p className="text-sm opacity-70 px-4 mb-6">{t("searchResults.error.failedSearchDesc")}</p>
+                                        <button
+                                            onClick={() => navigate(-1)}
+                                            className="px-6 py-2.5 bg-surface/50 hover:bg-surface border border-line rounded-xl text-sm font-bold text-content transition-all cursor-pointer active:scale-95"
+                                        >
+                                            {t('searchResultsPage.backToSearch')}
+                                        </button>
                                     </div>
                                 )}
 
                                 {selectionStep === 'return' && searchData.status === 'completed' && !returnItineraries?.length && (
-                                    <div className="flex flex-col items-center justify-center py-20 bg-main/40 backdrop-blur-md rounded-3xl border border-line text-center text-content-muted mx-4">
-                                        <AlertCircle size={48} className="mb-4 opacity-50 text-content" />
-                                        <h3 className="text-xl font-semibold text-content mb-2">No se han encontrado vuelos de vuelta</h3>
-                                        <p className="text-sm opacity-70 px-4">No se han encontrado vuelos de vuelta para esa búsqueda, vuelve a intentarlo con otros parámetros de búsqueda.</p>
+                                    <div className="flex flex-col gap-6">
+                                        {selectedDeparture && (
+                                            <SelectedFlightSummary
+                                                itinerary={selectedDeparture}
+                                                type="Ida"
+                                                airportsMap={airportsMap}
+                                                formatTime={formatTime}
+                                                formatDuration={formatDuration}
+                                                title={t('searchResultsPage.selectedFlight', { type: t('common.outbound') })}
+                                                onEdit={handleEditDeparture}
+                                            />
+                                        )}
+                                        <div className="flex flex-col items-center justify-center py-20 bg-main/40 backdrop-blur-md rounded-3xl border border-line text-center text-content-muted mx-4 gap-6">
+                                            <div className="flex flex-col items-center">
+                                                <AlertCircle size={48} className="mb-4 opacity-50 text-content" />
+                                                <h3 className="text-xl font-semibold text-content mb-2">{t("searchResults.error.noReturnFlights")}</h3>
+                                                <p className="text-sm opacity-70 px-4 max-w-md">{t("searchResults.error.noReturnFlightsDesc")}</p>
+                                            </div>
+                                            <div className="flex flex-col sm:flex-row gap-3">
+                                                <button
+                                                    onClick={handleEditDeparture}
+                                                    className="px-6 py-3 bg-surface/50 hover:bg-surface border border-line rounded-xl text-sm font-bold transition-all cursor-pointer active:scale-95"
+                                                >
+                                                    {t('searchResultsPage.previousStep')}
+                                                </button>
+                                                <button
+                                                    onClick={() => setSelectionStep('summary')}
+                                                    className="px-6 py-3 bg-brand text-white rounded-xl text-sm font-bold shadow-lg shadow-brand/20 transition-all hover:scale-105 active:scale-95 cursor-pointer"
+                                                >
+                                                    {t('searchResults.error.continueOneWay')}
+                                                </button>
+                                            </div>
+                                        </div>
                                     </div>
                                 )}
 
                                 {searchData.status === 'failed' && (
                                     <div className="flex flex-col items-center justify-center py-20 bg-red-500/5 backdrop-blur-md rounded-3xl border border-red-500/20 text-center text-red-500/70 mx-4">
                                         <AlertCircle size={48} className="mb-4 opacity-50" />
-                                        <h3 className="text-xl font-semibold text-red-500 mb-2">Búsqueda fallida</h3>
-                                        <p className="text-sm px-4">Hubo un problema al procesar tu búsqueda. Por favor, intenta de nuevo más tarde o con otros parámetros.</p>
+                                        <h3 className="text-xl font-semibold text-red-500 mb-2">{t("searchResults.error.failedSearch")}</h3>
+                                        <p className="text-sm px-4">{t("searchResults.error.failedSearchDesc")}</p>
+                                        <button
+                                            onClick={() => navigate(-1)}
+                                            className="mt-6 px-6 py-2.5 bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 rounded-xl text-sm font-bold text-red-500 transition-all cursor-pointer active:scale-95"
+                                        >
+                                            {t('searchResults.error.backToHome')}
+                                        </button>
                                     </div>
                                 )}
 

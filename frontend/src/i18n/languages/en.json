@@ -951,6 +951,11 @@
       "backToHome": "Back to home",
       "fetch": "Error fetching search results",
       "noFlights": "No flights found",
+      "noReturnFlights": "No return flights found",
+      "noReturnFlightsDesc": "We found outbound flights, but there are no flights available for your return on the selected date. You can go back to change the dates or continue with only the outbound flight.",
+      "continueOneWay": "Continue with one-way",
+      "failedSearch": "Search not completed",
+      "failedSearchDesc": "We could not find flights for the selected criteria. Please try again with other dates or nearby airports.",
       "tryAgain": "Try again"
     },
     "toast": {
