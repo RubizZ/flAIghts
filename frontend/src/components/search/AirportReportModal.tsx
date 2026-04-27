@@ -3,6 +3,7 @@ import { AlertTriangle, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { useReportAirportError } from "@/api/generated/openapi/airports";
 import { AirportResponse } from "@/api/generated/openapi/model";
+import { useTranslation } from "react-i18next";
 
 interface AirportReportModalProps {
     isOpen: boolean;
@@ -14,6 +15,7 @@ const MIN_CHARS = 5;
 const MAX_CHARS = 1000;
 
 export default function AirportReportModal({ isOpen, onClose, airport }: AirportReportModalProps) {
+    const { t } = useTranslation();
     const [reportReason, setReportReason] = useState("");
 
     const isTooShort = reportReason.trim().length < MIN_CHARS;
@@ -21,12 +23,12 @@ export default function AirportReportModal({ isOpen, onClose, airport }: Airport
     const { mutate: sendReport, isPending } = useReportAirportError({
         mutation: {
             onSuccess: (data) => {
-                toast.success((data as any).message || "¡Gracias! Tu reporte ha sido enviado.");
+                toast.success((data as any).message || t("airportReport.toast.success"));
                 setReportReason("");
                 onClose();
             },
             onError: (error: any) => {
-                toast.error(error?.message || "Error al enviar el reporte. Inténtalo de nuevo.");
+                toast.error(error?.message || t("airportReport.toast.error"));
             }
         }
     });
@@ -35,7 +37,7 @@ export default function AirportReportModal({ isOpen, onClose, airport }: Airport
 
     const handleSendReport = () => {
         if (isTooShort) {
-            toast.error("Por favor, describe el error antes de enviar");
+            toast.error(t("airportReport.toast.describeError"));
             return;
         }
 
@@ -65,31 +67,31 @@ export default function AirportReportModal({ isOpen, onClose, airport }: Airport
                         <AlertTriangle className="text-red-500" size={24} />
                     </div>
                     <div>
-                        <h2 className="text-xl font-bold text-content">Reportar error</h2>
-                        <p className="text-content-muted text-sm">Ayúdanos a mejorar los datos de {airport.iata_code}</p>
+                        <h2 className="text-xl font-bold text-content">{t("airportReport.title")}</h2>
+                        <p className="text-content-muted text-sm">{t("airportReport.description", { iata: airport.iata_code })}</p>
                     </div>
                 </div>
 
                 <div className="flex flex-col gap-4">
                     <div className="bg-main/50 p-4 rounded-2xl border border-line">
-                        <div className="text-[10px] text-content-muted uppercase font-bold tracking-wider mb-1">Aeropuerto seleccionado</div>
+                        <div className="text-[10px] text-content-muted uppercase font-bold tracking-wider mb-1">{t("airportReport.selectedAirport")}</div>
                         <div className="text-content font-bold">{airport.name} ({airport.iata_code})</div>
                         <div className="text-content-muted text-xs">{airport.city}</div>
                     </div>
 
                     <div className="flex flex-col gap-2">
-                        <label className="text-xs font-bold text-content-muted ml-1">Descripción del error</label>
+                        <label className="text-xs font-bold text-content-muted ml-1">{t("airportReport.errorDescription")}</label>
                         <textarea
                             value={reportReason}
                             onChange={(e) => setReportReason(e.target.value)}
-                            placeholder="Ej: El nombre está mal escrito, la ubicación es incorrecta o es una base militar..."
+                            placeholder={t("airportReport.placeholder")}
                             className="w-full h-32 px-4 py-3 bg-main/50 border border-line rounded-2xl focus:ring-2 focus:ring-brand focus:border-brand outline-none transition-all text-sm resize-none text-content"
                             maxLength={MAX_CHARS}
                             autoFocus
                         />
                         <div className="flex justify-end px-1">
                             <span className={`text-[10px] font-bold ${isTooShort ? 'text-red-500' : 'text-content-muted'}`}>
-                                {reportReason.length} / {MAX_CHARS} {isTooShort && `(mínimo ${MIN_CHARS})`}
+                                {reportReason.length} / {MAX_CHARS} {isTooShort && `(${t("airportReport.minimum", { min: MIN_CHARS })})`}
                             </span>
                         </div>
                     </div>
@@ -100,7 +102,7 @@ export default function AirportReportModal({ isOpen, onClose, airport }: Airport
                         onClick={handleCancel}
                         className="flex-1 py-3 bg-surface border border-line text-content font-bold rounded-2xl hover:bg-surface/80 transition-all cursor-pointer"
                     >
-                        Cancelar
+                        {t("airportReport.cancel")}
                     </button>
                     <button
                         onClick={handleSendReport}
@@ -110,10 +112,10 @@ export default function AirportReportModal({ isOpen, onClose, airport }: Airport
                         {isPending ? (
                             <>
                                 <Loader2 size={18} className="animate-spin" />
-                                <span>Enviando...</span>
+                                <span>{t("airportReport.sending")}</span>
                             </>
                         ) : (
-                            "Enviar reporte"
+                            t("airportReport.sendReport")
                         )}
                     </button>
                 </div>

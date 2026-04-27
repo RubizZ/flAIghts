@@ -15,9 +15,9 @@ interface CalendarProps {
     keepTriggerWidth?: boolean;
 }
 
-export default function Calendar({ value, onChange, minDate, className = "", trigger,    isOpen, 
-    setIsOpen, 
-    contentClassName, 
+export default function Calendar({ value, onChange, minDate, className = "", trigger, isOpen,
+    setIsOpen,
+    contentClassName,
     defaultMonth,
     keepTriggerWidth = true
 }: CalendarProps) {

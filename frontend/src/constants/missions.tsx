@@ -270,198 +270,341 @@ const OpenSearchFromHistoryListener: React.FC = () => {
     return null;
 };
 
+const OpenGeneticTripListener: React.FC = () => {
+    const { completeStep } = useMissions();
+    useEffect(() => {
+        const handle = () => completeStep('genetic_mission', 'open_genetic_trip');
+        window.addEventListener('flaights:mission:genetic-trip-opened', handle);
+        return () => window.removeEventListener('flaights:mission:genetic-trip-opened', handle);
+    }, [completeStep]);
+    return null;
+};
+
+const GeneticTripCityAddedListener: React.FC = () => {
+    const { completeStep } = useMissions();
+    useEffect(() => {
+        const handle = (e: any) => {
+            if (e.detail?.count >= 2) {
+                completeStep('genetic_mission', 'add_itinerary_cities');
+            }
+        };
+        window.addEventListener('flaights:mission:genetic-trip-city-added', handle);
+        return () => window.removeEventListener('flaights:mission:genetic-trip-city-added', handle);
+    }, [completeStep]);
+    return null;
+};
+
+const GeneticTripPerformedListener: React.FC = () => {
+    const { completeStep } = useMissions();
+    useEffect(() => {
+        const handle = () => completeStep('genetic_mission', 'perform_genetic_search');
+        window.addEventListener('flaights:mission:genetic-trip-performed', handle);
+        return () => window.removeEventListener('flaights:mission:genetic-trip-performed', handle);
+    }, [completeStep]);
+    return null;
+};
+
 // --- Configuración de Misiones ---
 
 export const MISSIONS: BaseMission[] = [
     {
         id: 'registration_mission',
-        title: 'Regístrate en flAIghts',
-        description: 'Regístrate en la plataforma.',
+        title: 'missions.list.registration.title',
+        description: 'missions.list.registration.description',
         icon: '🚀',
         steps: [
             {
                 id: 'complete_registration',
-                title: 'Crea una cuenta',
-                description: 'Completa el formulario de registro para acceder a todas las funcionalidades.',
+                title: 'missions.list.registration.steps.complete_registration.title',
+                description: 'missions.list.registration.steps.complete_registration.description',
                 listener: RegistrationStepListener
             }
         ]
     },
     {
         id: 'profile_mission',
-        title: 'Personaliza tu perfil',
-        description: 'Sube una foto de perfil y configura tus preferencias de vuelo.',
+        title: 'missions.list.profile.title',
+        description: 'missions.list.profile.description',
         icon: '👤',
         dependsOn: ['registration_mission'],
         steps: [
             {
                 id: 'upload_avatar',
-                title: 'Sube una foto de perfil',
-                description: 'Actualiza tu perfil y sube la foto que más te guste.',
+                title: 'missions.list.profile.steps.upload_avatar.title',
+                description: 'missions.list.profile.steps.upload_avatar.description',
                 listener: AvatarUploadedListener
             },
             {
                 id: 'edit_preferences',
-                title: 'Personaliza tus busquedas de vuelos',
-                description: 'Edita tu perfil y ajusta los pesos de búsqueda para que se adapten mejor a tus preferencias.',
+                title: 'missions.list.profile.steps.edit_preferences.title',
+                description: 'missions.list.profile.steps.edit_preferences.description',
                 listener: ProfileUpdatedListener
             }
         ]
     },
     {
         id: 'social_mission',
-        title: 'Haz amigos',
-        description: 'Conecta con otras personas.',
+        title: 'missions.list.social.title',
+        description: 'missions.list.social.description',
         icon: '🤝',
         dependsOn: ['registration_mission'],
         steps: [
             {
                 id: 'view_user_profile',
-                title: 'Visita un perfil',
-                description: 'Busca a un usuario y visita su perfil público. Puedes buscar al usuario "flAIghts"',
+                title: 'missions.list.social.steps.view_user_profile.title',
+                description: 'missions.list.social.steps.view_user_profile.description',
                 listener: ViewUserProfileListener
             },
             {
                 id: 'send_friend_request',
-                title: 'Envía una solicitud',
-                description: 'Manda una solicitud de amistad a ese usuario. El usuario "flAIghts" la aceptará automáticamente.',
+                title: 'missions.list.social.steps.send_friend_request.title',
+                description: 'missions.list.social.steps.send_friend_request.description',
                 listener: SendFriendRequestListener
             },
             {
                 id: 'send_message',
-                title: 'Escribe un mensaje',
-                description: 'Envíale un mensaje directo para saludar.',
+                title: 'missions.list.social.steps.send_message.title',
+                description: 'missions.list.social.steps.send_message.description',
                 listener: SendMessageListener
             }
         ]
     },
     {
         id: 'manual_search_mission',
-        title: 'Usa el buscador de vuelos',
-        description: 'Realiza una búsqueda manual de vuelos usando el selector de aeropuertos.',
+        title: 'missions.list.manual_search.title',
+        description: 'missions.list.manual_search.description',
         icon: '🔍',
         dependsOn: ['profile_mission'],
         steps: [
             {
                 id: 'open_airport_card',
-                title: 'Abre el buscador de aeropuertos',
-                description: 'Haz clic en el campo de Origen o Destino para abrir el buscador.',
+                title: 'missions.list.manual_search.steps.open_airport_card.title',
+                description: 'missions.list.manual_search.steps.open_airport_card.description',
                 listener: OpenAirportCardListener
             },
             {
                 id: 'add_airport',
-                title: 'Selecciona un aeropuerto',
-                description: 'Escribe el nombre de una ciudad o aeropuerto de tu gusto y selecciónalo de la lista.',
+                title: 'missions.list.manual_search.steps.add_airport.title',
+                description: 'missions.list.manual_search.steps.add_airport.description',
                 listener: AddAirportListener
             },
             {
                 id: 'perform_manual_search',
-                title: 'Búsqueda manual',
-                description: 'Completa los campos restantes y realiza la búsqueda pulsando en "Explorar vuelos".',
+                title: 'missions.list.manual_search.steps.perform_manual_search.title',
+                description: 'missions.list.manual_search.steps.perform_manual_search.description',
                 listener: ManualSearchStepListener
             }
         ]
     },
     {
         id: 'map_search_mission',
-        title: 'Usa el mapa interactivo',
-        description: 'Realiza una búsqueda interactiva usando el globo terráqueo.',
+        title: 'missions.list.map_search.title',
+        description: 'missions.list.map_search.description',
         icon: '🌍',
         dependsOn: ['flight_results_mission'],
         steps: [
             {
                 id: 'open_map',
-                title: 'Abre el mapa interactivo',
-                description: 'Usa el botón de mapa en los inputs o haz clic directamente en el globo terráqueo para entrar en modo interacción.',
+                title: 'missions.list.map_search.steps.open_map.title',
+                description: 'missions.list.map_search.steps.open_map.description',
                 listener: OpenMapListener
             },
             {
                 id: 'select_on_map',
-                title: 'Selecciona desde el mapa',
-                description: 'Busca un aeropuerto en el globo terráqueo y selecciónalo como origen o destino usando el menú o la tarjeta de información.',
+                title: 'missions.list.map_search.steps.select_on_map.title',
+                description: 'missions.list.map_search.steps.select_on_map.description',
                 listener: SelectOnMapListener
             },
             {
                 id: 'perform_map_search',
-                title: 'Búsqueda desde el mapa',
-                description: 'Completa los campos restantes y realiza la búsqueda pulsando en "Explorar vuelos".',
+                title: 'missions.list.map_search.steps.perform_map_search.title',
+                description: 'missions.list.map_search.steps.perform_map_search.description',
                 listener: ManualSearchStepListener
             }
         ]
     },
     {
         id: 'flight_results_mission',
-        title: 'Explora los resultados',
-        description: 'Interactúa con los vuelos encontrados para encontrar tu opción ideal.',
+        title: 'missions.list.flight_results.title',
+        description: 'missions.list.flight_results.description',
         icon: '✈️',
         dependsOn: ['manual_search_mission'],
         steps: [
             {
                 id: 'view_flight_details',
-                title: 'Detalles del vuelo',
-                description: 'Selecciona un vuelo para ver sus detalles.',
+                title: 'missions.list.flight_results.steps.view_flight_details.title',
+                description: 'missions.list.flight_results.steps.view_flight_details.description',
                 listener: ViewFlightDetailsListener
             },
             {
                 id: 'select_flight',
-                title: 'Selecciona un vuelo como vuelo de ida',
-                description: 'Selecciona un vuelo como si fuese a ser tu vuelo de ida.',
+                title: 'missions.list.flight_results.steps.select_flight.title',
+                description: 'missions.list.flight_results.steps.select_flight.description',
                 listener: SelectFlightListener
             },
             {
                 id: 'buy_flight',
-                title: '"Compra" el vuelo',
-                description: 'Abre el provedor externo para comprar el vuelo seleccionado y cierra la ventana del proveedor. No te preocupes, no tienes que pagar nada ni comprarlo.',
+                title: 'missions.list.flight_results.steps.buy_flight.title',
+                description: 'missions.list.flight_results.steps.buy_flight.description',
                 listener: BuyFlightListener
             }
         ]
     },
     {
         id: 'share_mission',
-        title: 'Comparte tus viajes',
-        description: 'Comparte tus búsquedas de vuelos con tus amigos.',
+        title: 'missions.list.share.title',
+        description: 'missions.list.share.description',
         icon: '📤',
         dependsOn: ['flight_results_mission', 'social_mission'],
         steps: [
             {
                 id: 'share_from_results',
-                title: 'Comparte desde resultados',
-                description: 'Usa el botón de compartir en la página de resultados de búsqueda y compártelo con alguien. Puedes enviarselo al usuario "flAIghts".',
+                title: 'missions.list.share.steps.share_from_results.title',
+                description: 'missions.list.share.steps.share_from_results.description',
                 listener: ShareFromResultsListener
             },
             {
                 id: 'share_from_chat',
-                title: 'Comparte desde el chat',
-                description: 'Comparte una búsqueda directamente en una conversación con un amigo. Puedes enviarsela al usuario "flAIghts".',
+                title: 'missions.list.share.steps.share_from_chat.title',
+                description: 'missions.list.share.steps.share_from_chat.description',
                 listener: ShareFromChatListener
             }
         ]
     },
     {
         id: 'ai_mission',
-        title: 'Prueba la Inteligencia Artificial',
-        description: 'Usa el agente de IA para planificar un viaje complejo mediante lenguaje natural.',
+        title: 'missions.list.ai.title',
+        description: 'missions.list.ai.description',
         icon: '🤖',
         dependsOn: ['map_search_mission'],
         steps: [
             {
                 id: 'use_ai',
-                title: 'Usa la IA',
-                description: 'Escribe un mensaje al agente.',
+                title: 'missions.list.ai.steps.use_ai.title',
+                description: 'missions.list.ai.steps.use_ai.description',
                 listener: AIChatStepListener
             },
             {
                 id: 'get_search_history',
-                title: 'Tu historial',
-                description: 'Pídele al agente que consulte tus búsquedas anteriores.',
+                title: 'missions.list.ai.steps.get_search_history.title',
+                description: 'missions.list.ai.steps.get_search_history.description',
                 listener: AIGetSearchHistoryListener
             },
             {
                 id: 'receive_ai_flights',
-                title: 'Recibe vuelos de la IA',
-                description: 'Pídele al agente que te busque vuelos y haz que te recomiende uno de ellos.',
+                title: 'missions.list.ai.steps.receive_ai_flights.title',
+                description: 'missions.list.ai.steps.receive_ai_flights.description',
                 listener: AIFlightsReturnedListener
+            }
+        ]
+    },
+    {
+        id: 'genetic_mission',
+        title: 'missions.list.genetic.title',
+        description: 'missions.list.genetic.description',
+        icon: '🧬',
+        dependsOn: ['map_search_mission'],
+        steps: [
+            {
+                id: 'open_genetic_trip',
+                title: 'missions.list.genetic.steps.open_genetic_trip.title',
+                description: 'missions.list.genetic.steps.open_genetic_trip.description',
+                listener: OpenGeneticTripListener
+            },
+            {
+                id: 'add_itinerary_cities',
+                title: 'missions.list.genetic.steps.add_itinerary_cities.title',
+                description: 'missions.list.genetic.steps.add_itinerary_cities.description',
+                listener: GeneticTripCityAddedListener
+            },
+            {
+                id: 'perform_genetic_search',
+                title: 'missions.list.genetic.steps.perform_genetic_search.title',
+                description: 'missions.list.genetic.steps.perform_genetic_search.description',
+                listener: GeneticTripPerformedListener
             }
         ]
     }
 ];
+
+/**
+ * i18next-parser hints
+ * 
+ * This block ensures that the parser detects the keys used in the MISSIONS constant,
+ * as they are defined as static strings and not direct t() calls.
+ * 
+ * t('missions.list.registration.title')
+ * t('missions.list.registration.description')
+ * t('missions.list.registration.steps.complete_registration.title')
+ * t('missions.list.registration.steps.complete_registration.description')
+ * 
+ * t('missions.list.profile.title')
+ * t('missions.list.profile.description')
+ * t('missions.list.profile.steps.upload_avatar.title')
+ * t('missions.list.profile.steps.upload_avatar.description')
+ * t('missions.list.profile.steps.edit_preferences.title')
+ * t('missions.list.profile.steps.edit_preferences.description')
+ * 
+ * t('missions.list.social.title')
+ * t('missions.list.social.description')
+ * t('missions.list.social.steps.view_user_profile.title')
+ * t('missions.list.social.steps.view_user_profile.description')
+ * t('missions.list.social.steps.send_friend_request.title')
+ * t('missions.list.social.steps.send_friend_request.description')
+ * t('missions.list.social.steps.send_message.title')
+ * t('missions.list.social.steps.send_message.description')
+ * 
+ * t('missions.list.manual_search.title')
+ * t('missions.list.manual_search.description')
+ * t('missions.list.manual_search.steps.open_airport_card.title')
+ * t('missions.list.manual_search.steps.open_airport_card.description')
+ * t('missions.list.manual_search.steps.add_airport.title')
+ * t('missions.list.manual_search.steps.add_airport.description')
+ * t('missions.list.manual_search.steps.perform_manual_search.title')
+ * t('missions.list.manual_search.steps.perform_manual_search.description')
+ * 
+ * t('missions.list.map_search.title')
+ * t('missions.list.map_search.description')
+ * t('missions.list.map_search.steps.open_map.title')
+ * t('missions.list.map_search.steps.open_map.description')
+ * t('missions.list.map_search.steps.select_on_map.title')
+ * t('missions.list.map_search.steps.select_on_map.description')
+ * t('missions.list.map_search.steps.perform_map_search.title')
+ * t('missions.list.map_search.steps.perform_map_search.description')
+ * 
+ * t('missions.list.flight_results.title')
+ * t('missions.list.flight_results.description')
+ * t('missions.list.flight_results.steps.view_flight_details.title')
+ * t('missions.list.flight_results.steps.view_flight_details.description')
+ * t('missions.list.flight_results.steps.select_flight.title')
+ * t('missions.list.flight_results.steps.select_flight.description')
+ * t('missions.list.flight_results.steps.buy_flight.title')
+ * t('missions.list.flight_results.steps.buy_flight.description')
+ * 
+ * t('missions.list.share.title')
+ * t('missions.list.share.description')
+ * t('missions.list.share.steps.share_from_results.title')
+ * t('missions.list.share.steps.share_from_results.description')
+ * t('missions.list.share.steps.share_from_chat.title')
+ * t('missions.list.share.steps.share_from_chat.description')
+ * 
+ * t('missions.list.ai.title')
+ * t('missions.list.ai.description')
+ * t('missions.list.ai.steps.use_ai.title')
+ * t('missions.list.ai.steps.use_ai.description')
+ * t('missions.list.ai.steps.get_search_history.title')
+ * t('missions.list.ai.steps.get_search_history.description')
+ * t('missions.list.ai.steps.receive_ai_flights.title')
+ * t('missions.list.ai.steps.receive_ai_flights.description')
+ * 
+ * t('missions.list.genetic.title')
+ * t('missions.list.genetic.description')
+ * t('missions.list.genetic.steps.open_genetic_trip.title')
+ * t('missions.list.genetic.steps.open_genetic_trip.description')
+ * t('missions.list.genetic.steps.add_itinerary_cities.title')
+ * t('missions.list.genetic.steps.add_itinerary_cities.description')
+ * t('missions.list.genetic.steps.perform_genetic_search.title')
+ * t('missions.list.genetic.steps.perform_genetic_search.description')
+ * 
+ * t('missions.noMissionAvailable')
+ */

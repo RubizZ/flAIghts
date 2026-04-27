@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect, useCallback } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { useGetGlobeAirports } from "@/api/generated/openapi/airports";
-import { AlertCircle, Loader2, Plane, ArrowLeft, ArrowRight, DollarSign, Clock, Calendar, Share2, Globe as GlobeIcon, Lock } from "lucide-react";
+import { AlertCircle, Loader2, Star, Plane, ArrowLeft, ArrowRight, DollarSign, Clock, Calendar, Share2, Globe as GlobeIcon, Lock } from "lucide-react";
 import { useSearchResult, useShareSearch, usePrivatizeSearch } from "@/api/generated/openapi/search";
 import type { ItineraryResponse, GlobeAirportResponse, AirportResponse, FriendUser } from "@/api/generated/openapi/model";
 import { useSendMessage } from "@/api/generated/openapi/conversations";
@@ -10,17 +10,21 @@ import StarsBackground from "@/components/ui/StarsBackground";
 import Globe from "@/components/Globe";
 import FlightCard from "@/components/search/FlightCard";
 import SelectedFlightSummary from "@/components/search/SelectedFlightSummary";
+import BookingModal from "@/components/search/BookingModal";
+import { usePrepareBooking } from "@/api/generated/openapi/booking";
+import { useTranslation } from "react-i18next";
 import SmartPopover from "@/components/ui/SmartPopover";
 import UserAvatar from "@/components/ui/UserAvatar";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 
 export default function SearchResults() {
+    const { t } = useTranslation();
     const { id } = useParams<{ id: string }>();
     const { user, isAuthenticated } = useAuth();
     const queryClient = useQueryClient();
     const navigate = useNavigate();
-    const [sortBy, setSortBy] = useState<'price' | 'duration'>('price');
+    const [sortBy, setSortBy] = useState<'price' | 'duration' | 'personalized'>('personalized');
     const [hoveredItinerary, setHoveredItinerary] = useState<ItineraryResponse | null>(null);
     const [expandedItinerary, setExpandedItinerary] = useState<ItineraryResponse | null>(null);
     const [selectionStep, setSelectionStep] = useState<'departure' | 'return' | 'summary'>('departure');
@@ -29,6 +33,7 @@ export default function SearchResults() {
     const [isSMScreen, setIsSMScreen] = useState(window.innerWidth >= 640);
     const [isLargeScreen, setIsLargeScreen] = useState(window.innerWidth >= 1024);
     const [isGlobeReady, setIsGlobeReady] = useState(false);
+    const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
     const [isSharing, setIsSharing] = useState(false);
 
     useEffect(() => {
@@ -62,12 +67,12 @@ export default function SearchResults() {
     const { mutate: sendMessage } = useSendMessage({
         mutation: {
             onSuccess: () => {
-                toast.success("Busqueda compartida con exito");
+                toast.success(t("share.flightShared"))
                 window.dispatchEvent(new CustomEvent('flaights:mission:send-message'));
                 window.dispatchEvent(new CustomEvent('flaights:mission:share-from-results'));
                 setIsSharing(false);
             },
-            onError: () => toast.error("Error al compartir")
+            onError: () => toast.error(t("share.shareError"))
         }
     });
 
@@ -104,6 +109,44 @@ export default function SearchResults() {
             shareSearch({ searchId: id! });
         }
     };
+    const { mutate: prepareBooking, isPending: isPreparingBooking, error: prepareError, data: bookingData } = usePrepareBooking();
+
+    const [outboundSegmentsCount, setOutboundSegmentsCount] = useState(0);
+
+    const handleReserve = () => {
+        window.dispatchEvent(new CustomEvent('flaights:mission:buy-flight'));
+        const tokens: { token: string; origin: string; destination: string; departure_date: string }[] = [];
+
+        const collectTokens = (legs: any[]) => {
+            let count = 0;
+            legs.forEach(leg => {
+                if (leg.booking_token) {
+                    tokens.push({
+                        token: leg.booking_token,
+                        origin: leg.origin,
+                        destination: leg.destination,
+                        departure_date: leg.departure_time.split(' ')[0] // Extract YYYY-MM-DD from YYYY-MM-DD HH:MM
+                    });
+                    count++;
+                }
+            });
+            return count;
+        };
+
+        let outCount = 0;
+        if (selectedDeparture) outCount = collectTokens(selectedDeparture.legs);
+        if (selectedReturn) collectTokens(selectedReturn.legs);
+
+        if (tokens.length === 0) {
+            toast.error(t("searchResults.toast.noBookingOptions"));
+            return;
+        }
+
+        setOutboundSegmentsCount(outCount);
+        setIsBookingModalOpen(true);
+        prepareBooking({ data: { tokens: tokens as any } });
+        window.dispatchEvent(new CustomEvent('app:buy-flight'));
+    };
 
     const searchData = data;
 
@@ -136,11 +179,24 @@ export default function SearchResults() {
     const sortItineraries = (itineraries?: ItineraryResponse[]) => {
         if (!itineraries) return [];
         return [...itineraries].sort((a, b) => {
+            if (sortBy === 'personalized') return (b.score || 0) - (a.score || 0);
             if (sortBy === 'price') return a.total_price - b.total_price;
             if (sortBy === 'duration') return a.total_duration - b.total_duration;
             return 0;
         });
     };
+
+    const departureItineraries = sortItineraries(searchData?.departure_itineraries);
+    const returnItineraries = sortItineraries(searchData?.return_itineraries);
+
+    const isOneWay = useMemo(() => {
+        if (!searchData?.return_date) return true;
+        if (searchData.status === 'searching') return false;
+        return !returnItineraries || returnItineraries.length === 0;
+    }, [searchData?.return_date, searchData?.status, returnItineraries]);
+
+    const showLoading = (isLoading && !data) || (isLargeScreen && !isGlobeReady);
+
 
     const formatTime = (dateString?: string) => {
         if (!dateString) return "--:--";
@@ -254,24 +310,18 @@ export default function SearchResults() {
         return (
             <div className="flex flex-col items-center justify-center min-h-screen bg-main text-red-500 gap-4 p-4 text-center">
                 <AlertCircle size={48} className="opacity-80" />
-                <p className="text-lg font-medium">Error al cargar la búsqueda</p>
+                <p className="text-lg font-medium">{t("searchResults.error.fetch")}</p>
                 <p className="text-sm opacity-70 max-w-md">{error.message}</p>
                 <button
                     onClick={() => navigate('/')}
                     className="mt-4 px-6 py-2 bg-brand text-content-on-brand rounded-xl font-bold hover:bg-brand-hover transition-colors cursor-pointer"
                 >
-                    Volver al inicio
+                    {t("searchResults.error.backToHome")}
                 </button>
             </div>
         );
     }
 
-    const showLoading = (isLoading && !data) || (isLargeScreen && !isGlobeReady);
-
-    const departureItineraries = sortItineraries(searchData?.departure_itineraries);
-    const returnItineraries = sortItineraries(searchData?.return_itineraries);
-
-    const isOneWay = !searchData?.return_date || !returnItineraries || returnItineraries.length === 0;
 
     const handleSelectItinerary = (itinerary: ItineraryResponse, type: 'departure' | 'return') => {
         setExpandedItinerary(null);
@@ -289,6 +339,21 @@ export default function SearchResults() {
             setSelectionStep('summary');
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
+    };
+
+    const handleEditDeparture = () => {
+        setExpandedItinerary(null);
+        setSelectionStep('departure');
+        setSelectedDeparture(null);
+        setSelectedReturn(null);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
+    const handleEditReturn = () => {
+        setExpandedItinerary(null);
+        setSelectionStep('return');
+        setSelectedReturn(null);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
     const handleGoBack = () => {
@@ -323,7 +388,7 @@ export default function SearchResults() {
                     </svg>
                 </div>
                 <div className="flex flex-col items-center gap-1">
-                    <span className="text-content-muted text-xs">Buscando las mejores rutas...</span>
+                    <span className="text-content-muted text-xs">{t('searchResultsPage.searchingBestRoutes')}</span>
                 </div>
                 <div className="flex gap-1.5">
                     {[0, 1, 2].map(i => (
@@ -349,7 +414,7 @@ export default function SearchResults() {
                                         <button
                                             onClick={selectionStep === 'departure' ? () => navigate(-1) : handleGoBack}
                                             className="shrink-0 p-2.5 bg-surface/50 hover:bg-surface border border-line/30 rounded-xl transition-all group active:scale-95 cursor-pointer"
-                                            title={selectionStep === 'departure' ? "Volver atrás" : "Paso anterior"}
+                                            title={selectionStep === 'departure' ? t('searchResultsPage.backToSearch') : t('searchResultsPage.previousStep')}
                                         >
                                             <ArrowLeft size={20} className="text-content-muted group-hover:text-content" />
                                         </button>
@@ -392,7 +457,7 @@ export default function SearchResults() {
 
                                     {/* Actions: Privacy Toggle & Share Button */}
                                     <div className="shrink-0 flex items-center gap-2">
-                                        {isAuthenticated && user?._id === data?.user_id && (
+                                        {isAuthenticated && user._id === data?.user_id && (
                                             <button
                                                 onClick={(e) => {
                                                     e.preventDefault();
@@ -404,7 +469,7 @@ export default function SearchResults() {
                                                     ? 'bg-amber-500/10 text-amber-500 border-amber-500/20 hover:bg-amber-500/20'
                                                     : 'bg-surface/50 hover:bg-surface border-line/30 text-content-muted hover:text-brand'
                                                     }`}
-                                                title={data?.shared ? "Hacer privada" : "Hacer pública"}
+                                                title={data?.shared ? t('share.makePrivate') : t('share.makePublic')}
                                             >
                                                 {isSharingPublic || isPrivatizingPublic ? (
                                                     <Loader2 size={18} className="animate-spin" />
@@ -428,22 +493,22 @@ export default function SearchResults() {
                                                         setIsSharing(!isSharing);
                                                     }}
                                                     className={`p-2.5 border rounded-xl transition-all group active:scale-95 cursor-pointer ${isSharing ? 'bg-brand border-brand' : 'bg-surface/50 hover:bg-surface border-line/30'}`}
-                                                    title="Compartir búsqueda"
+                                                    title={t('share.shareFlightSearch')}
                                                 >
                                                     <Share2 size={18} className={isSharing ? 'text-white' : 'text-content-muted group-hover:text-brand'} />
                                                 </button>
                                             }
                                         >
                                             <div className="p-2 flex flex-col gap-1 min-w-[240px]">
-                                                {!data?.shared && user?._id === data?.user_id && (
+                                                {!data?.shared && isAuthenticated && user._id === data?.user_id && (
                                                     <div className="px-3 py-2 border-b border-line mb-1">
                                                         <p className="text-[10px] text-amber-500 font-bold leading-tight">
-                                                            Al compartir, la búsqueda se hará pública automáticamente.
+                                                            {t('share.autoPublicDisclaimer')}
                                                         </p>
                                                     </div>
                                                 )}
 
-                                                {isAuthenticated && user && user.friends.length > 0 && (
+                                                {isAuthenticated && user.friends.length > 0 && (
                                                     <>
                                                         <p className="px-3 py-1.5 text-[9px] font-black uppercase tracking-widest text-content-muted/40">Enviar a amigos</p>
                                                         <div className="max-h-60 overflow-y-auto custom-scrollbar flex flex-col gap-1">
@@ -487,7 +552,7 @@ export default function SearchResults() {
                                                         window.dispatchEvent(new CustomEvent('flaights:mission:share-from-results'));
 
                                                         // Si es privada y soy el dueño, la hacemos pública antes de compartir
-                                                        if (!data?.shared && user?._id === data?.user_id) {
+                                                        if (!data?.shared && isAuthenticated && user._id === data?.user_id) {
                                                             try {
                                                                 await shareSearch({ searchId: id! });
                                                             } catch (err) {
@@ -540,8 +605,18 @@ export default function SearchResults() {
                                 {selectionStep !== 'summary' && (
                                     <div className="flex items-center justify-between sm:justify-start gap-4 pt-2 md:pt-0 border-t md:border-t-0 border-line/30">
                                         <div className="flex items-center gap-2">
-                                            <span className="text-[10px] md:text-xs font-bold text-content-muted uppercase tracking-wider">Ordenar por:</span>
+                                            <span className="text-[10px] md:text-xs font-bold text-content-muted uppercase tracking-wider">{t('searchResultsPage.orderBy')}</span>
                                             <div className="flex items-center gap-1 bg-surface/50 p-1 rounded-xl border border-line/30">
+                                                <button
+                                                    onClick={() => setSortBy('personalized')}
+                                                    className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs md:text-sm font-medium transition-all cursor-pointer ${sortBy === 'personalized'
+                                                        ? 'bg-brand text-content-on-brand shadow-sm'
+                                                        : 'text-content-muted hover:text-content hover:bg-main'
+                                                        }`}
+                                                >
+                                                    <Star size={14} className={sortBy === 'personalized' ? 'fill-current' : ''} />
+                                                    <span>{t('searchResultsPage.personalized')}</span>
+                                                </button>
                                                 <button
                                                     onClick={() => setSortBy('price')}
                                                     className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${sortBy === 'price'
@@ -550,7 +625,7 @@ export default function SearchResults() {
                                                         }`}
                                                 >
                                                     <DollarSign size={12} />
-                                                    <span>Precio</span>
+                                                    <span>{t('searchResultsPage.price')}</span>
                                                 </button>
                                                 <button
                                                     onClick={() => setSortBy('duration')}
@@ -560,7 +635,7 @@ export default function SearchResults() {
                                                         }`}
                                                 >
                                                     <Clock size={12} />
-                                                    <span>Duración</span>
+                                                    <span>{t('searchResultsPage.duration')}</span>
                                                 </button>
                                             </div>
                                         </div>
@@ -579,6 +654,8 @@ export default function SearchResults() {
                                             airportsMap={airportsMap}
                                             formatTime={formatTime}
                                             formatDuration={formatDuration}
+                                            title={t('searchResultsPage.selectedFlight', { type: t('common.outbound') })}
+                                            onEdit={handleEditDeparture}
                                         />
                                         {selectedReturn && (
                                             <SelectedFlightSummary
@@ -587,23 +664,22 @@ export default function SearchResults() {
                                                 airportsMap={airportsMap}
                                                 formatTime={formatTime}
                                                 formatDuration={formatDuration}
+                                                title={t('searchResultsPage.selectedFlight', { type: t('common.return') })}
+                                                onEdit={handleEditReturn}
                                             />
                                         )}
                                         <div className="bg-main/80 dark:bg-main/60 backdrop-blur-xl border border-line rounded-2xl shadow-lg p-6 flex flex-col sm:flex-row items-center justify-between gap-4">
                                             <div className="text-center sm:text-left">
-                                                <span className="text-sm font-bold text-content-muted uppercase tracking-wider">Precio total del viaje</span>
+                                                <span className="text-sm font-bold text-content-muted uppercase tracking-wider">{t('searchResultsPage.tripTotalPrice')}</span>
                                                 <p className="text-4xl font-black text-brand">
                                                     {(selectedDeparture.total_price + (selectedReturn?.total_price || 0)).toFixed(2)}€
                                                 </p>
                                             </div>
                                             <button
-                                                onClick={() => {
-                                                    window.dispatchEvent(new CustomEvent('flaights:mission:buy-flight'));
-                                                    toast.info("Función no implementada", { description: "Esta acción te redirigirá a la web del vendedor." });
-                                                }}
+                                                onClick={handleReserve}
                                                 className="w-full sm:w-auto px-8 py-4 bg-brand hover:bg-brand-hover text-white text-base font-bold rounded-2xl shadow-lg shadow-brand/20 transition-all hover:scale-105 active:scale-95 cursor-pointer"
                                             >
-                                                Reservar Vuelos
+                                                {t('searchResultsPage.reserve')}
                                             </button>
                                         </div>
                                     </div>
@@ -616,7 +692,7 @@ export default function SearchResults() {
                                             <div className="p-2 bg-origin/20 rounded-lg">
                                                 <Plane className="w-5 h-5 text-origin -rotate-45" />
                                             </div>
-                                            Vuelos de Ida
+                                            {t('common.outboundFlights')}
                                         </h2>
                                         <div className="space-y-4">
                                             {departureItineraries.map((itinerary, index) => (
@@ -645,6 +721,8 @@ export default function SearchResults() {
                                                 airportsMap={airportsMap}
                                                 formatTime={formatTime}
                                                 formatDuration={formatDuration}
+                                                title={t('searchResultsPage.selectedFlight', { type: t('common.outbound') })}
+                                                onEdit={handleEditDeparture}
                                             />
                                         )}
 
@@ -653,7 +731,7 @@ export default function SearchResults() {
                                                 <div className="p-2 bg-destination/20 rounded-lg">
                                                     <Plane className="w-5 h-5 text-destination rotate-135" />
                                                 </div>
-                                                Vuelos de Vuelta
+                                                {t('common.returnFlights')}
                                             </h2>
                                             <div className="space-y-4">
                                                 {returnItineraries.map((itinerary, index) => (
@@ -673,18 +751,26 @@ export default function SearchResults() {
                                     </>
                                 )}
 
+                                {selectionStep === 'return' && searchData.status === 'searching' && (!returnItineraries || returnItineraries.length === 0) && (
+                                    <div className="flex flex-col items-center justify-center py-20 bg-main/40 backdrop-blur-md rounded-3xl border border-line text-center text-content-muted mx-4">
+                                        <Loader2 size={48} className="mb-4 opacity-50 text-brand animate-spin" />
+                                        <h3 className="text-xl font-semibold text-content mb-2">{t('searchResultsPage.searchingMore')}</h3>
+                                        <p className="text-sm opacity-70">{t('searchResultsPage.searchingBestRoutes')}</p>
+                                    </div>
+                                )}
+
                                 {selectionStep === 'departure' && searchData.status === 'searching' && !departureItineraries?.length && (
                                     <div className="flex flex-col items-center justify-center py-20 bg-main/40 backdrop-blur-md rounded-3xl border border-line text-center text-content-muted mx-4">
                                         <Loader2 size={48} className="mb-4 opacity-50 text-brand animate-spin" />
-                                        <h3 className="text-xl font-semibold text-content mb-2">Buscando más vuelos...</h3>
-                                        <p className="text-sm opacity-70">Estamos encontrando más opciones para ti en tiempo real.</p>
+                                        <h3 className="text-xl font-semibold text-content mb-2">{t('searchResultsPage.searchingMore')}</h3>
+                                        <p className="text-sm opacity-70">{t('searchResultsPage.searchingBestRoutes')}</p>
                                     </div>
                                 )}
                                 {selectionStep === 'departure' && searchData.status === 'completed' && !departureItineraries?.length && (
                                     <div className="flex flex-col items-center justify-center py-20 bg-main/40 backdrop-blur-md rounded-3xl border border-line text-center text-content-muted mx-4">
                                         <AlertCircle size={48} className="mb-4 opacity-50 text-content" />
-                                        <h3 className="text-xl font-semibold text-content mb-2">No se han encontrado vuelos</h3>
-                                        <p className="text-sm opacity-70 px-4">No se han encontrado vuelos para esa búsqueda, vuelve a intentarlo con otros parámetros de búsqueda.</p>
+                                        <h3 className="text-xl font-semibold text-content mb-2">{t("searchResults.error.noFlights")}</h3>
+                                        <p className="text-sm opacity-70 px-4">{t("searchResults.error.tryAgain")}</p>
                                     </div>
                                 )}
 
@@ -722,6 +808,15 @@ export default function SearchResults() {
                     onReady={handleGlobeReady}
                 />
             </div>
+
+            <BookingModal
+                isOpen={isBookingModalOpen}
+                onClose={() => setIsBookingModalOpen(false)}
+                isLoading={isPreparingBooking}
+                bookingData={bookingData || null}
+                outboundSegmentsCount={outboundSegmentsCount}
+                error={prepareError}
+            />
         </div>
     );
 }

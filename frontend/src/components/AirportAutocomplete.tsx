@@ -6,6 +6,7 @@ import SmartPopover from "./ui/SmartPopover";
 import { useUserLocation } from "@/context/UserLocationContext";
 import { useSearchAirportsInfinite } from "@/api/generated/openapi/airports";
 import { UnifiedSelection, isAirport, isCity, getEntityId, getEntityName } from "@/types/selection";
+import { useTranslation } from "react-i18next";
 
 interface AirportAutocompleteProps {
     value: UnifiedSelection[];
@@ -49,6 +50,7 @@ const HighlightedText = ({ text, highlight, query }: { text: string; highlight?:
 };
 
 export default function AirportAutocomplete({ value, onChange, placeholder, className, otherSelected = [], onHoverChange }: AirportAutocompleteProps) {
+    const { t } = useTranslation();
     const [query, setQuery] = useState("");
     const [debouncedQuery, setDebouncedQuery] = useState("");
     const [isOpen, setIsOpen] = useState(false);
@@ -109,7 +111,7 @@ export default function AirportAutocomplete({ value, onChange, placeholder, clas
         firstPageSuggestions.forEach(item => {
             let groupName = "";
             if (item.type === 'city') {
-                groupName = "Ciudades";
+                groupName = t("common.cities");
             } else {
                 const countryCode = item.country || "Otros";
                 const countryInfo = COUNTRY_NAMES[countryCode];
@@ -121,8 +123,8 @@ export default function AirportAutocomplete({ value, onChange, placeholder, clas
                 group = [];
                 groups[groupName] = group;
                 // Push "Ciudades" to the front if possible
-                if (groupName === "Ciudades") {
-                    groupOrder.unshift("Ciudades");
+                if (groupName === t("common.cities")) {
+                    groupOrder.unshift(t("common.cities"));
                 } else {
                     groupOrder.push(groupName);
                 }
@@ -275,7 +277,7 @@ export default function AirportAutocomplete({ value, onChange, placeholder, clas
                     ))}
                     <input
                         type="text"
-                        placeholder={value.length === 0 ? placeholder : "Añadir..."}
+                        placeholder={value.length === 0 ? placeholder : t("common.add")}
                         className={`${className} shrink-0`}
                         style={{ width: value.length === 0 ? '100%' : 'auto', minWidth: '80px' }}
                         value={query}
@@ -313,7 +315,7 @@ export default function AirportAutocomplete({ value, onChange, placeholder, clas
             >
                 {/* Helper functions for unified rendering */}
                 {(() => {
-                    const renderAirport = (airport: AirportResponse, isSub: boolean = false) => {
+                    const renderAirport = (airport: AirportResponse, isSub: boolean = false, parentLocation?: string) => {
                         const airportIsSelected = selectedIatas.has(airport.iata_code);
                         const airportIsConflict = otherIatas.has(airport.iata_code);
 
@@ -340,7 +342,7 @@ export default function AirportAutocomplete({ value, onChange, placeholder, clas
                                         {isSub ? (
                                             <>
                                                 {airport.distance_km_to_city ? (
-                                                    <span className="text-brand/80 font-medium italic">A {Math.round(airport.distance_km_to_city)} km de la ciudad</span>
+                                                    <span className="text-brand/80 font-medium italic">{t("airportAutocomplete.fromCity", { distance: Math.round(airport.distance_km_to_city), location: parentLocation })}</span>
                                                 ) : (
                                                     (airport.country && COUNTRY_NAMES[airport.country]?.[1]) || airport.country
                                                 )}
@@ -407,7 +409,13 @@ export default function AirportAutocomplete({ value, onChange, placeholder, clas
                                         )}
                                     </div>
                                 </div>
-                                {city.airports.map((sub: AirportResponse) => renderAirport(sub, true))}
+                                {(() => {
+                                    const referenceAirport = city.airports.find(a => a.distance_km_to_city === 0);
+                                    const reference = referenceAirport
+                                        ? `${referenceAirport.iata_code} ${t("searchFlight.labels2.airport")}`
+                                        : city.name.split(',')[0];
+                                    return city.airports.map((sub: AirportResponse) => renderAirport(sub, true, reference));
+                                })()}
                             </div>
                         );
                     };
@@ -417,7 +425,7 @@ export default function AirportAutocomplete({ value, onChange, placeholder, clas
                             <>
                                 {groupedSuggestions.map(([groupName, items]) => (
                                     <div key={groupName} className="flex flex-col border-b border-line last:border-0">
-                                        {groupName !== "Ciudades" && (
+                                        {groupName !== t("common.cities") && (
                                             <div className="sticky top-0 z-10 bg-surface/95 backdrop-blur-md px-4 py-2 border-b border-line flex items-center">
                                                 <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-content/50 pr-3 border-r border-line mr-3 leading-none">
                                                     {groupName}
@@ -437,13 +445,13 @@ export default function AirportAutocomplete({ value, onChange, placeholder, clas
                                         onClick={() => setShowFlatList(true)}
                                         className="w-full py-4 text-xs font-bold text-brand hover:bg-brand/5 transition-colors uppercase tracking-widest border-t border-line/50 cursor-pointer"
                                     >
-                                        {hasNextPage ? "Ver más aeropuertos" : "Ver todos los resultados"}
+                                        {hasNextPage ? t("airportAutocomplete.seeMoreAirports") : t("airportAutocomplete.seeAllResults")}
                                     </button>
                                 ) : suggestions.length > 0 && (
                                     <div className="py-8 flex justify-center border-t border-line/20 bg-surface/5">
                                         <span className="text-[10px] font-bold text-content-muted/40 uppercase tracking-[0.25em] flex items-center gap-4">
                                             <div className="h-px w-8 bg-line/40" />
-                                            No hay más resultados
+                                            {t("airportAutocomplete.noMoreResults")}
                                             <div className="h-px w-8 bg-line/40" />
                                         </span>
                                     </div>
@@ -464,7 +472,7 @@ export default function AirportAutocomplete({ value, onChange, placeholder, clas
                                         <div className="p-1 rounded-md bg-brand/10 transition-colors group-hover/back:bg-brand/20">
                                             <ChevronLeft size={10} />
                                         </div>
-                                        Volver a resultados destacados
+                                        {t("airportAutocomplete.backToFeatured")}
                                     </button>
                                 </div>
 
@@ -479,7 +487,7 @@ export default function AirportAutocomplete({ value, onChange, placeholder, clas
                                     ) : !hasNextPage && suggestions.length > 0 && (
                                         <span className="text-[10px] font-bold text-content-muted/40 uppercase tracking-[0.25em] flex items-center gap-4">
                                             <div className="h-px w-8 bg-line/40" />
-                                            No hay más resultados
+                                            {t("airportAutocomplete.noMoreResults")}
                                             <div className="h-px w-8 bg-line/40" />
                                         </span>
                                     )}
@@ -497,8 +505,8 @@ export default function AirportAutocomplete({ value, onChange, placeholder, clas
                             <Search size={32} />
                         </div>
                         <div className="flex flex-col gap-1">
-                            <p className="text-sm font-bold">No hay resultados</p>
-                            <p className="text-xs text-content-muted">Prueba con otro código o nombre de ciudad</p>
+                            <p className="text-sm font-bold">{t("airportAutocomplete.noResults")}</p>
+                            <p className="text-xs text-content-muted">{t("airportAutocomplete.tryOtherSearch")}</p>
                         </div>
                     </div>
                 )}
@@ -506,3 +514,4 @@ export default function AirportAutocomplete({ value, onChange, placeholder, clas
         </SmartPopover>
     );
 }
+

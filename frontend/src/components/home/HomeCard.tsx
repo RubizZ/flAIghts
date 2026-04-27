@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { Plus, Globe as GlobeIcon, Calendar as CalendarIcon, Sparkles, SlidersHorizontal, Trash2 } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { AirportResponse } from "@/api/generated/openapi/model";
 import { UnifiedSelection } from "@/types/selection";
 import ManualSearchForm from "../search/ManualSearchForm";
@@ -52,6 +53,7 @@ export default function HomeCard({
     className = "",
     onHoverChange
 }: HomeCardProps) {
+    const { t } = useTranslation();
     const [messages, setMessages] = useState<ExtendedChatMessage[]>([]);
     const chatRef = useRef<any>(null);
 
@@ -100,7 +102,7 @@ export default function HomeCard({
                                     className={`relative z-10 w-32.5 flex items-center justify-center gap-2 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-colors duration-200 flex-none ${searchMode === 'ai' ? 'text-content-on-brand' : 'text-content-muted hover:text-content cursor-pointer'}`}
                                 >
                                     <Sparkles size={14} className={searchMode === 'ai' ? 'animate-pulse' : 'opacity-70'} />
-                                    <span>Asistente IA</span>
+                                    <span>{t('homeCard.aiAssistant')}</span>
                                 </button>
 
                                 <button
@@ -108,7 +110,7 @@ export default function HomeCard({
                                     className={`relative z-10 w-32.5 flex items-center justify-center gap-2 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-colors duration-200 flex-none ${searchMode === 'manual' ? 'text-content-on-brand' : 'text-content-muted hover:text-content cursor-pointer'}`}
                                 >
                                     <SlidersHorizontal size={14} className={searchMode === 'manual' ? '' : 'opacity-70'} />
-                                    <span>Manual</span>
+                                    <span>{t('homeCard.manual')}</span>
                                 </button>
                             </div>
                         </div>
@@ -117,15 +119,15 @@ export default function HomeCard({
                     {/* Title & Subtitle - ONLY VISIBLE ON DESKTOP */}
                     <div className={`order-2 lg:order-1 pt-4 lg:pt-0 hidden lg:grid grid-cols-1 grid-rows-1 ${localMode === 'ai' ? 'grid' : 'grid'}`}>
                         <div className={`col-start-1 row-start-1 flex flex-col gap-0.5 items-center lg:items-start text-center lg:text-left transition-all duration-300 ${localMode === 'manual' ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4 pointer-events-none'}`}>
-                            <h1 className="font-bold text-content tracking-tight text-3xl">Vuela más allá.</h1>
-                            <p className="text-content-muted text-[13px]">Explora destinos mundiales con fl<span className="text-brand">AI</span>ghts.</p>
+                            <h1 className="font-bold text-content tracking-tight text-3xl">{t('homeCard.manualTitle')}</h1>
+                            <p className="text-content-muted text-[13px]">{t('homeCard.manualSubtitle')}<span className="text-brand">AI</span>ghts.</p>
                         </div>
 
                         <div className={`col-start-1 row-start-1 flex flex-col gap-0.5 items-center lg:items-start text-center lg:text-left transition-all duration-300 ${localMode === 'ai' ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4 pointer-events-none'}`}>
                             <h1 className="font-bold text-content tracking-tight text-3xl">
                                 Agente fl<span className="text-brand">AI</span>ghts
                             </h1>
-                            <p className="text-content-muted text-[13px]">Tu copiloto inteligente para planificar viajes.</p>
+                            <p className="text-content-muted text-[13px]">{t('homeCard.aiSubtitle')}</p>
                         </div>
 
                     </div>
@@ -146,7 +148,7 @@ export default function HomeCard({
                                     className="mx-auto bg-surface/90 dark:bg-main/90 backdrop-blur-3xl px-5 py-2.5 rounded-full border border-line flex items-center gap-2.5 shadow-2xl active:scale-95 transition-all cursor-pointer whitespace-nowrap"
                                 >
                                     <GlobeIcon size={14} className="text-brand" />
-                                    <span className="text-[10px] font-bold uppercase tracking-widest text-content">Explorar globo terráqueo</span>
+                                    <span className="text-[10px] font-bold uppercase tracking-widest text-content">{t('homeCard.exploreGlobe')}</span>
                                 </button>
 
                                 <div className="flex items-center gap-4 px-2">
@@ -179,17 +181,6 @@ export default function HomeCard({
                             today={today}
                             onHoverChange={onHoverChange}
                         />
-                        <div className="flex items-center justify-center gap-4 text-xs text-content-muted pb-2 shrink-0">
-                            <div className="flex items-center gap-1">
-                                <Plus size={12} className="text-brand" />
-                                <span>Añadir escala</span>
-                            </div>
-                            <div className="w-1 h-1 bg-line rounded-full" />
-                            <div className="flex items-center gap-1">
-                                <SlidersHorizontal size={12} className="text-brand" />
-                                <span>Filtros avanzados</span>
-                            </div>
-                        </div>
                     </div>
                 ) : (
                     <div className="flex flex-col flex-1 min-h-0 w-full h-full relative group">

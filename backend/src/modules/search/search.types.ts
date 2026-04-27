@@ -29,6 +29,28 @@ export interface SearchRequest {
         max_price?: number;
     };
 
+    dates?: string[];
+    source?: "manual" | "agent";
+}
+
+export interface GeneticTripRequest {
+    /**
+     * @pattern ^[A-Z]{3}$
+     */
+    origin: string;
+    /**
+     * @minItems 1
+     * @pattern ^[A-Z]{3}$
+     */
+    cities: string[];
+    /**
+     * @isDateTime Fecha de inicio del viaje
+     */
+    startDate: Date;
+    /**
+     * @minimum 1
+     */
+    daysPerCity: number;
     layover_days?: number[];
     source?: "manual" | "agent";
 }
@@ -48,6 +70,7 @@ export interface LegResponse {
     airplane: string;
     flight_number: string;
     travel_class: string;
+    booking_token?: string;
     extensions?: string[];
 }
 
@@ -98,10 +121,31 @@ export type SearchRequestValidationFailResponse = RequestValidationFailResponse<
 // Unión de todas las posibles respuestas 422 para search
 export type SearchValidationFailResponse = SearchRequestValidationFailResponse | DatabaseValidationFailResponse;
 
+export interface FlightSegment {
+    departure_airport: {
+        name: string;
+        id: string;
+        time: string;
+    };
+    arrival_airport: {
+        name: string;
+        id: string;
+        time: string;
+    };
+    duration: number;
+    airplane: string;
+    airline: string;
+    airline_logo?: string;
+    travel_class: string;
+    flight_number: string;
+    extensions?: string[];
+}
+
 export interface EnrichedFlightEdge extends DijkstraFlightEdge {
     airplane: string;
     flight_number: string;
     travel_class: string;
+    departure_token?: string;
     extensions?: string[];
 }
 

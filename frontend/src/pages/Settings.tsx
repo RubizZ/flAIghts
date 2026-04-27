@@ -27,16 +27,33 @@ import { useTheme } from "@/context/ThemeContext";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useChangePassword, useConnectGoogle, useDisconnectGoogle, useSetPassword, useRequestSecurityCode } from "@/api/generated/openapi/auth";
 import UserAvatar from "@/components/ui/UserAvatar";
+import { useTranslation } from "react-i18next";
 import { GoogleLogin } from "@react-oauth/google";
 
 export default function Settings() {
+    const { t, i18n } = useTranslation();
     const { user, logout, refetch, isAuthenticated, isLoading } = useAuth();
     const { theme, setTheme } = useTheme();
     const navigate = useNavigate();
     const queryClient = useQueryClient();
     const [searchParams, setSearchParams] = useSearchParams();
 
-    const activeTab = searchParams.get("tab") || "perfil";
+    const tabs = [
+        { id: 'profile', label: t("settings.tabs.profile"), icon: User },
+        { id: 'preferences', label: t("settings.tabs.preferences"), icon: Sliders },
+        { id: 'security', label: t("settings.tabs.security"), icon: Shield },
+        { id: 'appearance', label: t("settings.tabs.appearance"), icon: Sun },
+    ] as const;
+
+    const paramTab = searchParams.get("tab");
+    const activeTab = (paramTab && tabs.map((t) => t.id).includes(paramTab as typeof tabs[number]['id'])) ? paramTab as typeof tabs[number]['id'] : "profile";
+
+    useEffect(() => {
+        if (!paramTab || !tabs.map(t => t.id).includes(paramTab as typeof tabs[number]['id'])) {
+            setSearchParams({ tab: 'profile' }, { replace: true });
+        }
+    }, [paramTab, setSearchParams]);
+
     const mainContentRef = useRef<HTMLDivElement>(null);
 
     const setActiveTab = (tab: string) => {
@@ -85,12 +102,12 @@ export default function Settings() {
     const [newEmailCode, setNewEmailCode] = useState("");
     const isInitiatingRequest = useRef(false);
     useEffect(() => {
-        if (user?.pending_email && activeTab === 'seguridad') {
+        if (user?.pending_email && activeTab === 'security') {
             if (isInitiatingRequest.current) {
                 isInitiatingRequest.current = false;
                 return;
             }
-            toast.info("Tienes un cambio de email pendiente de verificación", {
+            toast.info(t("settings.toast.pendingEmail"), {
                 id: "pending-email-toast"
             });
         }
@@ -111,10 +128,10 @@ export default function Settings() {
     const { mutate: updateProfile, isPending: isUpdating } = useUpdateUser({
         mutation: {
             onSuccess: (_, variables) => {
-                toast.success("Perfil actualizado con éxito");
+                toast.success(t("settings.toast.success"));
                 queryClient.invalidateQueries({ queryKey: getGetSelfUserQueryKey() });
-                if (user?._id) {
-                    queryClient.invalidateQueries({ queryKey: getGetUserByIdQueryKey(user._id) });
+                if (user!._id) {
+                    queryClient.invalidateQueries({ queryKey: getGetUserByIdQueryKey(user!._id) });
                 }
                 refetch();
 
@@ -124,7 +141,7 @@ export default function Settings() {
                 }
             },
             onError: (error) => {
-                toast.error(error.message || "Error al actualizar el perfil");
+                toast.error(error.message || t("settings.toast.error"));
             }
         }
     });
@@ -133,7 +150,7 @@ export default function Settings() {
         mutation: {
             onSuccess: () => {
                 isInitiatingRequest.current = true;
-                toast.success("Solicitud de cambio de email iniciada. Introduce los códigos enviados.", {
+                toast.success(t("settings.toast.pending"), {
                     id: "pending-email-toast"
                 });
                 queryClient.invalidateQueries({ queryKey: getGetSelfUserQueryKey() });
@@ -141,9 +158,9 @@ export default function Settings() {
             },
             onError: (error) => {
                 if (error.code === "EMAIL_ALREADY_IN_USE") {
-                    toast.error("El nuevo email ya está en uso");
+                    toast.error(t("settings.toast.emailInUse"));
                 } else if (error.code === "REQUEST_VALIDATION_ERROR") {
-                    toast.error("El nuevo email es invalido");
+                    toast.error(t("settings.toast.invalidEmail"));
                 }
             }
         }
@@ -152,20 +169,20 @@ export default function Settings() {
     const { mutate: completeEmailChange, isPending: isCompletingEmailChange } = useCompleteEmailChange({
         mutation: {
             onSuccess: () => {
-                toast.success("Email actualizado correctamente");
+                toast.success(t("settings.toast.emailUpdatedSuccess"));
                 setOldEmailCode("");
                 setNewEmailCode("");
                 queryClient.invalidateQueries({ queryKey: getGetSelfUserQueryKey() });
-                if (user?._id) {
-                    queryClient.invalidateQueries({ queryKey: getGetUserByIdQueryKey(user._id) });
+                if (user!._id) {
+                    queryClient.invalidateQueries({ queryKey: getGetUserByIdQueryKey(user!._id) });
                 }
                 refetch();
             },
             onError: (error) => {
                 if (error.code === "EMAIL_VERIFICATION_CODE_INVALID_OR_EXPIRED") {
-                    toast.error("Uno o ambos códigos son inválidos o han expirado");
+                    toast.error(t("settings.toast.emailVerificationCodeInvalidOrExpired"));
                 } else {
-                    toast.error(error.message || "Error al completar el cambio de email");
+                    toast.error(error.message || t("settings.toast.emailUpdateError"));
                 }
             }
         }
@@ -174,15 +191,15 @@ export default function Settings() {
     const { mutate: cancelEmailChange, isPending: isCancellingEmailChange } = useCancelEmailChange({
         mutation: {
             onSuccess: () => {
-                toast.success("Cambio de email cancelado");
+                toast.success(t("settings.toast.emailCancelError"));
                 setOldEmailCode("");
                 setNewEmailCode("");
-                setEmail(user?.email ?? "");
+                setEmail(user!.email);
                 queryClient.invalidateQueries({ queryKey: getGetSelfUserQueryKey() });
                 refetch();
             },
             onError: (error) => {
-                toast.error(error.message || "Error al cancelar el cambio de email");
+                toast.error(error.message || t("settings.toast.emailCancelError"));
             }
         }
     });
@@ -190,14 +207,14 @@ export default function Settings() {
     const { mutate: changePassword, isPending: isChangingPassword } = useChangePassword({
         mutation: {
             onSuccess: () => {
-                toast.success("Contraseña actualizada correctamente");
+                toast.success(t("settings.toast.passwordUpdatedSuccess"));
                 setNewPassword("");
                 setConfirmPassword("");
                 setVerificationStep({ active: false, action: null, actionLabel: "", code: "", transactionId: "" });
                 refetch();
             },
             onError: (error) => {
-                toast.error(error.message || "Error al actualizar la contraseña");
+                toast.error(error.message || t("settings.toast.passwordUpdateError"));
             }
         }
     });
@@ -245,15 +262,15 @@ export default function Settings() {
     const { mutate: uploadAvatar, isPending: isUploadingAvatar } = useSetProfilePicture({
         mutation: {
             onSuccess: () => {
-                toast.success("Foto de perfil actualizada correctamente");
+                toast.success(t("settings.toast.avatarUpdatedSuccess"));
                 queryClient.invalidateQueries({ queryKey: getGetSelfUserQueryKey() });
-                if (user?._id) {
-                    queryClient.invalidateQueries({ queryKey: getGetUserByIdQueryKey(user._id) });
+                if (user!._id) {
+                    queryClient.invalidateQueries({ queryKey: getGetUserByIdQueryKey(user!._id) });
                 }
                 refetch();
             },
             onError: (error) => {
-                toast.error(error.message || "Error al subir la imagen");
+                toast.error(error.message || t("settings.toast.error"));
             }
         }
     });
@@ -290,7 +307,7 @@ export default function Settings() {
 
         // Limite de 5MB
         if (file.size > 5 * 1024 * 1024) {
-            toast.error("La imagen es demasiado grande (máx. 5MB)");
+            toast.error(t("settings.avatar.validation.fileTooBig"));
             return;
         }
 
@@ -301,7 +318,7 @@ export default function Settings() {
 
     const handleVerifyEmailChange = () => {
         if (!oldEmailCode || !newEmailCode) {
-            toast.error("Por favor, introduce ambos códigos");
+            toast.error(t("settings.security.email.validation.codesRequired"));
             return;
         }
         completeEmailChange({
@@ -321,20 +338,20 @@ export default function Settings() {
 
     const handleSavePassword = () => {
         if (!newPassword || !confirmPassword) {
-            toast.error("Por favor, rellena todos los campos");
+            toast.error(t("settings.security.password.validation.allFieldsRequired"));
             return;
         }
         if (newPassword !== confirmPassword) {
-            toast.error("Las contraseñas nuevas no coinciden");
+            toast.error(t("settings.security.password.validation.passwordMismatch"));
             return;
         }
         if (newPassword.length < 8) {
-            toast.error("La nueva contraseña debe tener al menos 8 caracteres");
+            toast.error(t("settings.security.password.validation.minLength"));
             return;
         }
 
-        const action = user?.is_password_set ? 'change-password' : 'set-password';
-        const actionLabel = user?.is_password_set ? 'Cambio de contraseña' : 'Establecer contraseña';
+        const action = user!.is_password_set ? 'change-password' : 'set-password';
+        const actionLabel = user!.is_password_set ? 'Cambio de contraseña' : 'Establecer contraseña';
 
         setVerificationStep({
             active: false,
@@ -396,13 +413,6 @@ export default function Settings() {
         );
     }
 
-    const tabs = [
-        { id: 'perfil', label: 'Perfil', icon: User },
-        { id: 'preferencias', label: 'Preferencias', icon: Sliders },
-        { id: 'seguridad', label: 'Seguridad', icon: Shield },
-        { id: 'apariencia', label: 'Apariencia', icon: Sun },
-    ] as const;
-
     return (
         <div className="max-w-4xl mx-auto p-4 sm:p-8">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -417,7 +427,7 @@ export default function Settings() {
                             >
                                 <ArrowLeft size={20} className="group-hover:-translate-x-1 transition-transform" />
                             </button>
-                            <h1 className="text-2xl font-bold text-content">Ajustes</h1>
+                            <h1 className="text-2xl font-bold text-content">{t("settings.title")}</h1>
                         </div>
 
                         {/* Card de navegación */}
@@ -443,7 +453,7 @@ export default function Settings() {
                                     >
                                         <div className="relative">
                                             <tab.icon size={18} />
-                                            {tab.id === 'seguridad' && user.pending_email && (
+                                            {tab.id === 'security' && user.pending_email && (
                                                 <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-brand border-2 border-white dark:border-slate-900 rounded-full animate-pulse shadow-sm" />
                                             )}
                                         </div>
@@ -457,7 +467,7 @@ export default function Settings() {
                                     onClick={logout}
                                     className="w-full flex items-center gap-3 p-3 text-red-500 hover:bg-red-50 rounded-2xl transition-all font-bold cursor-pointer"
                                 >
-                                    <LogOut size={18} /> Cerrar sesión
+                                    <LogOut size={18} /> {t("settings.general.logout")}
                                 </button>
                             </div>
                         </div>
@@ -467,14 +477,14 @@ export default function Settings() {
                 {/* Main Content */}
                 <div ref={mainContentRef} className="md:col-span-2 flex flex-col gap-8 min-h-[60vh] md:pt-15">
                     {/* Seccion Perfil */}
-                    {activeTab === 'perfil' && (
+                    {activeTab === 'profile' && (
                         <>
                             <section className="bg-main border border-line rounded-3xl shadow-sm p-6 sm:p-8 animate-fade-in animate-duration-300">
                                 <div className="flex items-center gap-3 mb-6">
                                     <div className="p-2 bg-brand/10 text-brand rounded-xl">
                                         <User size={20} />
                                     </div>
-                                    <h2 className="text-xl font-bold">Información del Perfil</h2>
+                                    <h2 className="text-xl font-bold">{t("settings.profile.title")}</h2>
                                 </div>
 
                                 <div className="space-y-6">
@@ -498,11 +508,11 @@ export default function Settings() {
                                             )}
                                         </div>
                                         <div className="flex flex-col gap-2 text-center sm:text-left">
-                                            <h3 className="font-bold text-lg">Tu foto de perfil</h3>
-                                            <p className="text-xs text-content-muted opacity-70 mb-2">Máximo 5MB.</p>
+                                            <h3 className="font-bold text-lg">{t("settings.avatar.title")}</h3>
+                                            <p className="text-xs text-content-muted opacity-70 mb-2">{t("settings.avatar.maxSize")}</p>
                                             <div className="flex flex-wrap gap-2 justify-center sm:justify-start">
                                                 <label className="px-4 py-2 bg-brand text-content-on-brand rounded-xl text-xs font-bold hover:opacity-90 transition-all cursor-pointer flex items-center gap-2">
-                                                    <Upload size={14} /> Seleccionar nueva foto
+                                                    <Upload size={14} /> {t("settings.avatar.selectNew")}
                                                     <input
                                                         type="file"
                                                         accept="image/*"
@@ -517,14 +527,14 @@ export default function Settings() {
 
                                     <div className="grid grid-cols-1 gap-4">
                                         <div className="space-y-2">
-                                            <label className="text-sm font-bold text-content-muted ml-1">Nombre de usuario</label>
+                                            <label className="text-sm font-bold text-content-muted ml-1">{t("settings.profile.username")}</label>
                                             <div className="relative">
                                                 <input
                                                     type="text"
                                                     value={username}
                                                     onChange={(e) => setUsername(e.target.value)}
                                                     className="w-full px-4 py-3 bg-main border border-line rounded-2xl focus:ring-2 focus:ring-brand focus:border-brand outline-none transition-all pl-11"
-                                                    placeholder="Tu nombre de usuario"
+                                                    placeholder={t("settings.profile.usernamePlaceholder")}
                                                 />
                                                 <div className="absolute left-4 top-1/2 -translate-y-1/2 text-content-muted opacity-50">
                                                     <User size={18} />
@@ -535,18 +545,18 @@ export default function Settings() {
                                 </div>
 
                                 <div className="pt-4 mt-6 border-t border-line space-y-3">
-                                    <label className="text-sm font-bold text-content-muted ml-1 block">Visibilidad del perfil</label>
+                                    <label className="text-sm font-bold text-content-muted ml-1 block">{t("settings.profile.profileVisibility")}</label>
                                     <div className="flex items-center justify-between p-4 bg-surface/50 rounded-2xl border border-line">
                                         <div className="flex items-center gap-4">
                                             <div className={`p-3 rounded-full ${isPublic ? 'bg-green-100 text-green-600' : 'bg-amber-100 text-amber-600'}`}>
                                                 {isPublic ? <Globe size={20} /> : <Lock size={20} />}
                                             </div>
                                             <div>
-                                                <h3 className="font-bold">{isPublic ? "Perfil Público" : "Perfil Privado"}</h3>
+                                                <h3 className="font-bold">{isPublic ? t("settings.profile.public") : t("settings.profile.private")}</h3>
                                                 <p className="text-xs text-content-muted opacity-70">
                                                     {isPublic
-                                                        ? "Otros usuarios pueden ver tus búsquedas recientes y estadísticas."
-                                                        : "Tus búsquedas y estadísticas son totalmente privadas."}
+                                                        ? t("settings.profile.publicDesc")
+                                                        : t("settings.profile.privateDesc")}
                                                 </p>
                                             </div>
                                         </div>
@@ -568,7 +578,7 @@ export default function Settings() {
                                         disabled={isUpdating || !hasProfileChanged}
                                         className="px-6 py-3 bg-brand text-content-on-brand rounded-2xl text-sm font-bold hover:opacity-90 transition-all disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed flex items-center gap-2 hover:scale-[1.02] active:scale-95"
                                     >
-                                        {isUpdating ? "Guardando..." : "Guardar cambios del perfil"}
+                                        {isUpdating ? t("settings.profile.saving") : t("settings.profile.save")}
                                     </button>
                                 </div>
                             </section>
@@ -578,26 +588,26 @@ export default function Settings() {
                     )}
 
                     {/* Seccion Preferencias de Vuelos */}
-                    {activeTab === 'preferencias' && (
+                    {activeTab === 'preferences' && (
                         <section className="bg-main border border-line rounded-3xl shadow-sm p-6 sm:p-8 animate-fade-in animate-duration-300">
                             <div className="flex items-center justify-between mb-2">
                                 <div className="flex items-center gap-3">
                                     <div className="p-2 bg-brand/10 text-brand rounded-xl">
                                         <Sliders size={20} />
                                     </div>
-                                    <h2 className="text-xl font-bold">Pesos de búsqueda</h2>
+                                    <h2 className="text-xl font-bold">{t("settings.preferences.title")}</h2>
                                 </div>
                             </div>
                             <div className="flex flex-col gap-4 mb-8 border-b border-line pb-6">
                                 <p className="text-sm text-content-muted opacity-70">
-                                    Ajusta el nivel de importancia de los factores al buscar vuelos.
+                                    {t("settings.preferences.description")}
                                 </p>
                                 <div className="p-4 bg-amber-500/10 border border-amber-500/20 rounded-2xl flex items-start gap-3">
                                     <AlertCircle className="text-amber-500 shrink-0 mt-0.5" size={18} />
                                     <div className="flex flex-col gap-1">
-                                        <p className="text-sm font-bold text-amber-500">¿Cómo ajustar los pesos?</p>
+                                        <p className="text-sm font-bold text-amber-500">{t("settings.preferences.infoTitle")}</p>
                                         <p className="text-xs text-content-muted opacity-80 leading-relaxed">
-                                            Ten en cuenta que si le das mucha más importancia a uno de los campos, debes representarlo correctamente en relación a los demás. Es decir, si te importa que el vuelo sea corto, pero te importa <strong>mucho más</strong> que el precio sea barato, no pongas la duración a 1, déjala en un valor menor para que el algoritmo priorice el precio.
+                                            {t("settings.preferences.weightsInfo")}
                                         </p>
                                     </div>
                                 </div>
@@ -606,55 +616,55 @@ export default function Settings() {
                             <div className="space-y-8">
                                 {[
                                     {
-                                        label: "Precio",
+                                        label: t("settings.preferences.fields.price"),
                                         value: priceWeight,
                                         setter: setPriceWeight,
                                         icon: "💵",
                                         getDescription: (v: number) => {
-                                            if (v === 0) return "El precio me es indiferente";
-                                            if (v < 0.3) return "Pagaría más por un mejor vuelo";
-                                            if (v < 0.7) return "Busco un equilibrio razonable en el precio";
-                                            if (v < 1) return "Suelo priorizar que el precio sea bajo";
-                                            return "Cuanto más barato mejor";
+                                            if (v === 0) return t("settings.preferences.descriptions.price.0");
+                                            if (v < 0.3) return t("settings.preferences.descriptions.price.low");
+                                            if (v < 0.7) return t("settings.preferences.descriptions.price.medium");
+                                            if (v < 1) return t("settings.preferences.descriptions.price.high");
+                                            return t("settings.preferences.descriptions.price.max");
                                         }
                                     },
                                     {
-                                        label: "Duración",
+                                        label: t("settings.preferences.fields.duration"),
                                         value: durationWeight,
                                         setter: setDurationWeight,
                                         icon: "⏱️",
                                         getDescription: (v: number) => {
-                                            if (v === 0) return "El tiempo de viaje me es indiferente";
-                                            if (v < 0.3) return "No me importa si el vuelo dura más";
-                                            if (v < 0.7) return "Prefiero no estar demasiadas horas de viaje";
-                                            if (v < 1) return "Intento llegar lo antes posible a mi destino";
-                                            return "Quiero el vuelo más rápido posible";
+                                            if (v === 0) return t("settings.preferences.descriptions.duration.0");
+                                            if (v < 0.3) return t("settings.preferences.descriptions.duration.low");
+                                            if (v < 0.7) return t("settings.preferences.descriptions.duration.medium");
+                                            if (v < 1) return t("settings.preferences.descriptions.duration.high");
+                                            return t("settings.preferences.descriptions.duration.max");
                                         }
                                     },
                                     {
-                                        label: "Escalas",
+                                        label: t("settings.preferences.fields.stops"),
                                         value: stopsWeight,
                                         setter: setStopsWeight,
                                         icon: "✈️",
                                         getDescription: (v: number) => {
-                                            if (v === 0) return "Me da igual hacer muchas escalas";
-                                            if (v < 0.3) return "Hacer varias paradas no me supone un problema";
-                                            if (v < 0.7) return "Prefiero rutas con pocas escalas si es posible";
-                                            if (v < 1) return "Intento evitar hacer transbordos";
-                                            return "Busco vuelos directos sin paradas";
+                                            if (v === 0) return t("settings.preferences.descriptions.stops.0");
+                                            if (v < 0.3) return t("settings.preferences.descriptions.stops.low");
+                                            if (v < 0.7) return t("settings.preferences.descriptions.stops.medium");
+                                            if (v < 1) return t("settings.preferences.descriptions.stops.high");
+                                            return t("settings.preferences.descriptions.stops.max");
                                         }
                                     },
                                     {
-                                        label: "Calidad Aerolínea",
+                                        label: t("settings.preferences.fields.airline"),
                                         value: airlineWeight,
                                         setter: setAirlineWeight,
                                         icon: "⭐",
                                         getDescription: (v: number) => {
-                                            if (v === 0) return "Me da igual con qué aerolínea volar";
-                                            if (v < 0.3) return "Me adapto a aerolíneas de bajo coste sin problema";
-                                            if (v < 0.7) return "Valoro un servicio aceptable a bordo";
-                                            if (v < 1) return "Prefiero aerolíneas tradicionales y cómodas";
-                                            return "Busco siempre las aerolíneas mejor valoradas";
+                                            if (v === 0) return t("settings.preferences.descriptions.airline.0");
+                                            if (v < 0.3) return t("settings.preferences.descriptions.airline.low");
+                                            if (v < 0.7) return t("settings.preferences.descriptions.airline.medium");
+                                            if (v < 1) return t("settings.preferences.descriptions.airline.high");
+                                            return t("settings.preferences.descriptions.airline.max");
                                         }
                                     },
                                 ].map((item) => (
@@ -694,26 +704,26 @@ export default function Settings() {
                                     disabled={isUpdating || !hasPreferencesChanged}
                                     className="px-6 py-3 bg-brand text-content-on-brand rounded-2xl text-sm font-bold hover:opacity-90 transition-all disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed flex items-center gap-2 hover:scale-[1.02] active:scale-95"
                                 >
-                                    {isUpdating ? "Guardando..." : "Guardar preferencias"}
+                                    {isUpdating ? t("settings.preferences.saving") : t("settings.preferences.save")}
                                 </button>
                             </div>
                         </section>
                     )}
 
                     {/* Seccion Seguridad */}
-                    {activeTab === 'seguridad' && (
+                    {activeTab === 'security' && (
                         <div className="flex flex-col gap-8">
                             <section className="bg-main border border-line rounded-3xl shadow-sm p-6 sm:p-8 animate-fade-in animate-duration-300">
                                 <div className="flex items-center gap-3 mb-6">
                                     <div className="p-2 bg-brand/10 text-brand rounded-xl">
                                         <Mail size={20} />
                                     </div>
-                                    <h2 className="text-xl font-bold">Dirección de correo electrónico</h2>
+                                    <h2 className="text-xl font-bold">{t("settings.security.email.title")}</h2>
                                 </div>
 
                                 <div className="space-y-4">
                                     <div className="space-y-1">
-                                        <p className="text-sm text-content-muted opacity-70 ml-1">Utilizamos este correo principal para identificarte y para enviarte notificaciones.</p>
+                                        <p className="text-sm text-content-muted opacity-70 ml-1">{t("settings.security.email.description")}</p>
                                     </div>
 
                                     {!user.pending_email ? (
@@ -724,7 +734,7 @@ export default function Settings() {
                                                     value={email}
                                                     onChange={(e) => setEmail(e.target.value)}
                                                     className="w-full px-4 py-3 bg-main border border-line rounded-2xl focus:ring-2 focus:ring-brand focus:border-brand outline-none transition-all pl-11"
-                                                    placeholder="tu@email.com"
+                                                    placeholder={t("settings.security.email.placeholder")}
                                                 />
                                                 <div className="absolute left-4 top-1/2 -translate-y-1/2 text-content-muted opacity-50 pointer-events-none">
                                                     <Mail size={18} />
@@ -737,7 +747,7 @@ export default function Settings() {
                                                     disabled={isInitiatingEmailChange || email.toLowerCase() === user.email.toLowerCase()}
                                                     className="px-6 py-3 bg-brand text-content-on-brand rounded-2xl text-sm font-bold hover:opacity-90 transition-all disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed flex items-center gap-2 hover:scale-[1.02] active:scale-95"
                                                 >
-                                                    {isInitiatingEmailChange ? "Actualizando..." : "Actualizar correo electrónico"}
+                                                    {isInitiatingEmailChange ? t("settings.security.email.updating") : t("settings.security.email.update")}
                                                 </button>
                                             </div>
                                         </div>
@@ -746,17 +756,16 @@ export default function Settings() {
                                             <div className="flex items-start gap-3">
                                                 <AlertCircle className="text-brand shrink-0 mt-0.5" size={18} />
                                                 <div className="flex flex-col gap-1">
-                                                    <p className="text-sm font-bold text-brand">Cambio de email pendiente</p>
+                                                    <p className="text-sm font-bold text-brand">{t("settings.security.email.pending")}</p>
                                                     <p className="text-xs text-content-muted opacity-80 leading-relaxed">
-                                                        Hemos enviado códigos a tu email actual (<span className="font-bold">{user.email}</span>)
-                                                        y al nuevo (<span className="font-bold">{user.pending_email}</span>).
+                                                        {t("settings.security.email.pendingMessage")} (<span className="font-bold">{user.email}</span>) {t("settings.security.email.pendingMessage")} (<span className="font-bold">{user.pending_email}</span>).
                                                     </p>
                                                 </div>
                                             </div>
 
                                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                                 <div className="space-y-1">
-                                                    <label className="text-[10px] uppercase font-bold text-content-muted/70 ml-1">Código email actual</label>
+                                                    <label className="text-[10px] uppercase font-bold text-content-muted/70 ml-1">{t("settings.security.email.codes.old")}</label>
                                                     <div className="relative">
                                                         <input
                                                             type="text"
@@ -769,7 +778,7 @@ export default function Settings() {
                                                     </div>
                                                 </div>
                                                 <div className="space-y-1">
-                                                    <label className="text-[10px] uppercase font-bold text-content-muted/70 ml-1">Código nuevo email</label>
+                                                    <label className="text-[10px] uppercase font-bold text-content-muted/70 ml-1">{t("settings.security.email.codes.new")}</label>
                                                     <div className="relative">
                                                         <input
                                                             type="text"
@@ -789,14 +798,14 @@ export default function Settings() {
                                                     disabled={isCompletingEmailChange || isCancellingEmailChange}
                                                     className="flex-1 py-2 bg-brand text-content-on-brand rounded-xl text-xs font-bold hover:scale-[1.01] transition-all disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed active:scale-95"
                                                 >
-                                                    {isCompletingEmailChange ? "Verificando..." : "Confirmar cambio"}
+                                                    {isCompletingEmailChange ? t("settings.security.email.verifying") : t("settings.security.email.verify")}
                                                 </button>
                                                 <button
                                                     onClick={() => cancelEmailChange()}
                                                     disabled={isCancellingEmailChange || isCompletingEmailChange}
                                                     className="py-2 px-4 bg-surface border border-line text-content-muted rounded-xl text-xs font-bold hover:border-red-400 hover:text-red-500 transition-all disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed active:scale-95"
                                                 >
-                                                    {isCancellingEmailChange ? "Cancelando..." : "Cancelar"}
+                                                    {isCancellingEmailChange ? t("settings.security.email.cancelling") : t("settings.security.email.cancel")}
                                                 </button>
                                             </div>
                                         </div>
@@ -809,19 +818,19 @@ export default function Settings() {
                                     <div className="p-2 bg-brand/10 text-brand rounded-xl">
                                         <Shield size={20} />
                                     </div>
-                                    <h2 className="text-xl font-bold">{user.is_password_set ? "Contraseña" : "Establecer Contraseña"}</h2>
+                                    <h2 className="text-xl font-bold">{user.is_password_set ? t("settings.security.password.title") : t("settings.security.password.setTitle")}</h2>
                                 </div>
 
                                 <p className="text-sm text-content-muted mb-8 opacity-70 border-b border-line pb-4">
                                     {user.is_password_set
-                                        ? "Cambia tu contraseña periódicamente para mantener tu cuenta segura."
-                                        : "Aún no has establecido una contraseña manual. Te recomendamos hacerlo para poder acceder si pierdes el acceso a servicios externos."}
+                                        ? t("settings.security.password.description")
+                                        : t("settings.security.password.setDesc")}
                                 </p>
 
                                 <div className="space-y-6">
                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                         <div className="space-y-2">
-                                            <label className="text-sm font-bold text-content-muted ml-1">Nueva contraseña</label>
+                                            <label className="text-sm font-bold text-content-muted ml-1">{t("settings.security.password.new")}</label>
                                             <div className="relative">
                                                 <input
                                                     type={showPasswords ? "text" : "password"}
@@ -836,7 +845,7 @@ export default function Settings() {
                                             </div>
                                         </div>
                                         <div className="space-y-2">
-                                            <label className="text-sm font-bold text-content-muted ml-1">Confirmar nueva contraseña</label>
+                                            <label className="text-sm font-bold text-content-muted ml-1">{t("settings.security.password.confirm")}</label>
                                             <div className="relative">
                                                 <input
                                                     type={showPasswords ? "text" : "password"}
@@ -859,16 +868,16 @@ export default function Settings() {
                                             className="text-xs font-bold text-brand hover:underline flex items-center gap-2 cursor-pointer"
                                         >
                                             {showPasswords ? <EyeOff size={14} /> : <Eye size={14} />}
-                                            {showPasswords ? "Ocultar contraseñas" : "Mostrar contraseñas"}
+                                            {showPasswords ? t("settings.security.password.hide") : t("settings.security.password.show")}
                                         </button>
                                     </div>
 
                                     <div className="mt-4 p-4 bg-brand/5 rounded-2xl border border-line">
-                                        <h4 className="text-xs font-bold text-brand uppercase tracking-wider mb-2">Requisitos:</h4>
+                                        <h4 className="text-xs font-bold text-brand uppercase tracking-wider mb-2">{t("settings.security.password.requirements.title")}</h4>
                                         <ul className="text-xs text-content-muted space-y-1 list-disc ml-4 opacity-80">
-                                            <li>Mínimo 8 caracteres</li>
-                                            <li>Debe ser diferente a la actual</li>
-                                            <li>Recomendamos incluir números y símbolos</li>
+                                            <li>{t("settings.security.password.requirements.minLength")}</li>
+                                            <li>{t("settings.security.password.requirements.different")}</li>
+                                            <li>{t("settings.security.password.requirements.recommended")}</li>
                                         </ul>
                                     </div>
 
@@ -878,7 +887,7 @@ export default function Settings() {
                                             disabled={isChangingPassword || isSettingPassword || !newPassword || !confirmPassword}
                                             className="px-6 py-3 bg-brand text-content-on-brand rounded-2xl text-sm font-bold hover:opacity-90 transition-all disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed flex items-center gap-2 hover:scale-[1.02] active:scale-95"
                                         >
-                                            {(isChangingPassword || isSettingPassword) ? "Actualizando..." : (user.is_password_set ? "Actualizar contraseña" : "Establecer contraseña")}
+                                            {(isChangingPassword || isSettingPassword) ? t("settings.security.password.updating") : (user.is_password_set ? t("settings.security.password.update") : t("settings.security.password.set"))}
                                         </button>
                                     </div>
                                 </div>
@@ -889,11 +898,11 @@ export default function Settings() {
                                     <div className="p-2 bg-brand/10 text-brand rounded-xl">
                                         <LayoutGrid size={20} />
                                     </div>
-                                    <h2 className="text-xl font-bold">Aplicaciones conectadas</h2>
+                                    <h2 className="text-xl font-bold">{t("settings.security.apps.title")}</h2>
                                 </div>
 
                                 <p className="text-sm text-content-muted mb-8 opacity-70 border-b border-line pb-4">
-                                    Gestiona las cuentas de terceros vinculadas a tu cuenta de flAIghts.
+                                    {t("settings.security.apps.description")}
                                 </p>
 
                                 <div className="space-y-4">
@@ -911,8 +920,8 @@ export default function Settings() {
                                                 <h3 className="font-bold">Google</h3>
                                                 <p className="text-xs text-content-muted opacity-70">
                                                     {user.google_id
-                                                        ? (user.google_email || "Cuenta vinculada correctamente")
-                                                        : "No has vinculado tu cuenta de Google"}
+                                                        ? (user.google_email || t("settings.security.apps.google.linked"))
+                                                        : t("settings.security.apps.google.notLinked")}
                                                 </p>
                                             </div>
                                         </div>
@@ -920,12 +929,12 @@ export default function Settings() {
                                             {user.google_id ? (
                                                 <div className="flex items-center gap-3">
                                                     <span className="px-3 py-1 bg-green-500/10 text-green-500 text-[10px] font-black uppercase tracking-widest rounded-full border border-green-500/20">
-                                                        Conectado
+                                                        {t("settings.security.apps.google.connected")}
                                                     </span>
                                                     <button
                                                         onClick={handleDisconnectGoogle}
                                                         disabled={isDisconnectingGoogle}
-                                                        title="Desconectar cuenta de Google"
+                                                        title={t("settings.security.apps.google.disconnect")}
                                                         className="p-1.5 text-content-muted hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-all cursor-pointer disabled:opacity-50"
                                                     >
                                                         {isDisconnectingGoogle ? (
@@ -936,32 +945,34 @@ export default function Settings() {
                                                     </button>
                                                 </div>
                                             ) : (
-                                                <div className="flex flex-col items-end gap-2">
-                                                    <GoogleLogin
-                                                        onSuccess={credentialResponse => {
-                                                            if (credentialResponse.credential) {
-                                                                const actionLabel = "Vincular Google";
-                                                                setVerificationStep({
-                                                                    active: false,
-                                                                    action: 'connect-google',
-                                                                    actionLabel,
-                                                                    code: "",
-                                                                    data: { credential: credentialResponse.credential }
-                                                                });
-                                                                requestCode({
-                                                                    data: { actionName: 'connect-google' }
-                                                                });
-                                                            }
-                                                        }}
-                                                        onError={() => {
-                                                            toast.error('Error al conectar con Google');
-                                                        }}
-                                                        useOneTap
-                                                        theme="outline"
-                                                        shape="pill"
-                                                        size="medium"
-                                                        text="signin_with"
-                                                    />
+                                                <div className={`flex flex-col items-end gap-2 ${isRequestingCode || isConnectingGoogle ? 'cursor-not-allowed' : ''}`}>
+                                                    <div className={isRequestingCode || isConnectingGoogle ? 'pointer-events-none opacity-50' : ''}>
+                                                        <GoogleLogin
+                                                            onSuccess={credentialResponse => {
+                                                                if (credentialResponse.credential) {
+                                                                    const actionLabel = "Vincular Google";
+                                                                    setVerificationStep({
+                                                                        active: false,
+                                                                        action: 'connect-google',
+                                                                        actionLabel,
+                                                                        code: "",
+                                                                        data: { credential: credentialResponse.credential }
+                                                                    });
+                                                                    requestCode({
+                                                                        data: { actionName: 'connect-google' }
+                                                                    });
+                                                                }
+                                                            }}
+                                                            onError={() => {
+                                                                toast.error('Error al conectar con Google');
+                                                            }}
+                                                            useOneTap
+                                                            theme="outline"
+                                                            shape="pill"
+                                                            size="medium"
+                                                            text="signin_with"
+                                                        />
+                                                    </div>
                                                 </div>
                                             )}
                                         </div>
@@ -972,43 +983,66 @@ export default function Settings() {
                     )}
 
                     {/* Seccion Apariencia */}
-                    {activeTab === 'apariencia' && (
+                    {activeTab === 'appearance' && (
                         <section className="bg-main border border-line rounded-3xl shadow-sm p-6 sm:p-8 animate-fade-in animate-duration-300">
                             <div className="flex items-center gap-3 mb-6">
                                 <div className="p-2 bg-brand/10 text-brand rounded-xl">
                                     <Sun size={20} />
                                 </div>
-                                <h2 className="text-xl font-bold">Apariencia</h2>
+                                <h2 className="text-xl font-bold">{t("settings.appearance.title")}</h2>
                             </div>
 
-                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                                <button
-                                    onClick={() => setTheme('light')}
-                                    className={`flex flex-col items-center gap-4 p-6 rounded-3xl border-2 transition-all hover:scale-[1.02] cursor-pointer ${theme === 'light' ? 'border-brand bg-brand' : 'border-line bg-surface hover:bg-surface/80'}`}
-                                >
-                                    <div className="p-4 bg-white rounded-full shadow-md text-orange-500">
-                                        <Sun size={32} />
+                            <div className="space-y-6">
+                                <div>
+                                    <p className="text-sm font-bold text-content-muted ml-1 mb-4">{t("settings.appearance.themeLabel")}</p>
+                                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                                        <button
+                                            onClick={() => setTheme('light')}
+                                            className={`flex flex-col items-center gap-4 p-6 rounded-3xl border-2 transition-all hover:scale-[1.02] cursor-pointer ${theme === 'light' ? 'border-brand bg-brand' : 'border-line bg-surface hover:bg-surface/80'}`}
+                                        >
+                                            <div className="p-4 bg-white rounded-full shadow-md text-orange-500">
+                                                <Sun size={32} />
+                                            </div>
+                                            <span className={`font-bold ${theme === 'light' ? 'text-content-on-brand' : 'text-content'}`}>{t("settings.appearance.light")}</span>
+                                        </button>
+                                        <button
+                                            onClick={() => setTheme('dark')}
+                                            className={`flex flex-col items-center gap-4 p-6 rounded-3xl border-2 transition-all hover:scale-[1.02] cursor-pointer ${theme === 'dark' ? 'border-brand bg-brand' : 'border-line bg-surface hover:bg-surface/80'}`}
+                                        >
+                                            <div className="p-4 bg-slate-900 rounded-full shadow-md text-blue-400">
+                                                <Moon size={32} />
+                                            </div>
+                                            <span className={`font-bold ${theme === 'dark' ? 'text-content-on-brand' : 'text-content'}`}>{t("settings.appearance.dark")}</span>
+                                        </button>
+                                        <button
+                                            onClick={() => setTheme('system')}
+                                            className={`flex flex-col items-center gap-4 p-6 rounded-3xl border-2 transition-all hover:scale-[1.02] cursor-pointer ${theme === 'system' ? 'border-brand bg-brand' : 'border-line bg-surface hover:bg-surface/80'}`}
+                                        >
+                                            <div className="p-4 bg-main rounded-full shadow-md text-brand">
+                                                <Sliders size={32} />
+                                            </div>
+                                            <span className={`font-bold ${theme === 'system' ? 'text-content-on-brand' : 'text-content'}`}>{t("settings.appearance.system")}</span>
+                                        </button>
                                     </div>
-                                    <span className={`font-bold ${theme === 'light' ? 'text-content-on-brand' : 'text-content'}`}>Modo Claro</span>
-                                </button>
-                                <button
-                                    onClick={() => setTheme('dark')}
-                                    className={`flex flex-col items-center gap-4 p-6 rounded-3xl border-2 transition-all hover:scale-[1.02] cursor-pointer ${theme === 'dark' ? 'border-brand bg-brand' : 'border-line bg-surface hover:bg-surface/80'}`}
-                                >
-                                    <div className="p-4 bg-slate-900 rounded-full shadow-md text-blue-400">
-                                        <Moon size={32} />
+                                </div>
+
+                                <div className="pt-4 border-t border-line">
+                                    <p className="text-sm font-bold text-content-muted ml-1 mb-4">{t("settings.appearance.languageLabel")}</p>
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                        <button
+                                            onClick={() => i18n.changeLanguage('es')}
+                                            className={`flex flex-col items-center gap-3 p-6 rounded-3xl border-2 transition-all hover:scale-[1.02] cursor-pointer ${i18n.language === 'es' || i18n.language.startsWith('es') ? 'border-brand bg-brand' : 'border-line bg-surface hover:bg-surface/80'}`}
+                                        >
+                                            <span className={`font-bold ${i18n.language === 'es' || i18n.language.startsWith('es') ? 'text-content-on-brand' : 'text-content'}`}>{t("settings.appearance.spanish")}</span>
+                                        </button>
+                                        <button
+                                            onClick={() => i18n.changeLanguage('en')}
+                                            className={`flex flex-col items-center gap-3 p-6 rounded-3xl border-2 transition-all hover:scale-[1.02] cursor-pointer ${i18n.language === 'en' || i18n.language.startsWith('en') ? 'border-brand bg-brand' : 'border-line bg-surface hover:bg-surface/80'}`}
+                                        >
+                                            <span className={`font-bold ${i18n.language === 'en' || i18n.language.startsWith('en') ? 'text-content-on-brand' : 'text-content'}`}>{t("settings.appearance.english")}</span>
+                                        </button>
                                     </div>
-                                    <span className={`font-bold ${theme === 'dark' ? 'text-content-on-brand' : 'text-content'}`}>Modo Oscuro</span>
-                                </button>
-                                <button
-                                    onClick={() => setTheme('system')}
-                                    className={`flex flex-col items-center gap-4 p-6 rounded-3xl border-2 transition-all hover:scale-[1.02] cursor-pointer ${theme === 'system' ? 'border-brand bg-brand' : 'border-line bg-surface hover:bg-surface/80'}`}
-                                >
-                                    <div className="p-4 bg-main rounded-full shadow-md text-brand">
-                                        <Sliders size={32} />
-                                    </div>
-                                    <span className={`font-bold ${theme === 'system' ? 'text-content-on-brand' : 'text-content'}`}>Sistema</span>
-                                </button>
+                                </div>
                             </div>
                         </section>
                     )}
@@ -1028,7 +1062,7 @@ export default function Settings() {
                                 <div>
                                     <h3 className="text-2xl font-bold">{verificationStep.actionLabel}</h3>
                                     <p className="text-sm text-content-muted mt-2">
-                                        Por seguridad, introduce el código de 6 dígitos que hemos enviado a <span className="font-bold text-content">{user.email}</span>
+                                        {t("settings.verification.description", { email: user.email })}
                                     </p>
                                 </div>
                             </div>
@@ -1056,7 +1090,7 @@ export default function Settings() {
                                         disabled={isRequestingCode}
                                         className="text-xs font-bold text-brand hover:underline disabled:opacity-50 cursor-pointer"
                                     >
-                                        ¿No has recibido el código? Reenviar
+                                        {t("settings.verification.resend")}
                                     </button>
                                 </div>
 
@@ -1065,7 +1099,7 @@ export default function Settings() {
                                         onClick={() => setVerificationStep({ active: false, action: null, actionLabel: "", code: "", transactionId: "" })}
                                         className="flex-1 py-4 px-6 bg-surface border border-line text-content-muted rounded-2xl font-bold hover:bg-main transition-all active:scale-95 cursor-pointer"
                                     >
-                                        Cancelar
+                                        {t("settings.verification.cancel")}
                                     </button>
                                     <button
                                         disabled={verificationStep.code.length !== 6 || isChangingPassword || isSettingPassword || isConnectingGoogle || isDisconnectingGoogle}
@@ -1109,9 +1143,9 @@ export default function Settings() {
                                         {(isChangingPassword || isSettingPassword || isConnectingGoogle || isDisconnectingGoogle) ? (
                                             <>
                                                 <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                                                Confirmando...
+                                                {t("settings.verification.confirming")}
                                             </>
-                                        ) : "Confirmar acción"}
+                                        ) : t("settings.verification.confirm")}
                                     </button>
                                 </div>
                             </div>

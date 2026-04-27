@@ -78,12 +78,12 @@ export default function SmartPopover({
         const rect = containerRef.current.getBoundingClientRect();
         const vHeight = window.innerHeight;
         const vWidth = window.innerWidth;
-        
+
         // Mobile Keyboard Aware calculations
         const vv = window.visualViewport;
         const viewportHeight = vv ? vv.height : vHeight;
         const viewportOffsetTop = vv ? vv.offsetTop : 0;
-        
+
         const margin = 16;
 
         // space relative to what's actually visible (keyboard aware)
@@ -172,7 +172,7 @@ export default function SmartPopover({
 
         window.addEventListener('resize', handleUpdate);
         window.addEventListener('scroll', handleUpdate, true);
-        
+
         // Listen to visual viewport changes (keyboard)
         if (window.visualViewport) {
             window.visualViewport.addEventListener('resize', handleUpdate);

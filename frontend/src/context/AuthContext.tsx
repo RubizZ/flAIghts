@@ -4,18 +4,17 @@ import { useLogout } from '@/api/generated/openapi/auth';
 import { useQueryClient } from '@tanstack/react-query';
 import type { PopulatedUser } from '@/api/generated/openapi/model';
 
-interface AuthContextType {
-    /** Usuario autenticado actual, null si no está autenticado */
-    user: PopulatedUser | null;
+type AuthContextType = {
     /** Indica si se está cargando el estado de autenticación */
     isLoading: boolean;
-    /** Indica si el usuario está autenticado */
-    isAuthenticated: boolean;
     /** Cierra sesión del usuario (invalida todos los tokens) */
     logout: () => Promise<void>;
     /** Refresca los datos del usuario */
     refetch: () => Promise<void>;
-}
+} & (
+        | { isAuthenticated: true; user: PopulatedUser }
+        | { isAuthenticated: false; user: null }
+    );
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
@@ -78,16 +77,24 @@ export function AuthProvider({ children }: AuthProviderProps) {
         await refetchUser();
     }, [refetchUser]);
 
-    const value = useMemo(
-        () => ({
-            user,
+    const value = useMemo((): AuthContextType => {
+        if (user) {
+            return {
+                user,
+                isLoading,
+                isAuthenticated: true,
+                logout,
+                refetch,
+            };
+        }
+        return {
+            user: null,
             isLoading,
-            isAuthenticated: !!user,
+            isAuthenticated: false,
             logout,
             refetch,
-        }),
-        [user, isLoading, logout, refetch]
-    );
+        };
+    }, [user, isLoading, logout, refetch]);
 
     return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

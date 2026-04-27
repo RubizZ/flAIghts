@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
-import { Compass, Menu, Users, X, MessageSquare } from "lucide-react";
+import { Compass, Menu, Users, X, MessageSquare, Zap } from "lucide-react";
 import NavIconButton from "../ui/NavIconButton";
+import { useTranslation } from "react-i18next";
 
 interface SidebarProps {
     isOpen: boolean;
@@ -19,14 +20,21 @@ interface SidebarProps {
 }
 
 export default function Sidebar({ isOpen, onClose, onToggle, variant = 'classic', className = "" }: SidebarProps) {
+    const { t } = useTranslation();
     const { isAuthenticated, isLoading } = useAuth();
     const [clickedItem, setClickedItem] = useState<string | null>(null);
     const location = useLocation();
     const navItems = [
         {
-            label: "Inicio",
+            label: t("sidebar.searchFlights"),
             path: "/",
             icon: <Compass size={20} />,
+            show: true,
+        },
+        {
+            label: t("sidebar.geneticTrip"),
+            path: "/genetic-trip",
+            icon: <Zap size={20} />,
             show: true,
         },
         {
@@ -36,7 +44,7 @@ export default function Sidebar({ isOpen, onClose, onToggle, variant = 'classic'
             show: isAuthenticated,
         },
         {
-            label: "Amigos",
+            label: t("sidebar.friends"),
             path: "/friends",
             icon: <Users size={20} />,
             show: isAuthenticated,
@@ -61,7 +69,7 @@ export default function Sidebar({ isOpen, onClose, onToggle, variant = 'classic'
                     <NavIconButton
                         onClick={onToggle}
                         variant={variant}
-                        title="Abrir menú"
+                        title={t("sidebar.openMenu")}
                     >
                         <Menu size={20} />
                     </NavIconButton>
@@ -88,7 +96,7 @@ export default function Sidebar({ isOpen, onClose, onToggle, variant = 'classic'
                     <div className="flex-1 flex items-center px-2">
                         <button
                             onClick={onToggle}
-                            aria-label={isOpen ? "Cerrar menú" : "Abrir menú"}
+                            aria-label={isOpen ? t("sidebar.closeMenu") : t("sidebar.openMenu")}
                             className={`transition-all duration-200 cursor-pointer
                                 text-content-muted hover:text-content active:scale-95 flex items-center group
                                 ${isOpen

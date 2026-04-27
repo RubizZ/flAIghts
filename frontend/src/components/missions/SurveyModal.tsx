@@ -1,8 +1,10 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useMissions } from '@/context/MissionContext';
 import { MessageSquare, Star, X, Check, Sparkles, Save } from 'lucide-react';
 
 const SurveyModal: React.FC = () => {
+    const { t } = useTranslation();
     const { showSurveyMissionId, setShowSurveyMissionId, missions, addSurveyAnswer } = useMissions();
     const [rating, setRating] = useState<number>(0);
     const [comment, setComment] = useState('');
@@ -73,9 +75,9 @@ const SurveyModal: React.FC = () => {
                         </div>
 
                         <div className="flex items-center gap-3 mb-2">
-                            <h2 className="text-3xl font-black text-white tracking-tight">Feedback de Misión</h2>
+                            <h2 className="text-3xl font-black text-white tracking-tight">{t('missions.survey.title')}</h2>
                         </div>
-                        <p className="text-gray-400 text-sm mb-8 font-medium">Ayúdanos a mejorar flAIghts valorando tu experiencia.</p>
+                        <p className="text-gray-400 text-sm mb-8 font-medium">{t('missions.survey.subtitle')}</p>
 
                         {/* Mission Context Mini-Card */}
                         <div className="mb-8 p-5 rounded-3xl bg-white/5 border border-white/10 relative overflow-hidden group">
@@ -85,21 +87,21 @@ const SurveyModal: React.FC = () => {
                                 </div>
                                 <div className="min-w-0 flex-1">
                                     <div className="flex items-center gap-2 mb-1">
-                                        <h4 className="text-white font-bold text-sm truncate">{mission.title}</h4>
+                                        <h4 className="text-white font-bold text-sm truncate">{t(mission.title)}</h4>
                                         <div className="bg-green-500/20 text-green-400 px-2 py-0.5 rounded-full text-[8px] font-black uppercase tracking-widest border border-green-500/10 flex items-center gap-1 shrink-0">
-                                            <Sparkles size={8} /> Completada
+                                            <Sparkles size={8} /> {t('missions.survey.achieved')}
                                         </div>
                                     </div>
-                                    <p className="text-gray-400 text-xs leading-relaxed mb-3">{mission.description}</p>
+                                    <p className="text-gray-400 text-xs leading-relaxed mb-3">{t(mission.description)}</p>
 
                                     <div className="pt-3 border-t border-white/5 space-y-1.5">
-                                        <p className="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-2">Pasos validados:</p>
+                                        <p className="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-2">{t('missions.survey.validatedSteps')}</p>
                                         {mission.steps.map(step => (
                                             <div key={step.id} className="flex items-center gap-2 text-[10px] text-gray-400 font-medium italic">
                                                 <div className="flex items-center justify-center h-4 w-4 rounded-full bg-emerald-500/20 text-emerald-400">
                                                     <Check size={10} strokeWidth={3} />
                                                 </div>
-                                                {step.title}
+                                                {t(step.title)}
                                             </div>
                                         ))}
                                     </div>
@@ -110,7 +112,7 @@ const SurveyModal: React.FC = () => {
                         <div className="space-y-8">
                             {/* Rating Selection */}
                             <div className="text-center sm:text-left">
-                                <p className="mb-4 text-sm text-gray-200 font-semibold tracking-wide">¿Cómo de fácil e intuitivo te ha resultado completar el reto?</p>
+                                <p className="mb-4 text-sm text-gray-200 font-semibold tracking-wide">{t('missions.survey.questionEase')}</p>
                                 <div className="flex flex-col items-center gap-6">
                                     <div
                                         className="flex justify-center gap-2 p-2"
@@ -136,22 +138,22 @@ const SurveyModal: React.FC = () => {
                                         ))}
                                     </div>
                                     <div className="text-[10px] font-black uppercase tracking-widest h-5 text-amber-500/80 italic text-center">
-                                        {rating === 1 && "Muy difícil"}
-                                        {rating === 2 && "Difícil"}
-                                        {rating === 3 && "Neutral"}
-                                        {rating === 4 && "Fácil"}
-                                        {rating === 5 && "Muy fácil"}
+                                        {rating === 1 && t('missions.survey.ratings.veryDifficult')}
+                                        {rating === 2 && t('missions.survey.ratings.difficult')}
+                                        {rating === 3 && t('missions.survey.ratings.neutral')}
+                                        {rating === 4 && t('missions.survey.ratings.easy')}
+                                        {rating === 5 && t('missions.survey.ratings.veryEasy')}
                                     </div>
                                 </div>
                             </div>
 
                             {/* Comments */}
                             <div className="relative">
-                                <label className="mb-3 block text-[10px] font-black uppercase tracking-[0.2em] text-gray-500 px-1">Tus Sugerencias (Opcional)</label>
+                                <label className="mb-3 block text-[10px] font-black uppercase tracking-[0.2em] text-gray-500 px-1">{t('missions.survey.suggestionsLabel')}</label>
                                 <textarea
                                     value={comment}
                                     onChange={(e) => setComment(e.target.value)}
-                                    placeholder="Comparte cualquier duda, molestia o idea que hayas tenido..."
+                                    placeholder={t('missions.survey.placeholder')}
                                     className="h-32 w-full rounded-2xl border border-white/10 bg-white/3 p-5 text-sm text-white placeholder:text-gray-600 focus:border-blue-500/50 focus:bg-white/5 focus:outline-hidden transition-all duration-300 resize-none shadow-inner"
                                 />
                             </div>
@@ -166,7 +168,7 @@ const SurveyModal: React.FC = () => {
                                     }`}
                             >
                                 <div className="absolute inset-0 bg-linear-to-r from-white/0 via-white/10 to-white/0 -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
-                                {isClosing ? 'Guardando...' : 'Guardar feedback'}
+                                {isClosing ? t('missions.survey.actions.sending') : t('missions.survey.actions.finish')}
                                 {!isClosing && <Save size={16} />}
                             </button>
                         </div>

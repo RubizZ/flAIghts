@@ -6,15 +6,34 @@ import { ServerConfig } from "../../config/server.config.js";
 import { Airport, type IAirport } from "./airport.model.js";
 import { AirportReport } from "./airport-report.model.js";
 import logger from "../../utils/logger.js";
+import type { MessageResponseData } from "../../utils/responses.js";
 import { GeocodeCache } from "./geocode-cache.model.js";
 import type { AirportResponse, AirportSearchPaginatedResult, ScoredAirport, GlobeAirportResponse, CachedAirport, SearchResult, CityResponse } from "./airport.types.js";
 import { COUNTRY_NAMES } from "./countries.js";
-import type { MessageResponseData } from "../../utils/responses.js";
 
 // Radios base (km) para búsqueda de rutas
-const MIN_RADIUS_KM = 150;
-const MAX_RADIUS_KM = 800;
-const MAX_LAYOVERS = 6;
+const MIN_RADIUS_KM = 1000;
+const MAX_RADIUS_KM = 3000;
+const MAX_LAYOVERS = 21;
+const GLOBAL_LCC_BASES: string[] = [
+    "ACE", "AEP", "AGP", "AKL", "ALC", "AMM", "ARN", "ATH", "ATL", "AUH",
+    "AUS", "BCN", "BEG", "BER", "BFS", "BGY", "BKI", "BLQ", "BLR", "BNA",
+    "BNE", "BOD", "BOG", "BOM", "BRS", "BTS", "BUD", "BVA", "BWI", "CAI",
+    "CAN", "CCU", "CDG", "CEB", "CGH", "CGK", "CGN", "CJU", "CMN", "CNF",
+    "COR", "CPH", "CPT", "CRL", "CTA", "CTG", "CUN", "CVG", "DAD", "DAL",
+    "DEL", "DEN", "DFW", "DMK", "DPS", "DTM", "DUB", "DUR", "DWC", "DXB",
+    "EDI", "EIN", "EPA", "EVE", "EWR", "EZE", "FAO", "FCO", "FLL", "FMM",
+    "GDL", "GDN", "GRU", "HAN", "HEL", "HKT", "HOU", "HYD", "IBZ", "ICN",
+    "ISM", "JED", "JNB", "KIX", "KRK", "KTW", "KUL", "KWI", "LAS", "LAX",
+    "LGW", "LIM", "LIS", "LPA", "LTN", "MAA", "MAD", "MAN", "MCO", "MCT",
+    "MDE", "MDW", "MEL", "MEX", "MIA", "MLA", "MNL", "MRS", "MTY", "MXP",
+    "NAP", "NRN", "NRT", "NTE", "OOL", "OPO", "ORD", "ORY", "OSL", "OTP",
+    "PEN", "PGD", "PHX", "PIE", "PMI", "PMO", "PRG", "PSA", "PVG", "RAK",
+    "RIX", "RUH", "SAN", "SAW", "SCL", "SFB", "SGN", "SHJ", "SIN", "SJD",
+    "SJU", "SKG", "SKP", "SOF", "STN", "SUB", "SYD", "TFS", "TIA", "TIJ",
+    "TLL", "TPA", "TPE", "TSF", "TTN", "VCE", "VCP", "VIE", "VNO", "WAW",
+    "WMI"
+];
 
 @singleton()
 export class AirportService {
@@ -488,6 +507,7 @@ export class AirportService {
         };
     }
 
+
     public async getCandidateLayovers(
         originIata: string,
         destinationIata: string
@@ -495,48 +515,46 @@ export class AirportService {
         try {
             if (!originIata || !destinationIata) return [];
 
-            const origin = await Airport.findOne({ iata_code: originIata }).lean<IAirport>();
-            const destination = await Airport.findOne({ iata_code: destinationIata }).lean<IAirport>();
+            const [origin, destination] = await Promise.all([
+                Airport.findOne({ iata_code: originIata }).lean<IAirport>(),
+                Airport.findOne({ iata_code: destinationIata }).lean<IAirport>()
+            ]);
 
             if (!origin || !destination) return [];
 
             const [oLon, oLat] = origin.location.coordinates;
             const [dLon, dLat] = destination.location.coordinates;
 
-            const totalDistance = this.haversine(oLat!, oLon!, dLat!, dLon!);
-            const radius = this.computeAdaptiveRadius(totalDistance);
-            const midLat = (oLat! + dLat!) / 2;
-            const midLon = (oLon! + dLon!) / 2;
+            const directDistance = this.haversine(oLat!, oLon!, dLat!, dLon!);
 
-            const candidates = await Airport.find({
-                iata_code: { $nin: [originIata, destinationIata] },
-                location: {
-                    $geoWithin: {
-                        $centerSphere: [[midLon, midLat], radius / 6371],
-                    },
-                },
-            }).lean<IAirport[]>().limit(50);
+            const hubs = await Airport.find({
+                iata_code: {
+                    $in: GLOBAL_LCC_BASES,
+                    $nin: [originIata, destinationIata]
+                }
+            }).lean<IAirport[]>();
 
-            const scored = candidates.map((a: IAirport): ScoredAirport => {
-                const [lon, lat] = a.location.coordinates;
-                const dOrigin = this.haversine(oLat!, oLon!, lat!, lon!);
-                const dDest = this.haversine(dLat!, dLon!, lat!, lon!);
+            const viableHubs = hubs
+                .map(hub => {
+                    const [hLon, hLat] = hub.location.coordinates;
+                    const dOriginToHub = this.haversine(oLat!, oLon!, hLat!, hLon!);
+                    const dHubToDest = this.haversine(hLat!, hLon!, dLat!, dLon!);
+                    const totalJourneyDistance = dOriginToHub + dHubToDest;
 
-                return {
-                    iata: a.iata_code,
-                    score: this.computeScore({
-                        totalDistance,
-                        dOrigin,
-                        dDest,
-                        importance: a.importance_score,
-                    }),
-                };
-            });
+                    return {
+                        iata: hub.iata_code,
+                        totalJourneyDistance,
+                        detourRatio: totalJourneyDistance / directDistance,
+                        extraDistance: totalJourneyDistance - directDistance
+                    };
+                })
+                .filter(item => {
+                    return (item.detourRatio <= 1.8) || (item.extraDistance <= 1500);
+                });
 
-            return scored
-                .sort((a, b) => b.score - a.score)
-                .slice(0, MAX_LAYOVERS)
-                .map(a => a.iata);
+            viableHubs.sort((a, b) => a.totalJourneyDistance - b.totalJourneyDistance);
+
+            return viableHubs.slice(0, MAX_LAYOVERS).map(item => item.iata);
 
         } catch (error) {
             logger.error({ error, originIata, destinationIata }, "getCandidateLayovers failed");
@@ -544,31 +562,41 @@ export class AirportService {
         }
     }
 
-    private computeScore(params: {
-        totalDistance: number;
-        dOrigin: number;
-        dDest: number;
-        importance: number;
-    }): number {
-        const { totalDistance, dOrigin, dDest, importance } = params;
-        const detourPenalty = (dOrigin + dDest) / totalDistance;
-        return (importance * 2 - detourPenalty * 100);
+    public async getHubsNear(iata: string, maxDistanceKm: number = 3000, limit: number = 14): Promise<string[]> {
+        const airport = await this.getAirportByIata(iata);
+        if (!airport) return [];
+
+        const [lon, lat] = airport.location.coordinates;
+
+        let candidates: { iata: string; distance: number }[] = [];
+
+        if (this.isInitialized && this.airportsCache.length > 0) {
+            candidates = this.airportsCache
+                .filter(a => GLOBAL_LCC_BASES.includes(a.iata_code) && a.iata_code !== iata.toUpperCase())
+                .map(a => {
+                    const [hLon, hLat] = a.location.coordinates;
+                    const distance = this.haversine(lat!, lon!, hLat!, hLon!);
+                    return { iata: a.iata_code, distance };
+                })
+                .filter(a => a.distance <= maxDistanceKm);
+        } else {
+            const near = await this.getNearAirports(lat!, lon!, limit * 2, maxDistanceKm);
+            candidates = near
+                .filter(a => GLOBAL_LCC_BASES.includes(a.iata_code) && a.iata_code !== iata.toUpperCase())
+                .map(a => ({
+                    iata: a.iata_code,
+                    distance: a.distance_km_to_city || 0
+                }));
+        }
+
+        return candidates
+            .sort((a, b) => a.distance - b.distance)
+            .slice(0, limit)
+            .map(a => a.iata);
     }
 
-    private computeAdaptiveRadius(distanceKm: number): number {
-        if (distanceKm < 800) return MIN_RADIUS_KM;
-        if (distanceKm > 8000) return MAX_RADIUS_KM;
-        const factor = distanceKm / 8000;
-        return MIN_RADIUS_KM + factor * (MAX_RADIUS_KM - MIN_RADIUS_KM);
-    }
-
-    private haversine(
-        lat1: number,
-        lon1: number,
-        lat2: number,
-        lon2: number
-    ): number {
-        const R = 6371; // km
+    private haversine(lat1: number, lon1: number, lat2: number, lon2: number): number {
+        const R = 6371; // radio de la Tierra en km
         const toRad = (d: number) => (d * Math.PI) / 180;
         const dLat = toRad(lat2 - lat1);
         const dLon = toRad(lon2 - lon1);

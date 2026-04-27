@@ -8,8 +8,10 @@ import { toast } from "sonner";
 import Logo from "@/components/ui/Logo";
 import TurnstileWidget, { type TurnstileWidgetRef } from "@/components/ui/TurnstileWidget";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 
 export default function ForgotPassword(): JSX.Element {
+    const { t } = useTranslation();
     const navigate = useNavigate();
     const [email, setEmail] = useState('');
     const [turnstileToken, setTurnstileToken] = useState<string>('');
@@ -19,7 +21,7 @@ export default function ForgotPassword(): JSX.Element {
     const { mutate: forgotPassword, isPending } = useForgotPassword({
         mutation: {
             onSuccess: () => {
-                toast.success('Se ha enviado un correo con un enlace para restablecer tu contraseña');
+                toast.success(t("forgotPassword.toast.resetLinkSent"));
             },
             onError: (error) => {
                 switch (error.code) {
@@ -42,7 +44,7 @@ export default function ForgotPassword(): JSX.Element {
                         toast.error("La verificación de seguridad ha fallado. Por favor, inténtalo de nuevo.");
                         break;
                     default: {
-                        toast.error('Error desconocido al enviar el correo');
+                        toast.error(t("forgotPassword.toast.unknownError"));
                         break;
                     }
                 }
@@ -52,12 +54,12 @@ export default function ForgotPassword(): JSX.Element {
 
     const handleSubmit = () => {
         if (!email) {
-            setError('El email es obligatorio');
+            setError(t("forgotPassword.validation.emailRequired"));
             return;
         }
 
         if (!/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(email)) {
-            setError('El email es invalido');
+            setError(t("forgotPassword.validation.emailInvalid"));
             return;
         }
 
@@ -74,12 +76,12 @@ export default function ForgotPassword(): JSX.Element {
             <AuthCard title={
                 <>
                     <Logo size={32} />
-                    <span>Recuperar contraseña</span>
+                    <span>{t("forgotPassword.title")}</span>
                 </>
             }>
                 <form action="" className="flex flex-col gap-4">
                     <p className="text-center text-content-muted text-sm text-muted-foreground">
-                        Escribe tu email y te enviaremos un enlace para restablecer tu contraseña.
+                        {t("forgotPassword.description")}
                     </p>
                     <FloatingLabelInput
                         label="Email"
@@ -107,10 +109,10 @@ export default function ForgotPassword(): JSX.Element {
                         >
                             Volver
                         </button>
-                        <button 
-                            disabled={isPending} 
-                            onClick={handleSubmit} 
-                            type="button" 
+                        <button
+                            disabled={isPending}
+                            onClick={handleSubmit}
+                            type="button"
                             className="flex-[2] rounded-lg bg-brand p-3 text-content-on-brand font-bold enabled:hover:scale-[1.02] enabled:active:scale-95 transition-all shadow-lg shadow-brand/20 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             {isPending ? 'Enviando...' : 'Enviar'}
@@ -118,9 +120,9 @@ export default function ForgotPassword(): JSX.Element {
                     </div>
                 </form>
             </AuthCard>
-            <TurnstileWidget 
+            <TurnstileWidget
                 ref={turnstileRef}
-                onVerify={setTurnstileToken} 
+                onVerify={setTurnstileToken}
                 onExpire={() => setTurnstileToken("")}
                 onError={() => setTurnstileToken("")}
             />

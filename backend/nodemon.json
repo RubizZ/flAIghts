@@ -8,6 +8,7 @@
         "src/generated/**",
         "src/generated/",
         "**/generated/**",
+        "**/routes.ts",
         "build/**"
     ],
     "exec": "npm run generate:all && npm run sync:frontend && node --enable-source-maps --inspect=0.0.0.0:9229 --import tsx src/index.ts",

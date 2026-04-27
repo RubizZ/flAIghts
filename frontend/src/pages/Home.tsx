@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import Globe from "../components/Globe.tsx"
 import { Plus, Maximize2, PlaneTakeoff, PlaneLanding, X, Plane, ChevronDown, ChevronRight, AlertTriangle, Search, Calendar as CalendarIcon } from "lucide-react";
 import { useSearchRequest } from "@/api/generated/openapi/search";
@@ -15,6 +16,7 @@ import HomeCard from "../components/home/HomeCard.tsx";
 import { useNavLogo } from "@/context/NavLogoContext";
 
 export default function Home() {
+    const { t } = useTranslation();
     const [origins, setOrigins] = useState<UnifiedSelection[]>([]);
     const [destinations, setDestinations] = useState<UnifiedSelection[]>([]);
     const [departureDate, setDepartureDate] = useState("");
@@ -61,6 +63,8 @@ export default function Home() {
         const ret = searchParams.get('ret');
         const m = searchParams.get('m');
 
+        const isValidDate = (d: string) => /^\d{4}-\d{2}-\d{2}$/.test(d) && !isNaN(new Date(d).getTime());
+
         if (o) {
             const parts = o.split(',');
             const found = parts.map(p => deserializeSelection(p, globeAirports)).filter(Boolean) as UnifiedSelection[];
@@ -73,9 +77,34 @@ export default function Home() {
             setDestinations(found);
         }
 
-        if (date) setDepartureDate(date);
-        if (ret) setReturnDate(ret);
-        if (m === 'manual' || m === 'ai') setSearchMode(m as 'manual' | 'ai');
+        let validatedDeparture = "";
+        if (date) {
+            if (isValidDate(date) && date >= today) {
+                validatedDeparture = date;
+                setDepartureDate(date);
+            } else {
+                setDepartureDate("");
+            }
+        } else {
+            setDepartureDate("");
+        }
+
+        if (ret) {
+            const minReturn = validatedDeparture || today;
+            // Solo permitimos returnDate si hay una departureDate válida y ret >= departureDate
+            if (isValidDate(ret) && validatedDeparture && ret >= validatedDeparture) {
+                setReturnDate(ret);
+            } else {
+                setReturnDate("");
+            }
+        } else {
+            setReturnDate("");
+        }
+
+        if (m) {
+            if (m === 'manual' || m === 'ai') setSearchMode(m as 'manual' | 'ai');
+            else setSearchMode('manual');
+        }
 
         initialParamsLoaded.current = true;
     }, [globeAirports, searchParams]);
@@ -114,6 +143,7 @@ export default function Home() {
             setIsLargeScreen(window.innerWidth >= 1024);
             setIsXXLScreen(window.innerWidth >= 1536);
         };
+
         window.addEventListener('resize', handleResize);
         return () => window.removeEventListener('resize', handleResize);
     }, []);
@@ -136,17 +166,21 @@ export default function Home() {
         }
     }, [isUserInteracting, isLargeScreen, isMobileCardExpanded]);
 
-    const { mutate: searchRequest, isPending } = useSearchRequest({
+    const { mutate: searchRequest, isPending: isSearchPending } = useSearchRequest({
         mutation: {
             onSuccess: (data) => {
                 navigate(`/search/${data._id}`);
             },
-            onError: (error) => {
+            onError: (error: any) => {
                 console.error(error);
-                toast.error(error?.message || "Error al buscar vuelos");
+                toast.error(error?.message || t("searchFlight.toast.searchError"));
             }
         }
     });
+
+    const isPending = isSearchPending;
+
+
 
     const formatDate = (dateStr: string) => {
         if (!dateStr) return "";
@@ -163,21 +197,23 @@ export default function Home() {
     const handleMapSelect = (airport: AirportResponse) => {
         if (selectingType === 'origin') {
             if (getAllIatas(destinations).includes(airport.iata_code)) {
-                toast.error("El origen y el destino no pueden ser el mismo");
+                toast.error(t("searchFlight.validation.sameOriginDestination"));
                 return;
             }
             if (getAllIatas(origins).includes(airport.iata_code)) {
-                toast.error("Ese aeropuerto ya está seleccionado como origen");
+                toast.error(t("searchFlight.validation.alreadySelectedOrigin"));
+
                 return;
             }
             setOrigins([...origins, airport]);
         } else if (selectingType === 'destination') {
             if (getAllIatas(origins).includes(airport.iata_code)) {
-                toast.error("El origen y el destino no pueden ser el mismo");
+                toast.error(t("searchFlight.validation.sameOriginDestination"));
                 return;
             }
             if (getAllIatas(destinations).includes(airport.iata_code)) {
-                toast.error("Ese aeropuerto ya está seleccionado como destino");
+                toast.error(t("searchFlight.validation.sameOriginDestination"));
+
                 return;
             }
             setDestinations([...destinations, airport]);
@@ -284,11 +320,11 @@ export default function Home() {
 
     const handleSetOrigin = (entity: UnifiedSelection) => {
         if (getAllIatas(destinations).includes(isAirport(entity) ? entity.iata_code : '')) {
-            toast.error("El origen y el destino no pueden ser el mismo");
+            toast.error(t("searchFlight.validation.sameOriginDestination"));
             return;
         }
         if (origins.some(o => getEntityId(o) === getEntityId(entity))) {
-            toast.error("Esa ubicación ya está seleccionada como origen");
+            toast.error(t("searchFlight.validation.alreadySelectedOrigin"));
             return;
         }
         setOrigins([...origins, entity]);
@@ -307,11 +343,11 @@ export default function Home() {
 
     const handleSetDestination = (entity: UnifiedSelection) => {
         if (getAllIatas(origins).includes(isAirport(entity) ? entity.iata_code : '')) {
-            toast.error("El origen y el destino no pueden ser el mismo");
+            toast.error(t("searchFlight.validation.sameOriginDestination"));
             return;
         }
         if (destinations.some(d => getEntityId(d) === getEntityId(entity))) {
-            toast.error("Esa ubicación ya está seleccionada como destino");
+            toast.error(t("searchFlight.validation.alreadySelectedDestination"));
             return;
         }
         setDestinations([...destinations, entity]);
@@ -335,7 +371,8 @@ export default function Home() {
 
     const handleSearch = () => {
         if (origins.length === 0 || destinations.length === 0 || !departureDate) {
-            toast.error("Por favor, completa origen, destino y fecha de salida");
+            toast.error(t("searchFlight.validation.completeFields"));
+
             return;
         }
 
@@ -437,9 +474,9 @@ export default function Home() {
                             <Maximize2 size={24} className="text-white animate-pulse" />
                         </div>
                         <div className="flex flex-col items-center gap-1.5">
-                            <span className="text-white font-black uppercase tracking-[0.4em] text-[10px] text-center drop-shadow-lg">Interacción 3D</span>
+                            <span className="text-white font-black uppercase tracking-[0.4em] text-[10px] text-center drop-shadow-lg">{t("home.globe.interaction3d")}</span>
                             <div className="h-px w-8 bg-white/20" />
-                            <span className="text-white/60 text-[9px] font-bold uppercase tracking-widest text-center drop-shadow-sm">Haz clic para explorar el mapa</span>
+                            <span className="text-white/60 text-[9px] font-bold uppercase tracking-widest text-center drop-shadow-sm">{t("home.globe.clickToExplore")}</span>
                         </div>
                     </div>
                 </div>
@@ -456,7 +493,8 @@ export default function Home() {
                     </svg>
                 </div>
                 <div className="flex flex-col items-center gap-1">
-                    <span className="text-content-muted text-xs font-bold uppercase tracking-widest">flAIghts está despegando...</span>
+                    <span className="text-content-muted text-xs font-bold uppercase tracking-widest">{t("searchFlight.loading.loadingGlobe")}</span>
+
                 </div>
             </div>
 
@@ -486,7 +524,7 @@ export default function Home() {
                         <div className="flex items-center gap-3">
                             <X size={20} className="group-hover:rotate-90 transition-transform duration-300" />
                             <span className="text-[10px] font-bold uppercase tracking-[0.2em] whitespace-nowrap leading-none">
-                                {selectingType ? "Cancelar selección" : "Cerrar mapa"}
+                                {selectingType ? t("home.globe.cancelSelection") : t("home.globe.closeMap")}
                             </span>
                         </div>
                     </NavIconButton>
@@ -504,12 +542,12 @@ export default function Home() {
                             {isPending ? (
                                 <div className="flex items-center gap-2">
                                     <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                                    <span>Buscando...</span>
+                                    <span>{t("searchFlight.actions.searching")}</span>
                                 </div>
                             ) : (
                                 <>
                                     <Search size={18} className="group-hover:scale-110 transition-transform" />
-                                    <span className="text-sm">Buscar vuelos</span>
+                                    <span className="text-sm">{t("searchFlight.actions.search")}</span>
                                 </>
                             )}
                         </button>
@@ -580,7 +618,7 @@ export default function Home() {
                                     {isMobileCardExpanded ? (
                                         <div className="flex items-center gap-2">
                                             <Search size={16} className="text-brand shrink-0" />
-                                            <span>Configura tu búsqueda</span>
+                                            <span>{t("home.globe.configureSearch")}</span>
                                         </div>
                                     ) : (
                                         <div className="flex items-center gap-2">
@@ -588,7 +626,7 @@ export default function Home() {
                                             <span>
                                                 {origins.length > 0 && destinations.length > 0
                                                     ? `${isAirport(origins[0]!) ? origins[0].iata_code : origins[0]!.name.substring(0, 3).toUpperCase()}${origins.length > 1 ? '...' : ''} → ${isAirport(destinations[0]!) ? destinations[0].iata_code : destinations[0]!.name.substring(0, 3).toUpperCase()}${destinations.length > 1 ? '...' : ''}`
-                                                    : "Configuración del viaje"}
+                                                    : t("home.globe.tripConfiguration")}
                                             </span>
                                         </div>
                                     )}
@@ -596,9 +634,9 @@ export default function Home() {
                                 {!isMobileCardExpanded && (
                                     <div className="flex items-center gap-1.5 mt-0.5">
                                         <div className="flex items-center gap-1 overflow-hidden">
-                                            <span className="text-content-muted text-[10px] font-medium truncate">{origins.length > 0 ? (getEntityName(origins[0]!) || "Origen") + (origins.length > 1 ? ` +${origins.length - 1}` : '') : "Origen"}</span>
+                                            <span className="text-content-muted text-[10px] font-medium truncate">{origins.length > 0 ? (getEntityName(origins[0]!) || t("common.origin")) + (origins.length > 1 ? ` +${origins.length - 1}` : '') : t("common.origin")}</span>
                                             <ChevronRight size={8} className="text-content-muted/30 shrink-0" />
-                                            <span className="text-content-muted text-[10px] font-medium truncate">{destinations.length > 0 ? (getEntityName(destinations[0]!) || "Destino") + (destinations.length > 1 ? ` +${destinations.length - 1}` : '') : "Destino"}</span>
+                                            <span className="text-content-muted text-[10px] font-medium truncate">{destinations.length > 0 ? (getEntityName(destinations[0]!) || t("common.destination")) + (destinations.length > 1 ? ` +${destinations.length - 1}` : '') : t("common.destination")}</span>
                                         </div>
                                         {(departureDate || returnDate) && (
                                             <>
@@ -638,7 +676,7 @@ export default function Home() {
                             className="absolute -bottom-5 left-1/2 -translate-x-1/2 bg-surface/90 backdrop-blur-2xl border border-line px-5 py-2.5 rounded-full shadow-2xl flex items-center gap-2.5 group hover:bg-surface transition-all active:scale-95 cursor-pointer z-sticky whitespace-nowrap animate-fade-in"
                         >
                             <ChevronDown size={14} className="text-brand rotate-180 transition-transform group-active:-translate-y-1" />
-                            <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-content/90">Plegar búsqueda</span>
+                            <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-content/90">{t("home.globe.collapseSearch")}</span>
                         </button>
                     )}
                 </div>
@@ -647,7 +685,7 @@ export default function Home() {
                 {origins.length > 0 && destinations.length > 0 && !departureDate && !isMobileCardExpanded && !isLargeScreen && (
                     <div className="absolute top-full mt-3 left-1/2 -translate-x-1/2 bg-red-500/90 backdrop-blur-md text-white text-[9px] font-black uppercase tracking-widest px-3 py-1.5 rounded-lg shadow-2xl border border-white/20 animate-bounce flex items-center gap-1.5 whitespace-nowrap z-popover">
                         <CalendarIcon size={10} />
-                        <span>Falta fecha de salida</span>
+                        <span>{t("home.globe.missingDepartureDate")}</span>
                         <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-red-500 rotate-45" />
                     </div>
                 )}
@@ -675,7 +713,7 @@ export default function Home() {
                     <div className={`flex flex-col gap-5 transition-opacity duration-300 ${isContentVisible ? 'opacity-100' : 'opacity-0'}`}>
                         <div className="flex items-start justify-between">
                             <div className="flex flex-col gap-1">
-                                <span className="text-[10px] text-brand uppercase font-bold tracking-[0.2em]">Aeropuerto</span>
+                                <span className="text-[10px] text-brand uppercase font-bold tracking-[0.2em]">{t("searchFlight.labels2.airport")}</span>
                                 <h2 className="text-2xl font-bold text-content tracking-tight">{renderedAirport?.iata_code}</h2>
                             </div>
                             <button
@@ -688,20 +726,22 @@ export default function Home() {
 
                         <div className="flex flex-col gap-4">
                             <div className="flex flex-col">
-                                <span className="text-xs text-content-muted uppercase font-bold tracking-wider">Nombre</span>
+                                <span className="text-xs text-content-muted uppercase font-bold tracking-wider">{t("searchFlight.labels2.name")}</span>
                                 <span className="text-content font-medium">{renderedAirport?.name}</span>
                             </div>
                             <div className="flex flex-col">
-                                <span className="text-xs text-content-muted uppercase font-bold tracking-wider">Ciudad / Región</span>
+                                <span className="text-xs text-content-muted uppercase font-bold tracking-wider">{t("searchFlight.labels2.city")}</span>
+
                                 <span className="text-content font-medium">{renderedAirport?.city}</span>
                             </div>
                             <div className="grid grid-cols-2 gap-4 pt-2 border-t border-line/50">
                                 <div className="flex flex-col">
-                                    <span className="text-xs text-content-muted uppercase font-bold tracking-wider">Latitud</span>
+                                    <span className="text-xs text-content-muted uppercase font-bold tracking-wider">{t("searchFlight.labels2.latitude")}</span>
                                     <span className="text-content text-xs font-mono">{renderedAirport?.location?.coordinates[1]?.toFixed(4)}°</span>
                                 </div>
                                 <div className="flex flex-col">
-                                    <span className="text-xs text-content-muted uppercase font-bold tracking-wider">Longitud</span>
+                                    <span className="text-xs text-content-muted uppercase font-bold tracking-wider">{t("searchFlight.labels2.longitude")}</span>
+
                                     <span className="text-content text-xs font-mono">{renderedAirport?.location?.coordinates[0]?.toFixed(4)}°</span>
                                 </div>
                             </div>
@@ -713,21 +753,22 @@ export default function Home() {
                                 className="flex items-center justify-center gap-2 w-full py-3 bg-brand/10 hover:bg-brand/20 border border-brand/20 rounded-2xl text-brand text-xs font-black uppercase transition-all group/btn cursor-pointer"
                             >
                                 <PlaneTakeoff size={14} className="group-hover/btn:-translate-y-0.5 transition-transform" />
-                                Definir como Origen
+                                {t("searchFlight.mapButtons.defineAsOrigin")}
                             </button>
                             <button
                                 onClick={() => renderedAirport && handleSetDestination(renderedAirport)}
                                 className="flex items-center justify-center gap-2 w-full py-3 bg-brand/10 hover:bg-brand/20 border border-brand/20 rounded-2xl text-brand text-xs font-black uppercase transition-all group/btn cursor-pointer"
                             >
                                 <PlaneLanding size={14} className="group-hover/btn:translate-y-0.5 transition-transform" />
-                                Definir como Destino
+                                {t("searchFlight.mapButtons.defineAsDestination")}
+
                             </button>
                             <button
                                 onClick={() => setIsReportModalOpen(true)}
                                 className="flex items-center justify-center gap-1.5 self-center mt-3 text-[9px] font-bold text-red-500/60 hover:text-red-500 transition-all cursor-pointer group/report"
                             >
                                 <AlertTriangle size={10} className="group-hover/report:animate-pulse" />
-                                <span className="italic underline-offset-2 hover:underline">Reportar error en los datos</span>
+                                <span className="italic underline-offset-2 hover:underline">{t("home.globe.reportDataError")}</span>
                             </button>
                         </div>
                     </div>

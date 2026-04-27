@@ -1,5 +1,6 @@
 import React from "react";
 import { ArrowLeftRight, Search } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { AirportResponse } from "@/api/generated/openapi/model";
 import { UnifiedSelection } from "@/types/selection";
 import FlightSearchInput from "./FlightSearchInput";
@@ -50,6 +51,7 @@ const ManualSearchForm: React.FC<ManualSearchFormProps> = ({
     today,
     onHoverChange,
 }) => {
+    const { t } = useTranslation();
     const handleSwitch = () => {
         const tempOrigins = [...origins];
         setOrigins([...destinations]);
@@ -133,7 +135,7 @@ const ManualSearchForm: React.FC<ManualSearchFormProps> = ({
                     isOpen={activeReturnPopover}
                     setIsOpen={setActiveReturnPopover}
                     disabled={!departureDate}
-                    disabledTooltip="Selecciona primero la fecha de salida"
+                    disabledTooltip={t('manualSearch.selectDepartureFirst')}
                     onClear={() => setReturnDate("")}
                 />
             </div>
@@ -151,12 +153,12 @@ const ManualSearchForm: React.FC<ManualSearchFormProps> = ({
                 {isPending ? (
                     <div className="flex items-center gap-2">
                         <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                        <span>Buscando...</span>
+                        <span>{t('manualSearch.searching')}</span>
                     </div>
                 ) : (
                     <>
                         <Search size={18} />
-                        <span>{isMapMode ? 'Buscar' : 'Explorar vuelos'}</span>
+                        <span>{isMapMode ? t('manualSearch.search') : t('manualSearch.exploreFlights')}</span>
                     </>
                 )}
             </button>

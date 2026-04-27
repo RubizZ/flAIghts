@@ -5,12 +5,11 @@ interface TooltipProps {
     content: string;
     position?: 'top' | 'bottom' | 'left' | 'right';
     disabled?: boolean;
+    className?: string;
 }
 
-export default function Tooltip({ children, content, position = 'top', disabled = false }: TooltipProps) {
+export default function Tooltip({ children, content, position = 'top', disabled = false, className = "w-full flex flex-col" }: TooltipProps) {
     const [isVisible, setIsVisible] = useState(false);
-
-    if (disabled) return <>{children}</>;
 
     const positions = {
         top: "-top-2 left-1/2 -translate-x-1/2 -translate-y-full mb-2",
@@ -28,12 +27,12 @@ export default function Tooltip({ children, content, position = 'top', disabled 
 
     return (
         <div
-            className="relative flex h-full w-full"
-            onMouseEnter={() => setIsVisible(true)}
-            onMouseLeave={() => setIsVisible(false)}
+            className={`relative ${className}`}
+            onMouseEnter={disabled ? undefined : () => setIsVisible(true)}
+            onMouseLeave={disabled ? undefined : () => setIsVisible(false)}
         >
             {children}
-            {isVisible && (
+            {!disabled && isVisible && (
                 <div
                     className={`absolute z-tooltip px-3 py-2 bg-main/90 backdrop-blur-3xl border border-line text-content text-xs font-medium rounded-xl shadow-2xl pointer-events-none whitespace-nowrap animate-duration-200 animate-delay-500 ${positions[position]} ${position === 'top' ? 'animate-fade-in-up' :
                         position === 'bottom' ? 'animate-fade-in-down' :

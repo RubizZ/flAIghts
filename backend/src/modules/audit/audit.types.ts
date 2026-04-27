@@ -164,18 +164,22 @@ export interface AuditDetails {
             destinations: string[];
             departure_date: Date;
             return_date?: Date;
-            layover_days?: number[];
+            dates?: string[];
             criteria: {
                 priority: "balanced" | "cheap" | "fast";
                 max_price?: number;
             }
         }
-        COMPLETE: {
+        EXPLORATION_START: {
             id: string;
-            itinerary_id: string;
         }
-        FAIL: {
+        EXPLORATION_COMPLETED: {
             id: string;
+            itinerary_count: number;
+        }
+        EXPLORATION_FAILED: {
+            id: string;
+            reason: string;
         }
         SHARE: {
             id: string;
@@ -192,6 +196,16 @@ export interface AuditDetails {
         TOOL_CALL: {
             tool: string;
             args: any;
+        }
+    }
+    BOOKING: {
+        PREPARE: {
+            tokens: {
+                token: string;
+                origin: string;
+                destination: string;
+                departure_date: string;
+            }[];
         }
     }
 }

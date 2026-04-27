@@ -1,6 +1,7 @@
 import React, { forwardRef, useState } from 'react';
 import { Eye, EyeOff } from 'lucide-react';
 import { toast } from 'sonner';
+import { useTranslation } from 'react-i18next';
 
 interface FloatingLabelInputProps extends React.InputHTMLAttributes<HTMLInputElement> {
     label: string;
@@ -11,6 +12,7 @@ interface FloatingLabelInputProps extends React.InputHTMLAttributes<HTMLInputEle
 
 const FloatingLabelInput = forwardRef<HTMLInputElement, FloatingLabelInputProps>(
     ({ label, error, isRepeat = false, icon, className = "", id, ...props }, ref) => {
+        const { t } = useTranslation();
         const [showPassword, setShowPassword] = useState(false);
         // Generar un ID si no se proporciona, necesario para el htmlFor del label
         const inputId = id || `floating-input-${label.replace(/\s+/g, '-').toLowerCase()}`;
@@ -25,8 +27,8 @@ const FloatingLabelInput = forwardRef<HTMLInputElement, FloatingLabelInputProps>
                     id={inputId}
                     {...props}
                     type={currentType}
-                    onCopy={isPassword ? (e) => { e.preventDefault(); toast.warning("Por seguridad, no se puede copiar en campos de contraseña", { id: 'copy-warn' }) } : props.onCopy}
-                    onCut={isPassword ? (e) => { e.preventDefault(); toast.warning("Por seguridad, no se puede cortar en campos de contraseña", { id: 'cut-warn' }) } : props.onCut}
+                    onCopy={isPassword ? (e) => { e.preventDefault(); toast.warning(t("floatingLabelInput.toast.cannotCopyPassword"), { id: 'copy-warn' }) } : props.onCopy}
+                    onCut={isPassword ? (e) => { e.preventDefault(); toast.warning(t("floatingLabelInput.toast.cannotCutPassword"), { id: 'cut-warn' }) } : props.onCut}
                     placeholder=" " // Crucial para la detección de :placeholder-shown
                     className={`
                         peer

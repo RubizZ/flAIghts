@@ -1,14 +1,16 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useMissions } from '@/context/MissionContext';
 import { Trophy, ChevronRight, Sparkles, Target, LayoutGrid, ListChecks, Map, Lock, X as CloseIcon, MessageSquareQuote } from 'lucide-react';
 
 type TooltipPosition = 'top' | 'bottom' | 'left' | 'right';
 
 const MissionOnboarding: React.FC = () => {
+    const { t } = useTranslation();
     const {
         isEvaluationMode, hasConsented, onboardingStep, nextOnboardingStep,
         surveyOnboardingStep, nextSurveyOnboardingStep, showRoadmap, skipOnboarding,
-        activeMission, showSurveyMissionId
+        activeMission, showSurveyMissionId, missions, isMissionCompleted, isMissionUnlocked
     } = useMissions();
 
     const [spotlightRect, setSpotlightRect] = useState<DOMRect | null>(null);
@@ -73,11 +75,13 @@ const MissionOnboarding: React.FC = () => {
             const findTarget = (shouldScroll = false) => {
                 let currentId = '';
 
-                if (displayState.isSurveyTour) {
-                    switch (displayState.surveyOnboardingStep) {
+                // Usamos los valores reales, no los de displayState, para el ID del target
+                // Esto evita el lag de 300ms que puede hacer que no se encuentre el elemento
+                if (surveyOnboardingStep > 0) {
+                    switch (surveyOnboardingStep) {
                         case 1:
                             if (isMobileTarget) {
-                                currentId = displayState.subStep === 0 ? (document.getElementById('nav-user-menu-trigger') ? 'nav-user-menu-trigger' : 'nav-options-menu-trigger') : (document.getElementById('nav-missions-button-mobile') ? 'nav-missions-button-mobile' : 'nav-missions-button-mobile-alt');
+                                currentId = subStep === 0 ? (document.getElementById('nav-user-menu-trigger') ? 'nav-user-menu-trigger' : 'nav-options-menu-trigger') : (document.getElementById('nav-missions-button-mobile') ? 'nav-missions-button-mobile' : 'nav-missions-button-mobile-alt');
                             } else {
                                 currentId = 'nav-missions-button';
                             }
@@ -87,10 +91,10 @@ const MissionOnboarding: React.FC = () => {
                         case 4: currentId = 'dashboard-back-button'; break;
                     }
                 } else {
-                    switch (displayState.onboardingStep) {
+                    switch (onboardingStep) {
                         case 1:
                             if (isMobileTarget) {
-                                currentId = displayState.subStep === 0 ? (document.getElementById('nav-user-menu-trigger') ? 'nav-user-menu-trigger' : 'nav-options-menu-trigger') : (document.getElementById('nav-missions-button-mobile') ? 'nav-missions-button-mobile' : 'nav-missions-button-mobile-alt');
+                                currentId = subStep === 0 ? (document.getElementById('nav-user-menu-trigger') ? 'nav-user-menu-trigger' : 'nav-options-menu-trigger') : (document.getElementById('nav-missions-button-mobile') ? 'nav-missions-button-mobile' : 'nav-missions-button-mobile-alt');
                             } else {
                                 currentId = 'nav-missions-button';
                             }
@@ -139,8 +143,8 @@ const MissionOnboarding: React.FC = () => {
             if (dashboardContainer) dashboardContainer.addEventListener('scroll', handleUpdate);
 
             // Frequent check for dynamic transitions
-            const timer = setTimeout(() => findTarget(false), 400);
-            const interval = setInterval(() => findTarget(false), 800);
+            const timer = setTimeout(() => findTarget(false), 300);
+            const interval = setInterval(() => findTarget(false), 300);
 
             return () => {
                 clearTimeout(timer);
@@ -370,9 +374,13 @@ const MissionOnboarding: React.FC = () => {
                                     )}
                                 </div>
                                 <div className="flex flex-col">
-                                    <h3 className="text-white font-black uppercase tracking-widest text-[9px]">Paso {displayState.activeTourStep} de {displayState.isSurveyTour ? 4 : 7}</h3>
-                                    <p className={`text-[8px] font-bold uppercase tracking-widest ${displayState.isSurveyTour ? 'text-amber-500' : 'text-blue-400'}`}>
-                                        {displayState.isSurveyTour ? 'Feedback de Misión' : 'Tutorial de la evaluación'}
+                                    <h3 className="text-white font-black uppercase tracking-widest text-[9px]">
+                                        {t("fixes.stepProgress", {
+                                            current: displayState.activeTourStep,
+                                            total: displayState.isSurveyTour ? 4 : 7
+                                        })}
+                                    </h3>                                    <p className={`text-[8px] font-bold uppercase tracking-widest ${displayState.isSurveyTour ? 'text-amber-500' : 'text-blue-400'}`}>
+                                        {displayState.isSurveyTour ? t('missions.onboarding.surveyTour') : t('missions.onboarding.evaluationTour')}
                                     </p>
                                 </div>
                             </div>
@@ -381,20 +389,20 @@ const MissionOnboarding: React.FC = () => {
                                 <p className="text-white text-base font-bold leading-tight flex items-center gap-2">
                                     {displayState.isSurveyTour ? (
                                         <>
-                                            {displayState.surveyOnboardingStep === 1 && (isMobileTarget && displayState.subStep === 0 ? "Abre el Menú" : "¡Misión Cumplida!")}
-                                            {displayState.surveyOnboardingStep === 2 && "Listo para evaluar"}
-                                            {displayState.surveyOnboardingStep === 3 && "Tu Opinión Importa"}
-                                            {displayState.surveyOnboardingStep === 4 && "Siguiente Misión"}
+                                            {displayState.surveyOnboardingStep === 1 && (isMobileTarget && displayState.subStep === 0 ? t('missions.onboarding.steps.openMenu') : t('missions.onboarding.steps.missionComplete'))}
+                                            {displayState.surveyOnboardingStep === 2 && t('missions.onboarding.steps.readyToEvaluate')}
+                                            {displayState.surveyOnboardingStep === 3 && t('missions.onboarding.steps.yourOpinionMatters')}
+                                            {displayState.surveyOnboardingStep === 4 && t('missions.onboarding.steps.nextMission')}
                                         </>
                                     ) : (
                                         <>
-                                            {displayState.onboardingStep === 1 && (isMobileTarget && displayState.subStep === 0 ? "Abre el Menú" : "Abre las Misiones")}
-                                            {displayState.onboardingStep === 2 && "Selecciona un Reto"}
-                                            {displayState.onboardingStep === 3 && "Resumen de Misión"}
-                                            {displayState.onboardingStep === 4 && "Checklist de Tareas"}
-                                            {displayState.onboardingStep === 5 && "Volver al Mapa"}
-                                            {displayState.onboardingStep === 6 && "Ruta Bloqueada"}
-                                            {displayState.onboardingStep === 7 && "Cerrar Panel"}
+                                            {displayState.onboardingStep === 1 && (isMobileTarget && displayState.subStep === 0 ? t('missions.onboarding.steps.openMenu') : t('missions.onboarding.steps.openMissions'))}
+                                            {displayState.onboardingStep === 2 && t('missions.onboarding.steps.selectChallenge')}
+                                            {displayState.onboardingStep === 3 && t('missions.onboarding.steps.missionSummary')}
+                                            {displayState.onboardingStep === 4 && t('missions.onboarding.steps.checklist')}
+                                            {displayState.onboardingStep === 5 && t('missions.onboarding.steps.backToMap')}
+                                            {displayState.onboardingStep === 6 && t('missions.onboarding.steps.lockedRoute')}
+                                            {displayState.onboardingStep === 7 && t('missions.onboarding.steps.closePanel')}
                                         </>
                                     )}
                                     <Sparkles size={14} className="text-amber-400" />
@@ -402,20 +410,24 @@ const MissionOnboarding: React.FC = () => {
                                 <p className="text-gray-400 text-[11px] leading-relaxed font-medium italic">
                                     {displayState.isSurveyTour ? (
                                         <>
-                                            {displayState.surveyOnboardingStep === 1 && (isMobileTarget && displayState.subStep === 0 ? "Pulsa en tu avatar para abrir las opciones de cuenta." : "Has completado un reto. Pulsa el trofeo para abrir el mapa y darnos feedback.")}
-                                            {displayState.surveyOnboardingStep === 2 && "Esta misión brilla con un nuevo color. Pulsa en ella para completar la evaluación de la misión."}
+                                            {displayState.surveyOnboardingStep === 1 && (isMobileTarget && displayState.subStep === 0 ? t('missions.onboarding.descriptions.openMenuMobile') : t('missions.onboarding.descriptions.missionComplete'))}
+                                            {displayState.surveyOnboardingStep === 2 && t('missions.onboarding.descriptions.readyToEvaluate')}
                                             {displayState.surveyOnboardingStep === 3 && "Pulsa el botón de feedback para compartir tu experiencia."}
                                             {displayState.surveyOnboardingStep === 4 && "¡Buen trabajo! Ahora pulsa este botón para volver al mapa y ver las nuevas misiones disponibles."}
                                         </>
                                     ) : (
                                         <>
-                                            {displayState.onboardingStep === 1 && (isMobileTarget && displayState.subStep === 0 ? "Pulsa en tu foto de perfil para abrir el menú de usuario." : "Haz clic en Misiones para ver el Roadmap de evaluación.")}
-                                            {displayState.onboardingStep === 2 && "Esta es tu misión actual. Pulsa en la tarjeta para abrir los detalles."}
-                                            {displayState.onboardingStep === 3 && (viewport.w < 1024 ? "En la parte superior encontrarás el objetivo principal y tu progreso actual." : "En la parte izquierda encontrarás el objetivo principal y tu progreso actual.")}
-                                            {displayState.onboardingStep === 4 && (viewport.w < 1024 ? "En la parte inferior tienes los pasos específicos. No tienes que marcarlos como completados, flAIghts los detectará automáticamente al completarlos." : "A la derecha tienes los pasos específicos. No tienes que marcarlos como completados, flAIghts los detectará automáticamente al completarlos.")}
-                                            {displayState.onboardingStep === 5 && "Pulsa aquí para volver a la vista general de todas las misiones."}
-                                            {displayState.onboardingStep === 6 && "Algunas misiones están bloqueadas. Deberás completar sus misiones precedentes primero."}
-                                            {displayState.onboardingStep === 7 && `Finalmente, usa la X para cerrar el Roadmap y empezar a navegar libremente. Tu primera misión es "${activeMission?.title || 'tu primer reto'}". ¡Completa todas las misiones para finalizar la evaluación!`}
+                                            {displayState.onboardingStep === 1 && (isMobileTarget && displayState.subStep === 0 ? t('missions.onboarding.descriptions.openMenuMobile') : t('missions.onboarding.descriptions.openMissions'))}
+                                            {displayState.onboardingStep === 2 && t('missions.onboarding.descriptions.selectChallenge')}
+                                            {displayState.onboardingStep === 3 && (viewport.w < 1024 ? t('missions.onboarding.descriptions.missionSummaryMobile') : t('missions.onboarding.descriptions.missionSummaryDesktop'))}
+                                            {displayState.onboardingStep === 4 && (viewport.w < 1024 ? t('missions.onboarding.descriptions.checklistMobile') : t('missions.onboarding.descriptions.checklistDesktop'))}
+                                            {displayState.onboardingStep === 5 && t('missions.onboarding.descriptions.backToMap')}
+                                            {displayState.onboardingStep === 6 && t('missions.onboarding.descriptions.lockedRoute')}
+                                            {displayState.onboardingStep === 7 && t('missions.onboarding.descriptions.closePanel', {
+                                                missionName: (activeMission || missions.find(m => !isMissionCompleted(m.id) && isMissionUnlocked(m.id)))?.title
+                                                    ? t((activeMission || missions.find(m => !isMissionCompleted(m.id) && isMissionUnlocked(m.id)))!.title)
+                                                    : t('missions.noMissionAvailable')
+                                            })}
                                         </>
                                     )}
                                 </p>
@@ -427,7 +439,7 @@ const MissionOnboarding: React.FC = () => {
                                         onClick={nextOnboardingStep}
                                         className="w-full group flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-500 text-white text-[9px] font-black uppercase tracking-[0.2em] py-3 rounded-xl transition-all active:scale-95 cursor-pointer shadow-lg shadow-blue-900/40"
                                     >
-                                        Siguiente Paso <ChevronRight size={14} className="group-hover:translate-x-1 transition-transform" />
+                                        {t('missions.onboarding.actions.next')} <ChevronRight size={14} className="group-hover:translate-x-1 transition-transform" />
                                     </button>
                                 </div>
                             )}
@@ -435,13 +447,13 @@ const MissionOnboarding: React.FC = () => {
                             {!isNextButtonStep && (
                                 <div className="mt-0.5 flex flex-col items-center gap-3">
                                     <div className="flex items-center justify-center gap-2 text-[8px] font-black uppercase tracking-widest text-white/20 animate-pulse">
-                                        <Target size={10} /> Requiere interacción del usuario.
+                                        <Target size={10} /> {t('missions.onboarding.actions.directAction')}
                                     </div>
                                     <button
                                         onClick={skipOnboarding}
                                         className="text-[9px] font-black uppercase tracking-widest text-white/40 hover:text-white/80 transition-colors cursor-pointer"
                                     >
-                                        Saltar Tutorial
+                                        {t('missions.onboarding.actions.skip')}
                                     </button>
                                 </div>
                             )}
@@ -452,7 +464,7 @@ const MissionOnboarding: React.FC = () => {
                                         onClick={skipOnboarding}
                                         className="text-[9px] font-black uppercase tracking-widest text-white/40 hover:text-white/80 transition-colors cursor-pointer"
                                     >
-                                        Saltar Tutorial
+                                        {t('missions.onboarding.actions.skip')}
                                     </button>
                                 </div>
                             )}

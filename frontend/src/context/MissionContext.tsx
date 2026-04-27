@@ -4,6 +4,7 @@ import { useAuth } from './AuthContext';
 import { MISSIONS } from '@/constants/missions';
 import { Mission, MissionStep } from '@/types/missions';
 import { toast } from 'sonner';
+import { useTranslation } from 'react-i18next';
 import ConsentModal from '@/components/missions/ConsentModal';
 import SurveyModal from '@/components/missions/SurveyModal';
 import FinalEvaluationModal from '@/components/missions/FinalEvaluationModal';
@@ -99,6 +100,7 @@ function validateMissionCycles(missions: { id: string, dependsOn?: string[] }[])
 
 export const MissionProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     const { isAuthenticated, user } = useAuth();
+    const { t } = useTranslation();
     const [missions, setMissions] = useState<Mission[]>(() => {
         const saved = localStorage.getItem(STORAGE_KEY);
 
@@ -150,7 +152,7 @@ export const MissionProvider: React.FC<{ children: ReactNode }> = ({ children })
                         s.id === 'complete_registration' ? {
                             ...s,
                             isCompleted: true,
-                            completedBy: user?._id,
+                            completedBy: user._id,
                             completedAt: new Date().toISOString()
                         } : s
                     );
@@ -159,7 +161,7 @@ export const MissionProvider: React.FC<{ children: ReactNode }> = ({ children })
                         ...m,
                         steps: newSteps,
                         isCompleted: allStepsCompleted,
-                        completedBy: allStepsCompleted ? (user?._id || m.completedBy) : m.completedBy,
+                        completedBy: allStepsCompleted ? (user._id || m.completedBy) : m.completedBy,
                         completedAt: allStepsCompleted ? (new Date().toISOString() || m.completedAt) : m.completedAt
                     };
                 }
@@ -192,7 +194,10 @@ export const MissionProvider: React.FC<{ children: ReactNode }> = ({ children })
         const seen = localStorage.getItem(ONBOARDING_KEY) === 'true';
         return seen ? 0 : 1;
     });
-    const [surveyOnboardingStep, setSurveyOnboardingStep] = useState<number>(0);
+    const [surveyOnboardingStep, setSurveyOnboardingStep] = useState<number>(() => {
+        const saved = localStorage.getItem('flaights_survey_onboarding_step');
+        return saved ? parseInt(saved, 10) : 0;
+    });
     const [hasSeenSurveyOnboarding, setHasSeenSurveyOnboarding] = useState(() => {
         return localStorage.getItem('onboarding_survey_seen') === 'true';
     });
@@ -219,6 +224,10 @@ export const MissionProvider: React.FC<{ children: ReactNode }> = ({ children })
     useEffect(() => {
         localStorage.setItem(FINISHED_KEY, evaluationFinished.toString());
     }, [evaluationFinished]);
+
+    useEffect(() => {
+        localStorage.setItem('flaights_survey_onboarding_step', surveyOnboardingStep.toString());
+    }, [surveyOnboardingStep]);
 
     const acceptConsent = () => {
         localStorage.setItem(CONSENT_KEY, 'true');
@@ -332,7 +341,7 @@ export const MissionProvider: React.FC<{ children: ReactNode }> = ({ children })
                     const newSteps = m.steps.map((s: MissionStep) => {
                         if (s.id === stepId) {
                             // Toast con ID único para deduplicación automática
-                            toast.success(`¡Paso ${m.title}: ${s.title} completado!`, {
+                            toast.success(t("fixes.stepCompleted", { mission: t(m.title), step: t(s.title) }), {
                                 id: `step-${missionId}-${stepId}`,
                                 icon: '✨',
                                 style: {
@@ -355,7 +364,7 @@ export const MissionProvider: React.FC<{ children: ReactNode }> = ({ children })
                     const allStepsCompleted = newSteps.every(s => s.isCompleted);
 
                     if (allStepsCompleted && !m.isCompleted) {
-                        toast.success(`Misión completada: ${m.title}`, {
+                        toast.success(`${t('missions.dashboard.missionPassed')}: ${t(m.title)}`, {
                             id: `mission-${missionId}`,
                             icon: '🎉',
                             duration: 5000,
@@ -411,7 +420,7 @@ export const MissionProvider: React.FC<{ children: ReactNode }> = ({ children })
                 completedAt: mission.completedAt!,
                 steps: mission.steps.map(s => ({
                     id: s.id,
-                    title: s.title,
+                    title: t(s.title),
                     completedAt: s.completedAt!
                 }))
             }
@@ -443,7 +452,7 @@ export const MissionProvider: React.FC<{ children: ReactNode }> = ({ children })
             });
 
             setEvaluationFinished(true);
-            toast.success('¡Evaluación completada!');
+            toast.success(t('home.toast.evaluationCompleted'));
 
             // Invalidad datos del usuario para mostrar la nueva insignia
             queryClient.invalidateQueries({ queryKey: getGetSelfUserQueryKey() });

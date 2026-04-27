@@ -11,8 +11,11 @@ import Logo from "@/components/ui/Logo";
 import TurnstileWidget, { type TurnstileWidgetRef } from "@/components/ui/TurnstileWidget";
 import GoogleLinkingView from "@/components/auth/GoogleLinkingView";
 import { useRef } from "react";
+import { useTranslation } from "react-i18next";
+import Tooltip from "@/components/ui/Tooltip";
 
 export default function Login() {
+    const { t } = useTranslation();
     const navigate = useNavigate();
     const { refetch, isAuthenticated, isLoading } = useAuth();
 
@@ -50,7 +53,7 @@ export default function Login() {
                         if (error.details["body.identifier"]) {
                             switch (error.details["body.identifier"].message) {
                                 case "minLength 3":
-                                    newErrors.identifier = "Mínimo 3 caracteres";
+                                    newErrors.identifier = t("login.validation.identifierMin");
                                     break;
                                 default:
                                     newErrors.identifier = error.details["body.identifier"].message;
@@ -60,7 +63,7 @@ export default function Login() {
                         if (error.details["body.password"]) {
                             switch (error.details["body.password"].message) {
                                 case "minLength 8":
-                                    newErrors.password = "Mínimo 8 caracteres";
+                                    newErrors.password = t("login.validation.passwordMin");
                                     break;
                                 default:
                                     newErrors.password = error.details["body.password"].message;
@@ -71,18 +74,18 @@ export default function Login() {
                         break;
                     }
                     case "INVALID_CREDENTIALS":
-                        toast.error("Credenciales inválidas");
+                        toast.error(t("login.toast.invalidCredentials"));
                         break;
                     case "TURNSTILE_MISSING_TOKEN":
-                        toast.error("Por favor, completa la verificación de seguridad.");
+                        toast.error(t("login.toast.turnstileRequired"));
                         break;
                     case "TURNSTILE_INVALID_TOKEN":
                     case "TURNSTILE_TOKEN_ALREADY_SPENT":
-                        toast.error("La verificación ha caducado o es inválida. Por favor, verifica de nuevo.");
+                        toast.error(t("login.toast.turnstileInvalid"));
                         turnstileRef.current?.reset();
                         break;
                     case "TURNSTILE_VERIFICATION_FAILED":
-                        toast.error("La verificación de seguridad ha fallado. Por favor, inténtalo de nuevo.");
+                        toast.error(t("login.toast.turnstileFailed"));
                         break;
                 }
             }
@@ -92,7 +95,7 @@ export default function Login() {
     const { mutate: performGoogleLogin, isPending: isGooglePending } = useLoginWithGoogleWeb({
         mutation: {
             onSuccess: async () => {
-                toast.success(googleLinkData ? "Cuentas vinculadas correctamente" : "Sesión iniciada con Google");
+                toast.success(googleLinkData ? t("login.toast.googleLinked") : t("login.toast.googleSuccess"));
                 setGoogleLinkData(null);
                 await refetch();
                 navigate("/");
@@ -103,15 +106,16 @@ export default function Login() {
                         credential: googleCredentialRef.current || "",
                         email: error.details.email
                     });
-                    toast.info("Cuenta existente detectada. Introduce tu contraseña para vincularla.");
+                    turnstileRef.current?.reset();
+                    toast.info(t("login.toast.googleAccountDetected"));
                 } else if (error.code === "INVALID_RESET_CODE") {
-                    toast.error("El código de verificación es incorrecto o ha caducado.");
+                    toast.error(t("login.toast.googleInvalidCode"));
                 } else if (error.code === "TURNSTILE_MISSING_TOKEN" || error.code === "TURNSTILE_INVALID_TOKEN" || error.code === "TURNSTILE_TOKEN_ALREADY_SPENT" || error.code === "TURNSTILE_VERIFICATION_FAILED") {
-                    toast.error("La verificación de seguridad ha fallado o caducado. Inténtalo de nuevo.");
+                    toast.error(t("login.toast.googleVerificationFailed"));
                     turnstileRef.current?.reset();
                 } else {
                     setGoogleLinkData(null);
-                    toast.error("Error al iniciar sesión con Google");
+                    toast.error(t("login.toast.googleError"));
                 }
             }
         }
@@ -119,13 +123,13 @@ export default function Login() {
 
     const login = () => {
         const newErrors = {
-            identifier: !credentials.identifier ? "Introduce tu email o nombre de usuario" : "",
-            password: !credentials.password ? "Introduce tu contraseña" : credentials.password.length < 8 ? "Mínimo 8 caracteres" : ""
+            identifier: !credentials.identifier ? t("login.validation.identifierRequired") : "",
+            password: !credentials.password ? t("login.validation.passwordRequired") : ""
         };
         setErrors(newErrors);
 
         if (newErrors.identifier || newErrors.password) {
-            toast.error("Por favor completa todos los campos");
+            toast.error(t("login.validation.fillAllFields"));
             return;
         }
 
@@ -153,7 +157,7 @@ export default function Login() {
                         <div className="absolute inset-0 bg-brand/20 blur-2xl rounded-full -z-10 animate-pulse" />
                     </div>
                     <div className="flex flex-col items-center gap-3">
-                        <span className="text-content-muted font-medium tracking-wide">Verificando sesión...</span>
+                        <span className="text-content-muted font-medium tracking-wide">{t("login.verifyingSession")}</span>
                         <div className="flex items-center gap-2">
                             <div className="w-2 h-2 rounded-full bg-brand animate-bounce animate-delay-[-0.3s]" />
                             <div className="w-2 h-2 rounded-full bg-brand animate-bounce animate-delay-[-0.15s]" />
@@ -170,14 +174,16 @@ export default function Login() {
             <AuthCard title={
                 <>
                     <Logo size={32} />
-                    <span>Inicio de sesión</span>
+                    <span>{t("login.title")}</span>
                 </>
             }>
                 {googleLinkData ? (
                     <GoogleLinkingView
                         linkData={googleLinkData}
-                        turnstileToken={turnstileToken}
-                        onCancel={() => setGoogleLinkData(null)}
+                        onCancel={() => {
+                            setGoogleLinkData(null);
+                            turnstileRef.current?.reset();
+                        }}
                         onSuccess={() => setGoogleLinkData(null)}
                     />
                 ) : (
@@ -192,7 +198,7 @@ export default function Login() {
                             type="text"
                             id="identifier"
                             name="identifier"
-                            label="Email o nombre de usuario"
+                            label={t("login.labels.identifier")}
                             error={errors.identifier}
                             onKeyDown={enterKeyPress}
                         />
@@ -206,55 +212,58 @@ export default function Login() {
                             type="password"
                             id="password"
                             name="password"
-                            label="Contraseña"
+                            label={t("login.labels.password")}
                             error={errors.password}
                             onKeyDown={enterKeyPress}
                         />
 
                         <span className="text-sm text-content text-right">
-                            <a href="/forgot-password" className="text-brand hover:underline">¿Olvidaste tu contraseña?</a>
+                            <a href="/forgot-password" className="text-brand hover:underline">{t("login.links.forgotPassword")}</a>
                         </span>
 
-                        <button
-                            type="button"
-                            onClick={login}
-                            disabled={isPending}
-                            className={`mt-2 rounded-lg bg-brand p-3 text-content-on-brand font-bold enabled:hover:scale-[1.02] enabled:active:scale-95 transition-all shadow-lg shadow-brand/20 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed`}
-                        >
-                            {isPending ? "Conectando..." : "Login"}
-                        </button>
+                        <Tooltip content={t("turnstile.verifying")} disabled={!!turnstileToken} position="top">
+                            <button
+                                type="button"
+                                onClick={login}
+                                disabled={isPending || !turnstileToken}
+                                className={`mt-2 rounded-lg bg-brand p-3 text-content-on-brand font-bold enabled:hover:scale-[1.02] enabled:active:scale-95 transition-all shadow-lg shadow-brand/20 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed`}
+                            >
+                                {isPending ? t("login.actions.loggingIn") : t("login.actions.login")}
+                            </button>
+                        </Tooltip>
 
                         <div className="relative flex py-2 items-center">
                             <div className="grow border-t border-content-muted/30"></div>
-                            <span className="shrink-0 mx-4 text-content-muted text-sm">O continúa con</span>
+                            <span className="shrink-0 mx-4 text-content-muted text-sm">{t("login.orContinueWith")}</span>
                             <div className="grow border-t border-content-muted/30"></div>
                         </div>
 
-                        <div className="flex justify-center">
-                            <GoogleLogin
-                                onSuccess={credentialResponse => {
-                                    if (credentialResponse.credential) {
-                                        const credential = credentialResponse.credential;
-                                        googleCredentialRef.current = credential;
-                                        performGoogleLogin({
-                                            data: {
-                                                credential,
-                                                turnstileToken
-                                            }
-                                        });
-                                    }
-                                }}
-                                onError={() => {
-                                    toast.error('Error al conectar con Google');
-                                }}
-                                theme='filled_blue'
-                                shape="circle"
-                                text="continue_with"
-                            />
+                        <div className={`w-full flex justify-center transition-opacity duration-300 ${isGooglePending ? "opacity-50 cursor-not-allowed" : ""}`}>
+                            <div className={isGooglePending ? "pointer-events-none" : ""}>
+                                <GoogleLogin
+                                    onSuccess={credentialResponse => {
+                                        if (credentialResponse.credential) {
+                                            const credential = credentialResponse.credential;
+                                            googleCredentialRef.current = credential;
+                                            performGoogleLogin({
+                                                data: {
+                                                    credential,
+                                                }
+                                            });
+                                        }
+                                    }}
+                                    onError={() => {
+                                        toast.error(t("login.toast.googleConnectError"));
+                                    }}
+                                    theme='filled_blue'
+                                    shape="circle"
+                                    text="continue_with"
+                                />
+                            </div>
                         </div>
 
                         <span className="text-sm text-content text-center">
-                            ¿No tienes cuenta? <a href="/register" className="text-brand font-bold hover:underline">Regístrate</a>
+                            {t("login.noAccount")} <a href="/register" className="text-brand font-bold hover:underline">{t("login.links.register")}</a>
                         </span>
                     </form>
                 )}

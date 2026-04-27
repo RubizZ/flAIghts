@@ -1,9 +1,10 @@
 import React from 'react';
+import { ParseKeys } from 'i18next';
 
 export interface MissionStep {
     id: string;
-    title: string;
-    description: string;
+    title: ParseKeys;
+    description: ParseKeys;
     isCompleted: boolean;
     completedBy?: string;
     completedAt?: string;
@@ -12,8 +13,8 @@ export interface MissionStep {
 
 export interface Mission {
     id: string;
-    title: string;
-    description: string;
+    title: ParseKeys;
+    description: ParseKeys;
     icon: string;
     steps: MissionStep[];
     isCompleted: boolean;

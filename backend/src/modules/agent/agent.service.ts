@@ -44,7 +44,7 @@ export class AgentService {
         }
 
         // Si hay modelos configurados en env (AVAILABLE_MODELS), hacer intersección (cross)
-        if (this.config.AVAILABLE_MODELS && this.config.AVAILABLE_MODELS.length > 0) {
+        if (this.config.AVAILABLE_MODELS !== undefined) {
             const allowed = this.config.AVAILABLE_MODELS.filter(m => backendModels.has(m));
 
             return allowed;
@@ -85,7 +85,7 @@ export class AgentService {
         userId: string,
         location?: { latitude: number; longitude: number },
         manual_state?: { origins?: string[]; destinations?: string[]; departure_date?: string; return_date?: string },
-        model: string | undefined = this.config.AVAILABLE_MODELS[0],
+        model: string | undefined = this.config.AVAILABLE_MODELS?.[0],
         date?: Date
     ): AsyncGenerator<AgentStreamEvent> {
         if (!model) {

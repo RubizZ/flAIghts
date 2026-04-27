@@ -8,6 +8,15 @@ export interface CachedAirport extends IAirport {
     _normCountryNames: string;
 }
 
+
+export interface CachedAirport extends IAirport {
+    _normIata: string;
+    _normCity: string;
+    _normName: string;
+    _normCountry: string;
+    _normCountryNames: string;
+}
+
 export interface AirportResponse {
     iata_code: string;
     name: string;

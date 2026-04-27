@@ -18,6 +18,14 @@ import { Error as MongooseError } from 'mongoose';
 import { contextStorage, type RequestContext } from './utils/context.js';
 import logger from './utils/logger.js';
 import { RegisterAsyncRoutes } from './generated/asyncapi/routes.js';
+import {
+    globalApiLimiter,
+    authLimiter,
+    registrationLimiter,
+    searchLimiter,
+    chatbotLimiter,
+    bookingLimiter
+} from './middlewares/rateLimiter.js';
 
 
 logger.info(`
@@ -76,10 +84,21 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
+if (config.TRUST_PROXY) {
+    app.set('trust proxy', 1);
+}
+
 // Request Context Middleware for auditing and tracking
 app.use((req, res, next) => {
+    // Si no confiamos en el proxy, ignoramos los encabezados que puedan ser spoofed
+    let detectedIp = req.ip || req.socket.remoteAddress || '';
+
+    if (config.TRUST_PROXY && req.headers['cf-connecting-ip']) {
+        detectedIp = req.headers['cf-connecting-ip'] as string;
+    }
+
     const store: RequestContext = {
-        ip: (req.ip || req.socket.remoteAddress || '').replace('::ffff:', ''),
+        ip: detectedIp.replace('::ffff:', ''),
         userAgent: req.headers['user-agent'] || '',
         userId: null // Puede actualizarse en el middleware de autenticación si es necesario
     };
@@ -128,9 +147,37 @@ app.get('/health', (req, res) => {
     res.status(200).send('OK');
 });
 
+// Health check endpoint
+app.get('/health', (req, res) => {
+    res.status(200).send('OK');
+});
+
+
+// Authentication endpoints rate limiter (5 req/min)
+app.post('/auth/login', authLimiter);
+app.post('/auth/forgot-password', authLimiter);
+app.post('/auth/reset-password', authLimiter);
+
+// Registration endpoints rate limiter (3 req/min)
+app.post('/users/register/initiate', registrationLimiter);
+app.post('/users/register/complete', registrationLimiter);
+
+// Search endpoint rate limiter (20 req/min)
+app.post('/search', searchLimiter);
+app.post('/search/stream', searchLimiter);
+
+// Chatbot endpoint rate limiter (10 req/min)
+app.post('/agent/stream', chatbotLimiter);
+
+// Booking endpoint rate limiter (10 req/min)
+app.post('/booking/prepare', bookingLimiter);
+
+// Global API rate limiter (100 req/min)
+app.use(globalApiLimiter);
+
 // Register routes from tsoa and asyncapi
-RegisterRoutes(app as any);
-RegisterAsyncRoutes(app as any);
+RegisterRoutes(app as any)
+RegisterAsyncRoutes(app as any)
 
 // Error handling middleware for validation request errors, business logic errors and unhandled errors
 app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction): express.Response | void => {

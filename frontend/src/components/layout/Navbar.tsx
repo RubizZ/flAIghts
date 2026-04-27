@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
+import { useTranslation } from "react-i18next";
 import { Theme, useTheme } from "@/context/ThemeContext";
 import Dropdown, { useDropdown } from "@/components/ui/Dropdown";
 import {
@@ -30,6 +31,7 @@ export default function Navbar({ variant = 'floating', logoRef }: { variant?: 'f
     const navigate = useNavigate();
     const { user, isAuthenticated, isLoading, logout } = useAuth();
     const { theme, setTheme } = useTheme();
+    const { t } = useTranslation();
 
     const { data: conversationsData } = useGetConversations(undefined, {
         query: {
@@ -51,23 +53,24 @@ export default function Navbar({ variant = 'floating', logoRef }: { variant?: 'f
     };
 
     const themeLabels = {
-        light: 'Claro',
-        dark: 'Oscuro',
-        system: 'Sistema'
+        light: t("settings.appearance.light"),
+        dark: t("settings.appearance.dark"),
+        system: t("settings.appearance.system")
     };
 
-    const { isEvaluationMode, hasConsented, setShowRoadmap, missions, isMissionRated, allCompleted, reopenConsent } = useMissions();
+    const { isEvaluationMode, hasConsented, setShowRoadmap, missions, isMissionRated, allCompleted, reopenConsent, onboardingStep, surveyOnboardingStep } = useMissions();
+    const isTutorialActive = onboardingStep > 0 || surveyOnboardingStep > 0;
     const pendingSurveysCount = missions.filter(m => m.isCompleted && !isMissionRated(m.id)).length;
 
     const NotificationsMainView = ({ user, unreadMessagesCount }: { user: PopulatedUser, unreadMessagesCount: number }) => {
         const { pushMenu, setIsOpen } = useDropdown();
-        const hasFriendRequests = user?.received_friend_requests && user.received_friend_requests.length > 0;
+        const hasFriendRequests = user.received_friend_requests.length > 0;
         const hasUnreadMessages = unreadMessagesCount > 0;
 
         return (
             <div className="p-2 min-w-70 max-w-sm whitespace-normal flex flex-col gap-1">
                 <div className="p-2 border-b border-line mb-1">
-                    <p className="text-[10px] uppercase tracking-widest text-content-muted font-bold opacity-50">Notificaciones</p>
+                    <p className="text-[10px] uppercase tracking-widest text-content-muted font-bold opacity-50">{t("navbar.notifications")}</p>
                 </div>
 
                 {hasUnreadMessages && (
@@ -95,8 +98,8 @@ export default function Navbar({ variant = 'floating', logoRef }: { variant?: 'f
                         className="w-full flex items-center justify-between px-3 py-3 text-sm text-content hover:bg-surface/70 rounded-xl transition-all cursor-pointer group text-left font-medium bg-brand/5"
                     >
                         <div className="flex flex-col">
-                            <span className="text-brand font-bold">Solicitudes de amistad</span>
-                            <span className="text-xs text-content-muted opacity-80">Tienes {user.received_friend_requests.length} nueva{user.received_friend_requests.length > 1 ? 's' : ''}</span>
+                            <span className="text-brand font-bold">{t("navbar.friendRequests")}</span>
+                            <span className="text-xs text-content-muted opacity-80">{t("navbar.newFriendRequests", { count: user.received_friend_requests.length, plural: user.received_friend_requests.length > 1 ? 's' : '' })}</span>
                         </div>
                         <ChevronDown size={14} className="-rotate-90 group-hover:translate-x-1 transition-transform text-brand" />
                     </button>
@@ -104,7 +107,7 @@ export default function Navbar({ variant = 'floating', logoRef }: { variant?: 'f
 
                 {!hasFriendRequests && !hasUnreadMessages && (
                     <div className="p-4 text-center text-content-muted opacity-50 text-sm">
-                        No tienes notificaciones
+                        {t("navbar.noNotifications")}
                     </div>
                 )}
             </div>
@@ -123,16 +126,16 @@ export default function Navbar({ variant = 'floating', logoRef }: { variant?: 'f
                     className="px-3 py-2 text-[10px] uppercase tracking-widest text-content font-bold hover:text-brand transition-colors flex items-center gap-2 cursor-pointer w-full text-left border-b border-line mb-2"
                 >
                     <ChevronDown size={12} className="rotate-90" />
-                    Volver
+                    {t("navbar.back")}
                 </button>
                 <div className="max-h-60 overflow-y-auto pr-1">
-                    {user?.received_friend_requests?.map((req) => (
+                    {user.received_friend_requests.map((req) => (
                         <div key={req._id} className="flex items-center justify-between p-2 hover:bg-surface/80 rounded-lg transition-colors cursor-pointer group" onClick={() => { setIsOpen(false); navigate(`/user/${req._id}`); }}>
                             <div className="flex items-center gap-2">
                                 <UserAvatar user={req} size={32} />
                                 <span className="font-bold text-sm text-content">{req.username}</span>
                             </div>
-                            <span className="text-[10px] font-bold text-brand bg-brand/10 px-2 py-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity">Ver</span>
+                            <span className="text-[10px] font-bold text-brand bg-brand/10 px-2 py-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity">{t("navbar.view")}</span>
                         </div>
                     ))}
                 </div>
@@ -142,7 +145,7 @@ export default function Navbar({ variant = 'floating', logoRef }: { variant?: 'f
 
     const UserMainView = ({ user, logout, navigate, theme, themeLabels, unreadMessagesCount }: { user: PopulatedUser, logout: () => void, navigate: any, theme: Theme, themeLabels: Record<string, string>, unreadMessagesCount: number }) => {
         const { pushMenu, setIsOpen } = useDropdown();
-        const totalNotifications = (user?.received_friend_requests?.length || 0) + unreadMessagesCount;
+        const totalNotifications = user.received_friend_requests.length + unreadMessagesCount;
 
         return (
             <div className="w-64">
@@ -162,7 +165,7 @@ export default function Navbar({ variant = 'floating', logoRef }: { variant?: 'f
                             className="w-full flex items-center justify-between px-4 py-3 text-sm text-content hover:bg-brand/10 rounded-xl transition-all cursor-pointer group text-left font-medium"
                         >
                             <div className="flex items-center gap-3">
-                                <Trophy size={20} className={`shrink-0 transition-colors ${pendingSurveysCount > 0 ? "text-amber-500 animate-soft-pulse" : allCompleted ? "text-green-500" : "group-hover:text-brand"}`} />
+                                <Trophy size={20} className={`shrink-0 transition-colors ${pendingSurveysCount > 0 ? (isTutorialActive ? "text-amber-500" : "text-amber-500 animate-soft-pulse") : allCompleted ? "text-green-500" : "group-hover:text-brand"}`} />
                                 <span className="leading-none font-bold">Misiones</span>
                             </div>
                             {pendingSurveysCount > 0 && (
@@ -174,8 +177,8 @@ export default function Navbar({ variant = 'floating', logoRef }: { variant?: 'f
                     </div>
                 )}
                 <div className="p-3 border-b border-line bg-surface/50">
-                    <p className="text-[10px] uppercase tracking-widest text-content-muted font-bold mb-1 opacity-50">Cuenta</p>
-                    <p className="text-sm font-bold text-content truncate">{user?.email}</p>
+                    <p className="text-[10px] uppercase tracking-widest text-content-muted font-bold mb-1 opacity-50">{t("navbar.account")}</p>
+                    <p className="text-sm font-bold text-content truncate">{user.email}</p>
                 </div>
                 <div className="p-1">
                     {/* Sección de notificaciones - Solo visible en móvil/tablet si flotante */}
@@ -189,7 +192,7 @@ export default function Navbar({ variant = 'floating', logoRef }: { variant?: 'f
                         >
                             <div className="flex items-center gap-3">
                                 <Bell size={20} className="shrink-0 group-hover:text-brand transition-colors" />
-                                <span className="leading-none">Notificaciones</span>
+                                <span className="leading-none">{t("navbar.notifications")}</span>
                             </div>
                             <div className="flex items-center gap-1.5">
                                 {totalNotifications > 0 && (
@@ -203,10 +206,10 @@ export default function Navbar({ variant = 'floating', logoRef }: { variant?: 'f
                     </div>
 
 
-                    <button onClick={() => { setIsOpen(false); navigate(`/user/${user?._id}`) }} className="w-full flex items-center justify-between text-content px-4 py-3 text-sm rounded-xl transition-all group text-left hover:bg-surface/70 hover:cursor-pointer font-medium">
+                    <button onClick={() => { setIsOpen(false); navigate(`/user/${user._id}`) }} className="w-full flex items-center justify-between text-content px-4 py-3 text-sm rounded-xl transition-all group text-left hover:bg-surface/70 hover:cursor-pointer font-medium">
                         <div className="flex items-center gap-3">
                             <User size={20} className="shrink-0" />
-                            <span className="leading-none">Mi Perfil</span>
+                            <span className="leading-none">{t("navbar.myProfile")}</span>
                         </div>
                     </button>
                     <button
@@ -224,10 +227,10 @@ export default function Navbar({ variant = 'floating', logoRef }: { variant?: 'f
                     >
                         <div className="flex items-center gap-3">
                             <Settings size={20} className="shrink-0" />
-                            <span className="leading-none">Ajustes</span>
+                            <span className="leading-none">{t("navbar.settings")}</span>
                         </div>
                     </button>
-                    {(user?.role === 'admin' || user?.role === 'superadmin') && (
+                    {(user.role === 'admin' || user.role === 'superadmin') && (
                         <button onClick={() => { setIsOpen(false); navigate('/admin') }} className="w-full flex items-center justify-between px-4 py-3 text-sm rounded-xl transition-all group text-left hover:bg-surface/70 cursor-pointer font-medium">
                             <div className="flex items-center gap-3 text-amber-500">
                                 <ShieldCheck size={20} />
@@ -247,7 +250,7 @@ export default function Navbar({ variant = 'floating', logoRef }: { variant?: 'f
                         className="w-full flex items-center gap-3 px-4 py-3 text-sm text-red-500 hover:bg-red-500/10 rounded-xl transition-all cursor-pointer text-left font-bold"
                     >
                         <LogOut size={20} />
-                        Cerrar sesión
+                        {t("settings.general.logout")}
                     </button>
                 </div>
             </div>
@@ -269,7 +272,7 @@ export default function Navbar({ variant = 'floating', logoRef }: { variant?: 'f
                     className="w-full flex items-center gap-3 text-content-muted px-4 py-3 text-sm rounded-xl transition-[background-color_300ms,border-color_150ms,color_300ms,transform_300ms,opacity_300ms,box-shadow_300ms] group text-left hover:bg-surface/70 hover:cursor-pointer font-medium mb-1"
                 >
                     <ChevronDown size={20} className="rotate-90 shrink-0" />
-                    <span className="leading-none">Volver</span>
+                    <span className="leading-none">{t("navbar.back")}</span>
                 </button>
                 <div className="flex flex-col">
                     {(['light', 'dark', 'system'] as const).map((t) => (
@@ -323,8 +326,8 @@ export default function Navbar({ variant = 'floating', logoRef }: { variant?: 'f
                             className="w-full flex items-center justify-between px-3 py-2 text-sm text-content hover:bg-brand/10 rounded-xl transition-all cursor-pointer group text-left font-medium"
                         >
                             <div className="flex items-center gap-3">
-                                <Trophy size={16} className={`shrink-0 transition-colors ${pendingSurveysCount > 0 ? "text-amber-500 animate-soft-pulse" : allCompleted ? "text-green-500" : "group-hover:text-brand"}`} />
-                                <span className="leading-none font-bold">Misiones</span>
+                                <Trophy size={16} className={`shrink-0 transition-colors ${pendingSurveysCount > 0 ? (isTutorialActive ? "text-amber-500" : "text-amber-500 animate-soft-pulse") : allCompleted ? "text-green-500" : "group-hover:text-brand"}`} />
+                                <span className="leading-none font-bold">{t("navbar.missions")}</span>
                             </div>
                         </button>
                     </div>
@@ -332,42 +335,42 @@ export default function Navbar({ variant = 'floating', logoRef }: { variant?: 'f
 
                 {/* Mobile/Tablet Auth Options */}
                 <div className="lg:hidden mb-2 pb-2 border-b border-line">
-                    <p className="px-3 py-2 text-[10px] uppercase tracking-widest text-content-muted font-bold opacity-50">Autenticación</p>
+                    <p className="px-3 py-2 text-[10px] uppercase tracking-widest text-content-muted font-bold opacity-50">{t("navbar.authentication")}</p>
                     <button
                         onClick={() => { setIsOpen(false); navigate('/login'); }}
                         className="w-full flex items-center gap-3 px-4 py-3 text-sm text-content hover:bg-surface/70 rounded-xl transition-colors cursor-pointer font-medium"
                     >
                         <User size={20} className="text-brand" />
-                        Log in
+                        {t("login.actions.login")}
                     </button>
                     <button
                         onClick={() => { setIsOpen(false); navigate('/register'); }}
                         className="w-full flex items-center gap-3 px-4 py-3 text-sm text-content hover:bg-surface/70 rounded-xl transition-colors cursor-pointer font-medium"
                     >
                         <ShieldCheck size={20} className="text-brand" />
-                        Register
+                        {t("register.steps.step2Title")}
                     </button>
                 </div>
 
                 <p className="hidden sm:block px-3 py-2 text-[10px] uppercase tracking-widest text-content-muted font-bold opacity-50">Opciones</p>
-{!isAuthenticated && (
-    <button
-        onClick={(e) => {
-            e.stopPropagation();
-            pushMenu('theme');
-        }}
-        className="w-full flex items-center justify-between px-4 py-3 text-sm text-content hover:text-content hover:bg-surface/70 rounded-xl transition-colors cursor-pointer group text-left font-medium"
-    >
-        <div className="flex items-center gap-3">
-            <Palette size={20} className="group-hover:text-brand transition-colors" />
-            Tema
-        </div>
-        <div className="flex items-center gap-1 text-[10px] text-content-muted opacity-60 font-bold">
-            {themeLabels[theme as keyof typeof themeLabels]}
-            <ChevronDown size={14} className="-rotate-90" />
-        </div>
-    </button>
-)}
+                {!isAuthenticated && (
+                    <button
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            pushMenu('theme');
+                        }}
+                        className="w-full flex items-center justify-between px-4 py-3 text-sm text-content hover:text-content hover:bg-surface/70 rounded-xl transition-colors cursor-pointer group text-left font-medium"
+                    >
+                        <div className="flex items-center gap-3">
+                            <Palette size={20} className="group-hover:text-brand transition-colors" />
+                            {t("navbar.theme")}
+                        </div>
+                        <div className="flex items-center gap-1 text-[10px] text-content-muted opacity-60 font-bold">
+                            {themeLabels[theme as keyof typeof themeLabels]}
+                            <ChevronDown size={14} className="-rotate-90" />
+                        </div>
+                    </button>
+                )}
             </div>
         );
     };
@@ -400,8 +403,8 @@ export default function Navbar({ variant = 'floating', logoRef }: { variant?: 'f
                                 }
                             }}
                             showBadge={pendingSurveysCount > 0}
-                            title="Misiones de Evaluación"
-                            className={`hidden lg:flex ${pendingSurveysCount > 0 ? "animate-soft-pulse" : ""}`}
+                            title={t("navbar.evaluationMissions")}
+                            className={`hidden lg:flex ${pendingSurveysCount > 0 && !isTutorialActive ? "animate-soft-pulse" : ""}`}
                         >
                             <Trophy
                                 size={20}
@@ -430,7 +433,7 @@ export default function Navbar({ variant = 'floating', logoRef }: { variant?: 'f
                                 trigger={
                                     <NavIconButton
                                         variant={variant}
-                                        showBadge={!!(user?.received_friend_requests && user.received_friend_requests.length > 0) || unreadMessagesCount > 0}
+                                        showBadge={user.received_friend_requests.length > 0 || unreadMessagesCount > 0}
                                         className="hidden lg:flex"
                                     >
                                         <Bell size={20} className="text-content group-hover:text-brand transition-colors" />
@@ -439,13 +442,13 @@ export default function Navbar({ variant = 'floating', logoRef }: { variant?: 'f
                                 menus={{
                                     main: (
                                         <NotificationsMainView
-                                            user={user!}
+                                            user={user}
                                             unreadMessagesCount={unreadMessagesCount}
                                         />
                                     ),
                                     friend_requests: (
                                         <NotificationsFriendRequestsView
-                                            user={user!}
+                                            user={user}
                                             navigate={navigate}
                                         />
                                     )
@@ -464,7 +467,7 @@ export default function Navbar({ variant = 'floating', logoRef }: { variant?: 'f
                                     <NavIconButton
                                         id="nav-user-menu-trigger"
                                         variant={variant}
-                                        showBadge={!!(user?.received_friend_requests && user.received_friend_requests.length > 0) || unreadMessagesCount > 0}
+                                        showBadge={user.received_friend_requests.length > 0 || unreadMessagesCount > 0}
                                         badgeClassName="lg:hidden"
                                     >
                                         <UserAvatar user={user} size={32} />
@@ -473,7 +476,7 @@ export default function Navbar({ variant = 'floating', logoRef }: { variant?: 'f
                                 menus={{
                                     main: (
                                         <UserMainView
-                                            user={user!}
+                                            user={user}
                                             logout={logout}
                                             navigate={navigate}
                                             theme={theme}

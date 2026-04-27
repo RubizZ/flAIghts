@@ -2959,6 +2959,9 @@
           "travel_class": {
             "type": "string"
           },
+          "booking_token": {
+            "type": "string"
+          },
           "extensions": {
             "items": {
               "type": "string"
@@ -3265,7 +3268,7 @@
             ],
             "type": "object"
           },
-          "body.layover_days": {
+          "body.dates": {
             "properties": {
               "value": {},
               "message": {
@@ -3392,10 +3395,9 @@
             ],
             "type": "object"
           },
-          "layover_days": {
+          "dates": {
             "items": {
-              "type": "number",
-              "format": "double"
+              "type": "string"
             },
             "type": "array"
           },
@@ -3412,6 +3414,53 @@
           "destinations",
           "departure_date",
           "criteria"
+        ],
+        "type": "object",
+        "additionalProperties": false
+      },
+      "GeneticTripRequest": {
+        "properties": {
+          "origin": {
+            "type": "string",
+            "pattern": "^[A-Z]{3}$"
+          },
+          "cities": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "minItems": 1,
+            "pattern": "^[A-Z]{3}$"
+          },
+          "startDate": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "daysPerCity": {
+            "type": "number",
+            "format": "double",
+            "minimum": 1
+          },
+          "layover_days": {
+            "items": {
+              "type": "number",
+              "format": "double"
+            },
+            "type": "array"
+          },
+          "source": {
+            "type": "string",
+            "enum": [
+              "manual",
+              "agent"
+            ]
+          }
+        },
+        "required": [
+          "origin",
+          "cities",
+          "startDate",
+          "daysPerCity"
         ],
         "type": "object",
         "additionalProperties": false
@@ -4236,6 +4285,148 @@
         "type": "object",
         "additionalProperties": false
       },
+      "BookingOption": {
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "price": {
+            "type": "number",
+            "format": "double"
+          },
+          "url": {
+            "type": "string"
+          },
+          "post_data": {
+            "type": "string"
+          },
+          "logo": {
+            "type": "string"
+          },
+          "extensions": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "type": "object",
+        "additionalProperties": false
+      },
+      "BookingSegment": {
+        "properties": {
+          "origin": {
+            "type": "string"
+          },
+          "destination": {
+            "type": "string"
+          },
+          "departure_time": {
+            "type": "string"
+          },
+          "arrival_time": {
+            "type": "string"
+          },
+          "airline": {
+            "type": "string"
+          },
+          "options": {
+            "items": {
+              "$ref": "#/components/schemas/BookingOption"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "origin",
+          "destination",
+          "departure_time",
+          "arrival_time",
+          "airline",
+          "options"
+        ],
+        "type": "object",
+        "additionalProperties": false
+      },
+      "BookingResponse": {
+        "properties": {
+          "segments": {
+            "items": {
+              "$ref": "#/components/schemas/BookingSegment"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "segments"
+        ],
+        "type": "object",
+        "additionalProperties": false
+      },
+      "SuccessResponseType_BookingResponse_": {
+        "description": "Wrapper de éxito JSend (aplicado por el middleware global).",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "success"
+            ],
+            "nullable": false
+          },
+          "data": {
+            "$ref": "#/components/schemas/BookingResponse"
+          }
+        },
+        "required": [
+          "status",
+          "data"
+        ],
+        "type": "object",
+        "additionalProperties": false
+      },
+      "BookingTokenData": {
+        "properties": {
+          "token": {
+            "type": "string"
+          },
+          "origin": {
+            "type": "string"
+          },
+          "destination": {
+            "type": "string"
+          },
+          "departure_date": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "token",
+          "origin",
+          "destination",
+          "departure_date"
+        ],
+        "type": "object",
+        "additionalProperties": false
+      },
+      "BookingRequest": {
+        "properties": {
+          "tokens": {
+            "items": {
+              "$ref": "#/components/schemas/BookingTokenData"
+            },
+            "type": "array",
+            "minItems": 1
+          }
+        },
+        "required": [
+          "tokens"
+        ],
+        "type": "object",
+        "additionalProperties": false
+      },
       "LoginResponseData": {
         "description": "Respuesta del endpoint POST /auth/login",
         "properties": {
@@ -4499,22 +4690,6 @@
                 "enum": [
                   "'body' is required",
                   "invalid object"
-                ]
-              }
-            },
-            "required": [
-              "message"
-            ],
-            "type": "object"
-          },
-          "body.turnstileToken": {
-            "properties": {
-              "value": {},
-              "message": {
-                "type": "string",
-                "enum": [
-                  "'turnstileToken' is required",
-                  "invalid string value"
                 ]
               }
             },
@@ -4828,15 +5003,10 @@
           },
           "transactionId": {
             "type": "string"
-          },
-          "turnstileToken": {
-            "type": "string",
-            "description": "Cloudflare Turnstile token for bot protection."
           }
         },
         "required": [
-          "credential",
-          "turnstileToken"
+          "credential"
         ],
         "type": "object",
         "additionalProperties": false
@@ -5837,15 +6007,10 @@
           "email": {
             "type": "string",
             "format": "email"
-          },
-          "turnstileToken": {
-            "type": "string",
-            "description": "Cloudflare Turnstile token for bot protection."
           }
         },
         "required": [
-          "email",
-          "turnstileToken"
+          "email"
         ],
         "type": "object",
         "additionalProperties": false
@@ -8867,6 +9032,53 @@
         }
       }
     },
+    "/search/genetic": {
+      "post": {
+        "operationId": "GeneticTrip",
+        "responses": {
+          "201": {
+            "description": "Búsqueda genética creada",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponseType_SearchResponseData_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Error de validación",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SearchValidationFailResponse"
+                }
+              }
+            }
+          }
+        },
+        "description": "Crea una nueva búsqueda de viaje optimizada mediante algoritmos genéticos.",
+        "tags": [
+          "Search"
+        ],
+        "security": [
+          {
+            "jwt-optional": []
+          }
+        ],
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GeneticTripRequest"
+              }
+            }
+          }
+        }
+      }
+    },
     "/search/{searchId}": {
       "get": {
         "operationId": "SearchResult",
@@ -9464,6 +9676,43 @@
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/EvaluationPayload"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/booking/prepare": {
+      "post": {
+        "operationId": "PrepareBooking",
+        "responses": {
+          "200": {
+            "description": "Opciones de reserva recuperadas",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponseType_BookingResponse_"
+                }
+              }
+            }
+          }
+        },
+        "description": "Prepara las opciones de reserva para un conjunto de tokens de vuelo.\r\nRecupera los enlaces de reserva y proveedores de SerpApi.",
+        "tags": [
+          "Booking"
+        ],
+        "security": [
+          {
+            "jwt-optional": []
+          }
+        ],
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BookingRequest"
               }
             }
           }
@@ -10174,16 +10423,6 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/SuccessResponse_SecurityCodeResponse_"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Verificación de seguridad fallida",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/TurnstileFailResponse"
                 }
               }
             }
@@ -10923,7 +11162,8 @@
                 "USER",
                 "AUTH",
                 "SEARCH",
-                "AGENT"
+                "AGENT",
+                "BOOKING"
               ]
             }
           },

@@ -12,8 +12,11 @@ import { toast } from "sonner";
 import { UserMinus, Check, X, Clock, Users, UserPlus, MessageCircle, UserSearch, Search } from "lucide-react";
 import { useState, useMemo } from "react";
 import UserAvatar from "@/components/ui/UserAvatar";
+import { useTranslation } from "react-i18next";
+
 
 export default function Friends() {
+    const { t } = useTranslation();
     const { user, isAuthenticated, isLoading } = useAuth();
     const queryClient = useQueryClient();
     const [activeTab, setActiveTab] = useState<'friends' | 'requests'>('friends');
@@ -25,28 +28,28 @@ export default function Friends() {
 
     const { mutate: acceptRequest } = useAcceptFriendRequest({
         mutation: {
-            onSuccess: () => { toast.success("Solicitud aceptada"); invalidateUser(); },
+            onSuccess: () => { toast.success(t("friends.toast.accepted")); invalidateUser(); },
             onError: (error: any) => toast.error(error.message)
         }
     });
 
     const { mutate: rejectRequest } = useRejectFriendRequest({
         mutation: {
-            onSuccess: () => { toast.success("Solicitud rechazada"); invalidateUser(); },
+            onSuccess: () => { toast.success(t("friends.toast.rejected")); invalidateUser(); },
             onError: (error: any) => toast.error(error.message)
         }
     });
 
     const { mutate: cancelRequest } = useCancelFriendRequest({
         mutation: {
-            onSuccess: () => { toast.success("Solicitud cancelada"); invalidateUser(); },
+            onSuccess: () => { toast.success(t("friends.toast.cancelled")); invalidateUser(); },
             onError: (error: any) => toast.error(error.message)
         }
     });
 
     const { mutate: removeFriend } = useRemoveFriend({
         mutation: {
-            onSuccess: () => { toast.success("Amigo eliminado"); invalidateUser(); },
+            onSuccess: () => { toast.success(t("friends.toast.removed")); invalidateUser(); },
             onError: (error: any) => toast.error(error.message)
         }
     });
@@ -65,18 +68,18 @@ export default function Friends() {
                 <div className="p-4 bg-red-50 rounded-full border border-red-100">
                     <UserPlus className="w-12 h-12 text-red-500" />
                 </div>
-                <h1 className="text-3xl font-bold text-content">No has iniciado sesión</h1>
+                <h1 className="text-3xl font-bold text-content">{t("friends.notLogged.title")}</h1>
                 <Link to="/login" className="px-8 py-3 bg-brand text-content-on-brand rounded-full hover:bg-brand/90 transition-all shadow-xl active:scale-95 font-bold hover:scale-[1.02]">
-                    Iniciar sesión
+                    {t("friends.notLogged.login")}
                 </Link>
             </div>
         );
     }
 
     // Assuming user's arrays have populated objects with at least _id and username
-    const friends = user?.friends || [];
-    const received = user?.received_friend_requests || [];
-    const sent = user?.sent_friend_requests || [];
+    const friends = user.friends;
+    const received = user.received_friend_requests;
+    const sent = user.sent_friend_requests;
 
     const filteredFriends = useMemo(() => {
         return friends.filter(f =>
@@ -90,15 +93,15 @@ export default function Friends() {
         <div className="flex flex-col max-w-5xl mx-auto w-full p-6 sm:p-8 gap-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
             <header className="flex justify-between items-end gap-4">
                 <div className="flex flex-col gap-2">
-                    <h1 className="text-4xl font-extrabold text-content tracking-tight">Amigos</h1>
-                    <p className="text-content-muted text-lg">Gestiona a las personas con las que compartes tus viajes.</p>
+                    <h1 className="text-4xl font-extrabold text-content tracking-tight">{t("friends.title")}</h1>
+                    <p className="text-content-muted text-lg">{t("friends.subtitle")}</p>
                 </div>
                 <Link
                     to="/user/search"
                     className="mb-1 flex items-center gap-2 bg-brand text-content-on-brand px-4 py-2 rounded-xl font-bold hover:opacity-90 transition-all shadow-lg shadow-brand/20 hover:scale-105 active:scale-95 whitespace-nowrap"
                 >
                     <UserSearch size={18} />
-                    <span className="hidden sm:inline">Añadir amigo</span>
+                    <span className="hidden sm:inline">{t("friends.addFriend")}</span>
                 </Link>
             </header>
             <div className="flex gap-4 border-b border-line overflow-x-auto no-scrollbar scroll-smooth">
@@ -107,7 +110,7 @@ export default function Friends() {
                     className={`flex items-center gap-2 pb-4 text-base sm:text-lg font-medium transition-all relative cursor-pointer whitespace-nowrap ${activeTab === 'friends' ? 'text-brand' : 'text-content-muted hover:text-content'}`}
                 >
                     <Users size={20} />
-                    <span>Mis Amigos</span>
+                    <span>{t("friends.tabs.friends")}</span>
                     <span className="bg-surface/10 px-2 py-0.5 rounded-full text-xs font-bold text-content ml-1">{friends.length}</span>
                     {activeTab === 'friends' && (
                         <span className="absolute bottom-0 left-0 right-0 h-1 bg-brand rounded-t-full transition-all" />
@@ -118,7 +121,7 @@ export default function Friends() {
                     className={`flex items-center gap-2 pb-4 text-base sm:text-lg font-medium transition-all relative cursor-pointer whitespace-nowrap ${activeTab === 'requests' ? 'text-brand' : 'text-content-muted hover:text-content'}`}
                 >
                     <UserPlus size={20} />
-                    <span>Solicitudes</span>
+                    <span>{t("friends.tabs.requests")}</span>
                     {totalRequests > 0 && (
                         <span className="bg-brand text-content-on-brand px-2 py-0.5 rounded-full text-xs font-bold ml-1">{totalRequests}</span>
                     )}
@@ -134,8 +137,8 @@ export default function Friends() {
                         {friends.length === 0 ? (
                             <div className="flex flex-col items-center justify-center py-20 bg-surface/10 rounded-3xl border border-dashed border-line">
                                 <Users size={48} className="text-content-muted opacity-50 mb-4" />
-                                <h3 className="text-xl font-bold text-content">Aún no tienes amigos</h3>
-                                <p className="text-content-muted text-center mt-2 max-w-sm">Busca a otros viajeros conectando con ellos y agregándolos a tu lista para planear viajes juntos.</p>
+                                <h3 className="text-xl font-bold text-content">{t("friends.emptyFriends.title")}</h3>
+                                <p className="text-content-muted text-center mt-2 max-w-sm">{t("friends.emptyFriends.description")}</p>
                             </div>
                         ) : (
                             <div className="flex flex-col gap-6">
@@ -145,7 +148,7 @@ export default function Friends() {
                                     </div>
                                     <input
                                         type="text"
-                                        placeholder="Buscar entre tus amigos..."
+                                        placeholder={t("friends.searchPlaceholder")}
                                         className="w-full bg-main placeholder-content-muted outline-none px-4 py-2 pl-10 rounded-xl font-medium border border-line focus:border-brand shadow-xs transition-all"
                                         value={searchQuery}
                                         onChange={(e) => setSearchQuery(e.target.value)}
@@ -162,7 +165,7 @@ export default function Friends() {
 
                                 {filteredFriends.length === 0 ? (
                                     <div className="flex flex-col items-center justify-center py-12 bg-surface/5 rounded-2xl border border-dashed border-line">
-                                        <p className="text-content-muted font-medium">No se han encontrado amigos que coincidan con &quot;<span className="text-content font-bold">{searchQuery}</span>&quot;</p>
+                                        <p className="text-content-muted font-medium">{t("friends.noResults", { query: searchQuery })}</p>
                                     </div>
                                 ) : (
                                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -182,18 +185,18 @@ export default function Friends() {
                                                     <Link
                                                         to={`/chats/${friend._id}`}
                                                         className="flex items-center gap-2 px-4 py-2 bg-brand text-content-on-brand rounded-full text-sm font-bold hover:bg-brand/90 transition-colors cursor-pointer hover:scale-105 active:scale-95"
-                                                        title="Enviar mensaje"
+                                                        title={t("friends.actions.message")}
                                                     >
                                                         <MessageCircle size={16} />
-                                                        Mensaje
+                                                        {t("friends.actions.message")}
                                                     </Link>
                                                     <button
                                                         onClick={() => removeFriend({ id: friend._id })}
                                                         className="flex items-center gap-2 px-4 py-2 bg-red-50 hover:bg-red-100 text-red-600 rounded-full text-sm font-bold transition-colors cursor-pointer hover:scale-105 active:scale-95"
-                                                        title="Eliminar amigo"
+                                                        title={t("friends.removeFriend")}
                                                     >
                                                         <UserMinus size={16} />
-                                                        Eliminar
+                                                        {t("friends.actions.remove")}
                                                     </button>
                                                 </div>
                                             </div>
@@ -211,12 +214,12 @@ export default function Friends() {
                         {/* Recibidas */}
                         <div className="flex flex-col gap-4">
                             <h2 className="text-xl font-bold text-content flex items-center gap-2">
-                                Solicitudes Recibidas
+                                {t("friends.requests.received")}
                                 <span className="bg-brand/10 text-brand px-2 py-0.5 rounded-full text-xs font-bold">{received.length}</span>
                             </h2>
                             {received.length === 0 ? (
                                 <div className="p-8 text-center text-content-muted bg-surface/5 rounded-2xl border border-dashed border-line">
-                                    No tienes solicitudes de amistad pendientes.
+                                    {t("friends.requests.noneReceived")}
                                 </div>
                             ) : (
                                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
@@ -235,13 +238,13 @@ export default function Friends() {
                                                     onClick={() => acceptRequest({ id: req._id })}
                                                     className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-4 py-2 bg-green-500 text-white rounded-xl font-bold hover:bg-green-600 transition-colors hover:scale-105 active:scale-95 cursor-pointer"
                                                 >
-                                                    <Check size={18} /> Aceptar
+                                                    <Check size={18} /> {t("friends.actions.accept")}
                                                 </button>
                                                 <button
                                                     onClick={() => rejectRequest({ id: req._id })}
                                                     className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-4 py-2 bg-red-100 text-red-600 rounded-xl font-bold hover:bg-red-200 transition-colors hover:scale-105 active:scale-95 cursor-pointer"
                                                 >
-                                                    <X size={18} /> Rechazar
+                                                    <X size={18} /> {t("friends.actions.reject")}
                                                 </button>
                                             </div>
                                         </div>
@@ -253,12 +256,12 @@ export default function Friends() {
                         {/* Enviadas */}
                         <div className="flex flex-col gap-4">
                             <h2 className="text-xl font-bold text-content flex items-center gap-2">
-                                Solicitudes Enviadas
+                                {t("friends.requests.sent")}
                                 <span className="bg-surface/10 text-content px-2 py-0.5 rounded-full text-xs font-bold">{sent.length}</span>
                             </h2>
                             {sent.length === 0 ? (
                                 <div className="p-8 text-center text-content-muted bg-surface/5 rounded-2xl border border-dashed border-line">
-                                    No has enviado solicitudes de amistad.
+                                    {t("friends.requests.noneSent")}
                                 </div>
                             ) : (
                                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
@@ -273,7 +276,7 @@ export default function Friends() {
                                                         {req.username}
                                                     </Link>
                                                     <span className="text-xs text-content-muted flex items-center gap-1">
-                                                        <Clock size={12} /> Esperando respuesta...
+                                                        <Clock size={12} /> {t("friends.requests.waiting")}
                                                     </span>
                                                 </div>
                                             </div>
@@ -281,7 +284,7 @@ export default function Friends() {
                                                 onClick={() => cancelRequest({ id: req._id })}
                                                 className="w-full sm:w-auto px-4 py-2 bg-surface/20 hover:bg-red-100 hover:text-red-600 text-content-muted rounded-xl font-bold transition-all text-sm cursor-pointer hover:scale-105 active:scale-95"
                                             >
-                                                Cancelar
+                                                {t("friends.actions.cancel")}
                                             </button>
                                         </div>
                                     ))}

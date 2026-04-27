@@ -1,9 +1,10 @@
 import { useState, useRef, useEffect, forwardRef, useImperativeHandle } from "react";
-import { Send, Sparkles, User, ExternalLink, Plane, MapPin, Calendar, Clock, ArrowRight, Check, Square, ChevronRight, ChevronDown, Lock, AlertCircle } from "lucide-react";
-
+import { Send, Sparkles, User, ExternalLink, Plane, MapPin, Calendar, Clock, ArrowRight, Check, Square, ChevronRight, ChevronDown, Lock, UserCircle, LogIn, History, Building2, CreditCard, AlertCircle } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import ReactMarkdown from 'react-markdown';
 import { toast } from "sonner";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import TextareaAutosize from "react-textarea-autosize";
 import type {
     SearchResponseData,
     ItineraryResponse,
@@ -80,6 +81,7 @@ const Typewriter = ({ text, speed = 15, onComplete }: { text: string; speed?: nu
 };
 
 const FlightCard = ({ search }: { search: SearchResponseData }) => {
+    const { t } = useTranslation();
     if (!search.departure_itineraries || search.departure_itineraries.length === 0) return null;
 
     const itinerary = search.departure_itineraries[0] as ItineraryResponse;
@@ -102,12 +104,12 @@ const FlightCard = ({ search }: { search: SearchResponseData }) => {
                     </div>
                     <div>
                         <p className="text-[10px] text-content-muted uppercase font-bold tracking-wider">{firstLeg?.airline}</p>
-                        <p className="text-xs font-bold text-content">Vuelo Recomendado</p>
+                        <p className="text-xs font-bold text-content">{t('agentChat.recommendedFlight')}</p>
                     </div>
                 </div>
                 <div className="text-right">
                     <p className="text-lg font-black text-brand tracking-tight">{itinerary.total_price}€</p>
-                    <p className="text-[10px] text-content-muted font-bold tracking-tighter uppercase">Precio Total</p>
+                    <p className="text-[10px] text-content-muted font-bold tracking-tighter uppercase">{t('agentChat.totalPrice')}</p>
                 </div>
             </div>
 
@@ -139,7 +141,7 @@ const FlightCard = ({ search }: { search: SearchResponseData }) => {
                 </div>
                 <div className="flex items-center gap-1.5 px-2 py-1 bg-main/30 rounded-lg text-[9px] font-bold text-content-muted">
                     <MapPin size={10} className="text-brand/60" />
-                    <span>{itinerary.legs.length > 1 ? `${itinerary.legs.length - 1} escalas` : "Directo"}</span>
+                    <span>{itinerary.legs.length > 1 ? t('agentChat.scales', { count: itinerary.legs.length - 1 }) : t('agentChat.direct')}</span>
                 </div>
                 <div className="ml-auto">
                     <div className="p-1.5 rounded-lg bg-brand text-content-on-brand group-hover:scale-110 transition-transform shadow-xs">
@@ -151,43 +153,42 @@ const FlightCard = ({ search }: { search: SearchResponseData }) => {
     );
 };
 
-const getToolDescription = (step: UIStep) => {
+const getToolDescription = (step: UIStep, t: any) => {
     if (step.type === 'step') return step.message;
     if (step.type === 'tool_call') {
-        // Si hay progreso activo, lo priorizamos en la descripción
         if (step.progress) {
             const pe = step.progress;
             if (pe.type === 'progress') return pe.message;
-            if (pe.type === 'completed') return 'Búsqueda de vuelos completada';
-            if (pe.type === 'failed') return `Error: ${pe.message}`;
+            if (pe.type === 'completed') return t('agentChat.toolStatus.searchCompleted');
+            if (pe.type === 'failed') return t('agentChat.toolStatus.searchFailed', { message: pe.message });
         }
 
         switch (step.name) {
-            case 'getUserInfo': return 'Accediendo a tu perfil...';
-            case 'getUserSearchHistory': return 'Consultando tu historial...';
-            case 'searchAirports': return `Localizando aeropuertos para "${step.args.query}"...`;
-            case 'searchAirlines': return `Buscando aerolíneas para "${step.args.query}"...`;
-            case 'performSearch': return `Rastreando vuelos desde ${step.args.origins.map(o => o).join(', ')} a ${step.args.destinations.map(d => d).join(', ')}...`;
+            case 'getUserInfo': return t('agentChat.toolStatus.accessingProfile');
+            case 'getUserSearchHistory': return t('agentChat.toolStatus.consultingHistory');
+            case 'searchAirports': return t('agentChat.toolStatus.locatingAirports', { query: step.args.query });
+            case 'searchAirlines': return t('agentChat.toolStatus.searchingAirlines', { query: step.args.query });
+            case 'performSearch': return t('agentChat.toolStatus.trackingFlights', { origins: step.args.origins.join(', '), destinations: step.args.destinations.join(', ') });
         }
     }
     if (step.type === 'tool_result') {
         switch (step.name) {
-            case 'getUserInfo': return `Datos obtenidos de tu perfil`;
-            case 'getUserSearchHistory': return `Datos obtenidos de tu historial`;
-            case 'searchAirports': return `Aeropuertos localizados con éxito`;
-            case 'searchAirlines': return `Aerolíneas localizadas con éxito`;
-            case 'performSearch': return `Búsqueda creada con éxito`;
+            case 'getUserInfo': return t('agentChat.toolStatus.dataFromProfile');
+            case 'getUserSearchHistory': return t('agentChat.toolStatus.dataFromHistory');
+            case 'searchAirports': return t('agentChat.toolStatus.airportsLocated');
+            case 'searchAirlines': return t('agentChat.toolStatus.airlinesLocated');
+            case 'performSearch': return t('agentChat.toolStatus.searchCreated');
         }
     }
     if (step.type === 'iteration') {
-        return `Pensando...`;
+        return t('agentChat.toolStatus.thinking');
     }
     if (step.type === 'tool_progress') {
         const progressEvent = step.event;
         if (progressEvent.type === 'progress') return progressEvent.message;
-        if (progressEvent.type === 'completed') return 'Búsqueda completada';
-        if (progressEvent.type === 'failed') return `Error: ${progressEvent.message}`;
-        return 'Procesando...';
+        if (progressEvent.type === 'completed') return t('agentChat.toolStatus.searchCompleted');
+        if (progressEvent.type === 'failed') return t('agentChat.toolStatus.searchFailed', { message: progressEvent.message });
+        return t('agentChat.toolStatus.processing');
     }
     return null;
 };
@@ -206,17 +207,16 @@ const getToolIcon = (name: string) => {
 };
 
 const StepProgress = ({ steps }: { steps: any[] }) => {
+    const { t } = useTranslation();
     const [isExpanded, setIsExpanded] = useState(false);
     const [expandedResults, setExpandedResults] = useState<Record<number, boolean>>({});
 
     if (!steps || steps.length === 0) return null;
 
-    // Filtrar iterations — tool_results ahora se usan para mostrar el resultado si estamos en DEV
     const filteredSteps = steps.filter(s => s.type !== 'iteration' && s.type !== 'tool_result');
 
     if (!filteredSteps || filteredSteps.length === 0) return null;
 
-    // Result locator: priorities merged results (cleaner) then separate result events (legacy)
     const getResult = (stepIdx: number) => {
         const step = filteredSteps[stepIdx];
         if (step.type !== 'tool_call') return null;
@@ -285,7 +285,7 @@ const StepProgress = ({ steps }: { steps: any[] }) => {
                     className="flex items-center gap-1.5 px-2 py-0.5 rounded bg-brand/5 hover:bg-brand/10 text-[9px] font-black text-brand/60 uppercase transition-colors cursor-pointer"
                 >
                     {isResExpanded ? <ChevronDown size={10} /> : <ChevronRight size={10} />}
-                    <span>Resultado Raw</span>
+                    <span>{t('agentChat.rawResult')}</span>
                 </button>
                 {isResExpanded && (
                     <div className="mt-2 p-3 bg-main/40 border border-line/20 rounded-xl overflow-x-auto">
@@ -304,11 +304,10 @@ const StepProgress = ({ steps }: { steps: any[] }) => {
             className={`flex flex-col py-2 px-1 w-full max-w-[95%] animate-fade-in group/steps transition-all duration-300 ${filteredSteps.length > 1 ? 'cursor-pointer hover:bg-brand/1 rounded-lg' : ''}`}
         >
             <div className="border-l-2 border-brand/5 pl-4 ml-0.5 transition-all duration-500">
-                {/* Previous steps — collapsible */}
                 <div className={`grid transition-all duration-500 ease-in-out ${isExpanded && filteredSteps.length > 1 ? 'grid-rows-[1fr] opacity-100 mb-4' : 'grid-rows-[0fr] opacity-0 overflow-hidden'}`}>
                     <div className="overflow-hidden space-y-3.5 pt-1">
                         {previousSteps.map((step, idx) => {
-                            const desc = getToolDescription(step);
+                            const desc = getToolDescription(step, t);
                             if (!desc) return null;
                             return (
                                 <div key={idx} className="flex flex-col gap-1 w-full animate-fade-in">
@@ -327,7 +326,6 @@ const StepProgress = ({ steps }: { steps: any[] }) => {
                     </div>
                 </div>
 
-                {/* Active (Last) Step - Always visible */}
                 <div className="flex flex-col gap-1 w-full animate-fade-in">
                     <div className="flex items-start gap-2.5 text-[11px] text-content font-bold transition-all duration-300">
                         <div className="mt-1">
@@ -335,10 +333,10 @@ const StepProgress = ({ steps }: { steps: any[] }) => {
                         </div>
                         <div className="flex flex-col gap-1 w-full">
                             <div className="flex items-center gap-2 flex-wrap min-h-[1.8em]">
-                                <span className="italic">{getToolDescription(lastStep)}</span>
+                                <span className="italic">{getToolDescription(lastStep, t)}</span>
                                 {!isExpanded && filteredSteps.length > 1 && (
                                     <span className="opacity-0 group-hover/steps:opacity-100 transition-all duration-300 text-[8px] font-black text-brand/50 uppercase tracking-widest translate-x-1 group-hover/steps:translate-x-0">
-                                        ( + {filteredSteps.length - 1} pasos )
+                                        ( + {filteredSteps.length - 1} {t('agentChat.moreSteps')})
                                     </span>
                                 )}
                             </div>
@@ -373,6 +371,8 @@ const AgentChat = forwardRef<any, AgentChatProps>(({
     setDepartureDate,
     setReturnDate
 }, ref) => {
+    const { t } = useTranslation();
+    const navigate = useNavigate();
     const { isAuthenticated, user, isLoading } = useAuth()
     const { location } = useUserLocation();
 
@@ -380,9 +380,12 @@ const AgentChat = forwardRef<any, AgentChatProps>(({
     const [input, setInput] = useState("");
     const [isTyping, setIsTyping] = useState(false);
     const scrollRef = useRef<HTMLDivElement>(null);
+    const textareaRef = useRef<HTMLTextAreaElement>(null);
     const abortControllerRef = useRef<AbortController | null>(null);
 
-    const { data: availableModelsData, isLoading: isLoadingModels } = useModels();
+    const { data: availableModelsData, isLoading: isLoadingModels } = useModels({
+        query: { staleTime: 1000 * 60 * 60 } // 1 hour
+    });
     const availableModels = availableModelsData || [];
     const [selectedModel, setSelectedModel] = useState<string>("");
     const [isStreaming, setIsStreaming] = useState(false);
@@ -412,15 +415,14 @@ const AgentChat = forwardRef<any, AgentChatProps>(({
                 return prev.map(m => {
                     if (m.isStreaming) {
                         let newContent = m.content;
-                        if (reason === 'user') newContent += "\n\n *— Generación interrumpida por el usuario*";
-                        if (reason === 'error') newContent += "\n\n *— Error en la generación, por favor, intenta de nuevo*";
+                        if (reason === 'user') newContent += `\n\n *— ${t('agentChat.interruptedByUser')}*`;
+                        if (reason === 'error') newContent += `\n\n *— ${t('agentChat.generationError')}*`;
                         return { ...m, isStreaming: false, content: newContent };
                     }
                     return m;
                 });
             } else if (reason) {
-                // Si estábamos "pensando" (reasoning) o esperando el primer token
-                const text = reason === 'user' ? "Generación interrumpida por el usuario" : "Error en la generación";
+                const text = reason === 'user' ? t('agentChat.interruptedByUser') : t('agentChat.generationError');
                 return [
                     ...prev,
                     { role: 'assistant', content: `*— ${text}*` } as ExtendedChatMessage
@@ -435,7 +437,7 @@ const AgentChat = forwardRef<any, AgentChatProps>(({
     const clearChat = () => {
         stopStream();
         setMessages([]);
-        toast.info("Historial de aventura borrado");
+        toast.info(t('agentChat.historyCleared'));
     };
 
     useImperativeHandle(ref, () => ({
@@ -575,7 +577,7 @@ const AgentChat = forwardRef<any, AgentChatProps>(({
                     capturedError = true;
                     stopStream('error');
                     console.error("Stream Error:", err);
-                    toast.error("Error al conectar con el servidor");
+                    toast.error(t('agentChat.connectionError'));
                 }
             });
         } finally {
@@ -588,7 +590,6 @@ const AgentChat = forwardRef<any, AgentChatProps>(({
 
 
 
-    // Auto-scroll logic: uses a larger threshold and instant scroll during streaming for better reliability
     useEffect(() => {
         const scrollContainer = scrollRef.current;
         if (!scrollContainer) return;
@@ -630,7 +631,6 @@ const AgentChat = forwardRef<any, AgentChatProps>(({
         setMessages(updatedMessages);
         setInput("");
 
-        // Limpieza de mensajes para el backend (evitar REQUEST_VALIDATION_ERROR por propiedades extra)
         const cleanMessages = updatedMessages
             .filter(m => m.role === 'user' || m.role === 'assistant')
             .map(m => ({
@@ -649,9 +649,9 @@ const AgentChat = forwardRef<any, AgentChatProps>(({
     const nextMonthName = nextMonth.toLocaleString('es-ES', { month: 'long' });
 
     const suggestions = [
-        `¿A dónde puedo ir en ${nextMonthName}?`,
-        "Sugiéreme un viaje basado en mis gustos",
-        "¿Cual es mi historial de busquedas?"
+        t('agentChat.suggestions.londonAirports'),
+        t('agentChat.suggestions.searchFlight'),
+        t('agentChat.suggestions.whatIsMyHistory')
     ];
 
     if (isLoading) return null;
@@ -663,11 +663,9 @@ const AgentChat = forwardRef<any, AgentChatProps>(({
                     <Lock size={40} className="animate-pulse" />
                     <div className="absolute inset-0 bg-brand/10 blur-xl rounded-full scale-110 opacity-50" />
                 </div>
-                <h2 className="text-xl font-black mb-2 text-content italic">Inteligencia Exclusiva</h2>
+                <h2 className="text-xl font-black mb-2 text-content italic">{t('agentChat.notAuthenticated.title')}</h2>
                 <div className="text-sm text-content-muted max-w-72 leading-relaxed mb-10 font-medium">
-                    <ReactMarkdown>Nuestro asistente **flAIghts** utiliza IA para aprender de tus gustos y sugerirte destinos únicos.</ReactMarkdown>
-                    <br />
-                    Para interactuar con él y ver recomendaciones, necesitas estar identificado.
+                    <ReactMarkdown>{t('agentChat.notAuthenticated.description')}</ReactMarkdown>
                 </div>
 
                 <div className="flex flex-col gap-3 w-full max-w-64">
@@ -675,14 +673,14 @@ const AgentChat = forwardRef<any, AgentChatProps>(({
                         to="/login"
                         className="px-6 py-4 bg-brand text-white font-black rounded-2xl shadow-[0_8px_20px_rgba(var(--brand-rgb),0.3)] hover:scale-[1.03] active:scale-95 transition-all flex items-center justify-center gap-3 group text-sm"
                     >
-                        Iniciar Sesión
+                        {t('agentChat.notAuthenticated.login')}
                         <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
                     </Link>
                     <Link
                         to="/register"
                         className="px-6 py-3 text-brand font-bold text-xs hover:bg-brand/5 rounded-xl transition-all"
                     >
-                        ¿No tienes cuenta? Únete aquí
+                        {t('agentChat.notAuthenticated.register')}
                     </Link>
                 </div>
             </div>
@@ -691,14 +689,13 @@ const AgentChat = forwardRef<any, AgentChatProps>(({
 
     return (
         <div className="flex flex-col h-full w-full bg-linear-to-b from-main/60 to-surface/40 dark:from-surface/60 dark:to-main/40 rounded-2xl border border-line/20 overflow-hidden backdrop-blur-sm transition-all duration-500">
-            {/* Mobile-only Header */}
             <div className="lg:hidden px-4 py-2 border-b border-line/10 bg-surface/30 flex items-center justify-between shrink-0">
                 <div className="flex items-center gap-2">
                     <Sparkles size={14} className="text-brand animate-pulse" />
-                    <span className="text-[10px] font-black uppercase tracking-widest text-content-muted">Agente flAIghts</span>
+                    <span className="text-[10px] font-black uppercase tracking-widest text-content-muted">{t('agentChat.header')}</span>
                 </div>
                 <div className="flex items-center gap-3">
-                    {availableModels.length > 0 && (
+                    {availableModels.length > 1 && (
                         <div className="relative group/model">
                             <select
                                 value={selectedModel}
@@ -716,18 +713,24 @@ const AgentChat = forwardRef<any, AgentChatProps>(({
                             </div>
                         </div>
                     )}
-                    {availableModels.length === 0 && (
-                        <div className="flex items-center gap-1">
+                    {isLoadingModels ? (
+                        <div className="flex items-center gap-1.5">
+                            <div className="w-1 h-1 bg-brand/30 rounded-full animate-pulse" />
+                            <span className="text-[8px] font-bold uppercase text-content-muted/30 tracking-widest italic">
+                                {t('agentChat.connecting')}
+                            </span>
+                        </div>
+                    ) : availableModels.length === 0 && (
+                        <div className="flex items-center gap-1.5">
                             <div className="w-1 h-1 bg-orange-400 rounded-full animate-pulse" />
-                            <span className="text-[8px] font-bold uppercase text-content-muted/40 tracking-widest italic">
-                                {isLoadingModels ? "Conectando..." : "Sin Servicio"}
+                            <span className="text-[8px] font-bold uppercase text-orange-400/60 tracking-widest italic">
+                                {t('agentChat.unavailable')}
                             </span>
                         </div>
                     )}
                 </div>
             </div>
 
-            {/* Messages Area */}
             <div
                 ref={scrollRef}
                 className="flex-1 overflow-y-auto p-6 space-y-6 scrollbar-thin scrollbar-thumb-line scrollbar-track-transparent"
@@ -738,9 +741,9 @@ const AgentChat = forwardRef<any, AgentChatProps>(({
                             <Sparkles size={40} className="animate-pulse" />
                             <div className="absolute inset-0 bg-brand/10 blur-xl rounded-full scale-110 opacity-50" />
                         </div>
-                        <h2 className="text-xl font-black mb-2 text-content italic">¡Hola, {isAuthenticated ? user?.username : 'explorador'}!</h2>
+                        <h2 className="text-xl font-black mb-2 text-content italic">{t('agentChat.welcome', { username: user.username })}</h2>
                         <div className="text-sm text-content-muted max-w-64 leading-relaxed mb-8 font-medium prose-strong:text-brand">
-                            <ReactMarkdown>Soy fl**AI**ghts. No solo busco vuelos, aprendo de ti para sugerirte tu próximo destino.</ReactMarkdown>
+                            <ReactMarkdown>{t('agentChat.emptyDescription')}</ReactMarkdown>
                         </div>
 
                         {availableModels.length > 0 && (
@@ -760,7 +763,6 @@ const AgentChat = forwardRef<any, AgentChatProps>(({
                     </div>
                 ) : (
                     messages.map((msg, i) => {
-                        // No renderizar el contenedor si es reasoning y no tiene steps visibles
                         if (msg.role === 'reasoning') {
                             const visibleSteps = msg.steps?.filter((s) => s.type !== 'iteration');
                             if (!visibleSteps || visibleSteps.length === 0) return null;
@@ -774,7 +776,7 @@ const AgentChat = forwardRef<any, AgentChatProps>(({
                                 <div className="flex flex-col gap-1 w-full">
                                     {msg.role === 'user' && (
                                         <span className="text-[10px] font-black uppercase tracking-[0.2em] mb-1 text-brand pr-1 text-right">
-                                            Tú
+                                            {t('agentChat.you')}
                                         </span>
                                     )}
 
@@ -787,9 +789,9 @@ const AgentChat = forwardRef<any, AgentChatProps>(({
                                                     {getToolIcon((msg as any).toolName)}
                                                 </div>
                                                 <div className="flex flex-col">
-                                                    <span className="text-[9px] font-black uppercase text-brand/70 tracking-widest leading-tight">Ejecutando</span>
+                                                    <span className="text-[9px] font-black uppercase text-brand/70 tracking-widest leading-tight">{t('agentChat.toolStatus.executing')}</span>
                                                     <span className="text-xs font-bold text-content italic leading-snug">
-                                                        {getToolDescription({ type: 'tool_call', name: (msg as any).toolName, args: (msg as any).args, call_id: '' } as UIStep)}
+                                                        {getToolDescription({ type: 'tool_call', name: (msg as any).toolName, args: (msg as any).args, call_id: '' } as UIStep, t)}
                                                     </span>
                                                 </div>
                                                 {(msg as any).status === 'working' && (
@@ -815,7 +817,7 @@ const AgentChat = forwardRef<any, AgentChatProps>(({
                                             ) : (
                                                 <div className={`prose prose-sm dark:prose-invert prose-p:my-1 prose-ul:my-2 prose-li:my-1 
                                                 prose-strong:text-brand prose-strong:font-black prose-headings:text-content prose-code:text-brand 
-                                                prose-code:bg-brand/10 prose-code:px-1 prose-code:rounded
+                                                prose-code:bg-brand/10 prose-code:px-1 prose-code:rounded break-words
                                                 ${msg.role === 'user' ? 'prose-p:text-white!' : ''}
                                                 ${msg.isStreaming ? 'streaming-cursor' : ''}`}
                                                 >
@@ -829,7 +831,6 @@ const AgentChat = forwardRef<any, AgentChatProps>(({
                                         </div>
                                     )}
 
-                                    {/* Flights results associated with the message */}
                                     {(msg as any).flights && (msg as any).flights.length > 0 && (
                                         <div className="w-full flex flex-col gap-4 mt-4 animate-fade-in-up">
                                             {(msg as any).flights.map((f: SearchResponseData) => (
@@ -846,7 +847,7 @@ const AgentChat = forwardRef<any, AgentChatProps>(({
                                                 className="flex items-center gap-2 px-4 py-2.5 bg-brand/10 hover:bg-brand/20 border border-brand/20 rounded-xl text-xs font-black text-brand uppercase tracking-widest transition-all hover:scale-[1.02] active:scale-95 cursor-pointer shadow-sm group"
                                             >
                                                 <ChevronRight size={14} className="group-hover:translate-x-0.5 transition-transform" />
-                                                <span>Seguir analizando</span>
+                                                <span>{t('agentChat.continueAnalyzing')}</span>
                                             </button>
                                         </div>
                                     )}
@@ -870,30 +871,45 @@ const AgentChat = forwardRef<any, AgentChatProps>(({
                                 <div className="w-1.5 h-1.5 bg-brand rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
                                 <div className="w-1.5 h-1.5 bg-brand rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
                             </div>
-                            <span className="text-xs font-bold text-brand uppercase tracking-widest animate-pulse">Pensando...</span>
+                            <span className="text-xs font-bold text-brand uppercase tracking-widest animate-pulse">{t('agentChat.toolStatus.thinking')}</span>
                         </div>
                     )}
             </div>
 
-            {/* Input Area */}
             <div className="p-2 lg:p-4 border-t border-line/20 bg-white/5 backdrop-blur-md shrink-0">
-                {availableModels.length === 0 ? (
-                    <div className="relative w-full flex items-center justify-center gap-3 bg-orange-500/5 border border-orange-500/20 rounded-2xl py-3 px-4 shadow-sm animate-fade-in group overflow-hidden">
-                        <AlertCircle size={18} className="text-orange-500 animate-pulse relative z-10" />
+                {isLoadingModels ? (
+                    <div className="relative w-full flex items-center gap-2 bg-main/50 border border-line/50 rounded-2xl pl-4 pr-1.5 py-1.5 shadow-inner animate-pulse cursor-wait">
+                        <div className="flex-1 text-sm text-content-muted/30 italic font-medium">
+                            {t('agentChat.connecting')}
+                        </div>
+                        <div className="p-2 rounded-xl bg-line/10 text-content-muted/30">
+                            <Send size={16} />
+                        </div>
+                    </div>
+                ) : availableModels.length === 0 ? (
+                    <div className="relative w-full flex items-center justify-center gap-3 bg-orange-500/5 border border-orange-500/20 rounded-2xl py-3 px-4 shadow-sm group overflow-hidden">
+                        <AlertCircle size={18} className="text-orange-500 relative z-10" />
                         <span className="text-xs font-bold text-orange-500/80 uppercase tracking-widest italic relative z-10">
-                            {isLoadingModels ? "Sincronizando modelos..." : "Agente no disponible temporalmente"}
+                            {t('agentChat.unavailable')}
                         </span>
                         <div className="absolute inset-0 bg-linear-to-r from-transparent via-orange-500/5 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
                     </div>
                 ) : (
                     <div className="relative w-full flex items-center gap-2 bg-main/50 border border-line/50 rounded-2xl pl-4 pr-1.5 py-1.5 focus-within:border-brand/50 focus-within:ring-4 focus-within:ring-brand/10 transition-all shadow-inner group">
-                        <input
-                            type="text"
+                        <TextareaAutosize
+                            ref={textareaRef}
                             value={input}
                             onChange={(e) => setInput(e.target.value)}
-                            onKeyDown={(e) => e.key === 'Enter' && handleSend()}
-                            placeholder="Pregunta lo que quieras..."
-                            className="flex-1 bg-transparent py-2 text-sm focus:outline-none placeholder:text-content-muted/40 placeholder:italic font-medium min-w-0"
+                            onKeyDown={(e) => {
+                                if (e.key === 'Enter' && !e.shiftKey) {
+                                    e.preventDefault();
+                                    handleSend();
+                                }
+                            }}
+                            placeholder={t('agentChat.inputPlaceholder')}
+                            className="flex-1 bg-transparent py-1 text-sm focus:outline-none placeholder:text-content-muted/40 placeholder:italic font-medium min-w-0 resize-none max-h-32 overflow-y-auto custom-scrollbar"
+                            maxRows={5}
+                            minRows={1}
                         />
 
                         <div className="flex items-center gap-1.5 shrink-0">
@@ -901,14 +917,14 @@ const AgentChat = forwardRef<any, AgentChatProps>(({
                                 <button
                                     onClick={() => stopStream('user')}
                                     className="p-2 rounded-xl transition-all duration-300 bg-red-500 hover:bg-red-600 text-white shadow-lg scale-100 hover:scale-105 active:scale-95 cursor-pointer"
-                                    title="Detener"
+                                    title={t('agentChat.stop')}
                                 >
                                     <Square size={16} className="fill-white" />
                                 </button>
                             ) : (
                                 <>
                                     {/* Compact Model Selector Dropdown - Hidden on mobile, shown on desktop */}
-                                    {availableModels.length > 0 && (
+                                    {availableModels.length > 1 && (
                                         <div className="hidden lg:block relative group/model">
                                             <select
                                                 value={selectedModel}
@@ -944,7 +960,7 @@ const AgentChat = forwardRef<any, AgentChatProps>(({
                 )}
                 <div className="mt-2.5 flex items-center justify-center">
                     <span className="text-[8px] font-bold uppercase tracking-widest text-content-muted/30 text-center">
-                        IA Experimental • flAIghts puede cometer errores. Verifica la información importante.
+                        {t('agentChat.legalNotice')}
                     </span>
                 </div>
             </div>

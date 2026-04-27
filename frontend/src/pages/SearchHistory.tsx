@@ -124,7 +124,7 @@ export default function SearchHistory() {
             <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
                     <Link 
-                        to={`/user/${user?._id}`}
+                        to={`/user/${user._id}`}
                         className="p-2 hover:bg-surface rounded-full transition-colors border border-line"
                     >
                         <ArrowLeft size={20} />

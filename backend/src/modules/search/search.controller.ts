@@ -1,5 +1,5 @@
 import { Body, Controller, Get, Patch, Path, Post, Query, RequestProp, Response, Route, Security, SuccessResponse, Tags } from "tsoa";
-import type { SearchRequest, SearchResponseData, SearchValidationFailResponse } from "./search.types.js";
+import type { GeneticTripRequest, SearchRequest, SearchResponseData, SearchValidationFailResponse } from "./search.types.js";
 import { inject, injectable } from "tsyringe";
 import { SearchService } from "./search.service.js";
 import type { AuthenticatedUser } from "../auth/auth.types.js";
@@ -9,11 +9,14 @@ import { AsyncAPIChannel, AsyncAPIController } from "../../utils/asyncapi.decora
 import type { SearchProgressEvent } from "./search.types.js";
 
 
+
 @injectable()
 @Route("search")
 @Tags("Search")
 @AsyncAPIController("Search")
+@AsyncAPIController("Search")
 export class SearchController extends Controller {
+
 
 
     constructor(
@@ -55,6 +58,24 @@ export class SearchController extends Controller {
         yield* this.searchService.createSearchStream(requestData);
     }
 
+
+    /**
+     * Crea una nueva búsqueda de viaje optimizada mediante algoritmos genéticos.
+     */
+    @Post("/genetic")
+    @Security('jwt-optional')
+    @Response<SearchValidationFailResponse>(422, "Error de validación")
+    @SuccessResponse(201, "Búsqueda genética creada")
+    public async geneticTrip(
+        @Body() body: GeneticTripRequest,
+        @RequestProp('user') user: AuthenticatedUser | null
+    ): Promise<SuccessResponseType<SearchResponseData>> {
+        const request: GeneticTripRequest & { user_id?: string } = { ...body };
+        if (user) request.user_id = user._id;
+        this.setStatus(201);
+        const result = await this.searchService.createGeneticSearch(request);
+        return result satisfies SearchResponseData as any;
+    }
 
     /**
      * Obtiene los resultados de una búsqueda por su ID.
@@ -130,4 +151,6 @@ export class SearchController extends Controller {
         return searches satisfies { items: SearchResponseData[], total: number, page: number, totalPages: number } as any;
     }
 }
+
+
 

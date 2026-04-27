@@ -1,4 +1,6 @@
 import { useTheme } from '@/context/ThemeContext';
+import { useTranslation } from 'react-i18next';
+import i18n from 'i18next';
 import { Turnstile, type TurnstileInstance, type TurnstileProps } from '@marsidev/react-turnstile';
 import { useRef, useState, useImperativeHandle, forwardRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
@@ -17,6 +19,7 @@ export interface TurnstileWidgetRef {
 
 const TurnstileWidget = forwardRef<TurnstileWidgetRef, TurnstileWidgetProps>(
     ({ onVerify, onError, onExpire, options }, ref) => {
+        const { t } = useTranslation();
         const { resolvedTheme } = useTheme();
         const turnstileRef = useRef<TurnstileInstance>(null);
         const siteKey = import.meta.env.VITE_TURNSTILE_SITE_KEY;
@@ -81,9 +84,9 @@ const TurnstileWidget = forwardRef<TurnstileWidgetRef, TurnstileWidgetProps>(
                         </div>
 
                         <div className="space-y-1">
-                            <h3 className="text-2xl font-black text-content tracking-tight">Verificación</h3>
+                            <h3 className="text-2xl font-black text-content tracking-tight">{t("turnstile.title")}</h3>
                             <p className="text-sm text-content-muted font-medium px-4">
-                                Necesitamos confirmar que eres humano para mantener la plataforma segura.
+                                {t("turnstile.description")}
                             </p>
                         </div>
                     </div>
@@ -106,7 +109,7 @@ const TurnstileWidget = forwardRef<TurnstileWidgetRef, TurnstileWidgetProps>(
                             onExpire={handleExpire}
                             onBeforeInteractive={() => setIsActuallyVisible(true)}
                             options={{
-                                language: 'es',
+                                language: i18n.language as any,
                                 ...options,
                                 theme: resolvedTheme,
                                 // Use a stable size to prevent re-mounting the widget.
@@ -123,8 +126,8 @@ const TurnstileWidget = forwardRef<TurnstileWidgetRef, TurnstileWidgetProps>(
                                 <AlertCircle size={20} className="shrink-0 animate-bounce" />
                                 <p className="text-xs font-bold leading-tight">
                                     {hasError
-                                        ? "La verificación ha fallado. Por favor, inténtalo de nuevo."
-                                        : "La verificación ha caducado por inactividad."}
+                                        ? t("turnstile.error")
+                                        : t("turnstile.expired")}
                                 </p>
                             </div>
                             <button
@@ -137,7 +140,7 @@ const TurnstileWidget = forwardRef<TurnstileWidgetRef, TurnstileWidgetProps>(
                                 className="flex items-center justify-center gap-2 w-full py-4 rounded-2xl bg-brand text-content-on-brand font-black text-sm hover:scale-[1.02] active:scale-95 transition-all shadow-xl shadow-brand/30 cursor-pointer"
                             >
                                 <RefreshCw size={18} className="animate-spin-slow" />
-                                Reintentar ahora
+                                {t("turnstile.retry")}
                             </button>
                         </div>
                     )}
