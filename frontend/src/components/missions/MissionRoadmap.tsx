@@ -229,7 +229,7 @@ const MissionRoadmap: React.FC<MissionRoadmapProps> = ({ onClose, onMissionClick
     const activeOnboardingTargetId = missionsWithLevels.find(m => isMissionUnlocked(m.id) && !isMissionCompleted(m.id))?.id;
     const surveyOnboardingTargetId = missionsWithLevels.find(m => isMissionCompleted(m.id) && !isMissionRated(m.id))?.id;
     const lockedOnboardingTargetId = missionsWithLevels.find(m => !isMissionUnlocked(m.id))?.id;
-
+    
     const maxLevel = Math.max(...missionsWithLevels.map(m => m.level), 0);
     const levels = Array.from({ length: maxLevel + 1 }, (_, i) => i);
 

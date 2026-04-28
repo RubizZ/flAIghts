@@ -198,6 +198,33 @@ export const MissionProvider: React.FC<{ children: ReactNode }> = ({ children })
         const saved = localStorage.getItem('flaights_survey_onboarding_step');
         return saved ? parseInt(saved, 10) : 0;
     });
+
+    // Sincronizar estado de misiones cuando el usuario se autentica
+    useEffect(() => {
+        if (isAuthenticated && user) {
+            setMissions(prev => prev.map(m => {
+                if (m.id === 'registration_mission' && !m.isCompleted) {
+                    const newSteps = m.steps.map(s =>
+                        s.id === 'complete_registration' ? {
+                            ...s,
+                            isCompleted: true,
+                            completedBy: user._id,
+                            completedAt: new Date().toISOString()
+                        } : s
+                    );
+                    const allStepsCompleted = newSteps.every(s => s.isCompleted);
+                    return {
+                        ...m,
+                        steps: newSteps,
+                        isCompleted: allStepsCompleted,
+                        completedBy: allStepsCompleted ? (user._id || m.completedBy) : m.completedBy,
+                        completedAt: allStepsCompleted ? (new Date().toISOString() || m.completedAt) : m.completedAt
+                    };
+                }
+                return m;
+            }));
+        }
+    }, [isAuthenticated, user]);
     const [hasSeenSurveyOnboarding, setHasSeenSurveyOnboarding] = useState(() => {
         return localStorage.getItem('onboarding_survey_seen') === 'true';
     });
@@ -239,11 +266,15 @@ export const MissionProvider: React.FC<{ children: ReactNode }> = ({ children })
             const next = prev + 1;
             if (next > 7) {
                 localStorage.setItem(ONBOARDING_KEY, 'true');
+                // Si hay misiones completadas y no ha visto el tutorial de feedback, lo activamos ahora
+                if (!hasSeenSurveyOnboarding && missions.some(m => m.isCompleted)) {
+                    setSurveyOnboardingStep(1);
+                }
                 return 0;
             }
             return next;
         });
-    }, []);
+    }, [hasSeenSurveyOnboarding, missions]);
 
     const nextSurveyOnboardingStep = useCallback(() => {
         setSurveyOnboardingStep(prev => {
@@ -376,7 +407,7 @@ export const MissionProvider: React.FC<{ children: ReactNode }> = ({ children })
                             }
                         });
 
-                        if (!hasSeenSurveyOnboarding && surveyOnboardingStep === 0) {
+                        if (!hasSeenSurveyOnboarding && surveyOnboardingStep === 0 && onboardingStep === 0) {
                             setSurveyOnboardingStep(1);
                         }
                     }

@@ -71,13 +71,16 @@ const MissionOnboarding: React.FC = () => {
     }, [onboardingStep, surveyOnboardingStep, isSurveyTour, viewport]);
 
     useEffect(() => {
-        if (isEvaluationMode && hasConsented && displayState.activeTourStep > 0) {
+        if (isEvaluationMode && hasConsented && (onboardingStep > 0 || surveyOnboardingStep > 0)) {
+            let retryCount = 0;
+            const maxRetries = 10; // Intentar durante ~3 segundos si el elemento no aparece
+
             const findTarget = (shouldScroll = false) => {
                 let currentId = '';
 
-                // Usamos los valores reales, no los de displayState, para el ID del target
+                // Usamos los valores reales, para el ID del target
                 // Esto evita el lag de 300ms que puede hacer que no se encuentre el elemento
-                if (surveyOnboardingStep > 0) {
+                if (surveyOnboardingStep > 0 && onboardingStep === 0) {
                     switch (surveyOnboardingStep) {
                         case 1:
                             if (isMobileTarget) {
@@ -113,6 +116,7 @@ const MissionOnboarding: React.FC = () => {
                 if (element) {
                     setSpotlightRect(element.getBoundingClientRect());
                     setIsVisible(true);
+                    retryCount = 0; // Reset retries on success
 
                     // Si el paso ha cambiado y el elemento es de los que pueden estar fuera de vista, scroll
                     if (shouldScroll) {
@@ -127,6 +131,15 @@ const MissionOnboarding: React.FC = () => {
                         nextOnboardingStep();
                         return;
                     }
+
+                    // Si estamos cambiando a un paso de la roadmap, esperar un poco a que se monte
+                    const isRoadmapStep = (onboardingStep === 2 || onboardingStep === 6 || onboardingStep === 7 || surveyOnboardingStep === 2);
+                    if (isRoadmapStep && retryCount < maxRetries) {
+                        retryCount++;
+                        return; // No ocultar todavía, el intervalo volverá a intentar
+                    }
+
+                    // Si ya hemos agotado los reintentos o no es un paso de roadmap, limpiar
                     setSpotlightRect(null);
                     setIsVisible(false);
                 }
@@ -143,7 +156,7 @@ const MissionOnboarding: React.FC = () => {
             if (dashboardContainer) dashboardContainer.addEventListener('scroll', handleUpdate);
 
             // Frequent check for dynamic transitions
-            const timer = setTimeout(() => findTarget(false), 300);
+            const timer = setTimeout(() => findTarget(false), 100);
             const interval = setInterval(() => findTarget(false), 300);
 
             return () => {
@@ -155,7 +168,7 @@ const MissionOnboarding: React.FC = () => {
         } else {
             setIsVisible(false);
         }
-    }, [isEvaluationMode, hasConsented, displayState, showRoadmap, isMobileTarget, nextOnboardingStep]);
+    }, [isEvaluationMode, hasConsented, displayState, onboardingStep, surveyOnboardingStep, showRoadmap, isMobileTarget, subStep, nextOnboardingStep]);
 
     // Bloquear scroll del body cuando el tutorial está activo
     useEffect(() => {
