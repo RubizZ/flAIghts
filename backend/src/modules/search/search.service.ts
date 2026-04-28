@@ -532,7 +532,15 @@ export class SearchService {
 
             for (let i = 0; i < path.length; i++) {
                 const edge = path[i]!;
-                totalPrice += edge.price;
+                
+                if (totalPrice !== undefined) {
+                    if (edge.price) {
+                        totalPrice += edge.price;
+                    } else {
+                        totalPrice = undefined;
+                    }
+                }
+                
                 if (i > 0) {
                     const prevArrival = parseEdgeDateTime(path[i - 1]!.arrival_time);
                     const currDeparture = parseEdgeDateTime(edge.departure_time);
@@ -542,14 +550,20 @@ export class SearchService {
                 totalDuration += (edge.duration || 0);
             }
 
-            totalPrice = isNaN(totalPrice) ? 0 : totalPrice;
             totalDuration = isNaN(totalDuration) ? 0 : totalDuration;
             totalWaitTime = isNaN(totalWaitTime) ? 0 : totalWaitTime;
 
             const totalJourneyDuration = totalDuration + totalWaitTime;
-            const weightedCost = (totalPrice * (preferences.price_weight || 0.4)) +
+            
+            // Base weighted cost calculation
+            let weightedCost = ((totalPrice || 0) * (preferences.price_weight || 0.4)) +
                 (totalJourneyDuration * (preferences.duration_weight || 0.2)) +
                 (stops * 100 * (preferences.stops_weight || 0.2));
+            
+            // If the flight is priceless, add a huge penalty to ensure it's at the end
+            if (totalPrice === undefined || totalPrice === null || totalPrice <= 0) {
+                weightedCost += 2000000; // 2M penalty
+            }
 
             return {
                 path,
@@ -774,10 +788,10 @@ export class SearchService {
                     return;
                 }
 
-                const bestEdge = edges.reduce((min, cur) => cur.price < min.price ? cur : min, edges[0]!) as EnrichedFlightEdge;
+                const bestEdge = edges.reduce((min, cur) => (cur.price ?? Infinity) < (min.price ?? Infinity) ? cur : min, edges[0]!) as EnrichedFlightEdge;
                 logger.debug({ searchId, from, to, date, price: bestEdge.price, id: bestEdge.id }, `[Genetic] Tramo resuelto`);
 
-                currentPrice += bestEdge.price;
+                currentPrice += (bestEdge.price ?? 0);
                 // La duración total del itinerario genético es la suma de las duraciones de los vuelos
                 // más el tiempo de estancia en las ciudades (daysPerCity).
                 currentDuration += bestEdge.duration;

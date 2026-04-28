@@ -60,7 +60,7 @@ export interface LegResponse {
     flight_id: string;
     origin: string;
     destination: string;
-    price: number;
+    price?: number;
     duration: number;
     airline: string;
     airline_logo?: string;
@@ -76,7 +76,7 @@ export interface LegResponse {
 
 export interface ItineraryResponse {
     score: number;
-    total_price: number;
+    total_price?: number;
     total_duration: number;
     city_order: string[];
     legs: LegResponse[];

@@ -6,7 +6,7 @@ export interface ILeg {
   flight_id: string;
   origin: string;
   destination: string;
-  price: number;
+  price?: number;
   duration: number;
   airline: string;
   airline_logo?: string;
@@ -22,7 +22,7 @@ export interface ILeg {
 
 export interface IItinerary {
   score: number;
-  total_price: number;
+  total_price?: number;
   total_duration: number;
   city_order: string[];
   legs: ILeg[];
@@ -58,7 +58,7 @@ const LegSchema = new Schema<ILeg>({
   },
   price: {
     type: Number,
-    required: true,
+    required: false,
     min: [0, "El precio no puede ser negativo"]
   },
   duration: {
@@ -111,7 +111,7 @@ const ItinerarySchema = new Schema<IItinerary>({
   },
   total_price: {
     type: Number,
-    required: true,
+    required: false,
     min: [0, "El precio no puede ser negativo"]
   },
   total_duration: {

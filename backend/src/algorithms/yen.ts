@@ -122,11 +122,11 @@ export class Yen {
             const durationTotal = edge.duration + waitMinutes;
 
             if (criteria === "price") {
-                totalWeight += edge.price;
+                totalWeight += edge.price || 1000000;
             } else if (criteria === "duration") {
                 totalWeight += durationTotal;
             } else {
-                totalWeight += edge.price * preferences.price_weight;
+                totalWeight += (edge.price || 1000000) * preferences.price_weight;
                 totalWeight += (durationTotal * 0.1) * preferences.duration_weight;
                 totalWeight += (edge.stops * 50) * preferences.stops_weight;
             }

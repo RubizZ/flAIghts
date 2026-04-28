@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect, forwardRef, useImperativeHandle } from "react";
-import { Send, Sparkles, User, ExternalLink, Plane, MapPin, Calendar, Clock, ArrowRight, Check, Square, ChevronRight, ChevronDown, Lock, UserCircle, LogIn, History, Building2, CreditCard, AlertCircle } from "lucide-react";
+import { Send, Sparkles, User, ExternalLink, Plane, MapPin, Calendar, Clock, ArrowRight, Check, Square, ChevronRight, ChevronDown, Lock, UserCircle, LogIn, History, Building2, CreditCard, AlertCircle, Info } from "lucide-react";
+import Tooltip from "../ui/Tooltip";
 import { useTranslation } from "react-i18next";
 import ReactMarkdown from 'react-markdown';
 import { toast } from "sonner";
@@ -107,8 +108,17 @@ const FlightCard = ({ search }: { search: SearchResponseData }) => {
                         <p className="text-xs font-bold text-content">{t('agentChat.recommendedFlight')}</p>
                     </div>
                 </div>
-                <div className="text-right">
-                    <p className="text-lg font-black text-brand tracking-tight">{itinerary.total_price}€</p>
+                <div className="flex flex-col items-end">
+                    <div className="flex items-center gap-1.5">
+                        <p className="text-lg font-black text-brand tracking-tight">
+                            {itinerary.total_price && itinerary.total_price > 0 ? `${itinerary.total_price}€` : 'N/A'}
+                        </p>
+                        {(!itinerary.total_price || itinerary.total_price <= 0) && (
+                            <Tooltip content={t('common.priceUnavailableDesc')} position="left">
+                                <Info size={14} className="text-content-muted hover:text-brand transition-colors cursor-help" />
+                            </Tooltip>
+                        )}
+                    </div>
                     <p className="text-[10px] text-content-muted font-bold tracking-tighter uppercase">{t('agentChat.totalPrice')}</p>
                 </div>
             </div>

@@ -52,13 +52,7 @@ export class SerpapiStorageService {
 
             response = await this.serpApiClient.search(params, userId);
 
-            // LIMPIEZA: Eliminar vuelos sin precio antes de guardar (evita errores de esquema en MongoDB)
-            if (response.best_flights) {
-                response.best_flights = response.best_flights.filter((f: any) => f.price !== undefined && f.price !== null);
-            }
-            if (response.other_flights) {
-                response.other_flights = response.other_flights.filter((f: any) => f.price !== undefined && f.price !== null);
-            }
+
 
             try {
                 await SerpapiStorage.create(response);
@@ -126,7 +120,7 @@ export class SerpapiStorageService {
             .map(edge => {
                 const key = `${edge.from}|${edge.to}|${date}`;
                 const current = this.minPriceCache.get(key) ?? Infinity;
-                if (edge.price < current) {
+                if (edge.price !== undefined && edge.price !== null && edge.price < current) {
                     this.minPriceCache.set(key, edge.price);
                 }
                 return edge;
@@ -165,7 +159,7 @@ export class SerpapiStorageService {
                 const to = last.arrival_airport.id;
                 const key = `${from}|${to}|${date}`;
                 const current = this.minPriceCache.get(key) ?? Infinity;
-                if (flight.price < current) {
+                if (flight.price !== undefined && flight.price !== null && flight.price < current) {
                     this.minPriceCache.set(key, flight.price);
                 }
             }
@@ -242,7 +236,7 @@ export class SerpapiStorageService {
         }
 
         const results = await Promise.all(promises);
-        return results.flat().sort((a, b) => a.price - b.price);
+        return results.flat().sort((a, b) => (a.price || 1000000) - (b.price || 1000000));
     }
 
     /**

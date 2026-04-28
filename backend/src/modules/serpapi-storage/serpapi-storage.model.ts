@@ -53,7 +53,7 @@ const FlightRouteSchema = new Schema<FlightRoute>({
     layovers: { type: [LayoverSchema], required: false },
     total_duration: { type: Number, required: true },
     carbon_emmisions: { type: CarbonEmissionsSchema, required: false },
-    price: { type: Number, required: true },
+    price: { type: Number, required: false },
     type: { type: String, required: true },
     airline_logo: { type: String, required: false },
     extensions: { type: [String], required: false },

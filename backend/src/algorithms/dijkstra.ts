@@ -5,7 +5,7 @@ export interface DijkstraFlightEdge {
     id: string; // booking_token o un ID único
     from: string;
     to: string;
-    price: number;
+    price?: number;
     duration: number;
     stops: number;
     date: string; //YYYY-MM-DD
@@ -137,7 +137,7 @@ export class Dijkstra {
         const durationTotal = edge.duration + waitMinutes;
 
         if (criteria === "price") {
-            return edge.price;
+            return edge.price || 1000000;
         }
 
         if (criteria === "duration") {
@@ -146,11 +146,11 @@ export class Dijkstra {
 
         // Caso "custom"
         let weight = 0;
-        weight += edge.price * preferences.price_weight;
+        weight += (edge.price || 1000000) * preferences.price_weight;
         weight += (durationTotal * 0.1) * preferences.duration_weight;
         weight += (edge.stops * 50) * preferences.stops_weight;
 
-        return weight || edge.price;
+        return weight || (edge.price || 1000000);
     }
 
     private reconstructPath(

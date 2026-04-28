@@ -2974,7 +2974,6 @@
           "flight_id",
           "origin",
           "destination",
-          "price",
           "duration",
           "airline",
           "departure_time",
@@ -3018,7 +3017,6 @@
         },
         "required": [
           "score",
-          "total_price",
           "total_duration",
           "city_order",
           "legs",

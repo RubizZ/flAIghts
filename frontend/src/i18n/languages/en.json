@@ -182,6 +182,8 @@
     "others": "Others",
     "outbound": "Outbound",
     "outboundFlights": "Outbound Flights",
+    "priceUnavailable": "Price unavailable",
+    "priceUnavailableDesc": "Hidden due to low confidence in data accuracy.",
     "remove": "Remove",
     "return": "Return",
     "returnFlights": "Return Flights",

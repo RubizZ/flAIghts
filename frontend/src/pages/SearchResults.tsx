@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect, useCallback } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { useGetGlobeAirports } from "@/api/generated/openapi/airports";
-import { AlertCircle, Loader2, Star, Plane, ArrowLeft, ArrowRight, DollarSign, Clock, Calendar, Share2, Globe as GlobeIcon, Lock } from "lucide-react";
+import { AlertCircle, Loader2, Star, Plane, ArrowLeft, ArrowRight, DollarSign, Clock, Calendar, Share2, Globe as GlobeIcon, Lock, Info } from "lucide-react";
 import { useSearchResult, useShareSearch, usePrivatizeSearch } from "@/api/generated/openapi/search";
 import type { ItineraryResponse, GlobeAirportResponse, AirportResponse, FriendUser } from "@/api/generated/openapi/model";
 import { useSendMessage } from "@/api/generated/openapi/conversations";
@@ -14,6 +14,7 @@ import SelectedFlightSummary from "@/components/search/SelectedFlightSummary";
 import BookingModal from "@/components/search/BookingModal";
 import { usePrepareBooking } from "@/api/generated/openapi/booking";
 import { useTranslation } from "react-i18next";
+import Tooltip from "@/components/ui/Tooltip";
 import SmartPopover from "@/components/ui/SmartPopover";
 import GlobeLoadingScreen from "@/components/ui/GlobeLoadingScreen";
 import UserAvatar from "@/components/ui/UserAvatar";
@@ -182,7 +183,13 @@ export default function SearchResults() {
         if (!itineraries) return [];
         return [...itineraries].sort((a, b) => {
             if (sortBy === 'personalized') return (b.score || 0) - (a.score || 0);
-            if (sortBy === 'price') return a.total_price - b.total_price;
+            
+            if (sortBy === 'price') {
+                const priceA = a.total_price && a.total_price > 0 ? a.total_price : 999999999;
+                const priceB = b.total_price && b.total_price > 0 ? b.total_price : 999999999;
+                return priceA - priceB;
+            }
+            
             if (sortBy === 'duration') return a.total_duration - b.total_duration;
             return 0;
         });
@@ -592,50 +599,48 @@ export default function SearchResults() {
 
                                 {/* Sorting Controls - Bottom row on mobile */}
                                 {selectionStep !== 'summary' && (
-                                    <div className="flex items-center justify-between sm:justify-start gap-4 pt-2 md:pt-0 border-t md:border-t-0 border-line/30">
-                                        <div className="flex items-center gap-2">
-                                            <span className="text-[10px] md:text-xs font-bold text-content-muted uppercase tracking-wider">{t('searchResultsPage.orderBy')}</span>
-                                            <div className="flex items-center gap-1 bg-surface/50 p-1 rounded-xl border border-line/30">
-                                                <button
-                                                    onClick={() => {
-                                                        setSortBy('personalized');
-                                                        window.dispatchEvent(new CustomEvent('flaights:mission:sort-changed'));
-                                                    }}
-                                                    className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs md:text-sm font-medium transition-all cursor-pointer ${sortBy === 'personalized'
-                                                        ? 'bg-brand text-content-on-brand shadow-sm'
-                                                        : 'text-content-muted hover:text-content hover:bg-main'
-                                                        }`}
-                                                >
-                                                    <Star size={14} className={sortBy === 'personalized' ? 'fill-current' : ''} />
-                                                    <span>{t('searchResultsPage.personalized')}</span>
-                                                </button>
-                                                <button
-                                                    onClick={() => {
-                                                        setSortBy('price');
-                                                        window.dispatchEvent(new CustomEvent('flaights:mission:sort-changed'));
-                                                    }}
-                                                    className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${sortBy === 'price'
-                                                        ? 'bg-brand text-content-on-brand shadow-sm'
-                                                        : 'text-content-muted hover:text-content hover:bg-main'
-                                                        }`}
-                                                >
-                                                    <DollarSign size={12} />
-                                                    <span>{t('searchResultsPage.price')}</span>
-                                                </button>
-                                                <button
-                                                    onClick={() => {
-                                                        setSortBy('duration');
-                                                        window.dispatchEvent(new CustomEvent('flaights:mission:sort-changed'));
-                                                    }}
-                                                    className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${sortBy === 'duration'
-                                                        ? 'bg-brand text-content-on-brand shadow-sm'
-                                                        : 'text-content-muted hover:text-content hover:bg-main'
-                                                        }`}
-                                                >
-                                                    <Clock size={12} />
-                                                    <span>{t('searchResultsPage.duration')}</span>
-                                                </button>
-                                            </div>
+                                    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 pt-4 md:pt-0 border-t md:border-t-0 border-line/30">
+                                        <span className="text-[10px] font-black text-content-muted/60 uppercase tracking-widest">{t('searchResultsPage.orderBy')}</span>
+                                        <div className="flex flex-wrap items-center gap-1.5 p-1 bg-surface/50 rounded-2xl border border-line/30 w-full sm:w-auto">
+                                            <button
+                                                onClick={() => {
+                                                    setSortBy('personalized');
+                                                    window.dispatchEvent(new CustomEvent('flaights:mission:sort-changed'));
+                                                }}
+                                                className={`flex-1 sm:flex-none flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-xs md:text-sm font-medium transition-all cursor-pointer ${sortBy === 'personalized'
+                                                    ? 'bg-brand text-white shadow-sm'
+                                                    : 'text-content-muted hover:text-content hover:bg-main'
+                                                    }`}
+                                            >
+                                                <Star size={14} className={sortBy === 'personalized' ? 'fill-current' : ''} />
+                                                <span className="whitespace-nowrap">{t('searchResultsPage.personalized')}</span>
+                                            </button>
+                                            <button
+                                                onClick={() => {
+                                                    setSortBy('price');
+                                                    window.dispatchEvent(new CustomEvent('flaights:mission:sort-changed'));
+                                                }}
+                                                className={`flex-1 sm:flex-none flex items-center justify-center gap-2 px-3 py-1.5 rounded-lg text-xs md:text-sm font-medium transition-all cursor-pointer ${sortBy === 'price'
+                                                    ? 'bg-brand text-white shadow-sm'
+                                                    : 'text-content-muted hover:text-content hover:bg-main'
+                                                    }`}
+                                            >
+                                                <DollarSign size={14} />
+                                                <span className="whitespace-nowrap">{t('searchResultsPage.price')}</span>
+                                            </button>
+                                            <button
+                                                onClick={() => {
+                                                    setSortBy('duration');
+                                                    window.dispatchEvent(new CustomEvent('flaights:mission:sort-changed'));
+                                                }}
+                                                className={`flex-1 sm:flex-none flex items-center justify-center gap-2 px-3 py-1.5 rounded-lg text-xs md:text-sm font-medium transition-all cursor-pointer ${sortBy === 'duration'
+                                                    ? 'bg-brand text-white shadow-sm'
+                                                    : 'text-content-muted hover:text-content hover:bg-main'
+                                                    }`}
+                                            >
+                                                <Clock size={14} />
+                                                <span className="whitespace-nowrap">{t('searchResultsPage.duration')}</span>
+                                            </button>
                                         </div>
                                     </div>
                                 )}
@@ -669,9 +674,20 @@ export default function SearchResults() {
                                         <div className="bg-main/80 dark:bg-main/60 backdrop-blur-xl border border-line rounded-2xl shadow-lg p-6 flex flex-col sm:flex-row items-center justify-between gap-4">
                                             <div className="text-center sm:text-left">
                                                 <span className="text-sm font-bold text-content-muted uppercase tracking-wider">{t('searchResultsPage.tripTotalPrice')}</span>
-                                                <p className="text-4xl font-black text-brand">
-                                                    {(selectedDeparture.total_price + (selectedReturn?.total_price || 0)).toFixed(2)}€
-                                                </p>
+                                                <div className="flex items-center gap-2">
+                                                    <p className="text-4xl font-black text-brand tracking-tighter whitespace-nowrap">
+                                                        {selectedDeparture.total_price && selectedDeparture.total_price > 0 ? (
+                                                            `${(selectedDeparture.total_price + (selectedReturn?.total_price || 0)).toFixed(2)}€`
+                                                        ) : (
+                                                            t('common.priceUnavailable')
+                                                        )}
+                                                    </p>
+                                                    {(!selectedDeparture.total_price || selectedDeparture.total_price <= 0) && (
+                                                        <Tooltip content={t('common.priceUnavailableDesc')} position="top">
+                                                            <Info size={18} className="text-content-muted hover:text-brand transition-colors cursor-help" />
+                                                        </Tooltip>
+                                                    )}
+                                                </div>
                                             </div>
                                             <button
                                                 onClick={handleReserve}

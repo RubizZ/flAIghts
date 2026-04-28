@@ -39,7 +39,7 @@ export interface FlightRoute {
     layovers?: Layover[];
     total_duration: number;
     carbon_emmisions?: CarbonEmmisions;
-    price: number;
+    price?: number;
     type: string;
     airline_logo?: string; //aerolineas mixtas
     extensions: string[];

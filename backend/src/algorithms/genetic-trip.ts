@@ -175,7 +175,10 @@ export class GeneticTripOptimizer {
     private async cheapestFlight(from: string, to: string, date: string): Promise<number> {
         try {
             const edges = await this.storageService.getFlightEdges([from], [to], date);
-            const prices = edges.filter((e) => e.from === from && e.to === to).map((e) => e.price);
+            const prices = edges
+                .filter((e) => e.from === from && e.to === to)
+                .map((e) => e.price)
+                .filter((p): p is number => p !== undefined && p !== null);
             return prices.length > 0 ? Math.min(...prices) : Infinity;
         } catch {
             return Infinity;

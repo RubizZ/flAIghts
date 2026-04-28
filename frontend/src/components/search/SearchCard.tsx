@@ -13,8 +13,11 @@ import {
     RefreshCw,
     ArrowRight,
     Trophy,
-    Plane
+    Plane,
+    Info
 } from "lucide-react";
+import { useTranslation } from "react-i18next";
+import Tooltip from "../ui/Tooltip";
 
 interface SearchCardProps {
     search: SearchResponseData;
@@ -23,6 +26,7 @@ interface SearchCardProps {
 }
 
 export default function SearchCard({ search, isFeatured, children }: SearchCardProps) {
+    const { t } = useTranslation();
     const bestItinerary = search.departure_itineraries?.[0];
     
     const statusConfig = {
@@ -119,8 +123,18 @@ export default function SearchCard({ search, isFeatured, children }: SearchCardP
                                     <Star size={10} fill="currentColor" />
                                     Mejor opción encontrada
                                 </span>
-                                <div className="text-2xl font-black text-brand">
-                                    {bestItinerary.total_price}€
+                                <div className="flex items-center gap-1.5">
+                                    <div className="text-2xl font-black text-brand">
+                                        {bestItinerary.total_price && bestItinerary.total_price > 0 
+                                            ? `${bestItinerary.total_price}€` 
+                                            : 'N/A'
+                                        }
+                                    </div>
+                                    {(!bestItinerary.total_price || bestItinerary.total_price <= 0) && (
+                                        <Tooltip content={t('common.priceUnavailableDesc')} position="left">
+                                            <Info size={14} className="text-content-muted hover:text-brand transition-colors cursor-help" />
+                                        </Tooltip>
+                                    )}
                                 </div>
                             </div>
 

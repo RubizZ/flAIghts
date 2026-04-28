@@ -1,8 +1,9 @@
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
-import { Plane, Calendar, Clock, DollarSign, Loader2, Star, ArrowRight } from "lucide-react";
+import { Plane, Calendar, Clock, DollarSign, Loader2, Star, ArrowRight, Info } from "lucide-react";
 import { useSearchResult } from "@/api/generated/openapi/search";
 import { useMemo } from "react";
+import Tooltip from "../ui/Tooltip";
 
 interface SharedSearchCardProps {
     content: string;
@@ -132,9 +133,20 @@ export default function SharedSearchCard({ content, isSelf }: SharedSearchCardPr
                                 </div>
                             </div>
                             <div className="text-right shrink-0">
-                                <div className={`flex items-center gap-0.5 text-base font-black ${isSelf ? 'text-white' : 'text-brand'}`}>
-                                    <DollarSign size={14} />
-                                    <span>{recommendedFlight.total_price.toFixed(0)}</span>
+                                <div className={`flex items-center gap-1 text-base font-black ${isSelf ? 'text-white' : 'text-brand'}`}>
+                                    {recommendedFlight.total_price && recommendedFlight.total_price > 0 ? (
+                                        <>
+                                            <DollarSign size={14} />
+                                            <span>{recommendedFlight.total_price.toFixed(0)}</span>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <span className="text-[10px] italic opacity-60">N/A</span>
+                                            <Tooltip content={t('common.priceUnavailableDesc')} position="left">
+                                                <Info size={12} className={`${isSelf ? 'text-white/60' : 'text-brand/60'} hover:opacity-100 transition-colors cursor-help`} />
+                                            </Tooltip>
+                                        </>
+                                    )}
                                 </div>
                                 <span className="text-[8px] font-black uppercase opacity-40">{t("searchResults.totalPrice")}</span>
                             </div>

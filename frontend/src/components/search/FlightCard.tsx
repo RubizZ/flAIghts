@@ -3,6 +3,7 @@ import { ChevronDown, Clock, Info, PlaneLanding, PlaneTakeoff, Ticket, Calendar,
 import { useTranslation } from "react-i18next";
 import type { ItineraryResponse, GlobeAirportResponse, LegResponse } from "@/api/generated/openapi/model";
 import FlightRouteInfo from "./FlightRouteInfo";
+import Tooltip from "../ui/Tooltip";
 
 interface FlightCardProps {
     itinerary: ItineraryResponse,
@@ -107,8 +108,17 @@ export default function FlightCard({ itinerary, formatTime, formatDuration, airp
                     {/* Price & Action */}
                     <div className="flex flex-col items-center sm:items-end justify-center px-4 sm:px-8 border-t sm:border-t-0 sm:border-l border-line/20 py-4 sm:py-0 bg-brand/[0.02] sm:bg-transparent w-full sm:w-auto">
                         <span className="text-[10px] font-bold text-content-muted/60 uppercase tracking-widest mb-1">{t('flightCard.totalPrice')}</span>
-                        <div className="flex items-baseline gap-1">
-                            <span className="text-3xl font-black text-brand tracking-tight">{itinerary.total_price}€</span>
+                        <div className="flex items-center gap-1.5">
+                            {itinerary.total_price && itinerary.total_price > 0 ? (
+                                <span className="text-3xl font-black text-brand tracking-tight">{itinerary.total_price}€</span>
+                            ) : (
+                                <>
+                                    <span className="text-sm font-bold text-content-muted italic whitespace-nowrap">{t('common.priceUnavailable')}</span>
+                                    <Tooltip content={t('common.priceUnavailableDesc')} position="left">
+                                        <Info size={14} className="text-content-muted hover:text-brand transition-colors cursor-help" />
+                                    </Tooltip>
+                                </>
+                            )}
                         </div>
                         {showSelectButton && onSelect && (
                             <button

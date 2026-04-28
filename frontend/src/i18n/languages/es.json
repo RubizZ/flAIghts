@@ -184,6 +184,8 @@
     "others": "Otros",
     "outbound": "Ida",
     "outboundFlights": "Vuelos de Ida",
+    "priceUnavailable": "Precio no disponible",
+    "priceUnavailableDesc": "Oculto por baja confianza en la exactitud de los datos.",
     "remove": "Eliminar",
     "return": "Vuelta",
     "returnFlights": "Vuelos de Vuelta",

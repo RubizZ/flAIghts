@@ -933,8 +933,7 @@
           "created_at",
           "legs",
           "score",
-          "total_duration",
-          "total_price"
+          "total_duration"
         ]
       },
       "LegResponse": {
@@ -1004,7 +1003,6 @@
           "flight_number",
           "order",
           "origin",
-          "price",
           "travel_class"
         ]
       },
