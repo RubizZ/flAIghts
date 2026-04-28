@@ -61,6 +61,20 @@ export default function GeneticTrip() {
         if (urlDays) setDaysPerCity(urlDays);
     }, [globeAirports]); // Only run when globeAirports are ready
 
+    // Dispatch opened event for missions
+    useEffect(() => {
+        window.dispatchEvent(new CustomEvent('flaights:mission:genetic-trip-opened'));
+    }, []);
+
+    // Dispatch city added event for missions
+    useEffect(() => {
+        if (cities.length > 0) {
+            window.dispatchEvent(new CustomEvent('flaights:mission:genetic-trip-city-added', {
+                detail: { count: cities.length }
+            }));
+        }
+    }, [cities.length]);
+
     // Sync state to URL
     useEffect(() => {
         const params = new URLSearchParams(searchParams);
@@ -139,6 +153,8 @@ export default function GeneticTrip() {
                 source: "manual"
             }
         });
+
+        window.dispatchEvent(new CustomEvent('flaights:mission:genetic-trip-performed'));
     };
 
     const handleStartMapSelection = (type: 'origin' | 'destination') => {
@@ -167,6 +183,7 @@ export default function GeneticTrip() {
         }
         setSelectingType(null);
         setIsSelectingOnMap(false);
+        window.dispatchEvent(new CustomEvent('flaights:mission:select-on-map', { detail: { airport } }));
     };
 
     return (
