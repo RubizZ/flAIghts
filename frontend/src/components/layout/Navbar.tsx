@@ -231,22 +231,6 @@ export default function Navbar({ variant = 'floating', logoRef }: { variant?: 'f
                             <span className="leading-none">{t("navbar.settings")}</span>
                         </div>
                     </button>
-                    <button
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            pushMenu('language');
-                        }}
-                        className="w-full flex items-center justify-between px-4 py-3 text-sm text-content hover:bg-surface/70 rounded-xl transition-all cursor-pointer group text-left font-medium"
-                    >
-                        <div className="flex items-center gap-3">
-                            <Languages size={20} className="shrink-0 group-hover:text-brand transition-colors" />
-                            <span className="leading-none">{t("navbar.language")}</span>
-                        </div>
-                        <div className="flex items-center gap-1.5 text-[10px] text-content-muted opacity-60 font-bold uppercase">
-                            {i18n.language}
-                            <ChevronDown size={14} className="-rotate-90" />
-                        </div>
-                    </button>
                     {(user.role === 'admin' || user.role === 'superadmin') && (
                         <button onClick={() => { setIsOpen(false); navigate('/admin') }} className="w-full flex items-center justify-between px-4 py-3 text-sm rounded-xl transition-all group text-left hover:bg-surface/70 cursor-pointer font-medium">
                             <div className="flex items-center gap-3 text-amber-500">
