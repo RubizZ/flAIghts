@@ -39,7 +39,7 @@ export interface SummarizedFlightPath {
     search_id: string;
     itineraries_count: number;
     best_itinerary: {
-        price: number;
+        price: number | undefined;
         duration: number;
         legs: {
             from: string;
@@ -129,7 +129,7 @@ export class ToolRegistry {
                     parameters: { type: "object", properties: {} }
                 },
                 summarize: (r) => ({ username: r.username, preferences: r.preferences }),
-                execute: async function* (_args, userId,) {
+                execute: async function* (_args, userId) {
                     if (!userId) throw new Error("No autenticado");
                     const user = await self.userService.getUser(userId);
                     return { username: user.username, preferences: user.preferences };
@@ -193,7 +193,7 @@ export class ToolRegistry {
                     }
                 },
                 summarize: (r) => (r.items || []).slice(0, 5).map((a) => ({ iata: a.code, name: a.name })),
-                execute: async function* (args, _callId) {
+                execute: async function* (args, userId, callId) {
                     return await self.airlineService.searchAirlines(args.query);
                 }
             },

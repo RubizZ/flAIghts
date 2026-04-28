@@ -29,6 +29,7 @@ export default function SearchResults() {
     const navigate = useNavigate();
     const [sortBy, setSortBy] = useState<'price' | 'duration' | 'personalized'>('personalized');
     const [hoveredItinerary, setHoveredItinerary] = useState<ItineraryResponse | null>(null);
+    const [debouncedHoveredItinerary, setDebouncedHoveredItinerary] = useState<ItineraryResponse | null>(null);
     const [expandedItinerary, setExpandedItinerary] = useState<ItineraryResponse | null>(null);
     const [selectionStep, setSelectionStep] = useState<'departure' | 'return' | 'summary'>('departure');
     const [selectedDeparture, setSelectedDeparture] = useState<ItineraryResponse | null>(null);
@@ -47,6 +48,13 @@ export default function SearchResults() {
         window.addEventListener('resize', handleResize);
         return () => window.removeEventListener('resize', handleResize);
     }, []);
+
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setDebouncedHoveredItinerary(hoveredItinerary);
+        }, 150);
+        return () => clearTimeout(timer);
+    }, [hoveredItinerary]);
 
 
     const { data: airportsData } = useGetGlobeAirports({
@@ -232,7 +240,7 @@ export default function SearchResults() {
     };
 
     const currentOrigins = useMemo(() => {
-        const activeItinerary = hoveredItinerary || expandedItinerary;
+        const activeItinerary = debouncedHoveredItinerary || expandedItinerary;
         if (activeItinerary) {
             const iata = activeItinerary.legs[0]?.origin;
             const a = iata ? airportsMap.get(iata) : null;
@@ -257,10 +265,10 @@ export default function SearchResults() {
                 } as AirportResponse;
             })
             .filter((a): a is AirportResponse => !!a);
-    }, [hoveredItinerary, expandedItinerary, searchData?.origins, airportsMap]);
+    }, [debouncedHoveredItinerary, expandedItinerary, searchData?.origins, airportsMap]);
 
     const currentDestinations = useMemo(() => {
-        const activeItinerary = hoveredItinerary || expandedItinerary;
+        const activeItinerary = debouncedHoveredItinerary || expandedItinerary;
         if (activeItinerary) {
             const iata = activeItinerary.legs[activeItinerary.legs.length - 1]?.destination;
             const a = iata ? airportsMap.get(iata) : null;
@@ -285,10 +293,10 @@ export default function SearchResults() {
                 } as AirportResponse;
             })
             .filter((a): a is AirportResponse => !!a);
-    }, [hoveredItinerary, expandedItinerary, searchData?.destinations, airportsMap]);
+    }, [debouncedHoveredItinerary, expandedItinerary, searchData?.destinations, airportsMap]);
 
     const currentSteps = useMemo(() => {
-        const activeItinerary = hoveredItinerary || expandedItinerary;
+        const activeItinerary = debouncedHoveredItinerary || expandedItinerary;
         if (!activeItinerary || activeItinerary.legs.length < 2) return [];
 
         const steps: AirportResponse[][] = [];
@@ -296,16 +304,17 @@ export default function SearchResults() {
             const iata = activeItinerary.legs[i]?.destination;
             const a = iata ? airportsMap.get(iata) : null;
             if (a) {
-                steps.push([{
+                const group = [{
                     iata_code: a.i,
                     name: a.n,
                     city: a.ci,
                     location: { coordinates: [a.lo, a.la], type: "Point" }
-                } as AirportResponse]);
+                } as AirportResponse];
+                steps.push(group);
             }
         }
         return steps;
-    }, [hoveredItinerary, expandedItinerary, airportsMap]);
+    }, [debouncedHoveredItinerary, expandedItinerary, airportsMap]);
 
     const allStepsIata = useMemo(() => currentSteps.flat().map(s => s.iata_code).filter(Boolean) as string[], [currentSteps]);
     const selectedAirports = useMemo(() =>

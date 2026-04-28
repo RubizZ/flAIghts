@@ -523,7 +523,7 @@ export class SearchService {
         if (paths.length === 0) return [];
 
         const pathData = paths.map(path => {
-            let totalPrice = 0;
+            let totalPrice: number | undefined = 0;
             let totalDuration = 0;
             let totalWaitTime = 0;
 
@@ -534,7 +534,7 @@ export class SearchService {
                 const edge = path[i]!;
                 
                 if (totalPrice !== undefined) {
-                    if (edge.price) {
+                    if (edge.price !== undefined && edge.price !== null) {
                         totalPrice += edge.price;
                     } else {
                         totalPrice = undefined;
