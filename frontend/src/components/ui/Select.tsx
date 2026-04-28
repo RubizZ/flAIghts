@@ -16,6 +16,7 @@ interface SelectProps {
     icon?: React.ElementType;
     className?: string;
     align?: 'left' | 'right' | 'center';
+    disabled?: boolean;
 }
 
 /**
@@ -28,7 +29,8 @@ export default function Select({
     placeholder = "Seleccionar...",
     icon: Icon,
     className = "",
-    align = 'left'
+    align = 'left',
+    disabled = false
 }: SelectProps) {
     const [isOpen, setIsOpen] = useState(false);
     
@@ -36,7 +38,7 @@ export default function Select({
 
     return (
         <SmartPopover
-            isOpen={isOpen}
+            isOpen={isOpen && !disabled}
             setIsOpen={setIsOpen}
             className={className}
             keepTriggerWidth={true}
@@ -44,24 +46,28 @@ export default function Select({
             trigger={
                 <button
                     type="button"
-                    onClick={() => setIsOpen(!isOpen)}
+                    onClick={() => !disabled && setIsOpen(!isOpen)}
+                    disabled={disabled}
                     className={`
                         w-full flex items-center justify-between gap-3 px-4 py-2.5 
                         bg-surface border border-line rounded-2xl text-sm font-medium
-                        hover:border-brand/40 transition-all shadow-sm cursor-pointer
-                        group focus:ring-2 focus:ring-brand/20 outline-none
-                        ${isOpen ? 'ring-2 ring-brand/20 border-brand' : ''}
+                        transition-all shadow-sm group outline-none
+                        ${disabled 
+                            ? 'opacity-50 cursor-not-allowed grayscale-[0.5]' 
+                            : 'hover:border-brand/40 cursor-pointer focus:ring-2 focus:ring-brand/20'
+                        }
+                        ${isOpen && !disabled ? 'ring-2 ring-brand/20 border-brand' : ''}
                     `}
                 >
                     <div className="flex items-center gap-2.5 truncate">
-                        {Icon && <Icon size={16} className="text-content-muted group-hover:text-brand transition-colors" />}
+                        {Icon && <Icon size={16} className={`text-content-muted transition-colors ${!disabled ? 'group-hover:text-brand' : ''}`} />}
                         <span className={selectedOption ? 'text-content' : 'text-content-muted'}>
                             {selectedOption ? selectedOption.label : placeholder}
                         </span>
                     </div>
                     <ChevronDown 
                         size={16} 
-                        className={`text-content-muted transition-transform duration-300 ${isOpen ? 'rotate-180 text-brand' : ''}`} 
+                        className={`text-content-muted transition-transform duration-300 ${isOpen && !disabled ? 'rotate-180 text-brand' : ''}`} 
                     />
                 </button>
             }

@@ -49,6 +49,17 @@ export class AdminService {
         });
     }
 
+    public async getAuditMetadata() {
+        const resources = await Audit.distinct('resource');
+        const actionsByResource: Record<string, string[]> = {};
+        
+        await Promise.all(resources.map(async (resource) => {
+            actionsByResource[resource] = await Audit.distinct('action', { resource });
+        }));
+
+        return { resources, actionsByResource };
+    }
+
     public async getAirportReports(status?: 'pending' | 'resolved' | 'rejected'): Promise<PopulatedAirportReport[]> {
         const query = status ? { status } : {};
         return await AirportReport.find(query)

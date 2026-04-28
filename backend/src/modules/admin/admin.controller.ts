@@ -73,6 +73,15 @@ export class AdminController extends Controller {
     }
 
     /**
+     * Obtener metadatos de auditoría (recursos y acciones disponibles dinámicamente).
+     */
+    @Get("/audits/metadata")
+    public async getAuditMetadata(): Promise<SuccessResponseType<{ resources: string[], actionsByResource: Record<string, string[]> }>> {
+        const result = await this.adminService.getAuditMetadata();
+        return { status: "success", data: result };
+    }
+
+    /**
      * Listar reportes de errores en aeropuertos.
      */
     @Get("/airport-reports")

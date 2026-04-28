@@ -77,7 +77,7 @@ export class SearchService {
         createdData.shared = !data.user_id;
         const search = await Search.create(createdData);
 
-        yield* this.runExploration(search._id, data);
+        yield* this.runExploration(search._id, data, data.user_id);
     }
 
     public async createSearchBlocking(data: SearchRequest & { user_id?: string }): Promise<SearchResponseData> {
@@ -86,7 +86,7 @@ export class SearchService {
         const search = await Search.create(createdData);
 
         let finalData: SearchResponseData | undefined;
-        for await (const event of this.runExploration(search._id, data)) {
+        for await (const event of this.runExploration(search._id, data, data.user_id)) {
             if (event.type === 'completed') {
                 finalData = event.data;
             } else if (event.type === 'failed') {
@@ -526,7 +526,7 @@ export class SearchService {
             let totalPrice = 0;
             let totalDuration = 0;
             let totalWaitTime = 0;
-            
+
             if (!path || path.length === 0) return null;
             const stops = path.length - 1;
 
@@ -724,7 +724,7 @@ export class SearchService {
 
     private async runGeneticTrip(searchId: string, data: { origin: string, cities: string[], startDate: Date, daysPerCity: number }, userId?: string) {
         logger.info({ searchId, origin: data.origin, cities: data.cities, startDate: data.startDate, daysPerCity: data.daysPerCity }, `[Genetic] Iniciando runGeneticTrip`);
-        
+
         await this.auditService.register({
             resource: "SEARCH",
             action: "EXPLORATION_START",

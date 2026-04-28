@@ -7386,6 +7386,53 @@
         "type": "object",
         "additionalProperties": false
       },
+      "Record_string.string-Array_": {
+        "properties": {},
+        "additionalProperties": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "type": "object",
+        "description": "Construct a type with a set of properties K of type T"
+      },
+      "SuccessResponseType__resources-string-Array--actionsByResource-Record_string.string-Array___": {
+        "description": "Wrapper de éxito JSend (aplicado por el middleware global).",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "success"
+            ],
+            "nullable": false
+          },
+          "data": {
+            "properties": {
+              "actionsByResource": {
+                "$ref": "#/components/schemas/Record_string.string-Array_"
+              },
+              "resources": {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              }
+            },
+            "required": [
+              "actionsByResource",
+              "resources"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "status",
+          "data"
+        ],
+        "type": "object",
+        "additionalProperties": false
+      },
       "Pick_IUserUnpopulated._id-or-username-or-email_": {
         "properties": {
           "email": {
@@ -11180,6 +11227,36 @@
             }
           }
         ]
+      }
+    },
+    "/admin/audits/metadata": {
+      "get": {
+        "operationId": "GetAuditMetadata",
+        "responses": {
+          "200": {
+            "description": "Ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponseType__resources-string-Array--actionsByResource-Record_string.string-Array___"
+                }
+              }
+            }
+          }
+        },
+        "description": "Obtener metadatos de auditoría (recursos y acciones disponibles dinámicamente).",
+        "tags": [
+          "Admin"
+        ],
+        "security": [
+          {
+            "jwt": [
+              "admin",
+              "superadmin"
+            ]
+          }
+        ],
+        "parameters": []
       }
     },
     "/admin/airport-reports": {

@@ -1,19 +1,31 @@
 import { Filter, ChevronRight, Loader2, Activity, User, Shield, Search, Bot } from 'lucide-react';
 import { useListAudits } from '@/api/generated/openapi/admin';
 import Select from '@/components/ui/Select';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { customInstance } from '@/api/axios-instance';
 
-const RESOURCE_ACTIONS: Record<string, string[]> = {
-    USER: ['INITIATE_REGISTRATION', 'COMPLETE_REGISTRATION', 'UPDATE', 'UPDATE_PROFILE_PICTURE', 'DELETE', 'INITIATE_EMAIL_CHANGE', 'COMPLETE_EMAIL_CHANGE', 'CANCEL_EMAIL_CHANGE', 'SEND_FRIEND_REQUEST', 'CANCEL_FRIEND_REQUEST', 'ACCEPT_FRIEND_REQUEST', 'REJECT_FRIEND_REQUEST', 'REMOVE_FRIEND'],
-    AUTH: ['LOGIN', 'FAILED_LOGIN', 'LOGOUT_ALL', 'FAILED_LOGOUT_ALL', 'CHANGE_PASSWORD', 'FAILED_CHANGE_PASSWORD', 'FORGOT_PASSWORD_REQUEST', 'FAILED_FORGOT_PASSWORD', 'RESET_PASSWORD', 'FAILED_RESET_PASSWORD'],
-    SEARCH: ['CREATE', 'COMPLETE', 'FAIL', 'SHARE', 'PRIVATIZE'],
-    AGENT: ['CHAT', 'TOOL_CALL']
+const RESOURCE_MAP: Record<string, { label: string, icon: any }> = {
+    USER: { label: 'Usuarios', icon: User },
+    AUTH: { label: 'Autenticación', icon: Shield },
+    SEARCH: { label: 'Búsquedas', icon: Search },
+    AGENT: { label: 'Asistente IA', icon: Bot },
+    BOOKING: { label: 'Reservas', icon: Activity }
 };
 
 export default function AuditsTab() {
     const [page, setPage] = useState(1);
     const [selectedResource, setSelectedResource] = useState<string>('all');
     const [selectedAction, setSelectedAction] = useState<string>('all');
+
+    // Obtener metadatos dinámicos del backend
+    const { data: metadata, isLoading: isLoadingMetadata } = useQuery({
+        queryKey: ['admin', 'audits', 'metadata'],
+        queryFn: () => customInstance<{ resources: string[], actionsByResource: Record<string, string[]> }>({
+            url: '/admin/audits/metadata',
+            method: 'GET'
+        })
+    });
 
     // Reiniciar acción al cambiar de recurso
     useEffect(() => {
@@ -33,6 +45,34 @@ export default function AuditsTab() {
     const audits = data?.audits || [];
     const [expandedAudit, setExpandedAudit] = useState<string | null>(null);
 
+    const resourceOptions = useMemo(() => {
+        const base = [{ value: 'all', label: 'Todos los recursos', icon: Filter }];
+        if (!metadata?.resources) return base;
+
+        return [
+            ...base,
+            ...metadata.resources.map(res => ({
+                value: res,
+                label: RESOURCE_MAP[res]?.label || res,
+                icon: RESOURCE_MAP[res]?.icon || Activity
+            }))
+        ];
+    }, [metadata]);
+
+    const actionOptions = useMemo(() => {
+        const base = [{ value: 'all', label: selectedResource === 'all' ? 'Filtrar por acción...' : 'Todas las acciones' }];
+        if (selectedResource === 'all' || !metadata?.actionsByResource?.[selectedResource]) return base;
+
+        return [
+            ...base,
+            ...metadata.actionsByResource[selectedResource].map(action => ({
+                value: action,
+                label: action.split('_').map(word => word.charAt(0) + word.slice(1).toLowerCase()).join(' '),
+                icon: Activity
+            }))
+        ];
+    }, [selectedResource, metadata]);
+
     return (
         <div className="space-y-4">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -46,30 +86,20 @@ export default function AuditsTab() {
                     <Select
                         value={selectedResource}
                         onChange={(val) => setSelectedResource(val)}
-                        options={[
-                            { value: 'all', label: 'Todos los recursos', icon: Filter },
-                            { value: 'USER', label: 'Usuarios', icon: User },
-                            { value: 'AUTH', label: 'Autenticación', icon: Shield },
-                            { value: 'SEARCH', label: 'Búsquedas', icon: Search },
-                            { value: 'AGENT', label: 'Asistente IA', icon: Bot }
-                        ]}
+                        options={resourceOptions}
                         className="w-full sm:w-56"
                         align="right"
+                        disabled={isLoadingMetadata}
                     />
 
                     {/* Selector de acciones dependiente */}
                     <Select
                         value={selectedAction}
                         onChange={(val) => setSelectedAction(val)}
-                        options={[
-                            { value: 'all', label: selectedResource === 'all' ? 'Filtrar por acción...' : 'Todas las acciones' },
-                            ...(selectedResource !== 'all' ? (RESOURCE_ACTIONS[selectedResource] || []).map(a => ({ value: a, label: a })) : [])
-                        ]}
-                        icon={Activity}
+                        options={actionOptions}
                         className="w-full sm:w-64"
-                        // @ts-ignore
-                        disabled={selectedResource === 'all'}
                         align="right"
+                        disabled={selectedResource === 'all' || isLoadingMetadata}
                     />
                 </div>
             </div>
@@ -95,7 +125,7 @@ export default function AuditsTab() {
                             <tbody className="divide-y divide-line">
                                 {audits.map((log: any) => (
                                     <React.Fragment key={log._id}>
-                                        <tr 
+                                        <tr
                                             className="hover:bg-brand/5 transition-colors group cursor-pointer"
                                             onClick={() => setExpandedAudit(expandedAudit === log._id ? null : log._id)}
                                         >
