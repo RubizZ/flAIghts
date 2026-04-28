@@ -39,7 +39,7 @@ export default function Sidebar({ isOpen, onClose, onToggle, variant = 'classic'
         },
         {
             label: t("sidebar.geneticTrip"),
-            path: "/multi-city",
+            path: "/multi-stop",
             icon: <Zap size={20} />,
             show: true,
         },
