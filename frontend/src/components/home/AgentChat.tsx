@@ -83,9 +83,10 @@ const Typewriter = ({ text, speed = 15, onComplete }: { text: string; speed?: nu
 
 const FlightCard = ({ search }: { search: SearchResponseData }) => {
     const { t } = useTranslation();
-    if (!search.departure_itineraries || search.departure_itineraries.length === 0) return null;
+    const bestItinerary = search.departure_itineraries_custom?.[0] || search.departure_itineraries_price?.[0] || search.departure_itineraries_duration?.[0];
+    if (!bestItinerary) return null;
 
-    const itinerary = search.departure_itineraries[0] as ItineraryResponse;
+    const itinerary = bestItinerary as ItineraryResponse;
     const firstLeg = itinerary.legs[0];
     const lastLeg = itinerary.legs[itinerary.legs.length - 1];
 

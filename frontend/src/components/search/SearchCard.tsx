@@ -27,7 +27,7 @@ interface SearchCardProps {
 
 export default function SearchCard({ search, isFeatured, children }: SearchCardProps) {
     const { t } = useTranslation();
-    const bestItinerary = search.departure_itineraries?.[0];
+    const bestItinerary = search.departure_itineraries_custom?.[0] || search.departure_itineraries_price?.[0] || search.departure_itineraries_duration?.[0];
     
     const statusConfig = {
         searching: { icon: <Loader2 className="w-3 h-3 animate-spin" />, label: "Buscando", color: "bg-blue-500/10 text-blue-500 border-blue-500/20" },

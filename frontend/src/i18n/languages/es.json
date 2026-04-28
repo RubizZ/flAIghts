@@ -1059,7 +1059,8 @@
       "notFoundDesc": "Esta búsqueda ha sido eliminada o no está disponible."
     },
     "toast": {
-      "noBookingOptions": "No se han encontrado opciones de reserva para este vuelo"
+      "noBookingOptions": "No se han encontrado opciones de reserva para este vuelo",
+      "moreResultsError": "Error al buscar más rutas"
     },
     "recommended": "Recomendado",
     "totalPrice": "Precio Total",
@@ -1078,7 +1079,8 @@
     "searchingBestRoutes": "Buscando las mejores rutas",
     "searchingMore": "Buscando más vuelos...",
     "selectedFlight": "Vuelo de {{type}} Seleccionado",
-    "tripTotalPrice": "Precio total del viaje"
+    "tripTotalPrice": "Precio total del viaje",
+    "loadMore": "Ver más opciones"
   },
   "settings": {
     "appearance": {

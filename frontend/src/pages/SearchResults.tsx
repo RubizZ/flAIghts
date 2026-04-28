@@ -2,7 +2,7 @@ import { useState, useMemo, useEffect, useCallback } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { useGetGlobeAirports } from "@/api/generated/openapi/airports";
 import { AlertCircle, Loader2, Star, Plane, ArrowLeft, ArrowRight, DollarSign, Clock, Calendar, Share2, Globe as GlobeIcon, Lock, Info } from "lucide-react";
-import { useSearchResult, useShareSearch, usePrivatizeSearch } from "@/api/generated/openapi/search";
+import { useSearchResult, useShareSearch, usePrivatizeSearch, useExploreMore } from "@/api/generated/openapi/search";
 import type { ItineraryResponse, GlobeAirportResponse, AirportResponse, FriendUser } from "@/api/generated/openapi/model";
 import { useSendMessage } from "@/api/generated/openapi/conversations";
 import { useAuth } from "@/context/AuthContext";
@@ -112,6 +112,20 @@ export default function SearchResults() {
         }
     });
 
+    const { mutate: exploreMore, isPending: isExploringMore } = useExploreMore({
+        mutation: {
+            onSuccess: () => {
+                queryClient.invalidateQueries({ queryKey: [`/search/${id}`] });
+            },
+            onError: () => toast.error(t("searchResults.toast.moreResultsError"))
+        }
+    });
+
+    const handleExploreMore = () => {
+        const criteriaType = sortBy === 'personalized' ? 'custom' : sortBy;
+        exploreMore({ searchId: id!, params: { limit: 10, criteriaType } });
+    };
+
     const togglePublic = () => {
         if (!data) return;
         if (data.shared) {
@@ -180,8 +194,8 @@ export default function SearchResults() {
 
         if (!searchData) return { origin: undefined, destination: undefined };
 
-        const origin = searchData.origins?.[0] || searchData.departure_itineraries?.[0]?.legs?.[0]?.origin;
-        const firstItinerary = searchData.departure_itineraries?.[0];
+        const origin = searchData.origins?.[0] || searchData.departure_itineraries_custom?.[0]?.legs?.[0]?.origin;
+        const firstItinerary = searchData.departure_itineraries_custom?.[0] || searchData.departure_itineraries_price?.[0] || searchData.departure_itineraries_duration?.[0];
         const destination = searchData.destinations?.[0] || (firstItinerary ? firstItinerary.legs[firstItinerary.legs.length - 1]?.destination : undefined);
 
         return { origin, destination };
@@ -203,8 +217,19 @@ export default function SearchResults() {
         });
     };
 
-    const departureItineraries = sortItineraries(searchData?.departure_itineraries);
-    const returnItineraries = sortItineraries(searchData?.return_itineraries);
+    const departureItineraries = useMemo(() => {
+        if (!searchData) return [];
+        if (sortBy === 'price') return sortItineraries(searchData.departure_itineraries_price);
+        if (sortBy === 'duration') return sortItineraries(searchData.departure_itineraries_duration);
+        return sortItineraries(searchData.departure_itineraries_custom);
+    }, [searchData, sortBy]);
+
+    const returnItineraries = useMemo(() => {
+        if (!searchData) return [];
+        if (sortBy === 'price') return sortItineraries(searchData.return_itineraries_price);
+        if (sortBy === 'duration') return sortItineraries(searchData.return_itineraries_duration);
+        return sortItineraries(searchData.return_itineraries_custom);
+    }, [searchData, sortBy]);
 
     const isOneWay = useMemo(() => {
         if (!searchData?.return_date) return true;
@@ -427,11 +452,11 @@ export default function SearchResults() {
                                                 {(selectionStep === 'departure' || selectionStep === 'return') && (
                                                     <>
                                                         <span className="truncate">
-                                                            {searchData.origins?.join(' + ') || (searchData.departure_itineraries?.[0]?.legs?.[0]?.origin)}
+                                                            {searchData.origins?.join(' + ') || (searchData.departure_itineraries_custom?.[0]?.legs?.[0]?.origin || searchData.departure_itineraries_price?.[0]?.legs?.[0]?.origin || searchData.departure_itineraries_duration?.[0]?.legs?.[0]?.origin)}
                                                         </span>
                                                         <Plane className="w-5 h-5 text-brand rotate-45 shrink-0 hidden sm:block" />
                                                         <span className="truncate">
-                                                            {searchData.destinations?.join(' + ') || (searchData.departure_itineraries?.[0]?.legs?.at(-1)?.destination)}
+                                                            {searchData.destinations?.join(' + ') || (searchData.departure_itineraries_custom?.[0]?.legs?.at(-1)?.destination || searchData.departure_itineraries_price?.[0]?.legs?.at(-1)?.destination || searchData.departure_itineraries_duration?.[0]?.legs?.at(-1)?.destination)}
                                                         </span>
                                                     </>
                                                 )}
@@ -735,6 +760,23 @@ export default function SearchResults() {
                                                     onSelect={(it) => handleSelectItinerary(it, 'departure')}
                                                 />
                                             ))}
+                                            
+                                            {departureItineraries.length > 0 && (
+                                                <button
+                                                    onClick={handleExploreMore}
+                                                    disabled={isExploringMore}
+                                                    className="w-full py-4 px-6 bg-surface/40 hover:bg-surface/60 border border-line/30 rounded-2xl text-content-muted hover:text-brand font-bold transition-all flex items-center justify-center gap-2 group cursor-pointer"
+                                                >
+                                                    {isExploringMore ? (
+                                                        <Loader2 size={20} className="animate-spin" />
+                                                    ) : (
+                                                        <>
+                                                            <span>{t('searchResultsPage.loadMore')}</span>
+                                                            <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
+                                                        </>
+                                                    )}
+                                                </button>
+                                            )}
                                         </div>
                                     </div>
                                 )}
@@ -779,6 +821,23 @@ export default function SearchResults() {
                                                         onSelect={(it) => handleSelectItinerary(it, 'return')}
                                                     />
                                                 ))}
+
+                                                {returnItineraries.length > 0 && (
+                                                    <button
+                                                        onClick={handleExploreMore}
+                                                        disabled={isExploringMore}
+                                                        className="w-full py-4 px-6 bg-surface/40 hover:bg-surface/60 border border-line/30 rounded-2xl text-content-muted hover:text-brand font-bold transition-all flex items-center justify-center gap-2 group cursor-pointer"
+                                                    >
+                                                        {isExploringMore ? (
+                                                            <Loader2 size={20} className="animate-spin" />
+                                                        ) : (
+                                                            <>
+                                                                <span>{t('searchResultsPage.loadMore')}</span>
+                                                                <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
+                                                            </>
+                                                        )}
+                                                    </button>
+                                                )}
                                             </div>
                                         </div>
                                     </>

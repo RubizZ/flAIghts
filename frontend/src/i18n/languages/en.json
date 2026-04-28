@@ -1054,7 +1054,8 @@
       "notFoundDesc": "This search has been deleted or is no longer available."
     },
     "toast": {
-      "noBookingOptions": "No booking options found for this flight"
+      "noBookingOptions": "No booking options found for this flight",
+      "moreResultsError": "Error searching for more routes"
     },
     "recommended": "Recommended",
     "totalPrice": "Total Price",
@@ -1073,7 +1074,8 @@
     "searchingBestRoutes": "Searching for the best routes",
     "searchingMore": "Searching for more flights...",
     "selectedFlight": "Selected {{type}} Flight",
-    "tripTotalPrice": "Total trip price"
+    "tripTotalPrice": "Total trip price",
+    "loadMore": "View more options"
   },
   "settings": {
     "appearance": {

@@ -94,24 +94,29 @@ export interface SearchResponseData {
     /**
      * @isDateTime
      */
-    departure_date: Date;
+    departure_date: string;
     /**
      * @isDateTime
      */
-    return_date?: Date;
+    return_date?: string;
     criteria: {
         priority: "balanced" | "cheap" | "fast";
         max_price?: number;
     };
     status: "searching" | "completed" | "failed";
     source: "manual" | "agent";
-    departure_itineraries?: ItineraryResponse[];
-    return_itineraries?: ItineraryResponse[];
+    departure_itineraries_price?: ItineraryResponse[];
+    departure_itineraries_duration?: ItineraryResponse[];
+    departure_itineraries_custom?: ItineraryResponse[];
+    return_itineraries_price?: ItineraryResponse[];
+    return_itineraries_duration?: ItineraryResponse[];
+    return_itineraries_custom?: ItineraryResponse[];
     shared: boolean;
     /**
      * @isDateTime
      */
     created_at: string;
+    last_error?: string;
 }
 
 export type SearchRequestValidationFailResponse = RequestValidationFailResponse<ValidationDetails<

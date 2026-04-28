@@ -3046,12 +3046,10 @@
             "type": "array"
           },
           "departure_date": {
-            "type": "string",
-            "format": "date-time"
+            "type": "string"
           },
           "return_date": {
-            "type": "string",
-            "format": "date-time"
+            "type": "string"
           },
           "criteria": {
             "properties": {
@@ -3088,13 +3086,37 @@
               "agent"
             ]
           },
-          "departure_itineraries": {
+          "departure_itineraries_price": {
             "items": {
               "$ref": "#/components/schemas/ItineraryResponse"
             },
             "type": "array"
           },
-          "return_itineraries": {
+          "departure_itineraries_duration": {
+            "items": {
+              "$ref": "#/components/schemas/ItineraryResponse"
+            },
+            "type": "array"
+          },
+          "departure_itineraries_custom": {
+            "items": {
+              "$ref": "#/components/schemas/ItineraryResponse"
+            },
+            "type": "array"
+          },
+          "return_itineraries_price": {
+            "items": {
+              "$ref": "#/components/schemas/ItineraryResponse"
+            },
+            "type": "array"
+          },
+          "return_itineraries_duration": {
+            "items": {
+              "$ref": "#/components/schemas/ItineraryResponse"
+            },
+            "type": "array"
+          },
+          "return_itineraries_custom": {
             "items": {
               "$ref": "#/components/schemas/ItineraryResponse"
             },
@@ -3104,6 +3126,9 @@
             "type": "boolean"
           },
           "created_at": {
+            "type": "string"
+          },
+          "last_error": {
             "type": "string"
           }
         },
@@ -9319,6 +9344,85 @@
             "required": true,
             "schema": {
               "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/search/{searchId}/explore": {
+      "post": {
+        "operationId": "ExploreMore",
+        "responses": {
+          "200": {
+            "description": "Nuevas rutas exploradas",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponseType_SearchResponseData_"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Búsqueda privada no autorizada",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FailResponseFromError_SearchNotAuthorizedError_"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Búsqueda no encontrada",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FailResponseFromError_SearchNotFoundError_"
+                }
+              }
+            }
+          }
+        },
+        "description": "Explora más combinaciones de vuelos para una búsqueda existente.",
+        "tags": [
+          "Search"
+        ],
+        "security": [
+          {
+            "jwt-optional": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "searchId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 10,
+              "format": "double",
+              "type": "number"
+            }
+          },
+          {
+            "in": "query",
+            "name": "criteriaType",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "price",
+                "duration",
+                "custom"
+              ]
             }
           }
         ]

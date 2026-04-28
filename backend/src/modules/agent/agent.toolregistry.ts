@@ -12,7 +12,7 @@ import type { IUserPopulated } from "../users/models/user.model.js";
 
 export interface SummarizedUserInfo {
     username: string;
-    preferences: any;
+    preferences: IUserPopulated['preferences'];
 }
 
 export interface SummarizedSearch {
@@ -170,12 +170,22 @@ export class ToolRegistry {
                 },
                 summarize: (r) => ({
                     total: r.total || 0,
-                    items: (r.items || []).slice(0, 5).map((a: any) => ({
-                        iata: a.iata_code || (a.airports ? a.airports[0]?.iata_code : null),
-                        name: a.name || a.display_name,
-                        city: a.city,
-                        type: a.type
-                    }))
+                    items: (r.items || []).slice(0, 5).map((a) => {
+                        if ("airports" in a) {
+                            return {
+                                iata: a.airports[0]?.iata_code || null,
+                                name: a.name,
+                                city: a.name,
+                                type: a.type
+                            };
+                        }
+                        return {
+                            iata: a.iata_code,
+                            name: a.name,
+                            city: a.city,
+                            type: a.type
+                        };
+                    })
                 }),
                 execute: async function* (args) {
                     return await self.airportService.searchAirports(args.query);
@@ -214,14 +224,15 @@ export class ToolRegistry {
                 },
                 summarize: (r) => {
                     if (r.status !== 'completed') return r;
+                    const itineraries = r.departure_itineraries_price || r.departure_itineraries_duration || r.departure_itineraries_custom || [];
                     return {
                         status: 'completed',
                         search_id: r._id,
-                        itineraries_count: r.departure_itineraries?.length || 0,
-                        best_itinerary: r.departure_itineraries?.[0] ? {
-                            price: r.departure_itineraries[0].total_price,
-                            duration: r.departure_itineraries[0].total_duration,
-                            legs: r.departure_itineraries[0].legs.map((l) => ({
+                        itineraries_count: itineraries.length,
+                        best_itinerary: itineraries[0] ? {
+                            price: itineraries[0].total_price,
+                            duration: itineraries[0].total_duration,
+                            legs: itineraries[0].legs.map((l) => ({
                                 from: l.origin,
                                 to: l.destination,
                                 airline: l.airline,
@@ -242,13 +253,14 @@ export class ToolRegistry {
                         user_id: userId
                     };
 
-                    let finalData: any;
+                    let finalData: SearchResponseData | undefined;
                     for await (const event of self.searchService.createSearchStream(searchReq)) {
                         yield { type: 'tool_progress', name: 'performSearch', event, call_id: callId } as AgentStreamEvent;
                         if (event.type === 'completed') {
                             finalData = event.data;
                         }
                     }
+                    if (!finalData) throw new Error("Search failed to complete");
                     return finalData;
                 }
             }

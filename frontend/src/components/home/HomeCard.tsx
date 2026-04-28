@@ -136,7 +136,7 @@ export default function HomeCard({
 
             <div className={`flex-1 min-h-0 flex flex-col transition-all duration-200 ${isTransitioning ? 'opacity-0 scale-[0.98] blur-sm' : 'opacity-100 scale-100 blur-0'}`}>
                 {localMode === 'manual' ? (
-                    <div className="h-full w-full overflow-y-auto overflow-x-hidden custom-scrollbar pr-1 flex flex-col gap-4 lg:gap-5">
+                    <div className="h-full w-full overflow-y-auto overflow-x-hidden custom-scrollbar flex flex-col gap-4 lg:gap-5">
                         <div className="lg:hidden flex flex-col items-center gap-0.5 mb-1 animate-fade-in-up">
                             <h2 className="font-bold text-content tracking-tight text-2xl">Explorar vuelos</h2>
                             <p className="text-content-muted text-[11px]">Encuentra tu próximo destino mundial</p>

@@ -62,7 +62,7 @@ export class SerpapiStorageService {
                 }
             }
         } else {
-            response = record as unknown as SerpApiResponse;
+            response = record as SerpApiResponse;
         }
 
         const allFlights: FlightRoute[] = [
@@ -148,13 +148,14 @@ export class SerpapiStorageService {
 
         for (const record of records) {
             const allFlights = [
-                ...((record as any).best_flights || []),
-                ...((record as any).other_flights || []),
+                ...(record.best_flights || []),
+                ...(record.other_flights || []),
             ];
 
             for (const flight of allFlights) {
                 const first = flight.flights[0];
                 const last = flight.flights[flight.flights.length - 1];
+                if (!first || !last) continue;
                 const from = first.departure_airport.id;
                 const to = last.arrival_airport.id;
                 const key = `${from}|${to}|${date}`;

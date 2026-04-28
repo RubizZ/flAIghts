@@ -1,6 +1,7 @@
 import { singleton, inject } from "tsyringe";
-import type { SearchRequest, SearchResponseData, LegResponse, EnrichedFlightEdge, SearchProgressEvent } from "./search.types.js";
-import { Itinerary } from "./models/itinerary.model.js";
+import mongoose, { type PopulatedDoc } from "mongoose";
+import type { SearchRequest, SearchResponseData, LegResponse, ItineraryResponse, EnrichedFlightEdge, SearchProgressEvent } from "./search.types.js";
+import { Itinerary, type IItinerary, type ILeg } from "./models/itinerary.model.js";
 import { SerpApiClient } from "@/services/serpapi/serpapi.client.js";
 import { Search, type ISearch } from "./models/search.model.js";
 import "./models/itinerary.model.js"; // Necesario para .populate("itineraries")
@@ -18,6 +19,12 @@ import { GeneticTripOptimizer } from "@/algorithms/genetic-trip.js";
 import logger from "@/utils/logger.js";
 
 
+
+interface ExplorationStateValue {
+    A: DijkstraFlightEdge[][];
+    candidates: { path: DijkstraFlightEdge[]; weight: number }[];
+    last_explored_index: number;
+}
 
 @singleton()
 export class SearchService {
@@ -38,7 +45,7 @@ export class SearchService {
 
         // Ejecución desvinculada (background)
         void (async () => {
-            for await (const _ of this.runExploration(search._id, data, data.user_id)) {
+            for await (const _ of this.runExploration(search._id.toString(), data, data.user_id)) {
                 // Consumimos el generador para que se ejecute la lógica
             }
         })();
@@ -77,7 +84,7 @@ export class SearchService {
         createdData.shared = !data.user_id;
         const search = await Search.create(createdData);
 
-        yield* this.runExploration(search._id, data, data.user_id);
+        yield* this.runExploration(search._id.toString(), data, data.user_id);
     }
 
     public async createSearchBlocking(data: SearchRequest & { user_id?: string }): Promise<SearchResponseData> {
@@ -86,7 +93,7 @@ export class SearchService {
         const search = await Search.create(createdData);
 
         let finalData: SearchResponseData | undefined;
-        for await (const event of this.runExploration(search._id, data, data.user_id)) {
+        for await (const event of this.runExploration(search._id.toString(), data, data.user_id)) {
             if (event.type === 'completed') {
                 finalData = event.data;
             } else if (event.type === 'failed') {
@@ -109,8 +116,12 @@ export class SearchService {
             throw new SearchNotAuthorizedError(searchId, requesterId ?? 'anonymous');
         }
 
-        await search.populate("departure_itineraries");
-        await search.populate("return_itineraries");
+        await search.populate("departure_itineraries_price");
+        await search.populate("departure_itineraries_duration");
+        await search.populate("departure_itineraries_custom");
+        await search.populate("return_itineraries_price");
+        await search.populate("return_itineraries_duration");
+        await search.populate("return_itineraries_custom");
 
         return this.formatSearchResponse(search.toJSON());
     }
@@ -167,7 +178,7 @@ export class SearchService {
 
 
 
-    public async *runExploration(searchId: string, criteria: SearchRequest, userId?: string): AsyncGenerator<SearchProgressEvent> {
+    public async *runExploration(searchId: string, criteria: SearchRequest, userId?: string, limitPerCriteria: number = 5): AsyncGenerator<SearchProgressEvent> {
         try {
             let userPreferences = {
                 price_weight: 0.4,
@@ -222,31 +233,68 @@ export class SearchService {
 
             yield { type: "progress", message: "Calculando mejores rutas con algoritmo de Yen..." };
 
-            const allOptimalPaths: DijkstraFlightEdge[][] = [];
+            const explorationState = (await Search.findById(searchId))?.exploration_state || new Map<string, ExplorationStateValue>();
+
+            const pathsByCriteria: Record<string, DijkstraFlightEdge[][]> = {
+                price: [],
+                duration: [],
+                custom: []
+            };
+
             for (const origin of criteria.origins) {
                 for (const destination of criteria.destinations) {
-                    const [bestByPrice, bestByDuration, bestByCustom] = await Promise.all([
-                        this.yen.findKPaths(origin, destination, edgePool, 15, "price", userPreferences),
-                        this.yen.findKPaths(origin, destination, edgePool, 15, "duration", userPreferences),
-                        this.yen.findKPaths(origin, destination, edgePool, 15, "custom", userPreferences)
-                    ]);
-                    allOptimalPaths.push(...bestByPrice, ...bestByDuration, ...bestByCustom);
+                    const criteriaTypes: WeightCriteria[] = ["price", "duration", "custom"];
+
+                    for (const type of criteriaTypes) {
+                        const stateKey = `departure:${origin}:${destination}:${type}`;
+                        const existingState = explorationState.get(stateKey);
+
+                        const result = this.yen.findKPathsWithState(
+                            origin,
+                            destination,
+                            edgePool,
+                            limitPerCriteria,
+                            type,
+                            userPreferences,
+                            existingState ? {
+                                A: (existingState as ExplorationStateValue).A || [],
+                                B: (existingState as ExplorationStateValue).candidates.map((c: { path: DijkstraFlightEdge[]; weight: number }) => ({ path: c.path, weight: c.weight })),
+                                lastExploredIndex: (existingState as ExplorationStateValue).last_explored_index
+                            } : undefined
+                        );
+
+                        pathsByCriteria[type]!.push(...result.paths);
+
+                        // Guardamos el nuevo estado
+                        const newStateObj = {
+                            A: result.newState.A,
+                            candidates: result.newState.B.map(c => ({ path: c.path, weight: c.weight })),
+                            last_explored_index: result.newState.lastExploredIndex
+                        };
+
+                        explorationState.set(stateKey, newStateObj);
+                    }
                 }
             }
 
             logger.info({
                 searchId,
-                pathsCount: allOptimalPaths.length,
+                pathsCount: (pathsByCriteria["price"]?.length || 0) + (pathsByCriteria["duration"]?.length || 0) + (pathsByCriteria["custom"]?.length || 0),
                 totalEdges: edgePool.length
             }, `[Search] Resultados consolidados de algoritmos de Yen para múltiples orígenes/destinos`);
 
-            const uniqueItineraryIds = await this.saveOptimalPathsAsItineraries(allOptimalPaths, userPreferences);
+            const itinerariesPrice = await this.saveOptimalPathsAsItineraries(pathsByCriteria["price"]!, userPreferences);
+            const itinerariesDuration = await this.saveOptimalPathsAsItineraries(pathsByCriteria["duration"]!, userPreferences);
+            const itinerariesCustom = await this.saveOptimalPathsAsItineraries(pathsByCriteria["custom"]!, userPreferences);
 
             await Search.findByIdAndUpdate(
                 searchId,
                 {
                     status: criteria.return_date ? "searching" : "completed",
-                    departure_itineraries: uniqueItineraryIds
+                    departure_itineraries_price: itinerariesPrice,
+                    departure_itineraries_duration: itinerariesDuration,
+                    departure_itineraries_custom: itinerariesCustom,
+                    exploration_state: explorationState
                 }
             );
 
@@ -271,33 +319,73 @@ export class SearchService {
                     returnEdgePool.push(...rManualEdges);
                 }
 
-                const rAllOptimalPaths: DijkstraFlightEdge[][] = [];
+                // Use the same explorationState object for return flights too
+                const rPathsByCriteria: Record<string, DijkstraFlightEdge[][]> = {
+                    price: [],
+                    duration: [],
+                    custom: []
+                };
+
                 for (const org of returnCriteria.origins) {
                     for (const dest of returnCriteria.destinations) {
-                        const [rBestByPrice, rBestByDuration, rBestByCustom] = await Promise.all([
-                            this.yen.findKPaths(org, dest, returnEdgePool, 5, "price", userPreferences),
-                            this.yen.findKPaths(org, dest, returnEdgePool, 5, "duration", userPreferences),
-                            this.yen.findKPaths(org, dest, returnEdgePool, 5, "custom", userPreferences)
-                        ]);
-                        rAllOptimalPaths.push(...rBestByPrice, ...rBestByDuration, ...rBestByCustom);
+                        const criteriaTypes: WeightCriteria[] = ["price", "duration", "custom"];
+
+                        for (const type of criteriaTypes) {
+                            const stateKey = `return:${org}:${dest}:${type}`;
+                            const existingState = explorationState.get(stateKey);
+
+                            const result = this.yen.findKPathsWithState(
+                                org,
+                                dest,
+                                returnEdgePool,
+                                limitPerCriteria,
+                                type,
+                                userPreferences,
+                                existingState ? {
+                                    A: (existingState as ExplorationStateValue).A || [],
+                                    B: (existingState as ExplorationStateValue).candidates.map((c: { path: DijkstraFlightEdge[]; weight: number }) => ({ path: c.path, weight: c.weight })),
+                                    lastExploredIndex: (existingState as ExplorationStateValue).last_explored_index
+                                } : undefined
+                            );
+
+                            rPathsByCriteria[type]!.push(...result.paths);
+
+                            // Guardamos el nuevo estado
+                            const newStateObj = {
+                                A: result.newState.A,
+                                candidates: result.newState.B.map(c => ({ path: c.path, weight: c.weight })),
+                                last_explored_index: result.newState.lastExploredIndex
+                            };
+
+                            explorationState.set(stateKey, newStateObj);
+                        }
                     }
                 }
 
-                const rUniqueItineraryIds = await this.saveOptimalPathsAsItineraries(rAllOptimalPaths, userPreferences);
+                const rItinerariesPrice = await this.saveOptimalPathsAsItineraries(rPathsByCriteria["price"]!, userPreferences);
+                const rItinerariesDuration = await this.saveOptimalPathsAsItineraries(rPathsByCriteria["duration"]!, userPreferences);
+                const rItinerariesCustom = await this.saveOptimalPathsAsItineraries(rPathsByCriteria["custom"]!, userPreferences);
 
-                if (rUniqueItineraryIds.length === 0) {
+                if (rItinerariesPrice.length === 0 && rItinerariesDuration.length === 0 && rItinerariesCustom.length === 0) {
                     throw new Error("No se encontraron vuelos de vuelta para los criterios seleccionados.");
                 }
 
                 await Search.findByIdAndUpdate(searchId, {
                     status: "completed",
-                    return_itineraries: rUniqueItineraryIds
+                    return_itineraries_price: rItinerariesPrice,
+                    return_itineraries_duration: rItinerariesDuration,
+                    return_itineraries_custom: rItinerariesCustom,
+                    exploration_state: explorationState
                 });
             }
 
             const finalSearch = await Search.findById(searchId)
-                .populate("departure_itineraries")
-                .populate("return_itineraries");
+                .populate("departure_itineraries_price")
+                .populate("departure_itineraries_duration")
+                .populate("departure_itineraries_custom")
+                .populate("return_itineraries_price")
+                .populate("return_itineraries_duration")
+                .populate("return_itineraries_custom");
 
             yield { type: "progress", message: "Resultados obtenidos y procesados.", data: undefined };
 
@@ -305,7 +393,7 @@ export class SearchService {
                 yield {
                     type: "completed",
                     message: "Exploración finalizada con éxito.",
-                    data: this.formatSearchResponse(finalSearch.toJSON() as any)
+                    data: this.formatSearchResponse(finalSearch.toJSON() as ISearch)
                 };
             }
 
@@ -314,19 +402,20 @@ export class SearchService {
                 action: "EXPLORATION_COMPLETED",
                 details: {
                     id: searchId,
-                    itinerary_count: (finalSearch?.departure_itineraries?.length || 0) + (finalSearch?.return_itineraries?.length || 0)
+                    itinerary_count: (finalSearch?.departure_itineraries_price?.length || 0) + (finalSearch?.departure_itineraries_duration?.length || 0) + (finalSearch?.departure_itineraries_custom?.length || 0)
                 },
                 user: { id: userId }
             });
 
-        } catch (error: any) {
-            logger.error(error, `Error en exploración ${searchId} (searchId: ${searchId})`);
+        } catch (error) {
+            const err = error as Error;
+            logger.error(err, `Error en exploración ${searchId} (searchId: ${searchId})`);
 
             await Search.updateOne(
                 { _id: searchId },
                 {
                     status: "failed",
-                    $set: { last_error: error.message || String(error) }
+                    $set: { last_error: err.message || String(err) }
                 }
             );
 
@@ -335,13 +424,200 @@ export class SearchService {
                 action: "EXPLORATION_FAILED",
                 details: {
                     id: searchId,
-                    reason: error.message || String(error)
+                    reason: err.message || String(err)
                 },
                 user: { id: userId }
             });
 
-            yield { type: "failed", message: error.message || "Error interno durante la exploración." };
+            yield { type: "failed", message: err.message || "Error interno durante la exploración." };
         }
+    }
+
+    public async exploreMore(searchId: string, userId: string | undefined, limit: number = 10, criteriaType?: WeightCriteria): Promise<SearchResponseData> {
+        const search = await Search.findById(searchId)
+            .populate("departure_itineraries_price")
+            .populate("departure_itineraries_duration")
+            .populate("departure_itineraries_custom")
+            .populate("return_itineraries_price")
+            .populate("return_itineraries_duration")
+            .populate("return_itineraries_custom");
+        if (!search) throw new SearchNotFoundError(searchId, userId ?? 'anonymous');
+
+        // Solo el dueño puede pedir más resultados (o si es pública)
+        if (!search.shared && search.user_id !== userId) {
+            throw new SearchNotAuthorizedError(searchId, userId ?? 'anonymous');
+        }
+
+        const criteria: SearchRequest = {
+            origins: search.origins,
+            destinations: search.destinations,
+            departure_date: search.departure_date,
+            return_date: search.return_date,
+            criteria: search.criteria
+        };
+
+        let userPreferences = {
+            price_weight: 0.4,
+            duration_weight: 0.2,
+            stops_weight: 0.2,
+            airline_quality_weight: 0.2
+        };
+
+        if (search.user_id) {
+            const targetUser = await this.userService.getUser(search.user_id);
+            if (targetUser && targetUser.preferences) {
+                userPreferences = {
+                    price_weight: targetUser.preferences.price_weight,
+                    duration_weight: targetUser.preferences.duration_weight,
+                    stops_weight: targetUser.preferences.stops_weight,
+                    airline_quality_weight: targetUser.preferences.airline_quality_weight
+                };
+            }
+        }
+
+        const edgePool = await this.getFlightsFromSerpApi(criteria, search.user_id);
+        if (criteria.origins.length === 1 && criteria.destinations.length === 1) {
+            const manualEdges = await this.collectAvailableEdges(criteria, userPreferences, search.user_id);
+            edgePool.push(...manualEdges);
+        }
+
+        const existingDepartureKeysByCriteria: Record<string, Set<string>> = {
+            price: new Set((search.departure_itineraries_price as PopulatedDoc<IItinerary>[])?.map(it => this.getItineraryKey(it)) || []),
+            duration: new Set((search.departure_itineraries_duration as PopulatedDoc<IItinerary>[])?.map(it => this.getItineraryKey(it)) || []),
+            custom: new Set((search.departure_itineraries_custom as PopulatedDoc<IItinerary>[])?.map(it => this.getItineraryKey(it)) || [])
+        };
+        const existingReturnKeysByCriteria: Record<string, Set<string>> = {
+            price: new Set((search.return_itineraries_price as PopulatedDoc<IItinerary>[])?.map(it => this.getItineraryKey(it)) || []),
+            duration: new Set((search.return_itineraries_duration as PopulatedDoc<IItinerary>[])?.map(it => this.getItineraryKey(it)) || []),
+            custom: new Set((search.return_itineraries_custom as PopulatedDoc<IItinerary>[])?.map(it => this.getItineraryKey(it)) || [])
+        };
+
+        const explorationState = search.exploration_state || new Map<string, ExplorationStateValue>();
+        const pathsByCriteria: Record<string, DijkstraFlightEdge[][]> = {
+            price: [],
+            duration: [],
+            custom: []
+        };
+
+        for (const origin of criteria.origins) {
+            for (const destination of criteria.destinations) {
+                const criteriaTypes: WeightCriteria[] = criteriaType ? [criteriaType] : ["price", "duration", "custom"];
+
+                for (const type of criteriaTypes) {
+                    const stateKey = `departure:${origin}:${destination}:${type}`;
+                    const existingState = explorationState.get(stateKey);
+
+                    const result = this.yen.findKPathsWithState(
+                        origin,
+                        destination,
+                        edgePool,
+                        limit,
+                        type,
+                        userPreferences,
+                        existingState ? {
+                            A: (existingState as ExplorationStateValue).A || [],
+                            B: (existingState as ExplorationStateValue).candidates.map((c: { path: DijkstraFlightEdge[]; weight: number }) => ({ path: c.path, weight: c.weight })),
+                            lastExploredIndex: (existingState as ExplorationStateValue).last_explored_index
+                        } : undefined
+                    );
+
+                    pathsByCriteria[type]!.push(...result.paths);
+
+                    const newStateObj = {
+                        A: result.newState.A,
+                        candidates: result.newState.B.map(c => ({ path: c.path, weight: c.weight })),
+                        last_explored_index: result.newState.lastExploredIndex
+                    };
+
+                        explorationState.set(stateKey, newStateObj);
+                }
+            }
+        }
+
+        const itinerariesPrice = await this.saveOptimalPathsAsItineraries(pathsByCriteria["price"]!, userPreferences, existingDepartureKeysByCriteria["price"]);
+        const itinerariesDuration = await this.saveOptimalPathsAsItineraries(pathsByCriteria["duration"]!, userPreferences, existingDepartureKeysByCriteria["duration"]);
+        const itinerariesCustom = await this.saveOptimalPathsAsItineraries(pathsByCriteria["custom"]!, userPreferences, existingDepartureKeysByCriteria["custom"]);
+
+        await Search.findByIdAndUpdate(searchId, {
+            $addToSet: {
+                departure_itineraries_price: { $each: itinerariesPrice },
+                departure_itineraries_duration: { $each: itinerariesDuration },
+                departure_itineraries_custom: { $each: itinerariesCustom }
+            },
+            exploration_state: explorationState
+        });
+
+        if (search.return_date) {
+            const returnCriteria: SearchRequest = {
+                ...criteria,
+                origins: criteria.destinations,
+                destinations: criteria.origins,
+                departure_date: search.return_date,
+                return_date: undefined
+            };
+
+            const returnEdgePool = await this.getFlightsFromSerpApi(returnCriteria, search.user_id);
+            if (returnCriteria.origins.length === 1 && returnCriteria.destinations.length === 1) {
+                const rManualEdges = await this.collectAvailableEdges(returnCriteria, userPreferences, search.user_id);
+                returnEdgePool.push(...rManualEdges);
+            }
+
+            const rPathsByCriteria: Record<string, DijkstraFlightEdge[][]> = {
+                price: [],
+                duration: [],
+                custom: []
+            };
+
+            for (const org of returnCriteria.origins) {
+                for (const dest of returnCriteria.destinations) {
+                    const criteriaTypes: WeightCriteria[] = criteriaType ? [criteriaType] : ["price", "duration", "custom"];
+
+                    for (const type of criteriaTypes) {
+                        const stateKey = `return:${org}:${dest}:${type}`;
+                        const existingState = explorationState.get(stateKey);
+
+                        const result = this.yen.findKPathsWithState(
+                            org,
+                            dest,
+                            returnEdgePool,
+                            limit,
+                            type,
+                            userPreferences,
+                            existingState ? {
+                                A: (existingState as ExplorationStateValue).A || [],
+                                B: (existingState as ExplorationStateValue).candidates.map((c: { path: DijkstraFlightEdge[]; weight: number }) => ({ path: c.path, weight: c.weight })),
+                                lastExploredIndex: (existingState as ExplorationStateValue).last_explored_index
+                            } : undefined
+                        );
+
+                        rPathsByCriteria[type]!.push(...result.paths);
+
+                        const newStateObj = {
+                            A: result.newState.A,
+                            candidates: result.newState.B.map(c => ({ path: c.path, weight: c.weight })),
+                            last_explored_index: result.newState.lastExploredIndex
+                        };
+
+                        explorationState.set(stateKey, newStateObj);
+                    }
+                }
+            }
+
+            const rItinerariesPrice = await this.saveOptimalPathsAsItineraries(rPathsByCriteria["price"]!, userPreferences, existingReturnKeysByCriteria["price"]);
+            const rItinerariesDuration = await this.saveOptimalPathsAsItineraries(rPathsByCriteria["duration"]!, userPreferences, existingReturnKeysByCriteria["duration"]);
+            const rItinerariesCustom = await this.saveOptimalPathsAsItineraries(rPathsByCriteria["custom"]!, userPreferences, existingReturnKeysByCriteria["custom"]);
+
+            await Search.findByIdAndUpdate(searchId, {
+                $addToSet: {
+                    return_itineraries_price: { $each: rItinerariesPrice },
+                    return_itineraries_duration: { $each: rItinerariesDuration },
+                    return_itineraries_custom: { $each: rItinerariesCustom }
+                },
+                exploration_state: explorationState
+            });
+        }
+
+        return this.getSearch(searchId, userId);
     }
 
     public async getSearches(
@@ -411,8 +687,12 @@ export class SearchService {
                 .sort({ created_at: -1 })
                 .skip(skip)
                 .limit(limit)
-                .populate("departure_itineraries")
-                .populate("return_itineraries"),
+                .populate("departure_itineraries_price")
+                .populate("departure_itineraries_duration")
+                .populate("departure_itineraries_custom")
+                .populate("return_itineraries_price")
+                .populate("return_itineraries_duration")
+                .populate("return_itineraries_custom"),
             Search.countDocuments(query)
         ]);
 
@@ -424,18 +704,75 @@ export class SearchService {
         };
     }
 
+    private getItineraryKey(itinerary: PopulatedDoc<IItinerary> | undefined): string {
+        if (!itinerary || typeof itinerary !== 'object' || !('legs' in itinerary)) return "";
+        return itinerary.legs.map((l) => l.flight_id).join("|");
+    }
+
     private formatSearchResponse(data: ISearch): SearchResponseData {
+        const formatItinerary = (itinerary: PopulatedDoc<IItinerary>): ItineraryResponse | null => {
+            if (!itinerary || typeof itinerary !== 'object' || !('legs' in itinerary)) return null;
+
+            const createdAt = itinerary.created_at;
+            const legs: LegResponse[] = itinerary.legs.map((l) => ({
+                order: l.order,
+                flight_id: l.flight_id,
+                origin: l.origin,
+                destination: l.destination,
+                price: l.price,
+                duration: l.duration,
+                airline: l.airline,
+                airline_logo: l.airline_logo,
+                departure_time: l.departure_time,
+                arrival_time: l.arrival_time,
+                wait_time: l.wait_time,
+                airplane: l.airplane,
+                flight_number: l.flight_number,
+                travel_class: l.travel_class,
+                booking_token: l.booking_token,
+                extensions: l.extensions
+            }));
+
+            return {
+                score: itinerary.score,
+                total_price: itinerary.total_price,
+                total_duration: itinerary.total_duration,
+                city_order: itinerary.city_order,
+                legs,
+                created_at: createdAt instanceof Date ? createdAt.toISOString() : String(createdAt)
+            };
+        };
+
+        const mapItineraries = (itineraries?: PopulatedDoc<IItinerary>[]): ItineraryResponse[] | undefined => {
+            if (!itineraries) return undefined;
+            return itineraries
+                .map(formatItinerary)
+                .filter((i): i is ItineraryResponse => i !== null);
+        };
+
+        const departureDate = data.departure_date;
+        const returnDate = data.return_date;
+        const createdAt = data.created_at;
+
         return {
-            ...data,
-            created_at: data.created_at instanceof Date ? data.created_at.toISOString() : data.created_at,
-            departure_itineraries: data.departure_itineraries?.map((itinerary) => ({
-                ...itinerary,
-                created_at: itinerary.created_at instanceof Date ? itinerary.created_at.toISOString() : itinerary.created_at
-            })),
-            return_itineraries: data.return_itineraries?.map((itinerary) => ({
-                ...itinerary,
-                created_at: itinerary.created_at instanceof Date ? itinerary.created_at.toISOString() : itinerary.created_at
-            }))
+            _id: data._id.toString(),
+            user_id: data.user_id,
+            shared: data.shared,
+            origins: data.origins,
+            destinations: data.destinations,
+            departure_date: departureDate instanceof Date ? departureDate.toISOString() : String(departureDate),
+            return_date: returnDate ? (returnDate instanceof Date ? returnDate.toISOString() : String(returnDate)) : undefined,
+            criteria: data.criteria,
+            status: data.status,
+            source: data.source,
+            created_at: createdAt instanceof Date ? createdAt.toISOString() : String(createdAt),
+            last_error: data.last_error,
+            departure_itineraries_price: mapItineraries(data.departure_itineraries_price),
+            departure_itineraries_duration: mapItineraries(data.departure_itineraries_duration),
+            departure_itineraries_custom: mapItineraries(data.departure_itineraries_custom),
+            return_itineraries_price: mapItineraries(data.return_itineraries_price),
+            return_itineraries_duration: mapItineraries(data.return_itineraries_duration),
+            return_itineraries_custom: mapItineraries(data.return_itineraries_custom)
         };
     }
 
@@ -517,7 +854,7 @@ export class SearchService {
     }
 
 
-    private async saveOptimalPathsAsItineraries(paths: DijkstraFlightEdge[][], preferences: RoutePreferences): Promise<string[]> {
+    private async saveOptimalPathsAsItineraries(paths: DijkstraFlightEdge[][], preferences: RoutePreferences, existingKeys: Set<string> = new Set()): Promise<string[]> {
         const itineraryIds: string[] = [];
 
         if (paths.length === 0) return [];
@@ -532,7 +869,7 @@ export class SearchService {
 
             for (let i = 0; i < path.length; i++) {
                 const edge = path[i]!;
-                
+
                 if (totalPrice !== undefined) {
                     if (edge.price !== undefined && edge.price !== null) {
                         totalPrice += edge.price;
@@ -540,7 +877,7 @@ export class SearchService {
                         totalPrice = undefined;
                     }
                 }
-                
+
                 if (i > 0) {
                     const prevArrival = parseEdgeDateTime(path[i - 1]!.arrival_time);
                     const currDeparture = parseEdgeDateTime(edge.departure_time);
@@ -554,12 +891,12 @@ export class SearchService {
             totalWaitTime = isNaN(totalWaitTime) ? 0 : totalWaitTime;
 
             const totalJourneyDuration = totalDuration + totalWaitTime;
-            
+
             // Base weighted cost calculation
             let weightedCost = ((totalPrice || 0) * (preferences.price_weight || 0.4)) +
                 (totalJourneyDuration * (preferences.duration_weight || 0.2)) +
                 (stops * 100 * (preferences.stops_weight || 0.2));
-            
+
             // If the flight is priceless, add a huge penalty to ensure it's at the end
             if (totalPrice === undefined || totalPrice === null || totalPrice <= 0) {
                 weightedCost += 2000000; // 2M penalty
@@ -577,7 +914,7 @@ export class SearchService {
         });
 
         const uniquePaths = [];
-        const seen = new Set();
+        const seen = new Set(existingKeys);
         for (const p of pathData) {
             if (p && !seen.has(p.key)) {
                 seen.add(p.key);
@@ -597,7 +934,7 @@ export class SearchService {
                 score = Math.max(1, Math.round(score * 10) / 10);
             }
 
-            const legs: any[] = [];
+            const legs: ILeg[] = [];
             const cityOrder: string[] = [];
             let currentOrder = 0;
             let previousArrivalTime: string | null = null;
@@ -769,7 +1106,7 @@ export class SearchService {
 
             logger.info({ searchId, route: result.route, cost: result.cost }, `[Genetic] Mejor ruta encontrada`);
 
-            const legs: any[] = [];
+            const legs: ILeg[] = [];
             let currentPrice = 0;
             let currentDuration = 0;
             let currentOrder = 0;
@@ -864,7 +1201,11 @@ export class SearchService {
                 { _id: searchId },
                 {
                     status: "completed",
-                    $push: { departure_itineraries: itinerary._id }
+                    $push: {
+                        departure_itineraries_price: itinerary._id,
+                        departure_itineraries_duration: itinerary._id,
+                        departure_itineraries_custom: itinerary._id
+                    }
                 }
             );
 
@@ -878,8 +1219,9 @@ export class SearchService {
                 user: { id: userId }
             });
 
-        } catch (error: any) {
-            logger.error({ error, searchId, message: error?.message, stack: error?.stack }, `[Genetic] Error inesperado en runGeneticTrip`);
+        } catch (error) {
+            const err = error as Error;
+            logger.error({ error: err, searchId, message: err.message, stack: err.stack }, `[Genetic] Error inesperado en runGeneticTrip`);
             await Search.updateOne({ _id: searchId }, { status: "failed" });
 
             await this.auditService.register({
@@ -887,7 +1229,7 @@ export class SearchService {
                 action: "EXPLORATION_FAILED",
                 details: {
                     id: searchId,
-                    reason: error.message || String(error)
+                    reason: err.message || String(err)
                 },
                 user: { id: userId }
             });

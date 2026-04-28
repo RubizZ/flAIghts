@@ -1,9 +1,10 @@
-import { Schema, model } from "mongoose";
+import { Schema, model, type PopulatedDoc } from "mongoose";
 import { randomUUID } from "node:crypto";
 import idValidator from "../../../utils/mongoose-id-validator.js";
 
 import type { IItinerary } from "./itinerary.model.js";
 import "@/modules/airport/airport.model.js"; // Necesario para mongoose.model("Airport") en idValidator
+import type { DijkstraFlightEdge } from "@/algorithms/dijkstra.js";
 
 export interface ISearch {
   _id: string;
@@ -19,10 +20,22 @@ export interface ISearch {
   };
   status: "searching" | "completed" | "failed";
   source: "manual" | "agent";
-  departure_itineraries?: IItinerary[];
-  return_itineraries?: IItinerary[];
+  departure_itineraries_price?: PopulatedDoc<IItinerary>[];
+  departure_itineraries_duration?: PopulatedDoc<IItinerary>[];
+  departure_itineraries_custom?: PopulatedDoc<IItinerary>[];
+  return_itineraries_price?: PopulatedDoc<IItinerary>[];
+  return_itineraries_duration?: PopulatedDoc<IItinerary>[];
+  return_itineraries_custom?: PopulatedDoc<IItinerary>[];
   created_at: Date;
   last_error?: string;
+  exploration_state?: Map<string, {
+    A: DijkstraFlightEdge[][];
+    candidates: {
+      path: DijkstraFlightEdge[];
+      weight: number;
+    }[];
+    last_explored_index: number;
+  }>;
 }
 
 const SearchSchema = new Schema<ISearch>({
@@ -62,10 +75,26 @@ const SearchSchema = new Schema<ISearch>({
   },
   status: { type: String, enum: ["searching", "completed", "failed"], default: "searching" },
   source: { type: String, enum: ["manual", "agent"], default: "manual" },
-  departure_itineraries: [{ type: Schema.Types.ObjectId, ref: 'Itinerary' }],
-  return_itineraries: [{ type: Schema.Types.ObjectId, ref: 'Itinerary' }],
+  departure_itineraries_price: [{ type: Schema.Types.ObjectId, ref: 'Itinerary' }],
+  departure_itineraries_duration: [{ type: Schema.Types.ObjectId, ref: 'Itinerary' }],
+  departure_itineraries_custom: [{ type: Schema.Types.ObjectId, ref: 'Itinerary' }],
+  return_itineraries_price: [{ type: Schema.Types.ObjectId, ref: 'Itinerary' }],
+  return_itineraries_duration: [{ type: Schema.Types.ObjectId, ref: 'Itinerary' }],
+  return_itineraries_custom: [{ type: Schema.Types.ObjectId, ref: 'Itinerary' }],
   created_at: { type: Date, default: Date.now },
-  last_error: { type: String, required: false }
+  last_error: { type: String, required: false },
+  exploration_state: {
+    type: Map,
+    of: new Schema({
+      A: [[Schema.Types.Mixed]],
+      candidates: [{
+        path: [Schema.Types.Mixed],
+        weight: Number
+      }],
+      last_explored_index: { type: Number, default: 0 }
+    }),
+    default: {}
+  }
 }, {
   toJSON: {
     versionKey: false

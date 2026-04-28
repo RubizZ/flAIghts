@@ -20,8 +20,9 @@ export default function SharedSearchCard({ content, isSelf }: SharedSearchCardPr
     });
 
     const recommendedFlight = useMemo(() => {
-        if (!search || !search.departure_itineraries || search.departure_itineraries.length === 0) return null;
-        return search.departure_itineraries[0];
+        if (!search) return null;
+        const flight = search.departure_itineraries_custom?.[0] || search.departure_itineraries_price?.[0] || search.departure_itineraries_duration?.[0];
+        return flight || null;
     }, [search]);
 
     if (isLoading) {

@@ -122,6 +122,24 @@ export class SearchController extends Controller {
         return result satisfies SearchResponseData as any;
     }
 
+    /**
+     * Explora más combinaciones de vuelos para una búsqueda existente.
+     */
+    @Post("/{searchId}/explore")
+    @Security('jwt-optional')
+    @Response<FailResponseFromError<SearchNotFoundError>>(404, "Búsqueda no encontrada")
+    @Response<FailResponseFromError<SearchNotAuthorizedError>>(403, "Búsqueda privada no autorizada")
+    @SuccessResponse(200, "Nuevas rutas exploradas")
+    public async exploreMore(
+        @Path('searchId') searchId: string,
+        @RequestProp('user') user: AuthenticatedUser | null,
+        @Query('limit') limit: number = 10,
+        @Query('criteriaType') criteriaType?: "price" | "duration" | "custom"
+    ): Promise<SuccessResponseType<SearchResponseData>> {
+        const result = await this.searchService.exploreMore(searchId, user?._id, limit, criteriaType);
+        return result satisfies SearchResponseData as any;
+    }
+
     @Get("/user/{userId}")
     @Security('jwt-optional')
     @Response<FailResponseFromError<SearchNotFoundError>>(404, "Búsqueda no encontrada")

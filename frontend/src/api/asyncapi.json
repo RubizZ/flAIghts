@@ -825,12 +825,10 @@
             }
           },
           "departure_date": {
-            "type": "string",
-            "format": "date-time"
+            "type": "string"
           },
           "return_date": {
-            "type": "string",
-            "format": "date-time"
+            "type": "string"
           },
           "criteria": {
             "type": "object",
@@ -867,13 +865,37 @@
             ],
             "type": "string"
           },
-          "departure_itineraries": {
+          "departure_itineraries_price": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/ItineraryResponse"
             }
           },
-          "return_itineraries": {
+          "departure_itineraries_duration": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ItineraryResponse"
+            }
+          },
+          "departure_itineraries_custom": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ItineraryResponse"
+            }
+          },
+          "return_itineraries_price": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ItineraryResponse"
+            }
+          },
+          "return_itineraries_duration": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ItineraryResponse"
+            }
+          },
+          "return_itineraries_custom": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/ItineraryResponse"
@@ -883,6 +905,9 @@
             "type": "boolean"
           },
           "created_at": {
+            "type": "string"
+          },
+          "last_error": {
             "type": "string"
           }
         },

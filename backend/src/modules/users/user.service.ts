@@ -685,7 +685,7 @@ export class UserService {
             });
 
             return user;
-        } catch (error: any) {
+        } catch (error) {
             // Transformamos solo errores de negocio (AppError) a dominio
             if (error instanceof S3FileTooLargeError) {
                 throw new ProfilePictureTooLargeError(error.details.size, error.details.maxSize);
