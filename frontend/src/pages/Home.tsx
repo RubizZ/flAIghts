@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useMemo } from "react";
 import { useTranslation } from "react-i18next";
+import { Helmet } from "react-helmet-async";
 import Globe from "../components/Globe.tsx"
 import { Plus, Maximize2, PlaneTakeoff, PlaneLanding, X, Plane, ChevronDown, ChevronRight, AlertTriangle, Search, Calendar as CalendarIcon } from "lucide-react";
 import { useSearchRequest } from "@/api/generated/openapi/search";
@@ -446,6 +447,10 @@ export default function Home() {
 
     return (
         <div className={`absolute inset-0 overflow-hidden transition-colors duration-700 ${!isLargeScreen && !isSelectingOnMap ? 'bg-main' : 'bg-black'}`}>
+            <Helmet>
+                <title>{t("seo.home.title")}</title>
+                <meta name="description" content={t("seo.home.description")} />
+            </Helmet>
             <StarsBackground className={`transition-opacity duration-1000 ${!isLargeScreen && !isSelectingOnMap ? 'opacity-30' : 'opacity-0'}`} />
 
             {/* Globe Layer */}

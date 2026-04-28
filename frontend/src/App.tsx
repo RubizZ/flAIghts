@@ -5,6 +5,7 @@ import { UserLocationProvider } from "@/context/UserLocationContext";
 import { routes } from "@/routes";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from 'sonner';
+import { HelmetProvider } from 'react-helmet-async';
 import queryClient from "@/api/query-client";
 import ConnectionOverlay from "@/components/common/ConnectionOverlay";
 
@@ -12,16 +13,18 @@ const router = createBrowserRouter(routes);
 
 export default function App() {
     return (
-        <QueryClientProvider client={queryClient}>
-            <ThemeProvider>
-                <AuthProvider>
-                    <UserLocationProvider>
-                        <RouterProvider router={router} />
-                        <ConnectionOverlay />
-                        <Toaster richColors position="top-center" />
-                    </UserLocationProvider>
-                </AuthProvider>
-            </ThemeProvider>
-        </QueryClientProvider>
+        <HelmetProvider>
+            <QueryClientProvider client={queryClient}>
+                <ThemeProvider>
+                    <AuthProvider>
+                        <UserLocationProvider>
+                            <RouterProvider router={router} />
+                            <ConnectionOverlay />
+                            <Toaster richColors position="top-center" />
+                        </UserLocationProvider>
+                    </AuthProvider>
+                </ThemeProvider>
+            </QueryClientProvider>
+        </HelmetProvider>
     );
 }

@@ -92,6 +92,7 @@
     "you": "You"
   },
   "airportAutocomplete": {
+    "searching": "Searching...",
     "backToFeatured": "Back to featured results",
     "fromCity": "{{distance}} km from {{location}}",
     "fromWhere": "From where?",
@@ -256,7 +257,7 @@
     "acknowledgements": "Acknowledgements",
     "branding": "flAIghts",
     "contact": "Contact",
-    "copyright": "Â© {{year}} flAIghts. Innovating the way you fly.",
+    "copyright": "© {{year}} flAIghts. Innovating the way you fly.",
     "privacyPolicy": "Privacy Policy",
     "termsOfService": "Terms of Service"
   },
@@ -318,7 +319,7 @@
     "change": "Change",
     "changeOrigin": "Change origin",
     "daysPerCity": "Days per City",
-    "description1": "Discover the **optimal route** to visit several cities while paying the minimum. Our genetic algorithm tests thousands of combinations in seconds.",
+    "description1": "Discover the <1>optimal route</1> to visit several cities while paying the minimum. Our genetic algorithm tests thousands of combinations in seconds.",
     "description2": "Perfect for backpackers or long trips: you choose the destinations and we take care of organizing them in the cheapest possible order.",
     "findRoute": "Discover route",
     "itinerary": "Itinerary",
@@ -327,7 +328,7 @@
     "startingPoint": "Starting point",
     "step1": "Starting point",
     "step2": "Route planning",
-    "title": "Optimal Route",
+    "title": "Route Planner",
     "tripConfig": "Trip Configuration"
   },
   "globe": {
@@ -803,8 +804,11 @@
     "newFriendRequests_other": "{{count}} new friend requests",
     "noNotifications": "No new notifications",
     "notifications": "Notifications",
+    "login": "Log In",
+    "register": "Register",
     "settings": "Settings",
     "theme": "Theme",
+    "language": "Language",
     "view": "View"
   },
   "notFound": {
@@ -982,6 +986,57 @@
       "completeFields": "Please complete origin, destination and departure date",
       "onlyAirports": "Only individual airports are allowed on this route",
       "sameOriginDestination": "Origin and destination cannot be the same"
+    }
+  },
+  "seo": {
+    "home": {
+      "title": "Search Cheap Flights with Artificial Intelligence - flAIghts",
+      "description": "Search and compare flights intelligently with flAIghts. Our AI helps you find the best routes and prices for your next trip."
+    },
+    "geneticTrip": {
+      "title": "Route Planner - flAIghts",
+      "description": "Plan your multi-city trip with our Genetic Trip tool. flAIghts AI designs the most efficient and economical route for you."
+    },
+    "chat": {
+      "title": "Chat - flAIghts",
+      "titleWithUser": "Chat with {{username}} - flAIghts",
+      "description": "Chat with other travelers and share your best flight searches on flAIghts."
+    },
+    "searchHistory": {
+      "title": "Search History - flAIghts",
+      "description": "Review your previous searches and manage your favorite trips on flAIghts."
+    },
+    "login": {
+      "title": "Log In - flAIghts",
+      "description": "Log in to your flAIghts account to manage your flight searches and plan your next trip with AI."
+    },
+    "register": {
+      "title": "Create Account - flAIghts",
+      "description": "Join flAIghts and start searching for flights with artificial intelligence. Find the best deals and plan your trips intelligently."
+    },
+    "about": {
+      "title": "About Us - flAIghts",
+      "description": "Meet the team behind flAIghts and our mission to revolutionize flight searching with artificial intelligence."
+    },
+    "contact": {
+      "title": "Contact - flAIghts",
+      "description": "Have any questions or suggestions? Contact the flAIghts team, we are here to help."
+    },
+    "forgotPassword": {
+      "title": "Recover Password - flAIghts",
+      "description": "Forgot your password? Don't worry, we'll help you recover it securely."
+    },
+    "terms": {
+      "title": "Terms of Service - flAIghts",
+      "description": "Check the terms and conditions of use for the flAIghts platform."
+    },
+    "privacy": {
+      "title": "Privacy Policy - flAIghts",
+      "description": "Your privacy comes first. Check how we handle your data securely at flAIghts."
+    },
+    "acknowledgements": {
+      "title": "Acknowledgements - flAIghts",
+      "description": "Special thanks to the entities and tools that make flAIghts possible."
     }
   },
   "searchResults": {
@@ -1205,7 +1260,7 @@
     "chats": "Chats",
     "closeMenu": "Close menu",
     "friends": "Friends",
-    "geneticTrip": "Optimal Route",
+    "geneticTrip": "Route Planner",
     "menu": "Menu",
     "openMenu": "Open menu",
     "searchFlights": "Search Flights"

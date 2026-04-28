@@ -1,12 +1,17 @@
 import { Link } from "react-router-dom";
 import { useTranslation, Trans } from "react-i18next";
 import { Heart, ArrowLeft, ExternalLink } from "lucide-react";
+import { Helmet } from "react-helmet-async";
 
 export default function Acknowledgements() {
     const { t, i18n } = useTranslation();
 
     return (
         <div className="min-h-svh py-16 px-6 relative overflow-hidden">
+            <Helmet>
+                <title>{t("seo.acknowledgements.title")}</title>
+                <meta name="description" content={t("seo.acknowledgements.description")} />
+            </Helmet>
             {/* Background decorative elements */}
             <div className="absolute top-1/4 right-0 w-80 h-80 bg-brand/5 rounded-full blur-3xl -z-10" />
 

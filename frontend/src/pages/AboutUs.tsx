@@ -1,12 +1,17 @@
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { Target, Eye, ShieldCheck, Users, ArrowLeft } from "lucide-react";
+import { Helmet } from "react-helmet-async";
 
 export default function AboutUs() {
     const { t } = useTranslation();
 
     return (
         <div className="min-h-svh py-16 px-6 relative overflow-hidden">
+            <Helmet>
+                <title>{t("seo.about.title")}</title>
+                <meta name="description" content={t("seo.about.description")} />
+            </Helmet>
             {/* Elementos decorativos de fondo */}
             <div className="absolute top-0 left-1/4 w-96 h-96 bg-brand/5 rounded-full blur-3xl -z-10 animate-pulse" />
             <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-brand/10 rounded-full blur-3xl -z-10" />

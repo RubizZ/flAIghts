@@ -1,5 +1,6 @@
 import { useLoginWeb, useLoginWithGoogleWeb } from "@/api/generated/openapi/auth";
 import { GoogleLogin } from '@react-oauth/google';
+import { Helmet } from "react-helmet-async";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import AuthLayout from "@/components/layout/AuthLayout";
@@ -172,6 +173,10 @@ export default function Login() {
 
     return (
         <AuthLayout>
+            <Helmet>
+                <title>{t("seo.login.title")}</title>
+                <meta name="description" content={t("seo.login.description")} />
+            </Helmet>
             <AuthCard title={
                 <>
                     <Logo size={32} />

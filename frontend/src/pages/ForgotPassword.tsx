@@ -9,6 +9,7 @@ import Logo from "@/components/ui/Logo";
 import TurnstileWidget, { type TurnstileWidgetRef } from "@/components/ui/TurnstileWidget";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+import { Helmet } from "react-helmet-async";
 
 export default function ForgotPassword(): JSX.Element {
     const { t } = useTranslation();
@@ -73,6 +74,10 @@ export default function ForgotPassword(): JSX.Element {
 
     return (
         <AuthLayout>
+            <Helmet>
+                <title>{t("seo.forgotPassword.title")}</title>
+                <meta name="description" content={t("seo.forgotPassword.description")} />
+            </Helmet>
             <AuthCard title={
                 <>
                     <Logo size={32} />

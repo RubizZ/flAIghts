@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { Helmet } from "react-helmet-async";
 import { toast } from "sonner";
 import AuthLayout from "@/components/layout/AuthLayout";
 import AuthCard from "@/components/ui/AuthCard";
@@ -254,6 +255,10 @@ export default function Register() {
 
     return (
         <AuthLayout>
+            <Helmet>
+                <title>{t("seo.register.title")}</title>
+                <meta name="description" content={t("seo.register.description")} />
+            </Helmet>
             <AuthCard title={
                 <>
                     <Logo size={32} />

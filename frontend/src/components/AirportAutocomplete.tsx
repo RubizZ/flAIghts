@@ -282,9 +282,10 @@ export default function AirportAutocomplete({
             }}
             className="w-full"
             trigger={
-                <div
-                    ref={chipsScrollRef}
-                    onWheel={(e) => {
+                <div className="relative w-full h-full group">
+                    <div
+                        ref={chipsScrollRef}
+                        onWheel={(e) => {
                         if (e.deltaY !== 0) {
                             e.preventDefault();
                             chipsScrollRef.current?.scrollBy({
@@ -399,15 +400,16 @@ export default function AirportAutocomplete({
                                     }
                                 }}
                             />
-                            {isFetching && (
-                                <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                                    <Loader2 className="animate-spin h-3.5 w-3.5 text-content-muted" />
-                                </div>
-                            )}
                         </>
                     )}
+                    {isFetching && (
+                        <div className="absolute right-3 top-1/2 -translate-y-1/2 z-10">
+                            <Loader2 className="animate-spin h-3.5 w-3.5 text-brand" />
+                        </div>
+                    )}
                 </div>
-            }
+            </div>
+        }
         >
             <ul
                 ref={scrollContainerRef}
@@ -415,6 +417,17 @@ export default function AirportAutocomplete({
                 onMouseDown={(e) => e.preventDefault()}
                 onMouseLeave={() => onHoverChange?.(null)}
             >
+                {isFetching && !isFetchingNextPage && suggestions.length === 0 && (
+                    <div className="flex flex-col items-center justify-center py-12 gap-3 animate-in fade-in duration-300">
+                        <div className="relative">
+                            <Loader2 className="animate-spin h-8 w-8 text-brand" />
+                            <div className="absolute inset-0 bg-brand/20 blur-xl rounded-full animate-pulse" />
+                        </div>
+                        <span className="text-[10px] font-bold text-content-muted uppercase tracking-[0.2em]">
+                            {t("airportAutocomplete.searching", "Buscando...")}
+                        </span>
+                    </div>
+                )}
                 {/* Helper functions for unified rendering */}
                 {(() => {
                     const renderAirport = (airport: AirportResponse, isSub: boolean = false, parentLocation?: string) => {

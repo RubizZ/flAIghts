@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
-import { useTranslation } from "react-i18next";
+import { useTranslation, Trans } from "react-i18next";
+import { Helmet } from "react-helmet-async";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
 import { Search, Map, Calendar, PlaneTakeoff, Plus, Minus, Info, X, ChevronDown } from "lucide-react";
@@ -188,6 +189,10 @@ export default function GeneticTrip() {
 
     return (
         <div className={`absolute inset-0 overflow-hidden transition-colors duration-700 ${!isLargeScreen && !isSelectingOnMap ? 'bg-main' : 'bg-black'}`}>
+            <Helmet>
+                <title>{t("seo.geneticTrip.title")}</title>
+                <meta name="description" content={t("seo.geneticTrip.description")} />
+            </Helmet>
             <GlobeLoadingScreen
                 isVisible={!globeReady}
                 text={t("searchFlight.loading.loadingGlobe")}
@@ -233,7 +238,9 @@ export default function GeneticTrip() {
                         </div>
                         <div className={`text-sm text-content-muted space-y-2 transition-all duration-500 ease-in-out overflow-hidden ${explanationVisible ? 'max-h-60 opacity-100 mt-1' : 'max-h-0 opacity-0 mt-0'}`}>
                             <p>
-                                {t("geneticTripPage.description1")}
+                                <Trans i18nKey="geneticTripPage.description1">
+                                    Descubre la <span className="text-brand font-black">ruta óptima</span> para visitar varias ciudades pagando lo mínimo. Nuestro algoritmo genético prueba miles de combinaciones en segundos.
+                                </Trans>
                             </p>
                             <p className="text-xs opacity-80">
                                 {t("geneticTripPage.description2")}

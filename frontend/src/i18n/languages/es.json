@@ -93,6 +93,7 @@
     "you": "Tú"
   },
   "airportAutocomplete": {
+    "searching": "Buscando...",
     "backToFeatured": "Volver a resultados destacados",
     "fromCity": "A {{distance}} km de {{location}}",
     "fromWhere": "¿Desde dónde?",
@@ -258,7 +259,7 @@
     "acknowledgements": "Agradecimientos",
     "branding": "flAIghts",
     "contact": "Contacto",
-    "copyright": "© {{year}} flAIghts. Innovando la forma en que vuelas.",
+    "copyright": "© {{year}} flAIghts. Innovando la forma en la que vuelas.",
     "privacyPolicy": "Política de Privacidad",
     "termsOfService": "Términos de Servicio"
   },
@@ -320,7 +321,7 @@
     "change": "Cambiar",
     "changeOrigin": "Cambiar origen",
     "daysPerCity": "Días por Ciudad",
-    "description1": "Descubre la **ruta óptima** para visitar varias ciudades pagando lo mínimo. Nuestro algoritmo genético prueba miles de combinaciones en segundos.",
+    "description1": "Descubre la <1>ruta óptima</1> para visitar varias ciudades pagando lo mínimo. Nuestro algoritmo genético prueba miles de combinaciones en segundos.",
     "description2": "Perfecto para mochileros o viajes largos: tú eliges los destinos y nosotros nos encargamos de organizarlos en el orden más barato posible.",
     "findRoute": "Descubrir ruta",
     "itinerary": "Itinerario",
@@ -329,7 +330,7 @@
     "startingPoint": "Punto de partida",
     "step1": "Punto de partida",
     "step2": "Planificación de ruta",
-    "title": "Ruta óptima",
+    "title": "Planificador de rutas",
     "tripConfig": "Configuración del Viaje"
   },
   "globe": {
@@ -617,7 +618,7 @@
             "title": "Elige tus destinos"
           },
           "open_genetic_trip": {
-            "description": "Entra en Ruta óptima para empezar a diseñar tu ruta.",
+            "description": "Entra en Planificador de rutas para empezar a diseñar tu ruta.",
             "title": "Ir al planificador"
           },
           "perform_genetic_search": {
@@ -625,7 +626,7 @@
             "title": "¡Ahorra en tu viaje!"
           }
         },
-        "title": "Ruta Inteligente"
+        "title": "Planificador de rutas"
       },
       "manual_search": {
         "description": "Realiza una búsqueda manual de vuelos usando el selector de aeropuertos.",
@@ -808,8 +809,11 @@
     "newFriendRequests_other": "{{count}} nuevas solicitudes de amistad",
     "noNotifications": "No hay notificaciones nuevas",
     "notifications": "Notificaciones",
+    "login": "Iniciar Sesión",
+    "register": "Registrarse",
     "settings": "Configuración",
     "theme": "Tema",
+    "language": "Idioma",
     "view": "Ver"
   },
   "notFound": {
@@ -987,6 +991,57 @@
       "completeFields": "Por favor, completa origen, destino y fecha de salida",
       "onlyAirports": "Solo se permiten aeropuertos individuales en esta ruta",
       "sameOriginDestination": "El origen y el destino no pueden ser el mismo"
+    }
+  },
+  "seo": {
+    "home": {
+      "title": "Busca Vuelos Baratos con Inteligencia Artificial - flAIghts",
+      "description": "Busca y compara vuelos de forma inteligente con flAIghts. Nuestra IA te ayuda a encontrar las mejores rutas y precios para tu próximo viaje."
+    },
+    "geneticTrip": {
+      "title": "Planificador de rutas - flAIghts",
+      "description": "Planifica tu viaje de varias ciudades con nuestra herramienta de Viaje Genético. La IA de flAIghts diseña la ruta más eficiente y económica para ti."
+    },
+    "chat": {
+      "title": "Chat - flAIghts",
+      "titleWithUser": "Chat con {{username}} - flAIghts",
+      "description": "Chatea con otros viajeros y comparte tus mejores búsquedas de vuelos en flAIghts."
+    },
+    "searchHistory": {
+      "title": "Historial de Búsquedas - flAIghts",
+      "description": "Revisa tus búsquedas anteriores y gestiona tus viajes favoritos en flAIghts."
+    },
+    "login": {
+      "title": "Iniciar Sesión - flAIghts",
+      "description": "Accede a tu cuenta de flAIghts para gestionar tus búsquedas de vuelos y planificar tu próximo viaje con IA."
+    },
+    "register": {
+      "title": "Crear Cuenta - flAIghts",
+      "description": "Únete a flAIghts y empieza a buscar vuelos con inteligencia artificial. Encuentra las mejores ofertas y planifica tus viajes de forma inteligente."
+    },
+    "about": {
+      "title": "Sobre Nosotros - flAIghts",
+      "description": "Conoce al equipo detrás de flAIghts y nuestra misión de revolucionar la búsqueda de vuelos con inteligencia artificial."
+    },
+    "contact": {
+      "title": "Contacto - flAIghts",
+      "description": "¿Tienes alguna duda o sugerencia? Contacta con el equipo de flAIghts, estamos aquí para ayudarte."
+    },
+    "forgotPassword": {
+      "title": "Recuperar Contraseña - flAIghts",
+      "description": "¿Has olvidado tu contraseña? No te preocupes, te ayudamos a recuperarla de forma segura."
+    },
+    "terms": {
+      "title": "Términos de Servicio - flAIghts",
+      "description": "Consulta los términos y condiciones de uso de la plataforma flAIghts."
+    },
+    "privacy": {
+      "title": "Política de Privacidad - flAIghts",
+      "description": "Tu privacidad es lo primero. Consulta cómo tratamos tus datos de forma segura en flAIghts."
+    },
+    "acknowledgements": {
+      "title": "Agradecimientos - flAIghts",
+      "description": "Agradecimientos especiales a las entidades y herramientas que hacen posible flAIghts."
     }
   },
   "searchResults": {
@@ -1209,7 +1264,7 @@
     "chats": "Chats",
     "closeMenu": "Cerrar menú",
     "friends": "Amigos",
-    "geneticTrip": "Ruta óptima",
+    "geneticTrip": "Planificador de rutas",
     "menu": "Menú",
     "openMenu": "Abrir menú",
     "searchFlights": "Buscar Vuelos"

@@ -1,12 +1,17 @@
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { Mail, MessageCircle, School, ArrowLeft } from "lucide-react";
+import { Helmet } from "react-helmet-async";
 
 export default function Contact() {
     const { t } = useTranslation();
 
     return (
         <div className="min-h-svh py-16 px-6 relative overflow-hidden">
+            <Helmet>
+                <title>{t("seo.contact.title")}</title>
+                <meta name="description" content={t("seo.contact.description")} />
+            </Helmet>
             {/* Decorative background blobs */}
             <div className="absolute -top-24 -right-24 w-96 h-96 bg-brand/10 rounded-full blur-3xl -z-10 animate-pulse" />
             <div className="absolute top-1/2 -left-24 w-72 h-72 bg-brand/5 rounded-full blur-3xl -z-10" />

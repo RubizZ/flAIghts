@@ -20,7 +20,7 @@ export default defineConfig({
                 '/',
                 '/about',
                 '/contact',
-                '/genetic-trip',
+                '/multi-stop',
                 '/login',
                 '/register',
                 '/forgot-password',

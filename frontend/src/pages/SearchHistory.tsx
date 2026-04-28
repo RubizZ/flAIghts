@@ -1,4 +1,5 @@
 import { useState, UIEvent } from "react";
+import { Helmet } from "react-helmet-async";
 import { useAuth } from "@/context/AuthContext";
 import { useGetSearchesInfinite } from "@/api/generated/openapi/search";
 import SearchCard from "@/components/search/SearchCard";
@@ -23,6 +24,7 @@ import Calendar from "@/components/ui/Calendar";
 import { useShareSearch, usePrivatizeSearch } from "@/api/generated/openapi/search";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { t } from "i18next";
 
 export default function SearchHistory() {
     const { user, isAuthenticated } = useAuth();
@@ -120,6 +122,10 @@ export default function SearchHistory() {
 
     return (
         <div className="flex flex-col h-full max-w-7xl mx-auto w-full p-4 sm:p-8 gap-8">
+            <Helmet>
+                <title>{t("seo.searchHistory.title")}</title>
+                <meta name="description" content={t("seo.searchHistory.description")} />
+            </Helmet>
             {/* Header */}
             <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
@@ -315,8 +321,8 @@ export default function SearchHistory() {
                                                         }}
                                                         disabled={isSharing || isPrivatizing}
                                                         className={`p-2 rounded-xl transition-all border cursor-pointer ${search.shared
-                                                                ? "bg-amber-500/10 text-amber-500 border-amber-500/20 hover:bg-amber-500/20"
-                                                                : "bg-surface text-content-muted border-line hover:border-brand hover:text-brand"
+                                                            ? "bg-amber-500/10 text-amber-500 border-amber-500/20 hover:bg-amber-500/20"
+                                                            : "bg-surface text-content-muted border-line hover:border-brand hover:text-brand"
                                                             }`}
                                                         title={search.shared ? "Hacer privada" : "Hacer pública"}
                                                     >
@@ -416,8 +422,8 @@ export default function SearchHistory() {
                                                 key={s}
                                                 onClick={() => setStatus(s)}
                                                 className={`px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all border ${status === s
-                                                        ? "bg-brand text-content-on-brand border-brand"
-                                                        : "bg-surface text-content-muted border-line hover:border-brand"
+                                                    ? "bg-brand text-content-on-brand border-brand"
+                                                    : "bg-surface text-content-muted border-line hover:border-brand"
                                                     }`}
                                             >
                                                 {s === "" ? "Todos" : s === "completed" ? "OK" : s === "searching" ? "..." : "Error"}

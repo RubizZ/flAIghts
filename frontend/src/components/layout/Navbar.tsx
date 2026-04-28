@@ -17,7 +17,8 @@ import {
     Bell,
     Trophy,
     MoreHorizontal,
-    History
+    History,
+    Languages
 } from "lucide-react";
 import { PopulatedUser } from "@/api/generated/openapi/model";
 import UserAvatar from "@/components/ui/UserAvatar";
@@ -31,7 +32,7 @@ export default function Navbar({ variant = 'floating', logoRef }: { variant?: 'f
     const navigate = useNavigate();
     const { user, isAuthenticated, isLoading, logout } = useAuth();
     const { theme, setTheme } = useTheme();
-    const { t } = useTranslation();
+    const { t, i18n } = useTranslation();
 
     const { data: conversationsData } = useGetConversations(undefined, {
         query: {
@@ -230,6 +231,22 @@ export default function Navbar({ variant = 'floating', logoRef }: { variant?: 'f
                             <span className="leading-none">{t("navbar.settings")}</span>
                         </div>
                     </button>
+                    <button
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            pushMenu('language');
+                        }}
+                        className="w-full flex items-center justify-between px-4 py-3 text-sm text-content hover:bg-surface/70 rounded-xl transition-all cursor-pointer group text-left font-medium"
+                    >
+                        <div className="flex items-center gap-3">
+                            <Languages size={20} className="shrink-0 group-hover:text-brand transition-colors" />
+                            <span className="leading-none">{t("navbar.language")}</span>
+                        </div>
+                        <div className="flex items-center gap-1.5 text-[10px] text-content-muted opacity-60 font-bold uppercase">
+                            {i18n.language}
+                            <ChevronDown size={14} className="-rotate-90" />
+                        </div>
+                    </button>
                     {(user.role === 'admin' || user.role === 'superadmin') && (
                         <button onClick={() => { setIsOpen(false); navigate('/admin') }} className="w-full flex items-center justify-between px-4 py-3 text-sm rounded-xl transition-all group text-left hover:bg-surface/70 cursor-pointer font-medium">
                             <div className="flex items-center gap-3 text-amber-500">
@@ -306,6 +323,52 @@ export default function Navbar({ variant = 'floating', logoRef }: { variant?: 'f
         );
     };
 
+    const LanguageMenuView = () => {
+        const { i18n, t } = useTranslation();
+        const { popMenu } = useDropdown();
+
+        const languages = [
+            { code: 'es', label: 'Español', flag: '🇪🇸' },
+            { code: 'en', label: 'English', flag: '🇺🇸' }
+        ];
+
+        return (
+            <div className="w-64 flex flex-col p-1">
+                <button
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        popMenu();
+                    }}
+                    className="w-full flex items-center gap-3 text-content-muted px-4 py-3 text-sm rounded-xl transition-all group text-left hover:bg-surface/70 hover:cursor-pointer font-medium mb-1"
+                >
+                    <ChevronDown size={20} className="rotate-90 shrink-0" />
+                    <span className="leading-none">{t("navbar.back")}</span>
+                </button>
+                <div className="flex flex-col">
+                    {languages.map((lng) => (
+                        <button
+                            key={lng.code}
+                            onClick={() => i18n.changeLanguage(lng.code)}
+                            className={`w-full flex items-center justify-between px-4 py-3 text-sm rounded-xl transition-all group text-left font-medium
+                                ${i18n.language === lng.code
+                                    ? 'bg-surface/70 text-content cursor-pointer'
+                                    : 'text-content-muted hover:bg-surface/70 hover:cursor-pointer'
+                                }`}
+                        >
+                            <div className="flex items-center gap-3">
+                                <span className="text-xl">{lng.flag}</span>
+                                <span className="leading-none">{lng.label}</span>
+                            </div>
+                            {i18n.language === lng.code && (
+                                <div className="w-1.5 h-1.5 rounded-full bg-brand shadow-[0_0_8px_rgba(var(--color-brand),0.6)]" />
+                            )}
+                        </button>
+                    ))}
+                </div>
+            </div>
+        );
+    };
+
     const OptionsMainView = ({ theme, themeLabels, navigate }: { theme: Theme, themeLabels: Record<string, string>, navigate: any }) => {
         const { pushMenu, setIsOpen } = useDropdown();
         return (
@@ -341,36 +404,50 @@ export default function Navbar({ variant = 'floating', logoRef }: { variant?: 'f
                         className="w-full flex items-center gap-3 px-4 py-3 text-sm text-content hover:bg-surface/70 rounded-xl transition-colors cursor-pointer font-medium"
                     >
                         <User size={20} className="text-brand" />
-                        {t("login.actions.login")}
+                        {t("navbar.login")}
                     </button>
                     <button
                         onClick={() => { setIsOpen(false); navigate('/register'); }}
                         className="w-full flex items-center gap-3 px-4 py-3 text-sm text-content hover:bg-surface/70 rounded-xl transition-colors cursor-pointer font-medium"
                     >
                         <ShieldCheck size={20} className="text-brand" />
-                        {t("register.steps.step2Title")}
+                        {t("navbar.register")}
                     </button>
                 </div>
 
                 <p className="hidden sm:block px-3 py-2 text-[10px] uppercase tracking-widest text-content-muted font-bold opacity-50">Opciones</p>
-                {!isAuthenticated && (
-                    <button
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            pushMenu('theme');
-                        }}
-                        className="w-full flex items-center justify-between px-4 py-3 text-sm text-content hover:text-content hover:bg-surface/70 rounded-xl transition-colors cursor-pointer group text-left font-medium"
-                    >
-                        <div className="flex items-center gap-3">
-                            <Palette size={20} className="group-hover:text-brand transition-colors" />
-                            {t("navbar.theme")}
-                        </div>
-                        <div className="flex items-center gap-1 text-[10px] text-content-muted opacity-60 font-bold">
-                            {themeLabels[theme as keyof typeof themeLabels]}
-                            <ChevronDown size={14} className="-rotate-90" />
-                        </div>
-                    </button>
-                )}
+                <button
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        pushMenu('theme');
+                    }}
+                    className="w-full flex items-center justify-between px-4 py-3 text-sm text-content hover:text-content hover:bg-surface/70 rounded-xl transition-colors cursor-pointer group text-left font-medium"
+                >
+                    <div className="flex items-center gap-3">
+                        <Palette size={20} className="group-hover:text-brand transition-colors" />
+                        {t("navbar.theme")}
+                    </div>
+                    <div className="flex items-center gap-1 text-[10px] text-content-muted opacity-60 font-bold">
+                        {themeLabels[theme as keyof typeof themeLabels]}
+                        <ChevronDown size={14} className="-rotate-90" />
+                    </div>
+                </button>
+                <button
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        pushMenu('language');
+                    }}
+                    className="w-full flex items-center justify-between px-4 py-3 text-sm text-content hover:text-content hover:bg-surface/70 rounded-xl transition-colors cursor-pointer group text-left font-medium"
+                >
+                    <div className="flex items-center gap-3">
+                        <Languages size={20} className="group-hover:text-brand transition-colors" />
+                        {t("navbar.language")}
+                    </div>
+                    <div className="flex items-center gap-1 text-[10px] text-content-muted opacity-60 font-bold uppercase">
+                        {i18n.language}
+                        <ChevronDown size={14} className="-rotate-90" />
+                    </div>
+                </button>
             </div>
         );
     };
@@ -501,6 +578,9 @@ export default function Navbar({ variant = 'floating', logoRef }: { variant?: 'f
                                             user={user!}
                                             navigate={navigate}
                                         />
+                                    ),
+                                    language: (
+                                        <LanguageMenuView />
                                     )
                                 }}
                             />
@@ -508,7 +588,7 @@ export default function Navbar({ variant = 'floating', logoRef }: { variant?: 'f
                     ) : (
                         <div className="hidden lg:flex gap-2">
                             <NavIconButton to="/login" variant={variant} isPill>
-                                Log in
+                                {t("navbar.login")}
                             </NavIconButton>
                             <NavIconButton
                                 to="/register"
@@ -516,7 +596,7 @@ export default function Navbar({ variant = 'floating', logoRef }: { variant?: 'f
                                 isPill
                                 className="bg-brand! hover:bg-brand-hover! text-content-on-brand! border-none!"
                             >
-                                Register
+                                {t("navbar.register")}
                             </NavIconButton>
                         </div>
                     )}
@@ -555,6 +635,9 @@ export default function Navbar({ variant = 'floating', logoRef }: { variant?: 'f
                                         theme={theme}
                                         setTheme={setTheme}
                                     />
+                                ),
+                                language: (
+                                    <LanguageMenuView />
                                 )
                             }}
                         />

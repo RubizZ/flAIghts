@@ -1,12 +1,17 @@
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { Shield, ArrowLeft, Lock, Database, Cookie, Mail, Info } from "lucide-react";
+import { Helmet } from "react-helmet-async";
 
 export default function PrivacyPolicy() {
     const { t, i18n } = useTranslation();
 
     return (
         <div className="min-h-svh py-16 px-6 relative overflow-hidden">
+            <Helmet>
+                <title>{t("seo.privacy.title")}</title>
+                <meta name="description" content={t("seo.privacy.description")} />
+            </Helmet>
             {/* Background decorative elements */}
             <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-brand/5 rounded-full blur-[120px] -z-10" />
             <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-brand/10 rounded-full blur-[100px] -z-10" />
