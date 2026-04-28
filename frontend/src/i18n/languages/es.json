@@ -169,20 +169,28 @@
     "andThe": " y la ",
     "badge": "insignia",
     "bookmarkAlert": "Para añadir flAIghts a tus marcadores, pulsa Ctrl+D (Windows) o Cmd+D (Mac)",
+    "cancel": "Cancelar",
     "cities": "Ciudades",
-    "others": "Otros",
-    "unknown": "Desconocido",
+    "days": "Días",
     "destination": "Destino",
+    "destinations": "Destinos",
+    "economy": "Turista",
     "evaluation": "Evaluación",
     "exit": "Salir",
+    "hide": "Cerrar",
+    "info": "Ayuda",
     "installAlert": "Para añadir flAIghts a tu pantalla de inicio, usa la opción \"Añadir a pantalla de inicio\" en el menú de tu navegador.",
     "origin": "Origen",
+    "others": "Otros",
     "outbound": "Ida",
     "outboundFlights": "Vuelos de Ida",
+    "remove": "Eliminar",
     "return": "Vuelta",
     "returnFlights": "Vuelos de Vuelta",
     "select": "Seleccionar",
-    "tfg": "Trabajo de Fin de Grado"
+    "selected": "seleccionados",
+    "tfg": "Trabajo de Fin de Grado",
+    "unknown": "Desconocido"
   },
   "contact": {
     "title": "Contacto",
@@ -306,12 +314,20 @@
   },
   "geneticTripPage": {
     "betaBadge": "Algoritmo Genético Beta",
+    "calculating": "Calculando ruta óptima...",
     "change": "Cambiar",
     "changeOrigin": "Cambiar origen",
     "daysPerCity": "Días por Ciudad",
+    "description1": "Descubre la **ruta óptima** para visitar varias ciudades pagando lo mínimo. Nuestro algoritmo genético prueba miles de combinaciones en segundos.",
+    "description2": "Perfecto para mochileros o viajes largos: tú eliges los destinos y nosotros nos encargamos de organizarlos en el orden más barato posible.",
+    "findRoute": "Descubrir ruta",
     "itinerary": "Itinerario",
     "processing": "Procesando...",
+    "startDate": "Fecha de inicio",
     "startingPoint": "Punto de partida",
+    "step1": "Punto de partida",
+    "step2": "Planificación de ruta",
+    "title": "Ruta óptima",
     "tripConfig": "Configuración del Viaje"
   },
   "globe": {
@@ -596,22 +612,22 @@
         "title": "Explora los resultados"
       },
       "genetic": {
-        "description": "Encuentra la mejor ruta multi-ciudad usando algoritmos avanzados.",
+        "description": "Visita varias ciudades pagando lo mínimo. Calculamos el mejor orden por ti.",
         "steps": {
           "add_itinerary_cities": {
-            "description": "Añade al menos 2 ciudades diferentes a tu ruta para optimizar.",
-            "title": "Planificar itinerario"
+            "description": "Añade al menos 2 ciudades que quieras visitar en tu viaje.",
+            "title": "Elige tus destinos"
           },
           "open_genetic_trip": {
-            "description": "Entra en la sección de Algoritmo Genético para empezar a planificar.",
-            "title": "Explorar Genetic Trip"
+            "description": "Entra en Ruta óptima para empezar a diseñar tu ruta.",
+            "title": "Ir al planificador"
           },
           "perform_genetic_search": {
-            "description": "Encuentra la mejor combinación de vuelos para tu ruta multi-ciudad.",
-            "title": "Optimizar ruta"
+            "description": "Calcula la combinación de vuelos más barata para todos tus destinos.",
+            "title": "¡Ahorra en tu viaje!"
           }
         },
-        "title": "Optimizador Genético"
+        "title": "Ruta Inteligente"
       },
       "manual_search": {
         "description": "Realiza una búsqueda manual de vuelos usando el selector de aeropuertos.",

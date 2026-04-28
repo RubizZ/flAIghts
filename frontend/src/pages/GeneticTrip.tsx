@@ -15,7 +15,7 @@ import GlobeLoadingScreen from "@/components/ui/GlobeLoadingScreen";
 import { useNavLogo } from "@/context/NavLogoContext";
 
 export default function GeneticTrip() {
-    const { t } = useTranslation();
+    const { t, i18n } = useTranslation();
     const navigate = useNavigate();
     const [searchParams, setSearchParams] = useSearchParams();
     const { hideLogo, showLogo } = useNavLogo();
@@ -173,7 +173,7 @@ export default function GeneticTrip() {
         <div className={`absolute inset-0 overflow-hidden transition-colors duration-700 ${!isLargeScreen && !isSelectingOnMap ? 'bg-main' : 'bg-black'}`}>
             <GlobeLoadingScreen
                 isVisible={!globeReady}
-                text={t("searchFlight.loading.loadingGlobe", "Cargando mundo tridimensional")}
+                text={t("searchFlight.loading.loadingGlobe")}
                 className="absolute inset-0 z-app-loading bg-main"
             />
             <StarsBackground className={`transition-opacity duration-1000 ${!isLargeScreen && !isSelectingOnMap ? 'opacity-30' : 'opacity-0'}`} />
@@ -205,21 +205,21 @@ export default function GeneticTrip() {
                                 <div className="p-2.5 rounded-xl bg-brand/10 border border-brand/20 group-hover:bg-brand/20 transition-colors">
                                     <Map className="text-brand" size={24} />
                                 </div>
-                                <h1 className="text-xl lg:text-3xl font-black text-content tracking-tight">{t("geneticTripPage.title", "Viaje con múltiples destinos")}</h1>
+                                <h1 className="text-xl lg:text-3xl font-black text-content tracking-tight">{t("geneticTripPage.title")}</h1>
                             </div>
                             <div className={`p-2 rounded-xl transition-all flex items-center gap-2 ${explanationVisible ? 'bg-brand/10 text-brand' : 'hover:bg-surface text-content-muted'}`}>
                                 <span className="text-[10px] font-bold uppercase tracking-widest hidden sm:block">
-                                    {explanationVisible ? t("common.hide", "Cerrar") : t("common.info", "Ayuda")}
+                                    {explanationVisible ? t("common.hide") : t("common.info")}
                                 </span>
                                 <Info size={18} className={explanationVisible ? 'animate-pulse' : ''} />
                             </div>
                         </div>
                         <div className={`text-sm text-content-muted space-y-2 transition-all duration-500 ease-in-out overflow-hidden ${explanationVisible ? 'max-h-60 opacity-100 mt-1' : 'max-h-0 opacity-0 mt-0'}`}>
                             <p>
-                                Descubre la <b>ruta óptima</b> para visitar varias ciudades pagando lo mínimo. Nuestro algoritmo genético prueba miles de combinaciones en segundos.
+                                {t("geneticTripPage.description1")}
                             </p>
                             <p className="text-xs opacity-80">
-                                Perfecto para mochileros o viajes largos: tú eliges los destinos y nosotros nos encargamos de organizarlos en el orden más barato posible.
+                                {t("geneticTripPage.description2")}
                             </p>
                         </div>
                     </div>
@@ -231,7 +231,7 @@ export default function GeneticTrip() {
                             <div className="flex items-center gap-3">
                                 <div className="w-8 h-8 rounded-full bg-brand/10 text-brand flex items-center justify-center font-bold text-sm shrink-0">1</div>
                                 <h2 className="text-sm font-bold uppercase tracking-[0.2em] text-content/60">
-                                    {t("geneticTripPage.step1", "Punto de Partida")}
+                                    {t("geneticTripPage.step1")}
                                 </h2>
                                 <div className="h-px grow bg-line/20" />
                             </div>
@@ -240,7 +240,7 @@ export default function GeneticTrip() {
                                 <div className="flex flex-col gap-0.5 lg:gap-2 lg:col-span-8 min-w-0">
                                     <label className="h-6 text-[11px] font-bold uppercase tracking-wider text-content-muted ml-1 flex items-center gap-1.5 shrink-0">
                                         <PlaneTakeoff size={12} className="text-brand" />
-                                        {t("common.origin", "Origen")} <span className="text-brand">*</span>
+                                        {t("common.origin")} <span className="text-brand">*</span>
                                     </label>
                                     <FlightSearchInput
                                         type="origin"
@@ -258,7 +258,7 @@ export default function GeneticTrip() {
                                 <div className="flex flex-col gap-0.5 lg:gap-2 lg:col-span-4 min-w-0">
                                     <label className="h-6 text-[11px] font-bold uppercase tracking-wider text-content-muted ml-1 flex items-center gap-1.5 shrink-0">
                                         <Calendar size={12} className="text-brand" />
-                                        {t("geneticTripPage.startDate", "Fecha de inicio")} <span className="text-brand">*</span>
+                                        {t("geneticTripPage.startDate")} <span className="text-brand">*</span>
                                     </label>
                                     <DateSearchInput
                                         type="departure"
@@ -282,7 +282,7 @@ export default function GeneticTrip() {
                             <div className="flex items-center gap-3">
                                 <div className="w-8 h-8 rounded-full bg-brand/10 text-brand flex items-center justify-center font-bold text-sm shrink-0">2</div>
                                 <h2 className="text-sm font-bold uppercase tracking-[0.2em] text-content/60">
-                                    {t("geneticTripPage.step2", "Planificación de Ruta")}
+                                    {t("geneticTripPage.step2")}
                                 </h2>
                                 <div className="h-px grow bg-line/20" />
                             </div>
@@ -292,10 +292,10 @@ export default function GeneticTrip() {
                                     <label className="h-6 text-[11px] font-bold uppercase tracking-wider text-content-muted ml-1 flex items-center justify-between shrink-0">
                                         <div className="flex items-center gap-1.5">
                                             <Map size={12} className="text-brand" />
-                                            {t("common.destinations", "Destinos")} <span className="text-brand">*</span>
+                                            {t("common.destinations")} <span className="text-brand">*</span>
                                         </div>
                                         <span className="text-[8px] bg-brand/10 text-brand px-1.5 py-0.5 rounded-md font-bold border border-brand/20 uppercase tracking-tighter">
-                                            {cities.length} {t("common.selected", "seleccionados")}
+                                            {cities.length} {t("common.selected")}
                                         </span>
                                     </label>
                                     <div className="flex flex-col group w-full">
@@ -332,7 +332,7 @@ export default function GeneticTrip() {
                                                                     setCities(newCities);
                                                                 }}
                                                                 className="text-brand hover:text-brand-dark transition-colors cursor-pointer p-0.5"
-                                                                title={t("common.remove", "Eliminar")}
+                                                                title={t("common.remove")}
                                                             >
                                                                 <X size={12} />
                                                             </button>
@@ -347,7 +347,7 @@ export default function GeneticTrip() {
                                 <div className="flex flex-col gap-0.5 lg:gap-2 lg:col-span-4 min-w-0">
                                     <label className="h-6 text-[11px] font-bold uppercase tracking-wider text-content-muted ml-1 flex items-center gap-1.5 shrink-0">
                                         <Info size={12} className="text-brand" />
-                                        {t("geneticTripPage.daysPerCity", "Días por ciudad")}
+                                        {t("geneticTripPage.daysPerCity")}
                                     </label>
                                     <div className="premium-input flex items-center justify-between h-14 w-full rounded-2xl px-4 transition-colors group focus-within:ring-2 focus-within:ring-brand/20">
                                         <button
@@ -359,7 +359,7 @@ export default function GeneticTrip() {
                                         </button>
                                         <div className="flex flex-col items-center justify-center">
                                             <span className="text-lg font-black text-content tabular-nums">{daysPerCity}</span>
-                                            <span className="text-[9px] uppercase tracking-wider text-content-muted font-bold -mt-1">{t("common.days", "Días")}</span>
+                                            <span className="text-[9px] uppercase tracking-wider text-content-muted font-bold -mt-1">{t("common.days")}</span>
                                         </div>
                                         <button
                                             type="button"
@@ -382,12 +382,12 @@ export default function GeneticTrip() {
                             {isPending ? (
                                 <div className="flex items-center gap-3">
                                     <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                                    <span className="tracking-wide">{t("geneticTripPage.calculating", "Calculando ruta óptima...")}</span>
+                                    <span className="tracking-wide">{t("geneticTripPage.calculating")}</span>
                                 </div>
                             ) : (
                                 <>
                                     <Search size={20} className="group-hover:scale-110 transition-transform" />
-                                    <span className="text-lg tracking-wide">{t("geneticTripPage.findRoute", "Descubrir ruta")}</span>
+                                    <span className="text-lg tracking-wide">{t("geneticTripPage.findRoute")}</span>
                                 </>
                             )}
                         </button>
@@ -407,7 +407,7 @@ export default function GeneticTrip() {
                 >
                     <Plus size={20} className="text-red-500 rotate-45 group-hover:rotate-135 transition-transform duration-500" />
                     <span className="text-[11px] font-black uppercase tracking-[0.2em] text-content/90 whitespace-nowrap">
-                        {t("common.cancel", "Cancelar selección")}
+                        {t("common.cancel")}
                     </span>
                 </button>
             </div>

@@ -167,20 +167,28 @@
     "andThe": " and the ",
     "badge": "badge",
     "bookmarkAlert": "To add flAIghts to your bookmarks, press Ctrl+D (Windows) or Cmd+D (Mac)",
+    "cancel": "Cancel",
     "cities": "Cities",
-    "others": "Others",
-    "unknown": "Unknown",
+    "days": "Days",
     "destination": "Destination",
+    "destinations": "Destinations",
+    "economy": "Economy",
     "evaluation": "Evaluation",
     "exit": "Exit",
+    "hide": "Hide",
+    "info": "Info",
     "installAlert": "To add flAIghts to your home screen, use the \"Add to home screen\" option in your browser's menu.",
     "origin": "Origin",
+    "others": "Others",
     "outbound": "Outbound",
     "outboundFlights": "Outbound Flights",
+    "remove": "Remove",
     "return": "Return",
     "returnFlights": "Return Flights",
     "select": "Select",
-    "tfg": "Final Degree Project"
+    "selected": "selected",
+    "tfg": "Bachelor's Final Project",
+    "unknown": "Unknown"
   },
   "contact": {
     "title": "Contact",
@@ -304,12 +312,20 @@
   },
   "geneticTripPage": {
     "betaBadge": "Genetic Algorithm Beta",
+    "calculating": "Calculating optimal route...",
     "change": "Change",
     "changeOrigin": "Change origin",
     "daysPerCity": "Days per City",
+    "description1": "Discover the **optimal route** to visit several cities while paying the minimum. Our genetic algorithm tests thousands of combinations in seconds.",
+    "description2": "Perfect for backpackers or long trips: you choose the destinations and we take care of organizing them in the cheapest possible order.",
+    "findRoute": "Discover route",
     "itinerary": "Itinerary",
     "processing": "Processing...",
+    "startDate": "Start date",
     "startingPoint": "Starting point",
+    "step1": "Starting point",
+    "step2": "Route planning",
+    "title": "Optimal Route",
     "tripConfig": "Trip Configuration"
   },
   "globe": {
@@ -592,22 +608,22 @@
         "title": "Explore the results"
       },
       "genetic": {
-        "description": "Find the best multi-city route using advanced algorithms.",
+        "description": "Visit multiple cities at the lowest price. We'll find the best order for you.",
         "steps": {
           "add_itinerary_cities": {
-            "description": "Add at least 2 different cities to your route to optimize.",
-            "title": "Plan itinerary"
+            "description": "Add at least 2 cities you'd like to visit on your journey.",
+            "title": "Pick your destinations"
           },
           "open_genetic_trip": {
-            "description": "Enter the Genetic Algorithm section to start planning.",
-            "title": "Explore Genetic Trip"
+            "description": "Enter the Optimal Route section to start designing your trip.",
+            "title": "Go to planner"
           },
           "perform_genetic_search": {
-            "description": "Find the best flight combination for your multi-city route.",
-            "title": "Optimize route"
+            "description": "Calculate the cheapest flight combination for all your stops.",
+            "title": "Find the best deal"
           }
         },
-        "title": "Genetic Optimizer"
+        "title": "Smart Route Planner"
       },
       "manual_search": {
         "description": "Perform a manual flight search using the airport selector.",

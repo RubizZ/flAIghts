@@ -30,7 +30,7 @@ interface LegDetailsProps {
 }
 
 export default function FlightCard({ itinerary, formatTime, formatDuration, airportsMap, onHover, onExpandChange, onSelect, showSelectButton = true }: FlightCardProps) {
-    const { t } = useTranslation();
+    const { t, i18n } = useTranslation();
     const [isExpanded, setIsExpanded] = useState(false);
     const firstDepartureTime = itinerary.legs[0]?.departure_time;
     const lastArrivalLeg = itinerary.legs[itinerary.legs.length - 1];
@@ -71,7 +71,7 @@ export default function FlightCard({ itinerary, formatTime, formatDuration, airp
     const formatDateSuperscript = (targetTime?: string) => {
         if (!targetTime) return null;
         const date = new Date(targetTime);
-        return date.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' }).replace('.', '');
+        return date.toLocaleDateString(i18n.language, { day: 'numeric', month: 'short' }).replace('.', '');
     };
 
     const totalDayDiff = useMemo(() =>
@@ -385,7 +385,7 @@ function LegDetails({
             <div className="flex flex-col text-xs text-content-muted font-medium items-start gap-2 sm:max-w-[40%]">
                 <div className="flex items-center gap-2" title="Clase de viaje">
                     <Ticket size={14} className="text-brand/70" />
-                    <span>{leg.travel_class || 'Turista'}</span>
+                    <span>{leg.travel_class || t('common.economy')}</span>
                 </div>
 
                 <div className="flex items-center gap-2" title="Duración del vuelo">
