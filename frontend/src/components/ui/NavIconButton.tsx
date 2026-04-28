@@ -31,9 +31,9 @@ const NavIconButton: React.FC<NavIconButtonProps> = ({
     const baseStyles = "relative flex items-center justify-center transition-all duration-100 cursor-pointer group focus:outline-none";
 
     // Strict symmetry & HUD synchronization:
-    // Icons: Strictly 48x48 Circle
-    // Pills: 48px height with horizontal padding
-    const sizeStyles = isPill ? "h-12 px-6 min-w-fit" : "w-12 h-12";
+    // Icons: Strictly 40x40 Circle
+    // Pills: 40px height with horizontal padding
+    const sizeStyles = isPill ? "h-10 px-5 min-w-fit" : "w-10 h-10";
     const shapeStyles = "rounded-full";
 
     const glassStyles = isFloating
@@ -46,7 +46,7 @@ const NavIconButton: React.FC<NavIconButtonProps> = ({
         <>
             {children}
             {showBadge && (
-                <span className={`absolute top-1.5 right-1.5 w-2 h-2 bg-brand rounded-full animate-in fade-in scale-in duration-300 shadow-[0_0_8px_rgba(var(--color-brand),0.6)] ${badgeClassName}`} />
+                <span className={`absolute top-1 right-1 w-2 h-2 bg-brand rounded-full animate-in fade-in scale-in duration-300 shadow-[0_0_8px_rgba(var(--color-brand),0.6)] ${badgeClassName}`} />
             )}
         </>
     );

@@ -164,9 +164,9 @@ export default function Sidebar({ isOpen, onClose, onToggle, variant = 'classic'
                                     </div>
 
                                     {/* Label */}
-                                    <span className={`font-bold overflow-hidden transition-all duration-300 line-clamp-2
+                                    <span className={`font-bold whitespace-nowrap overflow-hidden transition-all duration-300
                                         ${isOpen
-                                            ? 'opacity-100 translate-x-0 flex-1 text-[13px] leading-tight'
+                                            ? 'opacity-100 translate-x-0 w-auto ml-1.5'
                                             : 'opacity-0 -translate-x-2 w-0 ml-0 pointer-events-none'
                                         }
                                     `}>
