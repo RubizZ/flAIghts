@@ -6,7 +6,6 @@ import airplaneModelUrl from "@/assets/plane.glb";
 import { gsap } from "gsap";
 import { PlaneTakeoff, PlaneLanding, X } from "lucide-react";
 import { useGetGlobeAirports } from "@/api/generated/openapi/airports";
-import { COUNTRY_NAMES } from "@/constants/countries";
 import type { AirportResponse, CityResponse } from "@/api/generated/openapi/model";
 import { UnifiedSelection, isAirport, isCity, getEntityId, getEntityLocation, getEntityName, getAllIatas } from "@/types/selection";
 import { useUserLocation } from "@/context/UserLocationContext";
@@ -1545,7 +1544,8 @@ export default function Globe({
                     } else if (item.isCity) {
                         isSpecial = item.isSpecial; // Cities are only rendered if special/forced
                     } else {
-                        isSpecial = activeOrigins.includes(item.iata) || activeDests.includes(item.iata) || selSet.has(item.iata);
+                        const allSteps = (stepsIataRef.current || []).flat();
+                        isSpecial = activeOrigins.includes(item.iata) || activeDests.includes(item.iata) || selSet.has(item.iata) || allSteps.includes(item.iata);
                     }
 
                     let targetOpacity = 0;
@@ -2190,10 +2190,7 @@ export default function Globe({
                     // TODO: Implement i18n
                     let displayName = c.name;
                     if (c.iso) {
-                        const names = COUNTRY_NAMES[c.iso];
-                        if (names) {
-                            displayName = names[1] || names[0];
-                        }
+                        displayName = t(`countries.${c.iso}`, { defaultValue: c.name });
                     }
 
                     const texture = getCountryLabelTexture(displayName);

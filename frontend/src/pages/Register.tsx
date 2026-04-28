@@ -57,6 +57,7 @@ export default function Register() {
     const { mutate: performLogin } = useLoginWeb({
         mutation: {
             onSuccess: () => {
+                toast.success(t("register.toast.success"));
                 queryClient.invalidateQueries({ queryKey: getGetSelfUserQueryKey() });
                 navigate("/");
             },

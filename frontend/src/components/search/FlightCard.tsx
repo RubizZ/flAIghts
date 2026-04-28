@@ -3,7 +3,6 @@ import { ChevronDown, Clock, Info, PlaneLanding, PlaneTakeoff, Ticket, Calendar,
 import { useTranslation } from "react-i18next";
 import type { ItineraryResponse, GlobeAirportResponse, LegResponse } from "@/api/generated/openapi/model";
 import FlightRouteInfo from "./FlightRouteInfo";
-import { COUNTRY_NAMES } from "@/constants/countries";
 
 interface FlightCardProps {
     itinerary: ItineraryResponse,
@@ -292,7 +291,7 @@ function StopoverDetails({ leg, formatDuration, airportsMap, index, previousLeg,
             <div className="w-1 h-1 bg-line rounded-full" />
             <div className="flex flex-col min-w-0">
                 <span className="font-bold text-content truncate">
-                    {airport?.ci}, {airport?.c && (COUNTRY_NAMES[airport.c]?.[1] || airport.c)}
+                    {airport?.ci}, {airport?.c && t(`countries.${airport.c}`, { defaultValue: airport.c })}
                 </span>
                 <span className="font-medium text-[10px] text-content-muted truncate">
                     {airport?.n} ({leg.origin})
@@ -322,6 +321,7 @@ function LegDetails({
     calculateDayDiff,
     formatDateSuperscript
 }: LegDetailsPropsWithColors) {
+    const { t } = useTranslation();
     const originAirport = airportsMap.get(leg.origin);
     const destinationAirport = airportsMap.get(leg.destination);
 
@@ -359,7 +359,7 @@ function LegDetails({
                             )}
                         </span>
                         <span className="text-xs text-content-muted">
-                            {originAirport?.ci}, {originAirport?.c && (COUNTRY_NAMES[originAirport.c]?.[1] || originAirport.c)} • {originAirport?.n}
+                            {originAirport?.ci}, {originAirport?.c && t(`countries.${originAirport.c}`, { defaultValue: originAirport.c })} • {originAirport?.n}
                         </span>
                     </div>
                 </div>
@@ -376,7 +376,7 @@ function LegDetails({
                             )}
                         </span>
                         <span className="text-xs text-content-muted">
-                            {destinationAirport?.ci}, {destinationAirport?.c && (COUNTRY_NAMES[destinationAirport.c]?.[1] || destinationAirport.c)} • {destinationAirport?.n}
+                            {destinationAirport?.ci}, {destinationAirport?.c && t(`countries.${destinationAirport.c}`, { defaultValue: destinationAirport.c })} • {destinationAirport?.n}
                         </span>
                     </div>
                 </div>

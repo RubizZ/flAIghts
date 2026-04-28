@@ -33,11 +33,13 @@ const PremiumInput: React.FC<PremiumInputProps> = ({
                 {icon}
             </div>
 
-            <div className="flex flex-col grow min-w-0 text-left">
-                <span className="text-[9px] text-content-muted uppercase font-bold tracking-wider">
-                    {label}
-                </span>
-                <div className="relative flex items-center h-7 lg:h-8">
+            <div className="flex flex-col grow min-w-0 text-left justify-center">
+                {label && (
+                    <span className="text-[9px] text-content-muted uppercase font-bold tracking-wider empty:h-0">
+                        {label}
+                    </span>
+                )}
+                <div className="relative flex items-center min-h-[1.75rem] lg:min-h-[2rem] min-w-0">
                     {children}
                 </div>
                 {error && (

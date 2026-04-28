@@ -176,12 +176,19 @@ export class MessageService {
         const [result] = await Message.aggregate(pipeline);
 
         const total = result.metadata[0]?.total || 0;
-        const items = result.data.map((item: any) => ({
-            conversationId: item._id,
-            otherUser: item.otherUser,
-            lastMessage: this.formatMessageResponse(item.lastMessage),
-            unreadCount: item.unreadCount
-        }));
+        const items = result.data.map((item: any) => {
+            if (item.otherUser?.profile_picture && !item.otherUser.profile_picture.startsWith('http') && !item.otherUser.profile_picture.startsWith('/')) {
+                const parts = item.otherUser.profile_picture.split('-');
+                const hash = parts[parts.length - 1]?.split('.')[0] || Date.now();
+                item.otherUser.profile_picture = `/users/${item.otherUser._id}/avatar?v=${hash}`;
+            }
+            return {
+                conversationId: item._id,
+                otherUser: item.otherUser,
+                lastMessage: this.formatMessageResponse(item.lastMessage),
+                unreadCount: item.unreadCount
+            };
+        });
 
         return {
             items,

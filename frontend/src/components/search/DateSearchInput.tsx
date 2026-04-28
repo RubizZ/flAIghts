@@ -17,6 +17,7 @@ interface DateSearchInputProps {
     defaultMonth?: string;
     onClear?: () => void;
     className?: string;
+    label?: string;
 }
 
 const DateSearchInput: React.FC<DateSearchInputProps> = ({
@@ -31,10 +32,12 @@ const DateSearchInput: React.FC<DateSearchInputProps> = ({
     defaultMonth,
     onClear,
     className = "",
+    label: customLabel,
 }) => {
     const { t } = useTranslation();
     const isDeparture = type === 'departure';
-    const label = isDeparture ? t("home.globe.departure") : t("home.globe.return");
+    const defaultLabel = isDeparture ? t("home.globe.departure") : t("home.globe.return");
+    const label = customLabel !== undefined ? customLabel : defaultLabel;
     const iconColorClass = value
         ? (isDeparture ? "text-origin" : "text-destination")
         : "text-content-muted";
@@ -69,7 +72,16 @@ const DateSearchInput: React.FC<DateSearchInputProps> = ({
                             setTimeout(() => {
                                 const vv = window.visualViewport;
                                 if (vv && vv.height < window.innerHeight) {
-                                    containerRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                                    const el = containerRef.current;
+                                    const scrollParent = el?.closest('.overflow-y-auto, .custom-scrollbar');
+                                    if (el && scrollParent) {
+                                        const parentRect = scrollParent.getBoundingClientRect();
+                                        const targetRect = el.getBoundingClientRect();
+                                        const scrollTop = scrollParent.scrollTop + targetRect.top - parentRect.top - 20;
+                                        scrollParent.scrollTo({ top: scrollTop, behavior: 'smooth' });
+                                    } else {
+                                        el?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                                    }
                                 }
                             }, 100);
                         }
@@ -97,27 +109,25 @@ const DateSearchInput: React.FC<DateSearchInputProps> = ({
     );
 
     return (
-        <div className={`relative flex w-full min-w-0 ${className}`}>
-            <Tooltip
-                content={disabledTooltip || ""}
-                disabled={!disabled || !disabledTooltip}
-                position="bottom"
-            >
-                <div className="w-full">
-                    <Calendar
-                        isOpen={isOpen}
-                        setIsOpen={setIsOpen}
-                        value={value}
-                        onChange={onChange}
-                        minDate={minDate}
-                        defaultMonth={defaultMonth}
-                        trigger={trigger}
-                        contentClassName="w-[min(380px,90vw,65svh)] bg-main border border-line shadow-2xl rounded-3xl"
-                        keepTriggerWidth={false}
-                    />
-                </div>
-            </Tooltip>
-        </div>
+        <Tooltip
+            content={disabledTooltip || ""}
+            disabled={!disabled || !disabledTooltip}
+            position="bottom"
+            className={`w-full ${className}`}
+        >
+            <Calendar
+                className="w-full h-full"
+                isOpen={isOpen}
+                setIsOpen={setIsOpen}
+                value={value}
+                onChange={onChange}
+                minDate={minDate}
+                defaultMonth={defaultMonth}
+                trigger={trigger}
+                contentClassName="w-[min(380px,90vw,65svh)] bg-main border border-line shadow-2xl rounded-3xl"
+                keepTriggerWidth={false}
+            />
+        </Tooltip>
     );
 };
 

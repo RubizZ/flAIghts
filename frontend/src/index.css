@@ -110,9 +110,42 @@ body,
   }
 
   .premium-input:focus-within {
-    background: color-mix(in srgb, var(--color-main) 80%, transparent);
     border-color: var(--color-brand);
-    box-shadow: 0 0 20px -5px rgba(var(--color-brand), 0.2);
+    background: var(--color-main);
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--color-brand) 10%, transparent);
+  }
+
+  .skeleton {
+    @apply bg-surface/50 rounded-lg overflow-hidden relative;
+  }
+
+  .skeleton::after {
+    @apply absolute inset-0;
+    content: "";
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgba(255, 255, 255, 0.05),
+      transparent
+    );
+    animation: skeleton-shimmer 2s infinite linear;
+  }
+
+  @keyframes skeleton-shimmer {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+  }
+
+  .premium-input-bottom {
+    @apply transition-all duration-300 px-2.5 lg:px-3.5 pb-3 rounded-b-2xl;
+    background: color-mix(in srgb, var(--color-main) 50%, transparent);
+    border: 1px solid color-mix(in srgb, var(--color-line) 40%, transparent);
+    border-top: 0;
+  }
+
+  /* Sync bottom part with input hover/focus */
+  .group:focus-within .premium-input-bottom {
+    border-color: var(--color-brand);
   }
 
   /* Small & Discrete Scrollbar System */

@@ -9,11 +9,13 @@ import { useAuth } from "@/context/AuthContext";
 import StarsBackground from "@/components/ui/StarsBackground";
 import Globe from "@/components/Globe";
 import FlightCard from "@/components/search/FlightCard";
+import FlightCardSkeleton from "@/components/search/FlightCardSkeleton";
 import SelectedFlightSummary from "@/components/search/SelectedFlightSummary";
 import BookingModal from "@/components/search/BookingModal";
 import { usePrepareBooking } from "@/api/generated/openapi/booking";
 import { useTranslation } from "react-i18next";
 import SmartPopover from "@/components/ui/SmartPopover";
+import GlobeLoadingScreen from "@/components/ui/GlobeLoadingScreen";
 import UserAvatar from "@/components/ui/UserAvatar";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
@@ -377,25 +379,11 @@ export default function SearchResults() {
     return (
         <div className="relative min-h-screen w-full overflow-y-auto overflow-x-hidden bg-main lg:bg-black text-content flex lg:block">
             {/* Loading Overlay */}
-            <div className={`fixed inset-0 z-loading bg-main flex flex-col items-center justify-center gap-6 transition-opacity duration-700 pointer-events-none ${showLoading ? 'opacity-100' : 'opacity-0'}`}>
-                <div className="relative flex items-center justify-center">
-                    {/* Radar rings — staggered expanding pulses using brand color */}
-                    <div className="absolute w-20 h-20 rounded-full border border-brand/40 animate-radar" style={{ animationDelay: '0s' }} />
-                    <div className="absolute w-20 h-20 rounded-full border border-brand/25 animate-radar" style={{ animationDelay: '0.8s' }} />
-                    <div className="absolute w-20 h-20 rounded-full border border-brand/15 animate-radar" style={{ animationDelay: '1.6s' }} />
-                    <svg className="w-10 h-10 text-brand relative z-content" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M21 16v-2l-8-5V3.5A1.5 1.5 0 0 0 11.5 2A1.5 1.5 0 0 0 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1l3.5 1v-1.5L13 19v-5.5l8 2.5z" />
-                    </svg>
-                </div>
-                <div className="flex flex-col items-center gap-1">
-                    <span className="text-content-muted text-xs">{t('searchResultsPage.searchingBestRoutes')}</span>
-                </div>
-                <div className="flex gap-1.5">
-                    {[0, 1, 2].map(i => (
-                        <div key={i} className="w-1.5 h-1.5 rounded-full bg-brand/40 animate-pulse" style={{ animationDelay: `${i * 200}ms` }} />
-                    ))}
-                </div>
-            </div>
+            <GlobeLoadingScreen
+                isVisible={showLoading}
+                text={t('searchResultsPage.searchingBestRoutes')}
+                className="fixed inset-0 z-loading bg-main"
+            />
 
             {/* Mobile Background Globe (Full screen) */}
             <div className="fixed inset-0 z-behind lg:hidden">
@@ -437,7 +425,10 @@ export default function SearchResults() {
                                                 {searchData.departure_date && (
                                                     <div className="flex items-center gap-1.5 whitespace-nowrap">
                                                         <Calendar size={12} className="text-brand/80" />
-                                                        <span>{formatDateForDisplay(searchData.departure_date)}</span>
+                                                        <span>
+                                                            {formatDateForDisplay(searchData.departure_date)}
+                                                            {searchData.return_date && ` - ${formatDateForDisplay(searchData.return_date)}`}
+                                                        </span>
                                                     </div>
                                                 )}
                                                 <div className="flex items-center gap-2">
@@ -446,8 +437,6 @@ export default function SearchResults() {
                                                     )}
                                                     <p className="whitespace-nowrap">
                                                         {selectionStep === 'departure' && searchData.status === 'searching' && 'Buscando...'}
-                                                        {selectionStep === 'departure' && searchData.status !== 'searching' && `${departureItineraries?.length || 0} ida`}
-                                                        {selectionStep === 'return' && `${returnItineraries?.length || 0} vuelta`}
                                                         {selectionStep === 'summary' && 'Confirma'}
                                                     </p>
                                                 </div>
@@ -533,7 +522,7 @@ export default function SearchResults() {
 
                                                                         sendMessage({
                                                                             otherUserId: friend._id,
-                                                                            data: { content: `SHARE_SEARCH:${id}:${data!.origins[0]}:${data!.destinations[0]}` }
+                                                                            data: { content: `SHARE_SEARCH:${id}` }
                                                                         });
                                                                     }}
                                                                     className="flex items-center gap-2 p-2 hover:bg-surface rounded-xl transition-all text-left w-full group/friend cursor-pointer"
@@ -608,7 +597,10 @@ export default function SearchResults() {
                                             <span className="text-[10px] md:text-xs font-bold text-content-muted uppercase tracking-wider">{t('searchResultsPage.orderBy')}</span>
                                             <div className="flex items-center gap-1 bg-surface/50 p-1 rounded-xl border border-line/30">
                                                 <button
-                                                    onClick={() => setSortBy('personalized')}
+                                                    onClick={() => {
+                                                        setSortBy('personalized');
+                                                        window.dispatchEvent(new CustomEvent('flaights:mission:sort-changed'));
+                                                    }}
                                                     className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs md:text-sm font-medium transition-all cursor-pointer ${sortBy === 'personalized'
                                                         ? 'bg-brand text-content-on-brand shadow-sm'
                                                         : 'text-content-muted hover:text-content hover:bg-main'
@@ -618,7 +610,10 @@ export default function SearchResults() {
                                                     <span>{t('searchResultsPage.personalized')}</span>
                                                 </button>
                                                 <button
-                                                    onClick={() => setSortBy('price')}
+                                                    onClick={() => {
+                                                        setSortBy('price');
+                                                        window.dispatchEvent(new CustomEvent('flaights:mission:sort-changed'));
+                                                    }}
                                                     className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${sortBy === 'price'
                                                         ? 'bg-brand text-content-on-brand shadow-sm'
                                                         : 'text-content-muted hover:text-content hover:bg-main'
@@ -628,7 +623,10 @@ export default function SearchResults() {
                                                     <span>{t('searchResultsPage.price')}</span>
                                                 </button>
                                                 <button
-                                                    onClick={() => setSortBy('duration')}
+                                                    onClick={() => {
+                                                        setSortBy('duration');
+                                                        window.dispatchEvent(new CustomEvent('flaights:mission:sort-changed'));
+                                                    }}
                                                     className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${sortBy === 'duration'
                                                         ? 'bg-brand text-content-on-brand shadow-sm'
                                                         : 'text-content-muted hover:text-content hover:bg-main'
@@ -693,6 +691,11 @@ export default function SearchResults() {
                                                 <Plane className="w-5 h-5 text-origin -rotate-45" />
                                             </div>
                                             {t('common.outboundFlights')}
+                                            {departureItineraries && departureItineraries.length > 0 && (
+                                                <span className="text-xs font-black bg-origin/10 text-origin px-2.5 py-1 rounded-full border border-origin/20 animate-in zoom-in duration-300">
+                                                    {departureItineraries.length}
+                                                </span>
+                                            )}
                                         </h2>
                                         <div className="space-y-4">
                                             {departureItineraries.map((itinerary, index) => (
@@ -732,6 +735,11 @@ export default function SearchResults() {
                                                     <Plane className="w-5 h-5 text-destination rotate-135" />
                                                 </div>
                                                 {t('common.returnFlights')}
+                                                {returnItineraries && returnItineraries.length > 0 && (
+                                                    <span className="text-xs font-black bg-destination/10 text-destination px-2.5 py-1 rounded-full border border-destination/20 animate-in zoom-in duration-300">
+                                                        {returnItineraries.length}
+                                                    </span>
+                                                )}
                                             </h2>
                                             <div className="space-y-4">
                                                 {returnItineraries.map((itinerary, index) => (
@@ -752,18 +760,59 @@ export default function SearchResults() {
                                 )}
 
                                 {selectionStep === 'return' && searchData.status === 'searching' && (!returnItineraries || returnItineraries.length === 0) && (
-                                    <div className="flex flex-col items-center justify-center py-20 bg-main/40 backdrop-blur-md rounded-3xl border border-line text-center text-content-muted mx-4">
-                                        <Loader2 size={48} className="mb-4 opacity-50 text-brand animate-spin" />
-                                        <h3 className="text-xl font-semibold text-content mb-2">{t('searchResultsPage.searchingMore')}</h3>
-                                        <p className="text-sm opacity-70">{t('searchResultsPage.searchingBestRoutes')}</p>
-                                    </div>
+                                    <>
+                                        {selectedDeparture && (
+                                            <SelectedFlightSummary
+                                                itinerary={selectedDeparture}
+                                                type="Ida"
+                                                airportsMap={airportsMap}
+                                                formatTime={formatTime}
+                                                formatDuration={formatDuration}
+                                                title={t('searchResultsPage.selectedFlight', { type: t('common.outbound') })}
+                                                onEdit={handleEditDeparture}
+                                            />
+                                        )}
+                                        <div className="space-y-4 animate-pulse">
+                                            <div className="flex items-center gap-3 ml-2 mb-6">
+                                                <div className="p-2 bg-destination/20 rounded-lg">
+                                                    <Plane className="w-5 h-5 text-destination rotate-135" />
+                                                </div>
+                                                <h2 className="text-xl font-bold text-content flex items-center gap-3">
+                                                    {t('common.returnFlights')}
+                                                    {returnItineraries && returnItineraries.length > 0 && (
+                                                        <span className="text-xs font-black bg-destination/10 text-destination px-2.5 py-1 rounded-full border border-destination/20 animate-in zoom-in duration-300">
+                                                            {returnItineraries.length}
+                                                        </span>
+                                                    )}
+                                                </h2>
+                                                <Loader2 size={16} className="text-brand animate-spin ml-auto" />
+                                            </div>
+                                            {Array.from({ length: 3 }).map((_, i) => (
+                                                <FlightCardSkeleton key={i} />
+                                            ))}
+                                        </div>
+                                    </>
                                 )}
 
                                 {selectionStep === 'departure' && searchData.status === 'searching' && !departureItineraries?.length && (
-                                    <div className="flex flex-col items-center justify-center py-20 bg-main/40 backdrop-blur-md rounded-3xl border border-line text-center text-content-muted mx-4">
-                                        <Loader2 size={48} className="mb-4 opacity-50 text-brand animate-spin" />
-                                        <h3 className="text-xl font-semibold text-content mb-2">{t('searchResultsPage.searchingMore')}</h3>
-                                        <p className="text-sm opacity-70">{t('searchResultsPage.searchingBestRoutes')}</p>
+                                    <div className="space-y-4 animate-pulse">
+                                        <div className="flex items-center gap-3 ml-2 mb-6">
+                                            <div className="p-2 bg-origin/20 rounded-lg">
+                                                <Plane className="w-5 h-5 text-origin -rotate-45" />
+                                            </div>
+                                            <h2 className="text-xl font-bold text-content flex items-center gap-3">
+                                                {t('common.outboundFlights')}
+                                                {departureItineraries && departureItineraries.length > 0 && (
+                                                    <span className="text-xs font-black bg-origin/10 text-origin px-2.5 py-1 rounded-full border border-origin/20 animate-in zoom-in duration-300">
+                                                        {departureItineraries.length}
+                                                    </span>
+                                                )}
+                                            </h2>
+                                            <Loader2 size={16} className="text-brand animate-spin ml-auto" />
+                                        </div>
+                                        {Array.from({ length: 5 }).map((_, i) => (
+                                            <FlightCardSkeleton key={i} />
+                                        ))}
                                     </div>
                                 )}
                                 {selectionStep === 'departure' && searchData.status === 'completed' && !departureItineraries?.length && (

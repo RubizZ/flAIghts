@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useMemo } from "react";
 import { Plane, Loader2, Search, X, Building2, MapPin, ChevronLeft, Plus, Check } from "lucide-react";
 import type { AirportResponse, SearchResult, CityResponse } from "@/api/generated/openapi/model";
-import { COUNTRY_NAMES } from "@/constants/countries";
+
 import SmartPopover from "./ui/SmartPopover";
 import { useUserLocation } from "@/context/UserLocationContext";
 import { useSearchAirportsInfinite } from "@/api/generated/openapi/airports";
@@ -15,6 +15,9 @@ interface AirportAutocompleteProps {
     className?: string;
     otherSelected?: UnifiedSelection[];
     onHoverChange?: (entity: UnifiedSelection | null) => void;
+    disableCities?: boolean;
+    maxSelections?: number;
+    hideSelections?: boolean;
 }
 
 const getDisplay = (value: UnifiedSelection[]) => {
@@ -49,8 +52,18 @@ const HighlightedText = ({ text, highlight, query }: { text: string; highlight?:
     );
 };
 
-export default function AirportAutocomplete({ value, onChange, placeholder, className, otherSelected = [], onHoverChange }: AirportAutocompleteProps) {
-    const { t } = useTranslation();
+export default function AirportAutocomplete({
+    value,
+    onChange,
+    placeholder,
+    className,
+    otherSelected = [],
+    onHoverChange,
+    disableCities = false,
+    maxSelections,
+    hideSelections = false,
+}: AirportAutocompleteProps) {
+    const { t, i18n } = useTranslation();
     const [query, setQuery] = useState("");
     const [debouncedQuery, setDebouncedQuery] = useState("");
     const [isOpen, setIsOpen] = useState(false);
@@ -58,6 +71,7 @@ export default function AirportAutocomplete({ value, onChange, placeholder, clas
     const sentinelRef = useRef<HTMLDivElement>(null);
     const scrollContainerRef = useRef<HTMLUListElement>(null);
     const chipsScrollRef = useRef<HTMLDivElement>(null);
+    const inputRef = useRef<HTMLInputElement>(null);
 
     // Selected IDs for fast lookup and conflict check
     const selectedIds = useMemo(() => new Set(value.map(getEntityId)), [value]);
@@ -104,18 +118,46 @@ export default function AirportAutocomplete({ value, onChange, placeholder, clas
     // Use only the first page for initial grouped view to keep it clean
     const firstPageSuggestions = useMemo(() => data?.pages[0]?.items ?? [], [data]);
 
+
+
+    const getLocalizedCountryName = (countryCode?: string) => {
+        if (!countryCode) return t("common.others");
+        return t(`countries.${countryCode}`, { defaultValue: 'Unknown' });
+    };
+
     const groupedSuggestions = useMemo(() => {
         const groups: Record<string, SearchResult[]> = {};
         const groupOrder: string[] = [];
 
         firstPageSuggestions.forEach(item => {
+            if (isCity(item) && disableCities) {
+                // If cities are disabled, extract their airports and show them instead
+                item.airports?.forEach(airport => {
+                    const groupName = getLocalizedCountryName(airport.country);
+
+                    let group = groups[groupName];
+                    if (!group) {
+                        group = [];
+                        groups[groupName] = group;
+                        groupOrder.push(groupName);
+                    }
+                    if (!group.some(a => a.type === 'airport' && (a as any).iata_code === airport.iata_code)) {
+                        group.push({
+                            ...airport,
+                            type: 'airport',
+                            // Copy the city's distance to the airport if it doesn't have one
+                            distance_km_to_user: airport.distance_km_to_user || item.distance_km_to_user
+                        } as SearchResult);
+                    }
+                });
+                return;
+            }
+
             let groupName = "";
             if (item.type === 'city') {
                 groupName = t("common.cities");
             } else {
-                const countryCode = item.country || "Otros";
-                const countryInfo = COUNTRY_NAMES[countryCode];
-                groupName = (countryInfo && countryInfo[1]) || countryCode;
+                groupName = getLocalizedCountryName(item.country);
             }
 
             let group = groups[groupName];
@@ -129,14 +171,16 @@ export default function AirportAutocomplete({ value, onChange, placeholder, clas
                     groupOrder.push(groupName);
                 }
             }
-            group.push(item);
+            if (!group.some(a => a.type === item.type && (a as any).iata_code === (item as any).iata_code && (a as any).name === (item as any).name)) {
+                group.push(item);
+            }
         });
 
         // Deduplicate and ensure unicity in groupOrder
         const uniqueOrder = Array.from(new Set(groupOrder));
 
         return uniqueOrder.map(name => [name, groups[name]] as [string, SearchResult[]]);
-    }, [firstPageSuggestions]);
+    }, [firstPageSuggestions, t, disableCities]);
 
     // Debounce query
     useEffect(() => {
@@ -249,60 +293,118 @@ export default function AirportAutocomplete({ value, onChange, placeholder, clas
                             });
                         }
                     }}
-                    className="flex items-center gap-1.5 w-full h-7 lg:h-8 overflow-x-auto overflow-y-hidden custom-scrollbar py-0 pb-1"
+                    className="flex items-center gap-1.5 w-full h-full min-h-[1.75rem] lg:min-h-[2rem] overflow-x-auto custom-scrollbar py-0.5"
                 >
-                    {value.map((item, idx) => (
-                        <div
-                            key={`${getEntityId(item)}-${idx}`}
-                            className="flex items-center gap-1.5 bg-brand/10 border border-brand/20 px-2.5 py-0.5 rounded-lg shrink-0 animate-in zoom-in-95 duration-200"
-                        >
-                            <span className="text-[10px] font-bold text-brand whitespace-nowrap">
-                                {isCity(item) ? item.name : (item.iata_code || getEntityName(item))}
-                            </span>
-                            <div className="w-[1px] h-3 bg-brand/20 ml-0.5" />
-                            <button
-                                type="button"
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    const newValue = [...value];
-                                    newValue.splice(idx, 1);
-                                    onChange(newValue);
+                    {maxSelections === 1 && value.length === 1 ? (() => {
+                        const item = value[0]!;
+                        const cityName = isCity(item) ? item.name : (item.city || item.name);
+                        const airportName = isCity(item) ? t("common.allAirports") : item.name;
+                        const countryName = getLocalizedCountryName(item.country);
+                        const iata = !isCity(item) ? item.iata_code : null;
+
+                        return (
+                            <div className="flex items-center justify-between w-full h-full pr-1 cursor-default group transition-colors">
+                                <div className="flex flex-col flex-1 min-w-0 leading-normal py-0.5">
+                                    <div className="flex items-center gap-2 overflow-hidden mb-0.5">
+                                        <span className="text-sm font-black text-content truncate uppercase tracking-tight">
+                                            {cityName}
+                                        </span>
+                                        {iata && (
+                                            <span className="text-[10px] font-black text-brand bg-brand/10 border border-brand/20 px-1.5 py-0.5 rounded-md shrink-0 uppercase tabular-nums">
+                                                {iata}
+                                            </span>
+                                        )}
+                                    </div>
+                                    <div className="flex flex-col gap-0">
+                                        <span className="text-[10px] text-content-muted font-bold truncate opacity-80 leading-tight">
+                                            {airportName}
+                                        </span>
+                                        {countryName && (
+                                            <span className="text-[9px] text-content-muted font-medium truncate opacity-60 uppercase tracking-tighter leading-tight">
+                                                {countryName}
+                                            </span>
+                                        )}
+                                    </div>
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        onChange([]);
+                                        setTimeout(() => inputRef.current?.focus(), 50);
+                                    }}
+                                    className="text-content-muted hover:text-error hover:bg-error/10 p-1.5 rounded-xl transition-all ml-2 shrink-0 cursor-pointer active:scale-95"
+                                    title={t("common.remove", "Eliminar")}
+                                >
+                                    <X size={16} />
+                                </button>
+                            </div>
+                        );
+                    })() : (
+                        <>
+                            {!hideSelections && value.map((item, idx) => (
+                                <div
+                                    key={`${getEntityId(item)}-${idx}`}
+                                    className="flex items-center gap-1.5 bg-brand/10 border border-brand/20 px-2.5 py-0.5 rounded-lg shrink-0 animate-in zoom-in-95 duration-200"
+                                >
+                                    <span className="text-[10px] font-bold text-brand whitespace-nowrap">
+                                        {isCity(item) ? item.name : (item.iata_code || getEntityName(item))}
+                                    </span>
+                                    <div className="w-[1px] h-3 bg-brand/20 ml-0.5" />
+                                    <button
+                                        type="button"
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            const newValue = [...value];
+                                            newValue.splice(idx, 1);
+                                            onChange(newValue);
+                                        }}
+                                        className="text-brand hover:text-brand-dark transition-colors cursor-pointer p-0.5"
+                                        title={t("common.remove", "Eliminar")}
+                                    >
+                                        <X size={10} />
+                                    </button>
+                                </div>
+                            ))}
+                            <input
+                                ref={inputRef}
+                                type="text"
+                                placeholder={value.length === 0 || hideSelections ? placeholder : t("common.add")}
+                                className={`${className} shrink-0`}
+                                style={{ width: value.length === 0 || hideSelections ? '100%' : 'auto', minWidth: '80px' }}
+                                value={query}
+                                onChange={(e) => {
+                                    setQuery(e.target.value);
+                                    if (e.target.value.length > 0) setIsOpen(true);
                                 }}
-                                className="text-brand hover:text-brand-dark transition-colors cursor-pointer p-0.5"
-                                title="Eliminar"
-                            >
-                                <X size={10} />
-                            </button>
-                        </div>
-                    ))}
-                    <input
-                        type="text"
-                        placeholder={value.length === 0 ? placeholder : t("common.add")}
-                        className={`${className} shrink-0`}
-                        style={{ width: value.length === 0 ? '100%' : 'auto', minWidth: '80px' }}
-                        value={query}
-                        onChange={(e) => {
-                            setQuery(e.target.value);
-                            if (e.target.value.length > 0) setIsOpen(true);
-                        }}
-                        onBlur={() => {
-                            setTimeout(() => {
-                                setIsOpen(false);
-                                onHoverChange?.(null);
-                            }, 200);
-                        }}
-                        onFocus={(e) => {
-                            setIsOpen(true);
-                            window.dispatchEvent(new CustomEvent('flaights:mission:open-airport-card'));
-                            if (window.visualViewport) {
-                                e.target.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                            }
-                        }}
-                    />
-                    {isFetching && (
-                        <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                            <Loader2 className="animate-spin h-3.5 w-3.5 text-content-muted" />
-                        </div>
+                                onBlur={() => {
+                                    setTimeout(() => {
+                                        setIsOpen(false);
+                                        onHoverChange?.(null);
+                                    }, 200);
+                                }}
+                                onFocus={(e) => {
+                                    setIsOpen(true);
+                                    window.dispatchEvent(new CustomEvent('flaights:mission:open-airport-card'));
+                                    if (window.visualViewport) {
+                                        const scrollParent = e.target.closest('.overflow-y-auto, .custom-scrollbar');
+                                        if (scrollParent) {
+                                            const parentRect = scrollParent.getBoundingClientRect();
+                                            const targetRect = (e.target as HTMLElement).getBoundingClientRect();
+                                            const scrollTop = scrollParent.scrollTop + targetRect.top - parentRect.top - (parentRect.height / 2) + (targetRect.height / 2);
+                                            scrollParent.scrollTo({ top: scrollTop, behavior: 'smooth' });
+                                        } else {
+                                            e.target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                        }
+                                    }
+                                }}
+                            />
+                            {isFetching && (
+                                <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                                    <Loader2 className="animate-spin h-3.5 w-3.5 text-content-muted" />
+                                </div>
+                            )}
+                        </>
                     )}
                 </div>
             }
@@ -344,12 +446,12 @@ export default function AirportAutocomplete({ value, onChange, placeholder, clas
                                                 {airport.distance_km_to_city ? (
                                                     <span className="text-brand/80 font-medium italic">{t("airportAutocomplete.fromCity", { distance: Math.round(airport.distance_km_to_city), location: parentLocation })}</span>
                                                 ) : (
-                                                    (airport.country && COUNTRY_NAMES[airport.country]?.[1]) || airport.country
+                                                    getLocalizedCountryName(airport.country)
                                                 )}
                                             </>
                                         ) : (
                                             <>
-                                                <HighlightedText text={airport.city} highlight={airport.highlight?.city} query={debouncedQuery} />, {(airport.country && COUNTRY_NAMES[airport.country]?.[1]) || airport.country}
+                                                <HighlightedText text={airport.city} highlight={airport.highlight?.city} query={debouncedQuery} />, {getLocalizedCountryName(airport.country)}
                                             </>
                                         )}
                                     </span>
@@ -477,7 +579,10 @@ export default function AirportAutocomplete({ value, onChange, placeholder, clas
                                 </div>
 
                                 {suggestions.map((item, idx) => {
-                                    if (item.type === 'city') return renderCity(item as CityResponse, `flat-${idx}`);
+                                    if (item.type === 'city') {
+                                        if (disableCities) return null;
+                                        return renderCity(item as CityResponse, `flat-${idx}`);
+                                    }
                                     return renderAirport(item as AirportResponse);
                                 })}
 

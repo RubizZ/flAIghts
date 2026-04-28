@@ -230,6 +230,16 @@ const ViewFlightDetailsListener: React.FC = () => {
     return null;
 };
 
+const SortResultsListener: React.FC = () => {
+    const { completeStep } = useMissions();
+    useEffect(() => {
+        const handler = () => completeStep('flight_results_mission', 'change_sort');
+        window.addEventListener('flaights:mission:sort-changed', handler);
+        return () => window.removeEventListener('flaights:mission:sort-changed', handler);
+    }, [completeStep]);
+    return null;
+};
+
 const SelectFlightListener: React.FC = () => {
     const { completeStep } = useMissions();
     useEffect(() => {
@@ -435,6 +445,12 @@ export const MISSIONS: BaseMission[] = [
                 title: 'missions.list.flight_results.steps.view_flight_details.title',
                 description: 'missions.list.flight_results.steps.view_flight_details.description',
                 listener: ViewFlightDetailsListener
+            },
+            {
+                id: 'change_sort',
+                title: 'missions.list.flight_results.steps.change_sort.title',
+                description: 'missions.list.flight_results.steps.change_sort.description',
+                listener: SortResultsListener
             },
             {
                 id: 'select_flight',

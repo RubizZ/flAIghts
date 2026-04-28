@@ -47,6 +47,7 @@ export interface CityResponse {
         coordinates: number[];
     };
     airports: AirportResponse[];
+    distance_km_to_user?: number;
     combined_score?: number;
     highlight?: {
         name?: string;

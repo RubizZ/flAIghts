@@ -1161,6 +1161,9 @@
               "$ref": "#/components/schemas/AirportResponse"
             }
           },
+          "distance_km_to_user": {
+            "type": "number"
+          },
           "combined_score": {
             "type": "number"
           },

@@ -222,7 +222,7 @@ export default function Settings() {
     const { mutate: setPassword, isPending: isSettingPassword } = useSetPassword({
         mutation: {
             onSuccess: () => {
-                toast.success("Contraseña establecida correctamente");
+                toast.success(t("settings.toast.passwordSetSuccess"));
                 setNewPassword("");
                 setConfirmPassword("");
                 setVerificationStep({ active: false, action: null, actionLabel: "", code: "", transactionId: "" });
@@ -237,7 +237,7 @@ export default function Settings() {
     const { mutate: connectGoogle, isPending: isConnectingGoogle } = useConnectGoogle({
         mutation: {
             onSuccess: () => {
-                toast.success("Cuenta de Google vinculada correctamente");
+                toast.success(t("settings.toast.googleLinkSuccess"));
                 setVerificationStep({ active: false, action: null, actionLabel: "", code: "", transactionId: "" });
                 refetch();
             },
@@ -250,7 +250,7 @@ export default function Settings() {
     const { mutate: requestCode, isPending: isRequestingCode } = useRequestSecurityCode({
         mutation: {
             onSuccess: (response) => {
-                toast.success("Código de seguridad enviado a tu email");
+                toast.success(t("settings.toast.securityCodeSent"));
                 setVerificationStep(prev => ({ ...prev, active: true, transactionId: response.transactionId }));
             },
             onError: (err: any) => {
@@ -370,7 +370,7 @@ export default function Settings() {
     const { mutate: disconnectGoogle, isPending: isDisconnectingGoogle } = useDisconnectGoogle({
         mutation: {
             onSuccess: () => {
-                toast.success('Cuenta de Google desvinculada correctamente');
+                toast.success(t("settings.toast.googleDisconnectSuccess"));
                 setVerificationStep({ active: false, action: null, actionLabel: "", code: "", transactionId: "" });
                 refetch();
             },
@@ -964,7 +964,7 @@ export default function Settings() {
                                                                 }
                                                             }}
                                                             onError={() => {
-                                                                toast.error('Error al conectar con Google');
+                                                                toast.error(t("login.toast.googleConnectError"));
                                                             }}
                                                             useOneTap
                                                             theme="outline"

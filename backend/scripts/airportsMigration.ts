@@ -2,6 +2,21 @@ import fs from "fs";
 import readline from "readline";
 import mongoose from "mongoose";
 import { Airport } from "../src/modules/airport/airport.model.js";
+import { COUNTRY_NAMES } from "../src/modules/airport/countries.js";
+
+// Reverse map for country names to ISO codes
+const NAME_TO_ISO: Record<string, string> = {};
+Object.entries(COUNTRY_NAMES).forEach(([code, names]) => {
+    names.forEach(name => {
+        NAME_TO_ISO[name.toLowerCase()] = code;
+    });
+});
+
+function getISO(countryStr: string): string {
+    if (!countryStr) return "Unknown";
+    if (countryStr.length === 2) return countryStr.toUpperCase(); // Already ISO
+    return NAME_TO_ISO[countryStr.toLowerCase()] || countryStr;
+}
 
 
 function parseCSVLine(line: string) {
@@ -83,7 +98,7 @@ async function migrate(mongoUri: string) {
                     iata: iata,
                     lat: parseFloat(parts[4] || "0"),
                     lon: parseFloat(parts[5] || "0"),
-                    country: parts[6] || "Unknown"
+                    country: getISO(parts[6] || "Unknown")
                 });
             }
         }
@@ -112,7 +127,7 @@ async function migrate(mongoUri: string) {
             const iata = parts[13];
             const name = parts[3] || "Unknown";
             const type = parts[2] || "";
-            const countryISO = parts[8] || "Unknown";
+            const countryISO = getISO(parts[8] || "Unknown");
 
             // Store IATA to ISO mapping for fallbacks regardless of commercial status
             if (iata && iata.length === 3) {

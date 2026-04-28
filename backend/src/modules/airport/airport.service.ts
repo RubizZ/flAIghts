@@ -205,10 +205,21 @@ export class AirportService {
                     const subAirports = near.map(n => {
                         const fuzzyMatch = fuzzyItems.find(f => f.iata_code === n.iata_code);
                         if (fuzzyMatch) {
-                            return { ...this.toAirportResponse(fuzzyMatch), distance_km_to_city: n.distance_km_to_city, highlight: fuzzyMatch.highlight };
+                            return { 
+                                ...this.toAirportResponse(fuzzyMatch), 
+                                distance_km_to_city: n.distance_km_to_city, 
+                                distance_km_to_user: fuzzyMatch.distance_km_to_user,
+                                highlight: fuzzyMatch.highlight 
+                            };
                         }
                         return n;
                     });
+
+                    // Calculate city distance to user if coordinates available
+                    let cityDistanceToUser: number | undefined = undefined;
+                    if (userLat !== undefined && userLon !== undefined) {
+                        cityDistanceToUser = Math.round(this.haversine(userLat, userLon, coordsResult.lat, coordsResult.lon));
+                    }
 
                     // Create City Item
                     const cityItem: CityResponse = {
@@ -217,6 +228,7 @@ export class AirportService {
                         type: "city" as const,
                         location: { type: "Point", coordinates: [coordsResult.lon, coordsResult.lat] },
                         airports: subAirports,
+                        distance_km_to_user: cityDistanceToUser,
                         combined_score: (fuzzyItems[0]?.combined_score || 350) + 50,
                         highlight: {
                             name: coordsResult.display_name.replace(new RegExp(cityToGeocode, 'gi'), '<b>$&</b>')
@@ -502,6 +514,7 @@ export class AirportService {
             type: "city",
             location: c.location,
             airports: (c.airports || []).map((a: any) => this.toAirportResponse(a)),
+            distance_km_to_user: c.distance_km_to_user,
             combined_score: c.combined_score,
             highlight: c.highlight
         };

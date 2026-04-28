@@ -214,7 +214,7 @@ export default function SmartPopover({
     }, [isOpen, setIsOpen]);
 
     return (
-        <div className={`relative inline-block ${className}`} ref={containerRef}>
+        <div className={`relative block ${className}`} ref={containerRef}>
             <div className="w-full h-full">
                 {trigger}
             </div>

@@ -13,6 +13,7 @@ import type { MessageResponse, PaginatedMessagesResponse } from "@/api/generated
 import type { ChatServerMessage } from "@/api/generated/asyncapi/models";
 import TextareaAutosize from "react-textarea-autosize";
 import { toast } from "sonner";
+import SharedSearchCard from "@/components/chat/SharedSearchCard";
 
 export default function Chat() {
     const { t } = useTranslation();
@@ -218,13 +219,11 @@ export default function Chat() {
             }
         }
 
-        const origins = search.origins.join(", ");
-        const destinations = search.destinations.join(", ");
-        // Formato: SHARE_SEARCH:id:origen:destino
+        // Formato: SHARE_SEARCH:id
         send({
             type: 'sendMessage',
             receiverId: userId!,
-            content: `SHARE_SEARCH:${search._id}:${origins}:${destinations}`,
+            content: `SHARE_SEARCH:${search._id}`,
         });
         window.dispatchEvent(new CustomEvent('flaights:mission:send-message'));
         window.dispatchEvent(new CustomEvent('flaights:mission:share-from-chat'));
@@ -289,9 +288,13 @@ export default function Chat() {
                     >
                         <ArrowLeft size={24} />
                     </button>
-                    <UserAvatar user={otherUser} size={40} />
+                    <Link to={`/user/${otherUser._id}`} className="shrink-0 transition-transform hover:scale-105 active:scale-95">
+                        <UserAvatar user={otherUser} size={40} />
+                    </Link>
                     <div className="flex flex-col gap-1">
-                        <h1 className="text-lg font-bold text-content leading-none">{otherUser.username}</h1>
+                        <Link to={`/user/${otherUser._id}`} className="hover:text-brand transition-colors">
+                            <h1 className="text-lg font-bold text-content leading-none">{otherUser.username}</h1>
+                        </Link>
                         <span className="text-xs font-medium text-content-muted animate-in fade-in">
                             {isOnline ? (
                                 <span className="text-brand font-bold">{t("chat.online")}</span>
@@ -321,31 +324,18 @@ export default function Chat() {
 
                                         const renderContent = () => {
                                             if (isSharedSearch) {
-                                                const [, searchId, origin, destination] = msg.content.split(":");
-                                                return (
-                                                    <div className="flex flex-col gap-3 min-w-[200px]">
-                                                        <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider opacity-70">
-                                                            <Plane size={14} className="rotate-45" />
-                                                            {t("share.flightShared")}
-                                                        </div>
-                                                        <div className="font-bold text-base">
-                                                            {origin} → {destination}
-                                                        </div>
-                                                        <Link
-                                                            to={`/search/${searchId}`}
-                                                            className={`text-center py-2 rounded-xl text-xs font-bold transition-all ${isSelf ? 'bg-white/20 hover:bg-white/30 text-white' : 'bg-brand text-white hover:opacity-90'}`}
-                                                        >
-                                                            {t("share.viewTripDetails")}
-                                                        </Link>
-                                                    </div>
-                                                );
+                                                return <SharedSearchCard content={msg.content} isSelf={isSelf} />;
                                             }
                                             return <p className="text-sm wrap-break-word whitespace-pre-wrap">{msg.content}</p>;
                                         };
 
                                         return (
                                             <div key={msg._id} className={`flex items-end gap-2 ${isSelf ? 'justify-end' : 'justify-start'}`}>
-                                                {!isSelf && <UserAvatar user={otherUser} size={32} className="self-end" />}
+                                                {!isSelf && (
+                                                    <Link to={`/user/${otherUser._id}`} className="self-end hover:scale-110 transition-transform active:scale-95">
+                                                        <UserAvatar user={otherUser} size={32} />
+                                                    </Link>
+                                                )}
                                                 <div className={`max-w-md lg:max-w-lg px-4 py-3 rounded-2xl shadow-sm ${isSelf ? 'bg-brand text-content-on-brand rounded-br-none' : 'bg-surface text-content rounded-bl-none'}`}>
                                                     {renderContent()}
                                                     <div className="flex items-center justify-end gap-1.5 mt-1.5">
@@ -357,7 +347,11 @@ export default function Chat() {
                                                         )}
                                                     </div>
                                                 </div>
-                                                {isSelf && <UserAvatar user={selfUser} size={32} className="self-end" />}
+                                                {isSelf && (
+                                                    <Link to={`/user/${selfUser?._id}`} className="self-end hover:scale-110 transition-transform active:scale-95">
+                                                        <UserAvatar user={selfUser} size={32} />
+                                                    </Link>
+                                                )}
                                             </div>
                                         );
                                     })}

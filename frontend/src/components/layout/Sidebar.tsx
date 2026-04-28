@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
-import { Compass, Menu, Users, X, MessageSquare, Zap } from "lucide-react";
+import { Compass, Menu, Users, X, MessageSquare, Zap, Sparkles } from "lucide-react";
 import NavIconButton from "../ui/NavIconButton";
 import { useTranslation } from "react-i18next";
 
@@ -27,18 +27,24 @@ export default function Sidebar({ isOpen, onClose, onToggle, variant = 'classic'
     const navItems = [
         {
             label: t("sidebar.searchFlights"),
-            path: "/",
+            path: "/?m=manual",
             icon: <Compass size={20} />,
             show: true,
         },
         {
+            label: t("sidebar.aiAgent"),
+            path: "/?m=ai",
+            icon: <Sparkles size={20} />,
+            show: true,
+        },
+        {
             label: t("sidebar.geneticTrip"),
-            path: "/genetic-trip",
+            path: "/multi-city",
             icon: <Zap size={20} />,
             show: true,
         },
         {
-            label: "Chats",
+            label: t("sidebar.chats"),
             path: "/chats",
             icon: <MessageSquare size={20} />,
             show: isAuthenticated,
@@ -108,7 +114,7 @@ export default function Sidebar({ isOpen, onClose, onToggle, variant = 'classic'
                             {isOpen ? (
                                 <>
                                     <X size={20} className="shrink-0 transition-transform duration-300 group-hover:rotate-90" />
-                                    <span className="font-bold text-sm text-content">Menú</span>
+                                    <span className="font-bold text-sm text-content">{t("sidebar.menu")}</span>
                                 </>
                             ) : (
                                 <Menu size={20} className="group-hover:text-content transition-colors shrink-0" />
@@ -128,7 +134,9 @@ export default function Sidebar({ isOpen, onClose, onToggle, variant = 'classic'
                         ))
                     ) : (
                         navItems.filter(item => item.show).map((item, idx) => {
-                            const isActive = location.pathname === item.path;
+                            const isActive = item.path.includes('?')
+                                ? (location.pathname + location.search) === item.path || (location.pathname === '/' && location.search === '' && item.path === '/?m=ai')
+                                : location.pathname === item.path;
                             return (
                                 <Link
                                     key={item.path}
@@ -191,10 +199,10 @@ export default function Sidebar({ isOpen, onClose, onToggle, variant = 'classic'
                     `}
                 >
                     <div className="grid grid-cols-2 gap-x-4 gap-y-3">
-                        <Link to="/about" onClick={onClose} className="text-[11px] font-bold text-content-muted hover:text-brand transition-colors text-center">About us</Link>
-                        <Link to="/contact" onClick={onClose} className="text-[11px] font-bold text-content-muted hover:text-brand transition-colors text-center">Contact</Link>
-                        <Link to="/privacy" onClick={onClose} className="text-[11px] font-bold text-content-muted hover:text-brand transition-colors text-center">Privacy Policy</Link>
-                        <Link to="/terms" onClick={onClose} className="text-[11px] font-bold text-content-muted hover:text-brand transition-colors text-center">Terms of Service</Link>
+                        <Link to="/about" onClick={onClose} className="text-[11px] font-bold text-content-muted hover:text-brand transition-colors text-center">{t("footer.aboutUs")}</Link>
+                        <Link to="/contact" onClick={onClose} className="text-[11px] font-bold text-content-muted hover:text-brand transition-colors text-center">{t("footer.contact")}</Link>
+                        <Link to="/privacy" onClick={onClose} className="text-[11px] font-bold text-content-muted hover:text-brand transition-colors text-center">{t("footer.privacyPolicy")}</Link>
+                        <Link to="/terms" onClick={onClose} className="text-[11px] font-bold text-content-muted hover:text-brand transition-colors text-center">{t("footer.termsOfService")}</Link>
                     </div>
                 </div>
 

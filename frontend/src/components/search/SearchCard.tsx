@@ -90,10 +90,19 @@ export default function SearchCard({ search, isFeatured, children }: SearchCardP
                             </div>
                         </div>
                         <div className="flex flex-col gap-1">
-                            <span className="text-[10px] font-black text-content-muted/60 uppercase tracking-widest">Tipo de Viaje</span>
+                            <span className="text-[10px] font-black text-content-muted/60 uppercase tracking-widest">{search.return_date ? 'Fecha Vuelta' : 'Tipo de Viaje'}</span>
                             <div className="flex items-center gap-2 text-sm font-bold text-content">
-                                {search.return_date ? <RefreshCw size={14} className="text-brand" /> : <ArrowRight size={14} className="text-brand" />}
-                                {search.return_date ? 'Ida y Vuelta' : 'Solo Ida'}
+                                {search.return_date ? (
+                                    <>
+                                        <RefreshCw size={14} className="text-brand" />
+                                        {new Date(search.return_date).toLocaleDateString(undefined, { day: '2-digit', month: 'short', year: 'numeric' })}
+                                    </>
+                                ) : (
+                                    <>
+                                        <ArrowRight size={14} className="text-brand" />
+                                        Solo Ida
+                                    </>
+                                )}
                             </div>
                         </div>
                     </div>

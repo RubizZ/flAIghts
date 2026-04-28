@@ -153,16 +153,10 @@ export class AuthService {
             // Generar password seguro y aleatorio
             const randomPassword = crypto.randomBytes(32).toString('hex');
 
-            let profilePictureKey: string | undefined;
-            if (payload.picture) {
-                profilePictureKey = await this.uploadGoogleProfilePictureToS3(payload.picture, payload.sub || email);
-            }
-
             user = new User({
                 email,
                 username,
                 password: PasswordService.hashPassword(randomPassword),
-                profile_picture: profilePictureKey || payload.picture, // Fallback a URL si falla S3
                 google_id: googleId,
                 google_email: email,
                 is_password_set: false
@@ -307,13 +301,6 @@ export class AuthService {
         user.security_code = undefined;
         user.security_code_expires = undefined;
 
-        // Optionally update profile picture if user doesn't have one
-        if (!user.profile_picture && payload.picture) {
-            const profilePictureKey = await this.uploadGoogleProfilePictureToS3(payload.picture, googleId);
-            if (profilePictureKey) {
-                user.profile_picture = profilePictureKey;
-            }
-        }
 
         await user.save();
 

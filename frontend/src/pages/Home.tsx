@@ -13,6 +13,7 @@ import ManualSearchForm from "../components/search/ManualSearchForm.tsx";
 import NavIconButton from "../components/ui/NavIconButton.tsx";
 import AirportReportModal from "../components/search/AirportReportModal.tsx";
 import HomeCard from "../components/home/HomeCard.tsx";
+import GlobeLoadingScreen from "../components/ui/GlobeLoadingScreen.tsx";
 import { useNavLogo } from "@/context/NavLogoContext";
 
 export default function Home() {
@@ -109,31 +110,46 @@ export default function Home() {
         initialParamsLoaded.current = true;
     }, [globeAirports, searchParams]);
 
+    // React to URL changes from outside (e.g. sidebar clicks)
+    useEffect(() => {
+        if (!initialParamsLoaded.current) return;
+        const m = searchParams.get('m');
+        if (m === 'manual' || m === 'ai') {
+            setSearchMode(prev => prev !== m ? m : prev);
+        }
+    }, [searchParams]);
+
     // Synchronize state to URL parameters
     useEffect(() => {
         if (!initialParamsLoaded.current) return;
 
-        const params = new URLSearchParams(searchParams);
+        setSearchParams(prev => {
+            const params = new URLSearchParams(prev);
+            let hasChanges = false;
 
-        if (origins.length > 0) params.set('o', origins.map(serializeSelection).join(','));
-        else params.delete('o');
+            const setParam = (key: string, value: string | null) => {
+                if (value) {
+                    if (params.get(key) !== value) {
+                        params.set(key, value);
+                        hasChanges = true;
+                    }
+                } else {
+                    if (params.has(key)) {
+                        params.delete(key);
+                        hasChanges = true;
+                    }
+                }
+            };
 
-        if (destinations.length > 0) params.set('d', destinations.map(serializeSelection).join(','));
-        else params.delete('d');
+            setParam('o', origins.length > 0 ? origins.map(serializeSelection).join(',') : null);
+            setParam('d', destinations.length > 0 ? destinations.map(serializeSelection).join(',') : null);
+            setParam('date', departureDate || null);
+            setParam('ret', returnDate || null);
+            setParam('m', searchMode || null);
 
-        if (departureDate) params.set('date', departureDate);
-        else params.delete('date');
-
-        if (returnDate) params.set('ret', returnDate);
-        else params.delete('ret');
-
-        if (searchMode) params.set('m', searchMode);
-        else params.delete('m');
-
-        if (params.toString() !== searchParams.toString()) {
-            setSearchParams(params, { replace: true });
-        }
-    }, [origins, destinations, departureDate, returnDate, searchMode, setSearchParams, searchParams]);
+            return hasChanges ? params : prev;
+        }, { replace: true });
+    }, [origins, destinations, departureDate, returnDate, searchMode, setSearchParams]);
 
 
 
@@ -483,20 +499,11 @@ export default function Home() {
             )}
 
             {/* Loading Screen */}
-            <div className={`absolute inset-0 z-app-loading bg-main flex flex-col items-center justify-center gap-6 transition-opacity duration-700 ${globeReady ? 'opacity-0 pointer-events-none' : 'opacity-100 pointer-events-auto'}`}>
-                <div className="relative flex items-center justify-center">
-                    <div className="absolute w-20 h-20 rounded-full border border-brand/40 animate-radar" style={{ animationDelay: '0s' }} />
-                    <div className="absolute w-20 h-20 rounded-full border border-brand/25 animate-radar" style={{ animationDelay: '0.8s' }} />
-                    <div className="absolute w-20 h-20 rounded-full border border-brand/15 animate-radar" style={{ animationDelay: '1.6s' }} />
-                    <svg className="w-10 h-10 text-brand relative z-10" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M21 16v-2l-8-5V3.5A1.5 1.5 0 0 0 11.5 2A1.5 1.5 0 0 0 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1l3.5 1v-1.5L13 19v-5.5l8 2.5z" />
-                    </svg>
-                </div>
-                <div className="flex flex-col items-center gap-1">
-                    <span className="text-content-muted text-xs font-bold uppercase tracking-widest">{t("searchFlight.loading.loadingGlobe")}</span>
-
-                </div>
-            </div>
+            <GlobeLoadingScreen
+                isVisible={!globeReady}
+                text={t("searchFlight.loading.loadingGlobe")}
+                className="absolute inset-0 z-app-loading bg-main"
+            />
 
             {/* Floating Selection Controls */}
             <div

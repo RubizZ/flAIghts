@@ -6154,6 +6154,10 @@
             },
             "type": "array"
           },
+          "distance_km_to_user": {
+            "type": "number",
+            "format": "double"
+          },
           "combined_score": {
             "type": "number",
             "format": "double"

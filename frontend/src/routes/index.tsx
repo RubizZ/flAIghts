@@ -51,7 +51,7 @@ export const routes: RouteObject[] = [
                     { path: "/chats/:userId", element: <Chat /> },
                     { path: "/settings", element: <Settings /> },
                     { path: "/history", element: <SearchHistory /> },
-                    { path: "/genetic-trip", element: <GeneticTrip /> },
+                    { path: "/multi-stop", element: <GeneticTrip />, handle: { isGlobe: true } },
                     { path: "/terms", element: <TermsOfService /> },
                     { path: "/privacy", element: <PrivacyPolicy /> },
                     { path: "/acknowledgements", element: <Acknowledgements /> },

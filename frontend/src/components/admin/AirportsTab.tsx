@@ -3,11 +3,12 @@ import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { Search, Loader2, Sliders, Plane, ArrowDown, ArrowUp, ArrowUpDown } from 'lucide-react';
 import { useListAirports, useUpdateAirport } from '@/api/generated/openapi/admin';
-import { COUNTRY_NAMES } from '@/constants/countries';
+import { useTranslation } from 'react-i18next';
 import Select from '@/components/ui/Select';
 
 export default function AirportsTab() {
     const queryClient = useQueryClient();
+    const { t } = useTranslation();
     const [page, setPage] = useState(1);
     const [searchTerm, setSearchTerm] = useState("");
     const [debouncedSearch, setDebouncedSearch] = useState("");
@@ -125,7 +126,7 @@ export default function AirportsTab() {
                                         <td className="px-4 py-3 opacity-60 capitalize">{a.type.replace('_', ' ')}</td>
                                         <td className="px-4 py-3">
                                             <div className="flex flex-col text-content-muted text-xs">
-                                                <span className="font-bold text-content/80">{a.city}, {COUNTRY_NAMES[a.country]?.[1] || a.country}</span>
+                                                <span className="font-bold text-content/80">{a.city}, {t(`countries.${a.country}`, { defaultValue: a.country })}</span>
                                                 <span className="font-mono text-[12px] opacity-60">
                                                     {a.location.coordinates[1].toFixed(4)}°, {a.location.coordinates[0].toFixed(4)}°
                                                 </span>

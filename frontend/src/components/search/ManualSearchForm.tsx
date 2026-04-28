@@ -75,6 +75,7 @@ const ManualSearchForm: React.FC<ManualSearchFormProps> = ({
                     className={'flex-1 min-w-0 h-full'}
                     otherSelected={destinations}
                     onHoverChange={(entity) => onHoverChange?.(entity, 'origin')}
+                    disableCities={false}
                 />
 
                 {/* Switch Button */}
@@ -103,6 +104,7 @@ const ManualSearchForm: React.FC<ManualSearchFormProps> = ({
                     className={'flex-1 min-w-0 h-full'}
                     otherSelected={origins}
                     onHoverChange={(entity) => onHoverChange?.(entity, 'destination')}
+                    disableCities={false}
                 />
             </div>
 
