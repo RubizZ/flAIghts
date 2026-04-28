@@ -239,7 +239,7 @@ export default function GeneticTrip() {
                         <div className={`text-sm text-content-muted space-y-2 transition-all duration-500 ease-in-out overflow-hidden ${explanationVisible ? 'max-h-60 opacity-100 mt-1' : 'max-h-0 opacity-0 mt-0'}`}>
                             <p>
                                 <Trans i18nKey="geneticTripPage.description1">
-                                    Descubre la <span className="text-brand font-black">ruta óptima</span> para visitar varias ciudades pagando lo mínimo. Nuestro algoritmo genético prueba miles de combinaciones en segundos.
+                                    Perfecto para mochileros o viajes largos. Descubre la <span className="text-brand font-black">ruta óptima</span> para visitar varias ciudades pagando lo mínimo.
                                 </Trans>
                             </p>
                             <p className="text-xs opacity-80">
