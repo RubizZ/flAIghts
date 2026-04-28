@@ -570,10 +570,6 @@
       "ai": {
         "description": "Use the AI agent to plan a complex trip using natural language.",
         "steps": {
-          "get_search_history": {
-            "description": "Ask the agent to consult your previous searches.",
-            "title": "Your history"
-          },
           "receive_ai_flights": {
             "description": "Ask the agent to look for flights and have it recommend one of them.",
             "title": "Receive flights from the AI"
@@ -689,33 +685,33 @@
         "description": "Share your flight searches with your friends.",
         "steps": {
           "share_from_chat": {
-            "description": "Share a search directly in a conversation with a friend. You can send it to the user \"flAIghts\".",
+            "description": "Share a search directly in a conversation. You can send it to a friend or use the \"flAIghts\" user.",
             "title": "Share from the chat"
           },
           "share_from_results": {
-            "description": "Use the share button on the search results page and share it with someone. You can send it to the user \"flAIghts\".",
+            "description": "Use the share button on the search results page and share it with someone. If you don't have contacts, try with the \"flAIghts\" user.",
             "title": "Share from results"
           }
         },
         "title": "Share your trips"
       },
       "social": {
-        "description": "Connect with our official user to start sharing your trips.",
+        "description": "Find and add other travelers to share your flight plans and organize group trips.",
         "steps": {
           "send_friend_request": {
-            "description": "Search for the user \"flAIghts\" and send a request. It will be accepted instantly!",
-            "title": "Add flAIghts"
+            "description": "Send a friend request to someone to connect. You can also add us by searching for the \"flAIghts\" user.",
+            "title": "Add a friend"
           },
           "send_message": {
-            "description": "Send a direct message to say hello.",
-            "title": "Write a message"
+            "description": "Send a direct message to one of your friends to say hello. Try it with the \"flAIghts\" user!",
+            "title": "Start a conversation"
           },
           "view_user_profile": {
-            "description": "Search for a user and visit their public profile. You can search for the user \"flAIghts\".",
-            "title": "Visit a profile"
+            "description": "Find a user in the community and visit their profile. Alternatively, you can search for the \"flAIghts\" user.",
+            "title": "Search for a traveler"
           }
         },
-        "title": "Search and add flAIghts"
+        "title": "Connect with friends"
       }
     },
     "noMissionAvailable": "No Mission Available",

@@ -210,15 +210,7 @@ const AIFlightsReturnedListener: React.FC = () => {
     return null;
 };
 
-const AIGetSearchHistoryListener: React.FC = () => {
-    const { completeStep } = useMissions();
-    useEffect(() => {
-        const handle = () => completeStep('ai_mission', 'get_search_history');
-        window.addEventListener('flaights:mission:agent-get-user-search-history', handle);
-        return () => window.removeEventListener('flaights:mission:agent-get-user-search-history', handle);
-    }, [completeStep]);
-    return null;
-};
+
 
 const ViewFlightDetailsListener: React.FC = () => {
     const { completeStep } = useMissions();
@@ -500,12 +492,7 @@ export const MISSIONS: BaseMission[] = [
                 description: 'missions.list.ai.steps.use_ai.description',
                 listener: AIChatStepListener
             },
-            {
-                id: 'get_search_history',
-                title: 'missions.list.ai.steps.get_search_history.title',
-                description: 'missions.list.ai.steps.get_search_history.description',
-                listener: AIGetSearchHistoryListener
-            },
+
             {
                 id: 'receive_ai_flights',
                 title: 'missions.list.ai.steps.receive_ai_flights.title',
@@ -608,8 +595,6 @@ export const MISSIONS: BaseMission[] = [
  * t('missions.list.ai.description')
  * t('missions.list.ai.steps.use_ai.title')
  * t('missions.list.ai.steps.use_ai.description')
- * t('missions.list.ai.steps.get_search_history.title')
- * t('missions.list.ai.steps.get_search_history.description')
  * t('missions.list.ai.steps.receive_ai_flights.title')
  * t('missions.list.ai.steps.receive_ai_flights.description')
  * 

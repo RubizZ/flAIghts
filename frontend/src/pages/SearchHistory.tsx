@@ -2,11 +2,11 @@ import { useState, UIEvent } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useGetSearchesInfinite } from "@/api/generated/openapi/search";
 import SearchCard from "@/components/search/SearchCard";
-import { 
-    Filter, 
-    Search as SearchIcon, 
-    X, 
-    History, 
+import {
+    Filter,
+    Search as SearchIcon,
+    X,
+    History,
     SlidersHorizontal,
     PlaneTakeoff,
     PlaneLanding,
@@ -27,7 +27,7 @@ import { toast } from "sonner";
 export default function SearchHistory() {
     const { user, isAuthenticated } = useAuth();
     const queryClient = useQueryClient();
-    
+
     // Hooks de compartir/privatizar
     const { mutate: shareSearch, isPending: isSharing } = useShareSearch({
         mutation: {
@@ -57,7 +57,7 @@ export default function SearchHistory() {
             shareSearch({ searchId });
         }
     };
-    
+
     // Filtros
     const [origin, setOrigin] = useState("");
     const [destination, setDestination] = useState("");
@@ -80,8 +80,8 @@ export default function SearchHistory() {
         isFetchingNextPage,
         isLoading
     } = useGetSearchesInfinite(
-        user?._id || "", 
-        { 
+        user?._id || "",
+        {
             limit: 10,
             origin: origin || undefined,
             destination: destination || undefined,
@@ -123,7 +123,7 @@ export default function SearchHistory() {
             {/* Header */}
             <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
-                    <Link 
+                    <Link
                         to={`/user/${user._id}`}
                         className="p-2 hover:bg-surface rounded-full transition-colors border border-line"
                     >
@@ -138,7 +138,7 @@ export default function SearchHistory() {
                     </div>
                 </div>
 
-                <button 
+                <button
                     onClick={() => setIsFilterMobileOpen(true)}
                     className="lg:hidden p-3 bg-brand text-content-on-brand rounded-2xl shadow-lg shadow-brand/20 active:scale-95 transition-all"
                 >
@@ -154,7 +154,7 @@ export default function SearchHistory() {
                             <SlidersHorizontal size={16} className="text-brand" />
                             Filtros
                         </div>
-                        <button 
+                        <button
                             onClick={clearFilters}
                             className="text-[10px] font-black text-brand uppercase tracking-tighter hover:underline cursor-pointer"
                         >
@@ -169,9 +169,9 @@ export default function SearchHistory() {
                                 <label className="text-[10px] font-black uppercase tracking-widest text-content-muted ml-1">Origen (IATA)</label>
                                 <div className="relative">
                                     <PlaneTakeoff className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-content-muted" />
-                                    <input 
-                                        type="text" 
-                                        placeholder="MAD, BCN..." 
+                                    <input
+                                        type="text"
+                                        placeholder="MAD, BCN..."
                                         value={origin}
                                         onChange={(e) => setOrigin(e.target.value.toUpperCase())}
                                         className="w-full pl-11 pr-4 py-3 bg-surface border border-line rounded-2xl text-sm font-bold focus:border-brand outline-none transition-all"
@@ -182,9 +182,9 @@ export default function SearchHistory() {
                                 <label className="text-[10px] font-black uppercase tracking-widest text-content-muted ml-1">Destino (IATA)</label>
                                 <div className="relative">
                                     <PlaneLanding className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-content-muted" />
-                                    <input 
-                                        type="text" 
-                                        placeholder="JFK, LHR..." 
+                                    <input
+                                        type="text"
+                                        placeholder="JFK, LHR..."
                                         value={destination}
                                         onChange={(e) => setDestination(e.target.value.toUpperCase())}
                                         className="w-full pl-11 pr-4 py-3 bg-surface border border-line rounded-2xl text-sm font-bold focus:border-brand outline-none transition-all"
@@ -196,7 +196,7 @@ export default function SearchHistory() {
                         {/* Status */}
                         <div className="space-y-1.5">
                             <label className="text-[10px] font-black uppercase tracking-widest text-content-muted ml-1">Estado</label>
-                            <select 
+                            <select
                                 value={status}
                                 onChange={(e) => setStatus(e.target.value)}
                                 className="w-full px-4 py-3 bg-surface border border-line rounded-2xl text-sm font-bold focus:border-brand outline-none transition-all appearance-none cursor-pointer"
@@ -213,9 +213,9 @@ export default function SearchHistory() {
                             <label className="text-[10px] font-black uppercase tracking-widest text-content-muted ml-1">Presupuesto Máximo (€)</label>
                             <div className="relative">
                                 <CreditCard className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-content-muted" />
-                                <input 
-                                    type="number" 
-                                    placeholder="Ej: 500" 
+                                <input
+                                    type="number"
+                                    placeholder="Ej: 500"
                                     value={maxPrice || ""}
                                     onChange={(e) => setMaxPrice(e.target.value ? Number(e.target.value) : undefined)}
                                     className="w-full pl-11 pr-4 py-3 bg-surface border border-line rounded-2xl text-sm font-bold focus:border-brand outline-none transition-all"
@@ -233,7 +233,7 @@ export default function SearchHistory() {
                                     isOpen={isStartCalendarOpen}
                                     setIsOpen={setIsStartCalendarOpen}
                                     trigger={
-                                        <button 
+                                        <button
                                             onClick={() => setIsStartCalendarOpen(!isStartCalendarOpen)}
                                             className="w-full flex items-center justify-between pl-11 pr-4 py-3 bg-surface border border-line rounded-2xl text-sm font-bold focus:border-brand outline-none transition-all relative cursor-pointer"
                                         >
@@ -252,7 +252,7 @@ export default function SearchHistory() {
                                     isOpen={isEndCalendarOpen}
                                     setIsOpen={setIsEndCalendarOpen}
                                     trigger={
-                                        <button 
+                                        <button
                                             onClick={() => setIsEndCalendarOpen(!isEndCalendarOpen)}
                                             className="w-full flex items-center justify-between pl-11 pr-4 py-3 bg-surface border border-line rounded-2xl text-sm font-bold focus:border-brand outline-none transition-all relative cursor-pointer"
                                         >
@@ -269,7 +269,7 @@ export default function SearchHistory() {
 
                 {/* Main Content */}
                 <main className="flex-1 flex flex-col min-w-0">
-                    <div 
+                    <div
                         className="flex-1 overflow-y-auto pr-2 flex flex-col gap-6 custom-scrollbar"
                         onScroll={handleScroll}
                     >
@@ -289,7 +289,7 @@ export default function SearchHistory() {
                                         No hemos encontrado búsquedas que coincidan con los filtros seleccionados.
                                     </p>
                                 </div>
-                                <button 
+                                <button
                                     onClick={clearFilters}
                                     className="px-6 py-3 bg-brand text-content-on-brand rounded-2xl font-bold shadow-xl shadow-brand/20 hover:scale-105 active:scale-95 transition-all"
                                 >
@@ -302,9 +302,9 @@ export default function SearchHistory() {
                                     {searchesData?.pages.map((page, i) => (
                                         <div key={i} className="flex flex-col gap-6">
                                             {page.items.map((search) => (
-                                                <SearchCard 
-                                                    key={search._id} 
-                                                    search={search} 
+                                                <SearchCard
+                                                    key={search._id}
+                                                    search={search}
                                                     isFeatured={search.shared}
                                                 >
                                                     <button
@@ -314,11 +314,10 @@ export default function SearchHistory() {
                                                             toggleShare(search._id, !!search.shared);
                                                         }}
                                                         disabled={isSharing || isPrivatizing}
-                                                        className={`p-2 rounded-xl transition-all border cursor-pointer ${
-                                                            search.shared 
-                                                            ? "bg-amber-500/10 text-amber-500 border-amber-500/20 hover:bg-amber-500/20" 
-                                                            : "bg-surface text-content-muted border-line hover:border-brand hover:text-brand"
-                                                        }`}
+                                                        className={`p-2 rounded-xl transition-all border cursor-pointer ${search.shared
+                                                                ? "bg-amber-500/10 text-amber-500 border-amber-500/20 hover:bg-amber-500/20"
+                                                                : "bg-surface text-content-muted border-line hover:border-brand hover:text-brand"
+                                                            }`}
                                                         title={search.shared ? "Hacer privada" : "Hacer pública"}
                                                     >
                                                         {isSharing || isPrivatizing ? (
@@ -364,7 +363,7 @@ export default function SearchHistory() {
                                 <Filter className="w-5 h-5 text-brand" />
                                 <h2 className="text-xl font-black text-content tracking-tight">Filtros Avanzados</h2>
                             </div>
-                            <button 
+                            <button
                                 onClick={() => setIsFilterMobileOpen(false)}
                                 className="p-2 hover:bg-surface rounded-full transition-all border border-line"
                             >
@@ -378,9 +377,9 @@ export default function SearchHistory() {
                                 <div className="grid grid-cols-2 gap-4">
                                     <div className="space-y-1.5">
                                         <label className="text-[10px] font-black uppercase tracking-widest text-content-muted ml-1">Origen</label>
-                                        <input 
-                                            type="text" 
-                                            placeholder="MAD" 
+                                        <input
+                                            type="text"
+                                            placeholder="MAD"
                                             value={origin}
                                             onChange={(e) => setOrigin(e.target.value.toUpperCase())}
                                             className="w-full px-4 py-3 bg-surface border border-line rounded-2xl text-sm font-bold focus:border-brand outline-none"
@@ -388,9 +387,9 @@ export default function SearchHistory() {
                                     </div>
                                     <div className="space-y-1.5">
                                         <label className="text-[10px] font-black uppercase tracking-widest text-content-muted ml-1">Destino</label>
-                                        <input 
-                                            type="text" 
-                                            placeholder="JFK" 
+                                        <input
+                                            type="text"
+                                            placeholder="JFK"
                                             value={destination}
                                             onChange={(e) => setDestination(e.target.value.toUpperCase())}
                                             className="w-full px-4 py-3 bg-surface border border-line rounded-2xl text-sm font-bold focus:border-brand outline-none"
@@ -400,9 +399,9 @@ export default function SearchHistory() {
 
                                 <div className="space-y-1.5">
                                     <label className="text-[10px] font-black uppercase tracking-widest text-content-muted ml-1">Presupuesto Máximo</label>
-                                    <input 
-                                        type="number" 
-                                        placeholder="Ej: 500" 
+                                    <input
+                                        type="number"
+                                        placeholder="Ej: 500"
                                         value={maxPrice || ""}
                                         onChange={(e) => setMaxPrice(e.target.value ? Number(e.target.value) : undefined)}
                                         className="w-full px-4 py-3 bg-surface border border-line rounded-2xl text-sm font-bold focus:border-brand outline-none"
@@ -416,11 +415,10 @@ export default function SearchHistory() {
                                             <button
                                                 key={s}
                                                 onClick={() => setStatus(s)}
-                                                className={`px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all border ${
-                                                    status === s 
-                                                    ? "bg-brand text-content-on-brand border-brand" 
-                                                    : "bg-surface text-content-muted border-line hover:border-brand"
-                                                }`}
+                                                className={`px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all border ${status === s
+                                                        ? "bg-brand text-content-on-brand border-brand"
+                                                        : "bg-surface text-content-muted border-line hover:border-brand"
+                                                    }`}
                                             >
                                                 {s === "" ? "Todos" : s === "completed" ? "OK" : s === "searching" ? "..." : "Error"}
                                             </button>
@@ -437,7 +435,7 @@ export default function SearchHistory() {
                                             isOpen={isStartCalendarMobileOpen}
                                             setIsOpen={setIsStartCalendarMobileOpen}
                                             trigger={
-                                                <button 
+                                                <button
                                                     onClick={() => setIsStartCalendarMobileOpen(!isStartCalendarMobileOpen)}
                                                     className="w-full flex items-center justify-between px-4 py-3 bg-surface border border-line rounded-2xl text-sm font-bold text-left cursor-pointer"
                                                 >
@@ -455,7 +453,7 @@ export default function SearchHistory() {
                                             isOpen={isEndCalendarMobileOpen}
                                             setIsOpen={setIsEndCalendarMobileOpen}
                                             trigger={
-                                                <button 
+                                                <button
                                                     onClick={() => setIsEndCalendarMobileOpen(!isEndCalendarMobileOpen)}
                                                     className="w-full flex items-center justify-between px-4 py-3 bg-surface border border-line rounded-2xl text-sm font-bold text-left cursor-pointer"
                                                 >
@@ -470,13 +468,13 @@ export default function SearchHistory() {
                         </div>
 
                         <div className="p-6 border-t border-line flex gap-4">
-                            <button 
+                            <button
                                 onClick={clearFilters}
                                 className="flex-1 py-4 bg-surface border border-line rounded-2xl text-sm font-black uppercase tracking-widest text-content-muted"
                             >
                                 Limpiar
                             </button>
-                            <button 
+                            <button
                                 onClick={() => setIsFilterMobileOpen(false)}
                                 className="flex-1 py-4 bg-brand text-content-on-brand rounded-2xl text-sm font-black uppercase tracking-widest shadow-xl shadow-brand/20"
                             >

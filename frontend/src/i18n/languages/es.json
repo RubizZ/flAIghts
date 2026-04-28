@@ -574,10 +574,6 @@
       "ai": {
         "description": "Usa el agente de IA para planificar un viaje complejo mediante lenguaje natural.",
         "steps": {
-          "get_search_history": {
-            "description": "Pídele al agente que consulte tus búsquedas anteriores.",
-            "title": "Tu historial"
-          },
           "receive_ai_flights": {
             "description": "Pídele al agente que te busque vuelos y haz que te recomiende uno de ellos.",
             "title": "Recibe vuelos de la IA"
@@ -693,33 +689,33 @@
         "description": "Comparte tus búsquedas de vuelos con tus amigos.",
         "steps": {
           "share_from_chat": {
-            "description": "Comparte una búsqueda directamente en una conversación con un amigo. Puedes enviarsela al usuario \"flAIghts\".",
+            "description": "Comparte una búsqueda directamente en una conversación. Puedes enviársela a un amigo o usar al usuario \"flAIghts\".",
             "title": "Comparte desde el chat"
           },
           "share_from_results": {
-            "description": "Usa el botón de compartir en la página de resultados de búsqueda y compártelo con alguien. Puedes enviarselo al usuario \"flAIghts\".",
+            "description": "Usa el botón de compartir en la página de resultados y envíaselo a alguien. Si no tienes contactos, prueba con el usuario \"flAIghts\".",
             "title": "Comparte desde resultados"
           }
         },
         "title": "Comparte tus viajes"
       },
       "social": {
-        "description": "Conecta con nuestro usuario oficial para empezar a compartir tus viajes.",
+        "description": "Busca y agrega a otros viajeros para compartir vuestros planes de vuelo y organizar viajes en grupo.",
         "steps": {
           "send_friend_request": {
-            "description": "Busca al usuario \"flAIghts\" y envíale una solicitud. ¡La aceptará al instante!",
-            "title": "Agrega a flAIghts"
+            "description": "Envía una solicitud de amistad a alguien para conectar. También puedes agregarnos a nosotros buscando al usuario \"flAIghts\".",
+            "title": "Agrega a un amigo"
           },
           "send_message": {
-            "description": "Envíale un mensaje directo para saludar.",
-            "title": "Escribe un mensaje"
+            "description": "Envía un mensaje directo a uno de tus amigos para saludar. ¡Pruébalo con el usuario \"flAIghts\"!",
+            "title": "Inicia una conversación"
           },
           "view_user_profile": {
-            "description": "Busca a un usuario y visita su perfil público. Puedes buscar al usuario \"flAIghts\".",
-            "title": "Visita un perfil"
+            "description": "Encuentra a un usuario en la comunidad y visita su perfil. Como alternativa, puedes buscar al usuario \"flAIghts\".",
+            "title": "Busca a un viajero"
           }
         },
-        "title": "Busca y agrega a flAIghts"
+        "title": "Conecta con amigos"
       }
     },
     "noMissionAvailable": "Ninguna misión disponible",
