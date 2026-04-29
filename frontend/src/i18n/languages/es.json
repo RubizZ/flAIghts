@@ -159,7 +159,7 @@
     },
     "error": "Error al cargar las conversaciones.",
     "newChat": "Nuevo chat",
-    "sharedFlight": "✈️ Vuelo compartido: {{origin}} → {{destination}}",
+    "sharedFlight": "✈️ Vuelo compartido",
     "subtitle": "Tus conversaciones recientes.",
     "title": "Chats"
   },

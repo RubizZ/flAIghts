@@ -71,7 +71,7 @@ export default function Sidebar({ isOpen, onClose, onToggle, variant = 'classic'
 
             {/* ── EXTERNAL HAMBURGER BUTTON (Only for floating variant) ── */}
             {isFloating && (
-                <div className={`fixed left-4 top-4 z-sidebar transition-all duration-200 ${isOpen ? 'opacity-0 scale-75 pointer-events-none -translate-x-4' : 'opacity-100 scale-100 translate-x-0'}`}>
+                <div className={`fixed left-4 top-6 z-sidebar transition-all duration-200 ${isOpen ? 'opacity-0 scale-75 pointer-events-none -translate-x-4' : 'opacity-100 scale-100 translate-x-0'}`}>
                     <NavIconButton
                         onClick={onToggle}
                         variant={variant}

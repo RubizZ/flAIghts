@@ -57,11 +57,10 @@ export default function Chats() {
     }
 
     const conversations = response?.items || [];
-    
+
     const formatMessageContent = (content: string) => {
         if (content.startsWith("SHARE_SEARCH:")) {
-            const [, , origin, destination] = content.split(":");
-            return t("chats.sharedFlight", { origin, destination });
+            return t("chats.sharedFlight");
         }
         return content;
     };

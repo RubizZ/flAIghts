@@ -157,7 +157,7 @@
     },
     "error": "Error loading conversations.",
     "newChat": "New chat",
-    "sharedFlight": "✈️ Shared flight: {{origin}} → {{destination}}",
+    "sharedFlight": "✈️ Shared flight",
     "subtitle": "Your recent conversations.",
     "title": "Chats"
   },

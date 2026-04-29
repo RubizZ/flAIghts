@@ -32,7 +32,7 @@ export default function AppLayout() {
         <div className={`h-svh w-full bg-main text-content overflow-hidden flex flex-col sm:flex-row`}>
             {/* Mobile Top Navbar */}
             {!isGlobe && (
-                <div className="sm:hidden w-full h-14 bg-main border-b border-line flex items-center justify-between px-4 shrink-0 z-header relative">
+                <div className="sm:hidden w-full h-16 bg-main border-b border-line flex items-center justify-between px-4 shrink-0 z-header relative">
                     <div className="flex items-center gap-3">
                         <button
                             onClick={toggleSidebar}
@@ -78,7 +78,7 @@ export default function AppLayout() {
                     className={`grow bg-surface overflow-auto custom-scrollbar relative transition-[padding] duration-300 ease-in-out min-h-0
                         ${isGlobe
                             ? `w-full ${isSidebarOpen ? 'sm:pl-64' : ''}`
-                            : 'w-full sm:pt-20'
+                            : 'w-full sm:pt-24'
                         }
                     `}
                 >

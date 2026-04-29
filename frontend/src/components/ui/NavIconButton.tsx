@@ -31,9 +31,9 @@ const NavIconButton: React.FC<NavIconButtonProps> = ({
     const baseStyles = "relative flex items-center justify-center transition-all duration-100 cursor-pointer group focus:outline-none";
 
     // Strict symmetry & HUD synchronization:
-    // Icons: Strictly 40x40 Circle
-    // Pills: 40px height with horizontal padding
-    const sizeStyles = isPill ? "h-10 px-5 min-w-fit" : "w-10 h-10";
+    // Icons: Strictly 48x48 Circle
+    // Pills: 48px height with horizontal padding
+    const sizeStyles = isPill ? "h-12 px-6 min-w-fit" : "w-12 h-12";
     const shapeStyles = "rounded-full";
 
     const glassStyles = isFloating

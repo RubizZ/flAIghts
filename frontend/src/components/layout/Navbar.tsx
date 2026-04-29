@@ -440,7 +440,7 @@ export default function Navbar({ variant = 'floating', logoRef }: { variant?: 'f
         <>
             {/* CENTER LOGO */}
             <div className={variant === 'floating'
-                ? "absolute top-4 left-1/2 -translate-x-1/2 h-10 flex items-center z-header pointer-events-none"
+                ? "absolute top-6 left-1/2 -translate-x-1/2 h-12 flex items-center z-header pointer-events-none"
                 : "absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-header pointer-events-none"
             }>
                 <Logo ref={logoRef} className={variant === 'floating' ? "" : "scale-90 sm:scale-100"} />
@@ -448,7 +448,7 @@ export default function Navbar({ variant = 'floating', logoRef }: { variant?: 'f
 
             <nav className={variant === 'floating' ? "contents" : "contents"}>
                 <div className={variant === 'floating'
-                    ? "absolute top-4 right-4 flex items-center justify-end gap-2 sm:gap-4 z-content pointer-events-auto"
+                    ? "absolute top-6 right-4 flex items-center justify-end gap-2 sm:gap-4 z-content pointer-events-auto"
                     : "flex items-center gap-2 sm:gap-4 pointer-events-auto"
                 }>
                     {/* Mission Indicator Button (Evaluation Mode) */}
@@ -478,7 +478,7 @@ export default function Navbar({ variant = 'floating', logoRef }: { variant?: 'f
                         <div className="flex items-center gap-2">
                             <div className="hidden sm:block w-16 h-8 bg-surface rounded-full animate-pulse opacity-50" />
                             <div className="hidden sm:block w-20 h-8 bg-surface rounded-full animate-pulse opacity-50" />
-                            <div className="w-10 h-10 bg-surface rounded-2xl sm:rounded-full animate-pulse opacity-50" />
+                            <div className="w-12 h-12 bg-surface rounded-2xl sm:rounded-full animate-pulse opacity-50" />
                         </div>
                     ) : isAuthenticated ? (
                         <>
@@ -531,7 +531,7 @@ export default function Navbar({ variant = 'floating', logoRef }: { variant?: 'f
                                         showBadge={user.received_friend_requests.length > 0 || unreadMessagesCount > 0}
                                         badgeClassName="lg:hidden"
                                     >
-                                        <UserAvatar user={user} size={32} />
+                                        <UserAvatar user={user} size={38} />
                                     </NavIconButton>
                                 }
                                 menus={{
