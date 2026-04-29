@@ -687,6 +687,18 @@
       "share": {
         "description": "Share your flight searches with your friends.",
         "steps": {
+          "access_search_history": {
+            "description": "Access your search history.",
+            "title": "Go to your history"
+          },
+          "open_search_from_history": {
+            "description": "Select a previous flight from your history to see its details.",
+            "title": "Select a flight"
+          },
+          "open_chat": {
+            "description": "Find a friend in your chat list and enter their conversation.",
+            "title": "Open a chat"
+          },
           "share_from_chat": {
             "description": "Share a search directly in a conversation. You can send it to a friend or use the \"flAIghts\" user.",
             "title": "Share from the chat"
@@ -699,11 +711,15 @@
         "title": "Share your trips"
       },
       "social": {
-        "description": "Find and add other travelers to share your flight plans and organize group trips.",
+        "description": "Add the flAIghts user or a friend of yours to share your flight plans and organize group trips.",
         "steps": {
           "send_friend_request": {
             "description": "Send a friend request to someone to connect. You can also add us by searching for the \"flAIghts\" user.",
             "title": "Add a friend"
+          },
+          "wait_for_friend_acceptance": {
+            "description": "Wait for your request to be accepted to start talking. If you added flAIghts, it will be instant!",
+            "title": "Connection established"
           },
           "send_message": {
             "description": "Send a direct message to one of your friends to say hello. Try it with the \"flAIghts\" user!",
@@ -757,16 +773,16 @@
     },
     "roadmap": {
       "legend": {
-        "achieved": "Achieved",
+        "achieved": "Completed",
         "blocked": "Blocked",
-        "feedback": "Feedback",
-        "inProgress": "In Progress"
+        "feedback": "Feedback Pending",
+        "inProgress": "Available"
       },
       "pendingFeedback": "Feedback Pending",
       "status": {
         "available": "Available",
         "completed": "Completed",
-        "locked": "Locked"
+        "locked": "Blocked"
       },
       "subtitle": "Progress of usability challenges. Complete all missions and answer the questionnaires to finish the evaluation.",
       "title": "Evaluation Roadmap"

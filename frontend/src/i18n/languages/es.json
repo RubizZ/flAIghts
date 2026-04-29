@@ -691,6 +691,18 @@
       "share": {
         "description": "Comparte tus búsquedas de vuelos con tus amigos.",
         "steps": {
+          "access_search_history": {
+            "description": "Accede a tu historial de búsquedas.",
+            "title": "Ve a tu historial"
+          },
+          "open_search_from_history": {
+            "description": "Selecciona un vuelo previo de tu historial para ver sus detalles.",
+            "title": "Selecciona un vuelo"
+          },
+          "open_chat": {
+            "description": "Busca un amigo en tu lista de chats y entra en su conversación.",
+            "title": "Abre un chat"
+          },
           "share_from_chat": {
             "description": "Comparte una búsqueda directamente en una conversación. Puedes enviársela a un amigo o usar al usuario \"flAIghts\".",
             "title": "Comparte desde el chat"
@@ -703,11 +715,15 @@
         "title": "Comparte tus viajes"
       },
       "social": {
-        "description": "Busca y agrega a otros viajeros para compartir vuestros planes de vuelo y organizar viajes en grupo.",
+        "description": "Agrega al usuario flAIghts o a un amigo tuyo para compartir vuestros planes de vuelo y organizar viajes en grupo.",
         "steps": {
           "send_friend_request": {
             "description": "Envía una solicitud de amistad a alguien para conectar. También puedes agregarnos a nosotros buscando al usuario \"flAIghts\".",
             "title": "Agrega a un amigo"
+          },
+          "wait_for_friend_acceptance": {
+            "description": "Espera a que tu solicitud sea aceptada para empezar a hablar. ¡Si has agregado a flAIghts será instantáneo!",
+            "title": "Conexión establecida"
           },
           "send_message": {
             "description": "Envía un mensaje directo a uno de tus amigos para saludar. ¡Pruébalo con el usuario \"flAIghts\"!",
@@ -761,22 +777,22 @@
     },
     "roadmap": {
       "legend": {
-        "achieved": "Conseguida",
-        "blocked": "Bloqueado",
-        "feedback": "Feedback",
-        "inProgress": "En Curso"
+        "achieved": "Completada",
+        "blocked": "Bloqueada",
+        "feedback": "Pendiente de Feedback",
+        "inProgress": "Disponible"
       },
       "pendingFeedback": "Pendiente de Feedback",
       "status": {
         "available": "Disponible",
-        "completed": "Completado",
-        "locked": "Bloqueado"
+        "completed": "Completada",
+        "locked": "Bloqueada"
       },
       "subtitle": "Progreso de los retos de usabilidad. Completa todas las misiones y responde a los cuestionarios para terminar la evaluación.",
       "title": "Roadmap de Evaluación"
     },
     "survey": {
-      "achieved": "Conseguida",
+      "achieved": "Completada",
       "actions": {
         "finish": "Finalizar Evaluación",
         "sending": "Enviando..."

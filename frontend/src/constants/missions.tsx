@@ -71,6 +71,7 @@ const ViewUserProfileListener: React.FC = () => {
 };
 
 const SendFriendRequestListener: React.FC = () => {
+    const { user } = useAuth();
     const { completeStep } = useMissions();
     const friendMutations = useMutationState({
         filters: { mutationKey: [sendFriendRequestKey], status: 'success' },
@@ -79,10 +80,10 @@ const SendFriendRequestListener: React.FC = () => {
     const initialCount = useRef(friendMutations.length);
 
     useEffect(() => {
-        if (friendMutations.length > initialCount.current) {
+        if (friendMutations.length > initialCount.current || (user && user.friends && user.friends.length > 0)) {
             completeStep('social_mission', 'send_friend_request');
         }
-    }, [friendMutations.length, completeStep]);
+    }, [friendMutations.length, completeStep, user]);
     return null;
 };
 
@@ -113,6 +114,47 @@ const ShareFromChatListener: React.FC = () => {
         window.addEventListener('flaights:mission:share-from-chat', handle);
         return () => window.removeEventListener('flaights:mission:share-from-chat', handle);
     }, [completeStep]);
+    return null;
+};
+
+const ShareOpenHistoryListener: React.FC = () => {
+    const { completeStep } = useMissions();
+    useEffect(() => {
+        const handler = () => completeStep('share_mission', 'open_search_from_history');
+        window.addEventListener('flaights:mission:open-search-from-history', handler);
+        return () => window.removeEventListener('flaights:mission:open-search-from-history', handler);
+    }, [completeStep]);
+    return null;
+};
+
+const ShareOpenChatListener: React.FC = () => {
+    const { completeStep } = useMissions();
+    useEffect(() => {
+        const handler = () => completeStep('share_mission', 'open_chat');
+        window.addEventListener('flaights:mission:open-chat', handler);
+        return () => window.removeEventListener('flaights:mission:open-chat', handler);
+    }, [completeStep]);
+    return null;
+};
+
+const ShareAccessHistoryListener: React.FC = () => {
+    const { completeStep } = useMissions();
+    useEffect(() => {
+        const handler = () => completeStep('share_mission', 'access_search_history');
+        window.addEventListener('flaights:mission:access-search-history', handler);
+        return () => window.removeEventListener('flaights:mission:access-search-history', handler);
+    }, [completeStep]);
+    return null;
+};
+
+const HasFriendsListener: React.FC = () => {
+    const { user } = useAuth();
+    const { completeStep } = useMissions();
+    useEffect(() => {
+        if (user && user.friends && user.friends.length > 0) {
+            completeStep('social_mission', 'wait_for_friend_acceptance');
+        }
+    }, [user, completeStep]);
     return null;
 };
 
@@ -364,6 +406,12 @@ export const MISSIONS: BaseMission[] = [
                 listener: SendFriendRequestListener
             },
             {
+                id: 'wait_for_friend_acceptance',
+                title: 'missions.list.social.steps.wait_for_friend_acceptance.title',
+                description: 'missions.list.social.steps.wait_for_friend_acceptance.description',
+                listener: HasFriendsListener
+            },
+            {
                 id: 'send_message',
                 title: 'missions.list.social.steps.send_message.title',
                 description: 'missions.list.social.steps.send_message.description',
@@ -466,10 +514,28 @@ export const MISSIONS: BaseMission[] = [
         dependsOn: ['flight_results_mission', 'social_mission'],
         steps: [
             {
+                id: 'access_search_history',
+                title: 'missions.list.share.steps.access_search_history.title',
+                description: 'missions.list.share.steps.access_search_history.description',
+                listener: ShareAccessHistoryListener
+            },
+            {
+                id: 'open_search_from_history',
+                title: 'missions.list.share.steps.open_search_from_history.title',
+                description: 'missions.list.share.steps.open_search_from_history.description',
+                listener: ShareOpenHistoryListener
+            },
+            {
                 id: 'share_from_results',
                 title: 'missions.list.share.steps.share_from_results.title',
                 description: 'missions.list.share.steps.share_from_results.description',
                 listener: ShareFromResultsListener
+            },
+            {
+                id: 'open_chat',
+                title: 'missions.list.share.steps.open_chat.title',
+                description: 'missions.list.share.steps.open_chat.description',
+                listener: ShareOpenChatListener
             },
             {
                 id: 'share_from_chat',
@@ -556,6 +622,8 @@ export const MISSIONS: BaseMission[] = [
  * t('missions.list.social.steps.send_friend_request.description')
  * t('missions.list.social.steps.send_message.title')
  * t('missions.list.social.steps.send_message.description')
+ * t('missions.list.social.steps.wait_for_friend_acceptance.title')
+ * t('missions.list.social.steps.wait_for_friend_acceptance.description')
  * 
  * t('missions.list.manual_search.title')
  * t('missions.list.manual_search.description')
@@ -590,6 +658,12 @@ export const MISSIONS: BaseMission[] = [
  * t('missions.list.share.steps.share_from_results.description')
  * t('missions.list.share.steps.share_from_chat.title')
  * t('missions.list.share.steps.share_from_chat.description')
+ * t('missions.list.share.steps.access_search_history.title')
+ * t('missions.list.share.steps.access_search_history.description')
+ * t('missions.list.share.steps.open_search_from_history.title')
+ * t('missions.list.share.steps.open_search_from_history.description')
+ * t('missions.list.share.steps.open_chat.title')
+ * t('missions.list.share.steps.open_chat.description')
  * 
  * t('missions.list.ai.title')
  * t('missions.list.ai.description')

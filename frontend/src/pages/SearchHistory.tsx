@@ -1,4 +1,4 @@
-import { useState, UIEvent } from "react";
+import { useState, UIEvent, useEffect } from "react";
 import { Helmet } from "react-helmet-async";
 import { useAuth } from "@/context/AuthContext";
 import { useGetSearchesInfinite } from "@/api/generated/openapi/search";
@@ -117,6 +117,10 @@ export default function SearchHistory() {
         setStartDate("");
         setEndDate("");
     };
+
+    useEffect(() => {
+        window.dispatchEvent(new CustomEvent('flaights:mission:access-search-history'));
+    }, []);
 
     if (!isAuthenticated) return null;
 

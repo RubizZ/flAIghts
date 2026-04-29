@@ -100,6 +100,7 @@ export default function Chat() {
     useEffect(() => {
         if (userId) {
             markConversationAsRead({ otherUserId: userId });
+            window.dispatchEvent(new CustomEvent('flaights:mission:open-chat'));
         }
     }, [userId, markConversationAsRead]);
 
