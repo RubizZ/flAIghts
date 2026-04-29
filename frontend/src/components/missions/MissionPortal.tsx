@@ -11,10 +11,10 @@ const MissionPortal: React.FC = () => {
     const {
         activeMission, missions, isEvaluationMode,
         hasConsented, isMissionUnlocked,
-        setShowSurveyMissionId, showRoadmap, setShowRoadmap
+        setShowSurveyMissionId, showRoadmap, setShowRoadmap,
+        isDashboardOpen, setIsDashboardOpen
     } = useMissions();
     
-    const [isOpen, setIsOpen] = useState(false);
     const [selectedMissionId, setSelectedMissionId] = useState<string | null>(null);
 
     // Filter for missions that are unlocked but not yet completed
@@ -42,12 +42,12 @@ const MissionPortal: React.FC = () => {
     return (
         <>
             {/* Full Screen Mission Dashboard */}
-            {isOpen && (
+            {isDashboardOpen && (
                 <MissionDashboard
                     mission={mission}
-                    onClose={() => setIsOpen(false)}
+                    onClose={() => setIsDashboardOpen(false)}
                     onBackToRoadmap={() => {
-                        setIsOpen(false);
+                        setIsDashboardOpen(false);
                         setShowRoadmap(true);
                     }}
                     onNext={handleNextMission}
@@ -66,7 +66,7 @@ const MissionPortal: React.FC = () => {
                     onMissionClick={(id) => {
                         setSelectedMissionId(id);
                         setShowRoadmap(false);
-                        setIsOpen(true);
+                        setIsDashboardOpen(true);
                     }}
                 />
             )}

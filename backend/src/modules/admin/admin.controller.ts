@@ -2,7 +2,7 @@ import { Controller, Get, Patch, Path, Query, Route, Security, SuccessResponse, 
 import { injectable, inject } from "tsyringe";
 import { AdminService } from "./admin.service.js";
 import type { SuccessResponse as SuccessResponseType } from "../../utils/responses.js";
-import type { AdminStats, UpdateAirportRequest, PaginatedUsersResponse, PaginatedAuditsResponse, PopulatedAirportReport, PopulatedEvaluationDocument, PaginatedAirportsResponse } from "./admin.types.js";
+import type { AdminStats, UpdateAirportRequest, PaginatedUsersResponse, PaginatedAuditsResponse, PopulatedAirportReport, PopulatedEvaluationDocument, PaginatedAirportsResponse, EvaluationAdminResponse } from "./admin.types.js";
 import type { IAirportReport } from "../airport/airport-report.model.js";
 import type { IAirport } from "../airport/airport.model.js";
 import type { IUserUnpopulated } from "../users/models/user.model.js";
@@ -137,8 +137,8 @@ export class AdminController extends Controller {
      * Ver resultados de las evaluaciones del TFG.
      */
     @Get("/evaluations")
-    public async listEvaluations(): Promise<SuccessResponseType<PopulatedEvaluationDocument[]>> {
-        const evals = await this.adminService.getEvaluations();
-        return { status: "success", data: evals };
+    public async listEvaluations(): Promise<SuccessResponseType<EvaluationAdminResponse>> {
+        const result = await this.adminService.getEvaluations();
+        return { status: "success", data: result };
     }
 }

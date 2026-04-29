@@ -34,6 +34,7 @@
     "tabs": {
       "airports": "Airports",
       "audits": "Audits",
+      "errors": "Errors",
       "evaluations": "Evaluations",
       "reports": "Reports",
       "stats": "Statistics",
@@ -220,6 +221,8 @@
     "homeButton": "Return to home",
     "loginButton": "Log in",
     "reloadButton": "Reload page",
+    "rateLimitTitle": "Too Many Requests",
+    "rateLimitDesc": "You have made too many requests in a short period of time. For security reasons, we have paused your activity. Please wait a few minutes before trying again.",
     "sessionExpired": "Session Expired",
     "sessionExpiredDesc": "Your session has expired or you don't have permissions to access this resource. Please log in again.",
     "showDetails": "Show technical details"
@@ -632,7 +635,7 @@
             "title": "Select an airport"
           },
           "open_airport_card": {
-            "description": "Tap on the Origin or Destination field to open the search.",
+            "description": "Tap on the Origin or Destination field to start typing your desired city or airport.",
             "title": "Open the airport search"
           },
           "perform_manual_search": {

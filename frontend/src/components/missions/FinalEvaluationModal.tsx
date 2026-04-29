@@ -7,7 +7,7 @@ import { useAuth } from '@/context/AuthContext';
 
 const FinalEvaluationModal: React.FC = () => {
     const { t } = useTranslation();
-    const { allCompleted, surveyAnswers, missions, finishEvaluation, evaluationFinished } = useMissions();
+    const { allCompleted, surveyAnswers, missions, finishEvaluation, evaluationFinished, setShowRoadmap, setIsDashboardOpen } = useMissions();
     const navigate = useNavigate();
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [fullName, setFullName] = useState('');
@@ -120,7 +120,7 @@ const FinalEvaluationModal: React.FC = () => {
                             <div className="flex flex-wrap justify-center gap-3 mb-12 animate-fade-in-up" style={{ animationDelay: '300ms' }}>
                                 {isAuthenticated && (
                                     <button
-                                        onClick={() => { handleClose(); navigate('/user/' + user._id); }}
+                                        onClick={() => { setShowRoadmap(false); setIsDashboardOpen(false); handleClose(); navigate('/user/' + user._id); }}
                                         className="flex items-center gap-3 px-6 py-4 bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/20 rounded-2xl transition-all group cursor-pointer"
                                     >
                                         <User size={18} className="text-blue-400 group-hover:scale-110 transition-transform" />
@@ -154,7 +154,7 @@ const FinalEvaluationModal: React.FC = () => {
                                 </button>
 
                                 <button
-                                    onClick={handleGoHome}
+                                    onClick={() => { setShowRoadmap(false); setIsDashboardOpen(false); handleGoHome(); }}
                                     className="flex items-center gap-3 px-6 py-4 bg-white/5 hover:bg-white/10 border border-white/10 rounded-2xl transition-all group cursor-pointer"
                                 >
                                     <Send size={18} className="text-white/40 group-hover:text-blue-400 transition-colors" />
@@ -166,7 +166,7 @@ const FinalEvaluationModal: React.FC = () => {
                             </div>
 
                             <button
-                                onClick={handleClose}
+                                onClick={() => { setShowRoadmap(false); setIsDashboardOpen(false); handleClose(); }}
                                 className="group relative px-16 py-5 bg-white text-blue-900 rounded-3xl font-black text-xl uppercase tracking-[0.2em] hover:bg-blue-50 transition-all hover:scale-105 active:scale-95 shadow-[0_20px_50px_rgba(255,255,255,0.2)] cursor-pointer overflow-hidden animate-fade-in-up"
                                 style={{ animationDelay: '400ms' }}
                             >

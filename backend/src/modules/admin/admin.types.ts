@@ -33,6 +33,25 @@ export interface PopulatedAirportReport extends Omit<IAirportReport, 'user_id' |
 
 export interface PopulatedEvaluationDocument extends Omit<IEvaluationDocument, 'userId'> {
     userId?: PopulatedUserRef;
+    susScore?: number;
+}
+
+export interface EvaluationSummary {
+    totalEvaluations: number;
+    averageSusScore: number;
+    minSusScore: number;
+    maxSusScore: number;
+    distribution: {
+        excellent: number; // > 80.3
+        good: number;      // 68 - 80.3
+        ok: number;        // 51 - 68
+        poor: number;      // < 51
+    };
+}
+
+export interface EvaluationAdminResponse {
+    evaluations: PopulatedEvaluationDocument[];
+    summary: EvaluationSummary;
 }
 
 export interface PaginatedUsersResponse {

@@ -8,7 +8,8 @@ import {
     BarChart3,
     ClipboardCheck,
     ChevronRight,
-    Plane
+    Plane,
+    Bug
 } from 'lucide-react';
 import { useGetStats } from '@/api/generated/openapi/admin';
 
@@ -19,8 +20,9 @@ import AirportsTab from '@/components/admin/AirportsTab';
 import ReportsTab from '@/components/admin/ReportsTab';
 import EvaluationsTab from '@/components/admin/EvaluationsTab';
 import AuditsTab from '@/components/admin/AuditsTab';
+import ExecutionErrorsTab from '@/components/admin/ExecutionErrorsTab';
 
-type TabType = 'stats' | 'users' | 'airports' | 'reports' | 'evaluations' | 'audits';
+type TabType = 'stats' | 'users' | 'airports' | 'reports' | 'evaluations' | 'audits' | 'errors';
 
 export default function AdminDashboard() {
     const { t } = useTranslation();
@@ -38,6 +40,7 @@ export default function AdminDashboard() {
         { id: 'reports', label: t('admin.tabs.reports'), icon: FileWarning },
         { id: 'evaluations', label: t('admin.tabs.evaluations'), icon: ClipboardCheck },
         { id: 'audits', label: t('admin.tabs.audits'), icon: History },
+        { id: 'errors', label: t('admin.tabs.errors'), icon: Bug },
     ];
 
     return (
@@ -84,6 +87,7 @@ export default function AdminDashboard() {
                         {activeTab === 'reports' && <ReportsTab />}
                         {activeTab === 'evaluations' && <EvaluationsTab />}
                         {activeTab === 'audits' && <AuditsTab />}
+                        {activeTab === 'errors' && <ExecutionErrorsTab />}
                     </div>
                 </div>
             </div>

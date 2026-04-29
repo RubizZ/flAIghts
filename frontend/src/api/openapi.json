@@ -4163,6 +4163,163 @@
         "type": "object",
         "additionalProperties": false
       },
+      "SuccessResponse_any_": {
+        "description": "Wrapper de éxito JSend (aplicado por el middleware global).",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "success"
+            ],
+            "nullable": false
+          },
+          "data": {}
+        },
+        "required": [
+          "status",
+          "data"
+        ],
+        "type": "object",
+        "additionalProperties": false
+      },
+      "ReportErrorRequest": {
+        "properties": {
+          "errorName": {
+            "type": "string"
+          },
+          "errorMessage": {
+            "type": "string"
+          },
+          "stack": {
+            "type": "string"
+          },
+          "componentStack": {
+            "type": "string"
+          },
+          "url": {
+            "type": "string"
+          },
+          "userAgent": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "errorName",
+          "errorMessage",
+          "url",
+          "userAgent"
+        ],
+        "type": "object",
+        "additionalProperties": false
+      },
+      "IExecutionError": {
+        "properties": {
+          "timestamp": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "errorName": {
+            "type": "string"
+          },
+          "errorMessage": {
+            "type": "string"
+          },
+          "stack": {
+            "type": "string"
+          },
+          "componentStack": {
+            "type": "string"
+          },
+          "url": {
+            "type": "string"
+          },
+          "userAgent": {
+            "type": "string"
+          },
+          "user": {
+            "properties": {
+              "username": {
+                "type": "string",
+                "nullable": true
+              },
+              "id": {
+                "type": "string",
+                "nullable": true
+              }
+            },
+            "required": [
+              "username",
+              "id"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "timestamp",
+          "errorName",
+          "errorMessage",
+          "url",
+          "userAgent"
+        ],
+        "type": "object",
+        "additionalProperties": false
+      },
+      "PaginatedExecutionErrorsResponse": {
+        "properties": {
+          "errors": {
+            "items": {
+              "$ref": "#/components/schemas/IExecutionError"
+            },
+            "type": "array"
+          },
+          "total": {
+            "type": "number",
+            "format": "double"
+          },
+          "page": {
+            "type": "number",
+            "format": "double"
+          },
+          "limit": {
+            "type": "number",
+            "format": "double"
+          },
+          "totalPages": {
+            "type": "number",
+            "format": "double"
+          }
+        },
+        "required": [
+          "errors",
+          "total",
+          "page",
+          "limit",
+          "totalPages"
+        ],
+        "type": "object",
+        "additionalProperties": false
+      },
+      "SuccessResponse_PaginatedExecutionErrorsResponse_": {
+        "description": "Wrapper de éxito JSend (aplicado por el middleware global).",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "success"
+            ],
+            "nullable": false
+          },
+          "data": {
+            "$ref": "#/components/schemas/PaginatedExecutionErrorsResponse"
+          }
+        },
+        "required": [
+          "status",
+          "data"
+        ],
+        "type": "object",
+        "additionalProperties": false
+      },
       "MissionStepResult": {
         "properties": {
           "id": {
@@ -7943,6 +8100,10 @@
           },
           "userId": {
             "$ref": "#/components/schemas/PopulatedUserRef"
+          },
+          "susScore": {
+            "type": "number",
+            "format": "double"
           }
         },
         "required": [
@@ -7955,7 +8116,82 @@
         "type": "object",
         "additionalProperties": false
       },
-      "SuccessResponseType_PopulatedEvaluationDocument-Array_": {
+      "EvaluationSummary": {
+        "properties": {
+          "totalEvaluations": {
+            "type": "number",
+            "format": "double"
+          },
+          "averageSusScore": {
+            "type": "number",
+            "format": "double"
+          },
+          "minSusScore": {
+            "type": "number",
+            "format": "double"
+          },
+          "maxSusScore": {
+            "type": "number",
+            "format": "double"
+          },
+          "distribution": {
+            "properties": {
+              "poor": {
+                "type": "number",
+                "format": "double"
+              },
+              "ok": {
+                "type": "number",
+                "format": "double"
+              },
+              "good": {
+                "type": "number",
+                "format": "double"
+              },
+              "excellent": {
+                "type": "number",
+                "format": "double"
+              }
+            },
+            "required": [
+              "poor",
+              "ok",
+              "good",
+              "excellent"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "totalEvaluations",
+          "averageSusScore",
+          "minSusScore",
+          "maxSusScore",
+          "distribution"
+        ],
+        "type": "object",
+        "additionalProperties": false
+      },
+      "EvaluationAdminResponse": {
+        "properties": {
+          "evaluations": {
+            "items": {
+              "$ref": "#/components/schemas/PopulatedEvaluationDocument"
+            },
+            "type": "array"
+          },
+          "summary": {
+            "$ref": "#/components/schemas/EvaluationSummary"
+          }
+        },
+        "required": [
+          "evaluations",
+          "summary"
+        ],
+        "type": "object",
+        "additionalProperties": false
+      },
+      "SuccessResponseType_EvaluationAdminResponse_": {
         "description": "Wrapper de éxito JSend (aplicado por el middleware global).",
         "properties": {
           "status": {
@@ -7966,10 +8202,7 @@
             "nullable": false
           },
           "data": {
-            "items": {
-              "$ref": "#/components/schemas/PopulatedEvaluationDocument"
-            },
-            "type": "array"
+            "$ref": "#/components/schemas/EvaluationAdminResponse"
           }
         },
         "required": [
@@ -9786,6 +10019,90 @@
             "required": true,
             "schema": {
               "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/execution-errors/report": {
+      "post": {
+        "operationId": "ReportError",
+        "responses": {
+          "200": {
+            "description": "Ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse_any_"
+                }
+              }
+            }
+          }
+        },
+        "description": "Reportar un error de ejecución desde el frontend.",
+        "tags": [
+          "Execution Errors"
+        ],
+        "security": [],
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReportErrorRequest"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/execution-errors": {
+      "get": {
+        "operationId": "GetErrors",
+        "responses": {
+          "200": {
+            "description": "Ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse_PaginatedExecutionErrorsResponse_"
+                }
+              }
+            }
+          }
+        },
+        "description": "Listar errores de ejecución (Solo Admin).",
+        "tags": [
+          "Execution Errors"
+        ],
+        "security": [
+          {
+            "jwt": [
+              "admin",
+              "superadmin"
+            ]
+          }
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page",
+            "required": false,
+            "schema": {
+              "default": 1,
+              "format": "double",
+              "type": "number"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "format": "double",
+              "type": "number"
             }
           }
         ]
@@ -11618,7 +11935,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/SuccessResponseType_PopulatedEvaluationDocument-Array_"
+                  "$ref": "#/components/schemas/SuccessResponseType_EvaluationAdminResponse_"
                 }
               }
             }

@@ -1,7 +1,8 @@
 import { Component, ErrorInfo, ReactNode } from "react";
-import { TriangleAlert, RefreshCcw, Home, ChevronDown, ChevronUp, Copy, LogIn } from "lucide-react";
+import { TriangleAlert, RefreshCcw, Home, ChevronDown, ChevronUp, Copy, LogIn, Clock } from "lucide-react";
 import i18n from "@/i18n/i18n";
-import { AuthFailError } from "@/api/axios-instance";
+import { AuthFailError, RateLimitError } from "@/api/axios-instance";
+import { reportExecutionError } from "@/api/execution-errors";
 
 interface Props {
     children?: ReactNode;
@@ -16,6 +17,7 @@ interface State {
     errorInfo: ErrorInfo | null;
     showDetails: boolean;
     isAuthError: boolean;
+    isRateLimitError: boolean;
 }
 
 class ErrorBoundary extends Component<Props, State> {
@@ -27,6 +29,7 @@ class ErrorBoundary extends Component<Props, State> {
             errorInfo: null,
             showDetails: false,
             isAuthError: props.initialError instanceof AuthFailError,
+            isRateLimitError: props.initialError instanceof RateLimitError,
         };
     }
 
@@ -37,12 +40,23 @@ class ErrorBoundary extends Component<Props, State> {
             errorInfo: null,
             showDetails: false,
             isAuthError: error instanceof AuthFailError,
+            isRateLimitError: error instanceof RateLimitError,
         };
     }
 
     public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
         console.error("Uncaught error:", error, errorInfo);
         this.setState({ errorInfo });
+
+        // Reportar el error al backend de forma asíncrona
+        reportExecutionError({
+            errorName: error.name || "Error",
+            errorMessage: error.message || String(error),
+            stack: error.stack,
+            componentStack: errorInfo.componentStack || undefined,
+            url: window.location.href,
+            userAgent: navigator.userAgent
+        });
     }
 
     private handleReset = () => {
@@ -50,7 +64,7 @@ class ErrorBoundary extends Component<Props, State> {
             this.props.onReset();
             this.setState({ hasError: false, error: null, errorInfo: null, isAuthError: false });
         } else {
-            this.setState({ hasError: false, error: null, errorInfo: null, isAuthError: false });
+            this.setState({ hasError: false, error: null, errorInfo: null, isAuthError: false, isRateLimitError: false });
             window.location.reload();
         }
     };
@@ -106,6 +120,52 @@ class ErrorBoundary extends Component<Props, State> {
                                 >
                                     <LogIn size={18} />
                                     {i18n.t("errorBoundary.loginButton")}
+                                </button>
+
+                                <button
+                                    onClick={() => window.location.href = '/'}
+                                    className="flex items-center gap-2 px-6 py-3 bg-surface text-content rounded-full border border-line hover:bg-surface/80 transition-all duration-300 active:scale-95 cursor-pointer"
+                                >
+                                    <Home size={18} />
+                                    {i18n.t("errorBoundary.homeButton")}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                );
+            }
+
+            // Si es un error de rate limit, mostrar UI específica
+            if (this.state.isRateLimitError) {
+                return (
+                    <div className="w-full min-h-screen flex items-center justify-center p-6 bg-main relative overflow-hidden group">
+                        {/* Background decoration */}
+                        <div className="absolute top-0 left-0 w-full h-1 bg-linear-to-r from-transparent via-brand/50 to-transparent shadow-[0_0_15px_rgba(var(--brand-rgb),0.5)]" />
+                        <div className="absolute -bottom-20 -right-20 w-64 h-64 bg-brand/5 blur-[100px] rounded-full" />
+                        <div className="absolute -top-20 -left-20 w-64 h-64 bg-brand/5 blur-[100px] rounded-full" />
+
+                        <div className="max-w-xl w-full text-center space-y-8 relative z-10 transition-all duration-500">
+                            <div className="relative inline-block">
+                                <div className="absolute inset-0 bg-brand/10 blur-2xl rounded-full scale-150 animate-pulse" />
+                                <div className="relative bg-surface p-6 rounded-full border border-brand/20 shadow-2xl">
+                                    <Clock size={48} className="text-brand" />
+                                </div>
+                            </div>
+
+                            <div className="space-y-3">
+                                <h2 className="text-2xl font-bold text-content tracking-tight">{i18n.t("errorBoundary.rateLimitTitle")}</h2>
+                                <p className="text-content-muted leading-relaxed">
+                                    {i18n.t("errorBoundary.rateLimitDesc")}
+                                </p>
+                            </div>
+
+                            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
+                                <button
+                                    onClick={this.handleReset}
+                                    className="flex items-center gap-2 px-6 py-3 bg-brand text-content-on-brand rounded-full font-semibold hover:bg-brand/90 transition-all duration-300 shadow-md active:scale-95 group/btn cursor-pointer"
+                                >
+                                    <RefreshCcw size={18} className="group-hover/btn:rotate-180 transition-transform duration-500" />
+                                    {i18n.t("errorBoundary.reloadButton")}
                                 </button>
 
                                 <button

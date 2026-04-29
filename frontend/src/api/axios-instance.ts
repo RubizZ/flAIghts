@@ -32,6 +32,16 @@ export class ConnectionError extends Error {
     }
 }
 
+// Clase de error para límite de peticiones (429)
+export class RateLimitError extends Error {
+    public readonly isRateLimitError = true;
+
+    constructor(message?: string) {
+        super(message ?? 'Has realizado demasiadas peticiones. Por favor, espera un momento.');
+        this.name = 'RateLimitError';
+    }
+}
+
 // Función para verificar si un código es un error de auth fail
 export const isAuthFailCode = (code: unknown): code is AuthFailCode => {
     return typeof code === 'string' && AUTH_FAIL_CODES.includes(code as AuthFailCode);
@@ -151,6 +161,10 @@ export const customInstance = <T>(
                 window.dispatchEvent(new CustomEvent('server-down'));
 
                 return Promise.reject(new ConnectionError(error.message));
+            }
+
+            if (status === 429) {
+                return Promise.reject(new RateLimitError(error.message));
             }
 
             return Promise.reject(error);

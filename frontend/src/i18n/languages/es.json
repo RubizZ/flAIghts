@@ -34,6 +34,7 @@
     "tabs": {
       "airports": "Aeropuertos",
       "audits": "Auditoría",
+      "errors": "Errores",
       "evaluations": "Evaluaciones",
       "reports": "Reportes",
       "stats": "Estadísticas",
@@ -222,6 +223,8 @@
     "homeButton": "Volver al inicio",
     "loginButton": "Iniciar sesión",
     "reloadButton": "Recargar la página",
+    "rateLimitTitle": "Demasiadas peticiones",
+    "rateLimitDesc": "Has realizado demasiadas solicitudes en poco tiempo. Por seguridad, hemos pausado tu actividad. Por favor, espera unos minutos antes de volver a intentarlo.",
     "sessionExpired": "Sesión expirada",
     "sessionExpiredDesc": "Tu sesión ha expirado o no tienes permisos para acceder a este recurso. Por favor, inicia sesión de nuevo.",
     "showDetails": "Ver detalles técnicos"
@@ -636,7 +639,7 @@
             "title": "Selecciona un aeropuerto"
           },
           "open_airport_card": {
-            "description": "Pulsa en el campo de Origen o Destino para abrir el buscador.",
+            "description": "Pulsa en el campo de Origen o Destino para escribir tu ciudad o aeropuerto deseado.",
             "title": "Abre el buscador de aeropuertos"
           },
           "perform_manual_search": {

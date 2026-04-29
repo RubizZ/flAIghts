@@ -8,7 +8,7 @@ import type { AuditDetails } from "../audit/audit.types.js";
 import { AuditService } from "../audit/audit.service.js";
 import { AdminActionNotAuthorizedError } from "./admin.errors.js";
 import { UserService } from "../users/user.service.js";
-import type { AdminStats, UpdateAirportRequest, PopulatedAirportReport, PopulatedEvaluationDocument, PaginatedUsersResponse, PaginatedAuditsResponse, PopulatedUserRef, PaginatedAirportsResponse } from "./admin.types.js";
+import type { AdminStats, UpdateAirportRequest, PopulatedAirportReport, PopulatedEvaluationDocument, PaginatedUsersResponse, PaginatedAuditsResponse, PopulatedUserRef, PaginatedAirportsResponse, EvaluationSummary, EvaluationAdminResponse } from "./admin.types.js";
 import type { IUserUnpopulated } from "../users/models/user.model.js";
 import { AirportService } from "../airport/airport.service.js";
 import type { AuthenticatedUser } from "../auth/auth.types.js";
@@ -52,7 +52,7 @@ export class AdminService {
     public async getAuditMetadata() {
         const resources = await Audit.distinct('resource');
         const actionsByResource: Record<string, string[]> = {};
-        
+
         await Promise.all(resources.map(async (resource) => {
             actionsByResource[resource] = await Audit.distinct('action', { resource });
         }));
@@ -157,10 +157,49 @@ export class AdminService {
         return airport;
     }
 
-    public async getEvaluations(): Promise<PopulatedEvaluationDocument[]> {
-        return await Evaluation.find()
+    public async getEvaluations(): Promise<EvaluationAdminResponse> {
+        const rawEvals = await Evaluation.find()
             .sort({ timestamp: -1 })
             .populate<PopulatedUserRef>('userId', 'username email')
             .lean<PopulatedEvaluationDocument[]>();
+
+        const evaluations = rawEvals.map(ev => {
+            let susScore: number | undefined;
+            if (ev.susResults && ev.susResults.length === 10) {
+                // SUS Calculation:
+                // Odd items (1, 3, 5, 7, 9) are 1-indexed in SUS, 0, 2, 4, 6, 8 in array
+                // Even items (2, 4, 6, 8, 10) are 1-indexed in SUS, 1, 3, 5, 7, 9 in array
+                const score = ev.susResults.reduce((acc, val, idx) => {
+                    if (idx % 2 === 0) { // Odd SUS item
+                        return acc + (val - 1);
+                    } else { // Even SUS item
+                        return acc + (5 - val);
+                    }
+                }, 0);
+                susScore = score * 2.5;
+            }
+            return { ...ev, susScore };
+        });
+
+        const validScores = evaluations
+            .map(e => e.susScore)
+            .filter((s): s is number => s !== undefined);
+
+        const summary: EvaluationSummary = {
+            totalEvaluations: evaluations.length,
+            averageSusScore: validScores.length > 0
+                ? Number((validScores.reduce((a, b) => a + b, 0) / validScores.length).toFixed(2))
+                : 0,
+            minSusScore: validScores.length > 0 ? Math.min(...validScores) : 0,
+            maxSusScore: validScores.length > 0 ? Math.max(...validScores) : 0,
+            distribution: {
+                excellent: validScores.filter(s => s >= 80.3).length,
+                good: validScores.filter(s => s >= 68 && s < 80.3).length,
+                ok: validScores.filter(s => s >= 51 && s < 68).length,
+                poor: validScores.filter(s => s < 51).length
+            }
+        };
+
+        return { evaluations, summary };
     }
 }

@@ -54,6 +54,8 @@ interface MissionContextType {
     skipOnboarding: () => void;
     declineConsent: () => void;
     reopenConsent: () => void;
+    isDashboardOpen: boolean;
+    setIsDashboardOpen: (open: boolean) => void;
 }
 
 const MissionContext = createContext<MissionContextType | undefined>(undefined);
@@ -190,6 +192,7 @@ export const MissionProvider: React.FC<{ children: ReactNode }> = ({ children })
 
     const [showSurveyMissionId, setShowSurveyMissionId] = useState<string | null>(null);
     const [showRoadmap, setShowRoadmap] = useState(false);
+    const [isDashboardOpen, setIsDashboardOpen] = useState(false);
     const [onboardingStep, setOnboardingStep] = useState<number>(() => {
         const seen = localStorage.getItem(ONBOARDING_KEY) === 'true';
         return seen ? 0 : 1;
@@ -521,7 +524,9 @@ export const MissionProvider: React.FC<{ children: ReactNode }> = ({ children })
             nextSurveyOnboardingStep,
             skipOnboarding,
             declineConsent,
-            reopenConsent
+            reopenConsent,
+            isDashboardOpen,
+            setIsDashboardOpen
         }}>
             {IS_EVAL_MODE && (
                 <>
