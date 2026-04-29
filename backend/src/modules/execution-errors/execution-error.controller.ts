@@ -19,6 +19,7 @@ export class ExecutionErrorController extends Controller {
      * Reportar un error de ejecución desde el frontend.
      */
     @Post("report")
+    @Security('jwt-optional')
     public async reportError(
         @Body() body: ReportErrorRequest,
         @RequestProp("user") user?: AuthenticatedUser

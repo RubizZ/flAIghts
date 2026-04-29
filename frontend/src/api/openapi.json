@@ -10043,7 +10043,11 @@
         "tags": [
           "Execution Errors"
         ],
-        "security": [],
+        "security": [
+          {
+            "jwt-optional": []
+          }
+        ],
         "parameters": [],
         "requestBody": {
           "required": true,
