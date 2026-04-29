@@ -78,13 +78,13 @@ const MissionOnboarding: React.FC = () => {
             const findTarget = (shouldScroll = false) => {
                 let currentId = '';
 
-                // Usamos los valores reales, para el ID del target
-                // Esto evita el lag de 300ms que puede hacer que no se encuentre el elemento
-                if (surveyOnboardingStep > 0 && onboardingStep === 0) {
-                    switch (surveyOnboardingStep) {
+                // Usamos los valores de displayState para el ID del target
+                // Esto sincroniza el movimiento con la desaparición (300ms delay)
+                if (displayState.surveyOnboardingStep > 0 && displayState.onboardingStep === 0) {
+                    switch (displayState.surveyOnboardingStep) {
                         case 1:
                             if (isMobileTarget) {
-                                currentId = subStep === 0 ? (document.getElementById('nav-user-menu-trigger') ? 'nav-user-menu-trigger' : 'nav-options-menu-trigger') : (document.getElementById('nav-missions-button-mobile') ? 'nav-missions-button-mobile' : 'nav-missions-button-mobile-alt');
+                                currentId = displayState.subStep === 0 ? (document.getElementById('nav-user-menu-trigger') ? 'nav-user-menu-trigger' : 'nav-options-menu-trigger') : (document.getElementById('nav-missions-button-mobile') ? 'nav-missions-button-mobile' : 'nav-missions-button-mobile-alt');
                             } else {
                                 currentId = 'nav-missions-button';
                             }
@@ -94,10 +94,10 @@ const MissionOnboarding: React.FC = () => {
                         case 4: currentId = 'dashboard-back-button'; break;
                     }
                 } else {
-                    switch (onboardingStep) {
+                    switch (displayState.onboardingStep) {
                         case 1:
                             if (isMobileTarget) {
-                                currentId = subStep === 0 ? (document.getElementById('nav-user-menu-trigger') ? 'nav-user-menu-trigger' : 'nav-options-menu-trigger') : (document.getElementById('nav-missions-button-mobile') ? 'nav-missions-button-mobile' : 'nav-missions-button-mobile-alt');
+                                currentId = displayState.subStep === 0 ? (document.getElementById('nav-user-menu-trigger') ? 'nav-user-menu-trigger' : 'nav-options-menu-trigger') : (document.getElementById('nav-missions-button-mobile') ? 'nav-missions-button-mobile' : 'nav-missions-button-mobile-alt');
                             } else {
                                 currentId = 'nav-missions-button';
                             }
@@ -133,7 +133,7 @@ const MissionOnboarding: React.FC = () => {
                     }
 
                     // Si estamos cambiando a un paso de la roadmap, esperar un poco a que se monte
-                    const isRoadmapStep = (onboardingStep === 2 || onboardingStep === 6 || onboardingStep === 7 || surveyOnboardingStep === 2);
+                    const isRoadmapStep = (displayState.onboardingStep === 2 || displayState.onboardingStep === 6 || displayState.onboardingStep === 7 || displayState.surveyOnboardingStep === 2);
                     if (isRoadmapStep && retryCount < maxRetries) {
                         retryCount++;
                         return; // No ocultar todavía, el intervalo volverá a intentar
