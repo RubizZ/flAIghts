@@ -2148,7 +2148,7 @@ export default function Globe({
             controls.dispose();
             if (zoomTimeoutRef.current) clearTimeout(zoomTimeoutRef.current);
 
-            if (mount.contains(renderer.domElement)) mount.removeChild(renderer.domElement);
+            if (renderer.domElement.parentNode === mount) mount.removeChild(renderer.domElement);
             renderer.dispose();
             rendererRef.current = null;
             cameraRef.current = null;
@@ -3136,7 +3136,7 @@ export default function Globe({
             {/* Origin Tags */}
             {origins.map((origin, idx) => (
                 <div
-                    key={`origin-${getEntityId(origin)}`}
+                    key={`origin-${getEntityId(origin)}-${idx}`}
                     ref={el => { originLabelRefs.current[idx] = el; }}
                     className="pointer-events-none absolute z-overlay hidden -translate-x-1/2 -translate-y-[calc(100%+12px)] flex-col items-center transition-opacity duration-300"
                 >
@@ -3150,7 +3150,7 @@ export default function Globe({
             {/* Destination Tags */}
             {destinations.map((dest, idx) => (
                 <div
-                    key={`dest-${getEntityId(dest)}`}
+                    key={`dest-${getEntityId(dest)}-${idx}`}
                     ref={el => { destLabelRefs.current[idx] = el; }}
                     className="pointer-events-none absolute z-overlay hidden -translate-x-1/2 -translate-y-[calc(100%+12px)] flex-col items-center transition-opacity duration-300"
                 >
@@ -3199,8 +3199,8 @@ export default function Globe({
                                 </div>
                             </div>
                             <div className="relative max-h-57.5 overflow-y-auto p-1.5 flex flex-col gap-1 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-                                {contextMenu.clusterAirports.map(a => (
-                                    <div key={a.iata} className="group/item flex flex-col gap-1 p-2 rounded-xl hover:bg-surface/50 border border-transparent hover:border-line/50 transition-all">
+                                {contextMenu.clusterAirports.map((a, idx) => (
+                                    <div key={`${a.iata}-${idx}`} className="group/item flex flex-col gap-1 p-2 rounded-xl hover:bg-surface/50 border border-transparent hover:border-line/50 transition-all">
                                         <button
                                             onClick={(e) => {
                                                 e.stopPropagation();

@@ -430,13 +430,13 @@ export default function AirportAutocomplete({
                 )}
                 {/* Helper functions for unified rendering */}
                 {(() => {
-                    const renderAirport = (airport: AirportResponse, isSub: boolean = false, parentLocation?: string) => {
+                    const renderAirport = (airport: AirportResponse, isSub: boolean = false, parentLocation?: string, keySuffix: string = "") => {
                         const airportIsSelected = selectedIatas.has(airport.iata_code);
                         const airportIsConflict = otherIatas.has(airport.iata_code);
 
                         return (
                             <li
-                                key={`${airport.iata_code}-${isSub ? 'sub' : 'main'}`}
+                                key={`${airport.iata_code}-${isSub ? 'sub' : 'main'}${keySuffix}`}
                                 className={`px-4 py-3 transition-all flex items-center gap-3 border-b border-line/40 last:border-0 group/suggestion ${isSub ? 'pl-10' : ''} ${airportIsSelected || airportIsConflict ? 'bg-surface/50 opacity-40 cursor-not-allowed' : 'hover:bg-surface cursor-pointer'}`}
                                 onClick={() => !(airportIsSelected || airportIsConflict) && handleSelect(airport)}
                                 onMouseEnter={() => onHoverChange?.(airport)}
@@ -596,7 +596,7 @@ export default function AirportAutocomplete({
                                         if (disableCities) return null;
                                         return renderCity(item as CityResponse, `flat-${idx}`);
                                     }
-                                    return renderAirport(item as AirportResponse);
+                                    return renderAirport(item as AirportResponse, false, undefined, `-flat-${idx}`);
                                 })}
 
                                 <div ref={sentinelRef} className="py-12 flex flex-col items-center justify-center border-t border-line/20 bg-surface/5">
