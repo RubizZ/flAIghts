@@ -286,130 +286,130 @@ export default function AirportAutocomplete({
                     <div
                         ref={chipsScrollRef}
                         onWheel={(e) => {
-                        if (e.deltaY !== 0) {
-                            e.preventDefault();
-                            chipsScrollRef.current?.scrollBy({
-                                left: e.deltaY * 0.5,
-                                behavior: 'smooth'
-                            });
-                        }
-                    }}
-                    className="flex items-center gap-1.5 w-full h-full min-h-[1.75rem] lg:min-h-[2rem] overflow-x-auto custom-scrollbar py-0.5"
-                >
-                    {maxSelections === 1 && value.length === 1 ? (() => {
-                        const item = value[0]!;
-                        const cityName = isCity(item) ? item.name : (item.city || item.name);
-                        const airportName = isCity(item) ? t("common.allAirports") : item.name;
-                        const countryName = getLocalizedCountryName(item.country);
-                        const iata = !isCity(item) ? item.iata_code : null;
+                            if (e.deltaY !== 0) {
+                                e.preventDefault();
+                                chipsScrollRef.current?.scrollBy({
+                                    left: e.deltaY * 0.5,
+                                    behavior: 'smooth'
+                                });
+                            }
+                        }}
+                        className="flex items-center gap-1.5 w-full h-full min-h-7 lg:min-h-8 overflow-x-auto custom-scrollbar py-0.5"
+                    >
+                        {maxSelections === 1 && value.length === 1 ? (() => {
+                            const item = value[0]!;
+                            const cityName = isCity(item) ? item.name : (item.city || item.name);
+                            const airportName = isCity(item) ? t("common.allAirports") : item.name;
+                            const countryName = getLocalizedCountryName(item.country);
+                            const iata = !isCity(item) ? item.iata_code : null;
 
-                        return (
-                            <div className="flex items-center justify-between w-full h-full pr-1 cursor-default group transition-colors">
-                                <div className="flex flex-col flex-1 min-w-0 leading-normal py-0.5">
-                                    <div className="flex items-center gap-2 overflow-hidden mb-0.5">
-                                        <span className="text-sm font-black text-content truncate uppercase tracking-tight">
-                                            {cityName}
-                                        </span>
-                                        {iata && (
-                                            <span className="text-[10px] font-black text-brand bg-brand/10 border border-brand/20 px-1.5 py-0.5 rounded-md shrink-0 uppercase tabular-nums">
-                                                {iata}
+                            return (
+                                <div className="flex items-center justify-between w-full h-full pr-1 cursor-default group transition-colors">
+                                    <div className="flex flex-col flex-1 min-w-0 leading-normal py-0.5">
+                                        <div className="flex items-center gap-2 overflow-hidden mb-0.5">
+                                            <span className="text-sm font-black text-content truncate uppercase tracking-tight">
+                                                {cityName}
                                             </span>
-                                        )}
-                                    </div>
-                                    <div className="flex flex-col gap-0">
-                                        <span className="text-[10px] text-content-muted font-bold truncate opacity-80 leading-tight">
-                                            {airportName}
-                                        </span>
-                                        {countryName && (
-                                            <span className="text-[9px] text-content-muted font-medium truncate opacity-60 uppercase tracking-tighter leading-tight">
-                                                {countryName}
+                                            {iata && (
+                                                <span className="text-[10px] font-black text-brand bg-brand/10 border border-brand/20 px-1.5 py-0.5 rounded-md shrink-0 uppercase tabular-nums">
+                                                    {iata}
+                                                </span>
+                                            )}
+                                        </div>
+                                        <div className="flex flex-col gap-0">
+                                            <span className="text-[10px] text-content-muted font-bold truncate opacity-80 leading-tight">
+                                                {airportName}
                                             </span>
-                                        )}
+                                            {countryName && (
+                                                <span className="text-[9px] text-content-muted font-medium truncate opacity-60 uppercase tracking-tighter leading-tight">
+                                                    {countryName}
+                                                </span>
+                                            )}
+                                        </div>
                                     </div>
-                                </div>
-                                <button
-                                    type="button"
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        onChange([]);
-                                        setTimeout(() => inputRef.current?.focus(), 50);
-                                    }}
-                                    className="text-content-muted hover:text-error hover:bg-error/10 p-1.5 rounded-xl transition-all ml-2 shrink-0 cursor-pointer active:scale-95"
-                                    title={t("common.remove", "Eliminar")}
-                                >
-                                    <X size={16} />
-                                </button>
-                            </div>
-                        );
-                    })() : (
-                        <>
-                            {!hideSelections && value.map((item, idx) => (
-                                <div
-                                    key={`${getEntityId(item)}-${idx}`}
-                                    className="flex items-center gap-1.5 bg-brand/10 border border-brand/20 px-2.5 py-0.5 rounded-lg shrink-0 animate-in zoom-in-95 duration-200"
-                                >
-                                    <span className="text-[10px] font-bold text-brand whitespace-nowrap">
-                                        {isCity(item) ? item.name : (item.iata_code || getEntityName(item))}
-                                    </span>
-                                    <div className="w-[1px] h-3 bg-brand/20 ml-0.5" />
                                     <button
                                         type="button"
                                         onClick={(e) => {
                                             e.stopPropagation();
-                                            const newValue = [...value];
-                                            newValue.splice(idx, 1);
-                                            onChange(newValue);
+                                            onChange([]);
+                                            setTimeout(() => inputRef.current?.focus(), 50);
                                         }}
-                                        className="text-brand hover:text-brand-dark transition-colors cursor-pointer p-0.5"
+                                        className="text-content-muted hover:text-error hover:bg-error/10 p-1.5 rounded-xl transition-all ml-2 shrink-0 cursor-pointer active:scale-95"
                                         title={t("common.remove", "Eliminar")}
                                     >
-                                        <X size={10} />
+                                        <X size={16} />
                                     </button>
                                 </div>
-                            ))}
-                            <input
-                                ref={inputRef}
-                                type="text"
-                                placeholder={value.length === 0 || hideSelections ? placeholder : t("common.add")}
-                                className={`${className} shrink-0`}
-                                style={{ width: value.length === 0 || hideSelections ? '100%' : 'auto', minWidth: '80px' }}
-                                value={query}
-                                onChange={(e) => {
-                                    setQuery(e.target.value);
-                                    if (e.target.value.length > 0) setIsOpen(true);
-                                }}
-                                onBlur={() => {
-                                    setTimeout(() => {
-                                        setIsOpen(false);
-                                        onHoverChange?.(null);
-                                    }, 200);
-                                }}
-                                onFocus={(e) => {
-                                    setIsOpen(true);
-                                    window.dispatchEvent(new CustomEvent('flaights:mission:open-airport-card'));
-                                    if (window.visualViewport) {
-                                        const scrollParent = e.target.closest('.overflow-y-auto, .custom-scrollbar');
-                                        if (scrollParent) {
-                                            const parentRect = scrollParent.getBoundingClientRect();
-                                            const targetRect = (e.target as HTMLElement).getBoundingClientRect();
-                                            const scrollTop = scrollParent.scrollTop + targetRect.top - parentRect.top - (parentRect.height / 2) + (targetRect.height / 2);
-                                            scrollParent.scrollTo({ top: scrollTop, behavior: 'smooth' });
-                                        } else {
-                                            e.target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                            );
+                        })() : (
+                            <>
+                                {!hideSelections && value.map((item, idx) => (
+                                    <div
+                                        key={`${getEntityId(item)}-${idx}`}
+                                        className="flex items-center gap-1.5 bg-brand/10 border border-brand/20 px-2.5 py-0.5 rounded-lg shrink-0 animate-in zoom-in-95 duration-200"
+                                    >
+                                        <span className="text-[10px] font-bold text-brand whitespace-nowrap">
+                                            {isCity(item) ? item.name : (item.iata_code || getEntityName(item))}
+                                        </span>
+                                        <div className="w-px h-3 bg-brand/20 ml-0.5" />
+                                        <button
+                                            type="button"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                const newValue = [...value];
+                                                newValue.splice(idx, 1);
+                                                onChange(newValue);
+                                            }}
+                                            className="text-brand hover:text-brand-dark transition-colors cursor-pointer p-0.5"
+                                            title={t("common.remove", "Eliminar")}
+                                        >
+                                            <X size={10} />
+                                        </button>
+                                    </div>
+                                ))}
+                                <input
+                                    ref={inputRef}
+                                    type="text"
+                                    placeholder={value.length === 0 || hideSelections ? placeholder : t("common.add")}
+                                    className={`${className} shrink-0`}
+                                    style={{ width: value.length === 0 || hideSelections ? '100%' : 'auto', minWidth: '80px' }}
+                                    value={query}
+                                    onChange={(e) => {
+                                        setQuery(e.target.value);
+                                        if (e.target.value.length > 0) setIsOpen(true);
+                                    }}
+                                    onBlur={() => {
+                                        setTimeout(() => {
+                                            setIsOpen(false);
+                                            onHoverChange?.(null);
+                                        }, 200);
+                                    }}
+                                    onFocus={(e) => {
+                                        setIsOpen(true);
+                                        window.dispatchEvent(new CustomEvent('flaights:mission:open-airport-card'));
+                                        if (window.visualViewport) {
+                                            const scrollParent = e.target.closest('.overflow-y-auto, .custom-scrollbar');
+                                            if (scrollParent) {
+                                                const parentRect = scrollParent.getBoundingClientRect();
+                                                const targetRect = (e.target as HTMLElement).getBoundingClientRect();
+                                                const scrollTop = scrollParent.scrollTop + targetRect.top - parentRect.top - (parentRect.height / 2) + (targetRect.height / 2);
+                                                scrollParent.scrollTo({ top: scrollTop, behavior: 'smooth' });
+                                            } else {
+                                                e.target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                            }
                                         }
-                                    }
-                                }}
-                            />
-                        </>
-                    )}
-                    {isFetching && (
-                        <div className="absolute right-3 top-1/2 -translate-y-1/2 z-10">
-                            <Loader2 className="animate-spin h-3.5 w-3.5 text-brand" />
-                        </div>
-                    )}
+                                    }}
+                                />
+                            </>
+                        )}
+                        {isFetching && (
+                            <div className="absolute right-3 top-1/2 -translate-y-1/2 z-10">
+                                <Loader2 className="animate-spin h-3.5 w-3.5 text-brand" />
+                            </div>
+                        )}
+                    </div>
                 </div>
-            </div>
-        }
+            }
         >
             <ul
                 ref={scrollContainerRef}
