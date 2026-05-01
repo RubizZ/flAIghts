@@ -7,12 +7,12 @@ export const isAirport = (item: UnifiedSelection): item is AirportResponse => {
 };
 
 export const isCity = (item: UnifiedSelection): item is CityResponse => {
-    return (item as CityResponse).airports !== undefined;
+    return (item as CityResponse).airports !== undefined && Array.isArray((item as CityResponse).airports);
 };
 
 export const getIatas = (item: UnifiedSelection): string[] => {
     if (isAirport(item)) return [item.iata_code];
-    return item.airports.map(a => a.iata_code);
+    return item.airports?.map(a => a.iata_code) || [];
 };
 
 export const getAllIatas = (items: UnifiedSelection[]): string[] => {

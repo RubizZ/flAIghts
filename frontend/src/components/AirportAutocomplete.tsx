@@ -5,7 +5,7 @@ import type { AirportResponse, SearchResult, CityResponse } from "@/api/generate
 import SmartPopover from "./ui/SmartPopover";
 import { useUserLocation } from "@/context/UserLocationContext";
 import { useSearchAirportsInfinite } from "@/api/generated/openapi/airports";
-import { UnifiedSelection, isAirport, isCity, getEntityId, getEntityName } from "@/types/selection";
+import { UnifiedSelection, isAirport, isCity, getEntityId, getEntityName, getAllIatas } from "@/types/selection";
 import { useTranslation } from "react-i18next";
 
 interface AirportAutocompleteProps {
@@ -75,8 +75,8 @@ export default function AirportAutocomplete({
 
     // Selected IDs for fast lookup and conflict check
     const selectedIds = useMemo(() => new Set(value.map(getEntityId)), [value]);
-    const selectedIatas = useMemo(() => new Set(value.flatMap(v => isAirport(v) ? [v.iata_code] : v.airports.map(a => a.iata_code))), [value]);
-    const otherIatas = useMemo(() => new Set(otherSelected.flatMap(v => isAirport(v) ? [v.iata_code] : v.airports.map(a => a.iata_code))), [otherSelected]);
+    const selectedIatas = useMemo(() => new Set(getAllIatas(value)), [value]);
+    const otherIatas = useMemo(() => new Set(getAllIatas(otherSelected)), [otherSelected]);
 
     // Group selected airports by city for visual display
     const groupedValue = useMemo(() => {

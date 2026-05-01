@@ -350,7 +350,7 @@ export default function Globe({
             }
         }
 
-        const cityAirportIatas = new Set(forcedCities.flatMap(c => c.airports.map(a => a.iata_code)));
+        const cityAirportIatas = new Set(getAllIatas(forcedCities));
 
         let items = globeAirports
             .filter(a => !cityAirportIatas.has(a.i))
