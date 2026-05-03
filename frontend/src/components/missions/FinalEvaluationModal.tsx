@@ -20,6 +20,13 @@ const FinalEvaluationModal: React.FC = () => {
     const [showThanks, setShowThanks] = useState(false);
     const [originalUrl, setOriginalUrl] = useState<string | null>(null);
     const { user, isAuthenticated } = useAuth();
+    const scrollRef = React.useRef<HTMLDivElement>(null);
+
+    React.useEffect(() => {
+        if (scrollRef.current) {
+            scrollRef.current.scrollTop = 0;
+        }
+    }, [showThanks]);
 
     const SUS_QUESTIONS = useMemo(() => t('missions.finalEvaluation.sus_questions', { returnObjects: true }) as string[], [t]);
 
@@ -80,7 +87,7 @@ const FinalEvaluationModal: React.FC = () => {
                     <div className="absolute -bottom-24 -left-24 h-64 w-64 rounded-full bg-indigo-500/20 blur-3xl animate-pulse" />
                 </div>
 
-                <div className="relative z-10 overflow-y-auto custom-scrollbar flex-1 w-full p-8 lg:p-12">
+                <div ref={scrollRef} className="relative z-10 overflow-y-auto custom-scrollbar flex-1 w-full p-8 lg:p-12">
                     {showThanks ? (
                         <div className="animate-fade-in animate-duration-500 flex flex-col items-center">
                             <div className="mb-8 flex h-24 w-24 items-center justify-center rounded-full bg-green-500/20 text-green-400 shadow-2xl shadow-green-500/20 ring-4 ring-green-500/30">

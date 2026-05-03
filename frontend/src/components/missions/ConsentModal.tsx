@@ -15,6 +15,13 @@ const ConsentModal: React.FC<ConsentModalProps> = ({ onAccept }) => {
     const [isChecked, setIsChecked] = React.useState(false);
     const [isClosing, setIsClosing] = React.useState(false);
     const navigate = useNavigate();
+    const scrollRef = React.useRef<HTMLDivElement>(null);
+
+    React.useEffect(() => {
+        if (scrollRef.current) {
+            scrollRef.current.scrollTop = 0;
+        }
+    }, [step]);
 
     const handleAccept = () => {
         setIsClosing(true);
@@ -42,7 +49,7 @@ const ConsentModal: React.FC<ConsentModalProps> = ({ onAccept }) => {
                 </div>
 
                 {/* Scrollable area only for content */}
-                <div className="relative max-h-[calc(100svh-2rem)] overflow-y-auto custom-scrollbar p-8">
+                <div ref={scrollRef} className="relative max-h-[calc(100svh-2rem)] overflow-y-auto custom-scrollbar p-8">
                     <div className="relative">
                         {step === 1 ? (
                             <div className="animate-in fade-in slide-in-from-right-4 duration-500">
