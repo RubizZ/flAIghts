@@ -1,1 +1,3 @@
 src/generated/
+# Analysis reports
+scripts/analysis/evaluations_analysis_report.html

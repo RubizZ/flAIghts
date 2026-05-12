@@ -1,0 +1,1804 @@
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Análisis Evaluaciones - flAIghts</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
+    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #6366f1;
+            --secondary: #a855f7;
+            --bg: #0f172a;
+            --card-bg: #1e293b;
+            --text: #f8fafc;
+            --text-muted: #94a3b8;
+        }
+        * {
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: 40px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        header {
+            margin-bottom: 40px;
+            text-align: center;
+        }
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            background: linear-gradient(to right, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .summary-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 40px;
+            align-items: stretch;
+        }
+        .card {
+            background-color: var(--card-bg);
+            padding: 24px;
+            border-radius: 16px;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            transition: transform 0.2s;
+            position: relative;
+        }
+        .card:hover .export-actions-mini {
+            opacity: 1;
+        }
+        .export-actions-mini {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            opacity: 0;
+            transition: opacity 0.2s;
+            display: flex;
+            gap: 4px;
+        }
+        .card:hover {
+            transform: translateY(-4px);
+        }
+        .card h3 {
+            margin: 0;
+            font-size: 0.875rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        .card .value {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-top: 8px;
+            color: var(--primary);
+        }
+        .charts-grid {
+            column-count: 2;
+            column-gap: 30px;
+            width: 100%;
+            margin-bottom: 20px;
+        }
+        .chart-container {
+            background-color: var(--card-bg);
+            padding: 24px;
+            border-radius: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            break-inside: avoid-column;
+            margin-bottom: 30px;
+            display: block;
+            width: 100%;
+        }
+        .chart-container h2 {
+            margin-top: 0;
+            font-size: 1.25rem;
+            margin-bottom: 20px;
+        }
+
+        /* Export Styles */
+        .chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        .chart-header h2 {
+            margin: 0 !important;
+            font-size: 1rem !important;
+        }
+        .export-actions {
+            display: flex;
+            gap: 8px;
+        }
+        .export-btn {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: var(--text-muted);
+            padding: 4px 10px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.7rem;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-weight: 600;
+        }
+        .export-btn:hover {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+        .export-btn.mini {
+            padding: 2px 6px;
+            font-size: 0.6rem;
+        }
+        .sus-grade {
+            text-align: center;
+            padding: 20px;
+            border-radius: 12px;
+            margin-top: 20px;
+            font-weight: 600;
+        }
+        .grade-excellent { background: rgba(34, 197, 94, 0.2); color: #4ade80; }
+        .grade-good { background: rgba(59, 130, 246, 0.2); color: #60a5fa; }
+        .grade-ok { background: rgba(234, 179, 8, 0.2); color: #facc15; }
+        .grade-poor { background: rgba(239, 68, 68, 0.2); color: #f87171; }
+        
+        .mode-tag {
+            position: relative;
+        }
+        .mode-tag:hover .export-actions-mini {
+            opacity: 1;
+        }
+
+        .item-table-container {
+            margin-top: 40px;
+            background-color: var(--card-bg);
+            padding: 24px;
+            border-radius: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            overflow-x: auto;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            text-align: left;
+            padding: 12px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        th {
+            color: var(--text-muted);
+            font-size: 0.875rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        tr:hover {
+            background-color: rgba(255, 255, 255, 0.02);
+        }
+        .q-num {
+            font-weight: 700;
+            color: var(--primary);
+        }
+        .positive { color: #4ade80; font-size: 0.75rem; font-weight: 600; }
+        .negative { color: #f87171; font-size: 0.75rem; font-weight: 600; }
+        
+        section {
+            margin-bottom: 60px;
+            padding: 30px;
+            background: rgba(255, 255, 255, 0.02);
+            border-radius: 24px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        section h2 {
+            font-size: 1.75rem;
+            margin-bottom: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+        }
+        .section-title-box {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .section-title-box::before {
+            content: '';
+            display: inline-block;
+            width: 4px;
+            height: 24px;
+            background: var(--primary);
+            border-radius: 2px;
+        }
+        
+        /* Ocultar botones en la captura de pantalla */
+        .html2canvas-container .export-actions,
+        .html2canvas-container .export-actions-mini,
+        .html2canvas-container .export-btn {
+            display: none !important;
+        }
+
+        .circular-chart-wrapper {
+            max-width: 550px;
+            margin: 0 auto;
+            position: relative;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 10px;">
+                <h1 style="margin: 0;">Análisis de Usabilidad y Funcionamiento de flAIghts</h1>
+                <div class="export-actions">
+                    <button class="export-btn" onclick="exportElement('header-summary', 'periodo_evaluacion_completo')">Exportar Resumen PNG</button>
+                </div>
+            </div>
+            <p style="color: var(--text-muted); margin-bottom: 25px;">Reporte Estadístico de las evaluaciones</p>
+            
+            <div id="header-summary" style="display: flex; width: fit-content; margin: 0 auto 20px auto; gap: 40px; background: rgba(255,255,255,0.03); padding: 20px 40px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.05); text-align: left; position: relative; align-items: center;">
+                <div class="mode-tag" id="period-start">
+                    <div class="export-actions-mini">
+                        <button class="export-btn mini" onclick="exportElement('period-start', 'inicio_evaluaciones')">PNG</button>
+                    </div>
+                    <div style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px;">Inicio Evaluaciones</div>
+                    <div style="font-size: 1rem; color: #6366f1; font-weight: 600;">13/05/2026, 01:15</div>
+                </div>
+                <div style="width: 1px; background: rgba(255,255,255,0.1); align-self: stretch;"></div>
+                <div class="mode-tag" id="period-end">
+                    <div class="export-actions-mini">
+                        <button class="export-btn mini" onclick="exportElement('period-end', 'fin_evaluaciones')">PNG</button>
+                    </div>
+                    <div style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px;">Última Evaluación</div>
+                    <div style="font-size: 1rem; color: var(--secondary); font-weight: 600;">13/05/2026, 01:32</div>
+                </div>
+                <div style="width: 1px; background: rgba(255,255,255,0.1); align-self: stretch;"></div>
+                <div class="mode-tag" id="period-duration">
+                    <div class="export-actions-mini">
+                        <button class="export-btn mini" onclick="exportElement('period-duration', 'duracion_captacion')">PNG</button>
+                    </div>
+                    <div style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px;">Periodo de Captación</div>
+                    <div style="font-size: 1rem; color: #14b8a6; font-weight: 700;">1 días</div>
+                </div>
+            </div>
+        </header>
+
+        <!-- SECCIÓN 0: DESCRIPCIÓN DE LA MUESTRA -->
+        <section id="sample-description">
+            <h2>
+                <div class="section-title-box">Descripción de la Muestra</div>
+                <div class="export-actions">
+                    <button class="export-btn" onclick="exportElement('sample-description', 'muestra_demografica')">Exportar Sección PNG</button>
+                </div>
+            </h2>
+            <p style="color: var(--text-muted); margin-bottom: 30px;">Distribución de los 50 participantes según variables demográficas.</p>
+            <div class="charts-grid">
+                <div class="chart-container">
+                    <div class="chart-header">
+                        <h2>Participantes por Edad</h2>
+                        <div class="export-actions">
+                            <button class="export-btn" onclick="exportChart('sampleAgeChart', 'png', event, false)">PNG</button>
+                            <button class="export-btn" onclick="exportChart('sampleAgeChart', 'png', event, true)">Card</button>
+                            <button class="export-btn" onclick="exportChart('sampleAgeChart', 'csv', event)">Excel</button>
+                        </div>
+                    </div>
+                    <canvas id="sampleAgeChart"></canvas>
+                    <div class="mode-tag" id="mode-age" style="margin-top: 20px; padding: 10px; background: rgba(99, 102, 241, 0.1); border-radius: 8px; border: 1px solid rgba(99, 102, 241, 0.2);">
+                        <div class="export-actions-mini">
+                            <button class="export-btn mini" onclick="exportElement('mode-age', 'moda_edad')">PNG</button>
+                        </div>
+                        <span style="color: var(--text-muted); font-size: 0.8rem; text-transform: uppercase;">Moda:</span>
+                        <span style="display: block; font-size: 1.1rem; font-weight: 700; color: var(--primary);">23 años</span>
+                    </div>
+                </div>
+                <div class="chart-container">
+                    <div class="chart-header">
+                        <h2>Participantes por Género</h2>
+                        <div class="export-actions">
+                            <button class="export-btn" onclick="exportChart('sampleGenderChart', 'png', event, false)">PNG</button>
+                            <button class="export-btn" onclick="exportChart('sampleGenderChart', 'png', event, true)">Card</button>
+                            <button class="export-btn" onclick="exportChart('sampleGenderChart', 'csv', event)">Excel</button>
+                        </div>
+                    </div>
+                    <div class="circular-chart-wrapper">
+                        <canvas id="sampleGenderChart"></canvas>
+                    </div>
+                    <div class="mode-tag" id="mode-gender" style="margin-top: 20px; padding: 10px; background: rgba(168, 85, 247, 0.1); border-radius: 8px; border: 1px solid rgba(168, 85, 247, 0.2);">
+                        <div class="export-actions-mini">
+                            <button class="export-btn mini" onclick="exportElement('mode-gender', 'moda_genero')">PNG</button>
+                        </div>
+                        <span style="color: var(--text-muted); font-size: 0.8rem; text-transform: uppercase;">Moda:</span>
+                        <span style="display: block; font-size: 1.1rem; font-weight: 700; color: var(--secondary);">Non-binary</span>
+                    </div>
+                </div>
+                <div class="chart-container">
+                    <div class="chart-header">
+                        <h2>Participantes por Nivel Educativo</h2>
+                        <div class="export-actions">
+                            <button class="export-btn" onclick="exportChart('sampleEduChart', 'png', event, false)">PNG</button>
+                            <button class="export-btn" onclick="exportChart('sampleEduChart', 'png', event, true)">Card</button>
+                            <button class="export-btn" onclick="exportChart('sampleEduChart', 'csv', event)">Excel</button>
+                        </div>
+                    </div>
+                    <div class="circular-chart-wrapper">
+                        <canvas id="sampleEduChart"></canvas>
+                    </div>
+                    <div class="mode-tag" id="mode-edu" style="margin-top: 20px; padding: 10px; background: rgba(20, 184, 166, 0.1); border-radius: 8px; border: 1px solid rgba(20, 184, 166, 0.2);">
+                        <div class="export-actions-mini">
+                            <button class="export-btn mini" onclick="exportElement('mode-edu', 'moda_educacion')">PNG</button>
+                        </div>
+                        <span style="color: var(--text-muted); font-size: 0.8rem; text-transform: uppercase;">Moda:</span>
+                        <span style="display: block; font-size: 1.1rem; font-weight: 700; color: #14b8a6;">PhD</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECCIÓN 1: PUNTUACIÓN SUS -->
+        <section id="sus-score">
+            <h2>
+                <div class="section-title-box">Puntuación SUS</div>
+                <div class="export-actions">
+                    <button class="export-btn" onclick="exportElement('sus-summary-cards', 'resumen_sus_cards')">PNG Resumen</button>
+                    <button class="export-btn" onclick="exportElement('sus-score', 'puntuacion_sus')">Exportar Sección PNG</button>
+                </div>
+            </h2>
+            
+            <div class="summary-cards" id="sus-summary-cards" style="grid-template-columns: repeat(4, 1fr);">
+                <div class="card" id="card-mean">
+                    <div class="export-actions-mini">
+                        <button class="export-btn mini" onclick="exportElement('card-mean', 'media_sus')">PNG</button>
+                    </div>
+                    <h3>Puntuación Media</h3>
+                    <div class="value">50,50</div>
+                </div>
+                <div class="card" id="card-median">
+                    <div class="export-actions-mini">
+                        <button class="export-btn mini" onclick="exportElement('card-median', 'mediana_sus')">PNG</button>
+                    </div>
+                    <h3>Mediana</h3>
+                    <div class="value">50,00</div>
+                </div>
+                <div class="card" id="card-std">
+                    <div class="export-actions-mini">
+                        <button class="export-btn mini" onclick="exportElement('card-std', 'desviacion_sus')">PNG</button>
+                    </div>
+                    <h3>Desviación Típica</h3>
+                    <div class="value">5,94</div>
+                </div>
+                <div class="card" id="card-count">
+                    <div class="export-actions-mini">
+                        <button class="export-btn mini" onclick="exportElement('card-count', 'total_evaluaciones')">PNG</button>
+                    </div>
+                    <h3>Total Evaluaciones</h3>
+                    <div class="value">50</div>
+                </div>
+            </div>
+
+            <div class="sus-grade grade-ok">
+                Calificación Global: Aceptable (D)
+            </div>
+
+            <div class="charts-grid" style="margin-top: 40px;">
+                <div class="chart-container">
+                    <div class="chart-header">
+                        <h2>Distribución de Puntuaciones SUS</h2>
+                        <div class="export-actions">
+                            <button class="export-btn" onclick="exportChart('distChart', 'png', event, false)">PNG</button>
+                            <button class="export-btn" onclick="exportChart('distChart', 'png', event, true)">Card</button>
+                            <button class="export-btn" onclick="exportChart('distChart', 'csv', event)">Excel</button>
+                        </div>
+                    </div>
+                    <div style="height: 250px; position: relative;">
+                        <canvas id="distChart"></canvas>
+                    </div>
+                </div>
+                <div class="chart-container">
+                    <div class="chart-header">
+                        <h2>Media SUS por Edad</h2>
+                        <div class="export-actions">
+                            <button class="export-btn" onclick="exportChart('ageChart', 'png', event, false)">PNG</button>
+                            <button class="export-btn" onclick="exportChart('ageChart', 'png', event, true)">Card</button>
+                            <button class="export-btn" onclick="exportChart('ageChart', 'csv', event)">Excel</button>
+                        </div>
+                    </div>
+                    <canvas id="ageChart"></canvas>
+                </div>
+                <div class="chart-container">
+                    <div class="chart-header">
+                        <h2>Media SUS por Género</h2>
+                        <div class="export-actions">
+                            <button class="export-btn" onclick="exportChart('genderChart', 'png', event, false)">PNG</button>
+                            <button class="export-btn" onclick="exportChart('genderChart', 'png', event, true)">Card</button>
+                            <button class="export-btn" onclick="exportChart('genderChart', 'csv', event)">Excel</button>
+                        </div>
+                    </div>
+                    <canvas id="genderChart"></canvas>
+                </div>
+                <div class="chart-container">
+                    <div class="chart-header">
+                        <h2>Media SUS por Nivel Educativo</h2>
+                        <div class="export-actions">
+                            <button class="export-btn" onclick="exportChart('eduChart', 'png', event, false)">PNG</button>
+                            <button class="export-btn" onclick="exportChart('eduChart', 'png', event, true)">Card</button>
+                            <button class="export-btn" onclick="exportChart('eduChart', 'csv', event)">Excel</button>
+                        </div>
+                    </div>
+                    <canvas id="eduChart"></canvas>
+                </div>
+            </div>
+
+            <div id="question-table-container" class="item-table-container" style="margin-top: 40px; border: none; padding: 30px; background: rgba(255,255,255,0.02); border-radius: 24px;">
+                <div class="chart-header">
+                    <h3 style="margin: 0; font-size: 1.1rem; color: var(--text-muted);">Análisis Individual por Pregunta</h3>
+                    <div class="export-actions">
+                        <button class="export-btn mini" onclick="exportElement('question-table-container', 'tabla_preguntas')">PNG Tabla</button>
+                    </div>
+                </div>
+                <p style="color: var(--text-muted); font-size: 0.85rem; margin: 10px 0 20px 0;">Valores crudos de la respuesta (1-5). Las preguntas impares son positivas, las pares son negativas (invertidas en el cálculo final).</p>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Pregunta</th>
+                            <th>Media</th>
+                            <th>Desv. Típica</th>
+                            <th>Tipo</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        
+                            <tr>
+                                <td class="q-num">Q1</td>
+                                <td>Me gustaría usar este sistema frecuentemente.</td>
+                                <td style="font-weight: 600;">3,90</td>
+                                <td style="color: var(--text-muted);">1,14</td>
+                                <td>
+                                    <span class="positive">POSITIVA</span>
+                                </td>
+                            </tr>
+                        
+                            <tr>
+                                <td class="q-num">Q2</td>
+                                <td>Encontré el sistema innecesariamente complejo.</td>
+                                <td style="font-weight: 600;">3,92</td>
+                                <td style="color: var(--text-muted);">1,00</td>
+                                <td>
+                                    <span class="negative">NEGATIVA</span>
+                                </td>
+                            </tr>
+                        
+                            <tr>
+                                <td class="q-num">Q3</td>
+                                <td>Pensé que el sistema era fácil de usar.</td>
+                                <td style="font-weight: 600;">3,98</td>
+                                <td style="color: var(--text-muted);">0,79</td>
+                                <td>
+                                    <span class="positive">POSITIVA</span>
+                                </td>
+                            </tr>
+                        
+                            <tr>
+                                <td class="q-num">Q4</td>
+                                <td>Necesitaría el apoyo de un técnico para usar este sistema.</td>
+                                <td style="font-weight: 600;">3,92</td>
+                                <td style="color: var(--text-muted);">0,91</td>
+                                <td>
+                                    <span class="negative">NEGATIVA</span>
+                                </td>
+                            </tr>
+                        
+                            <tr>
+                                <td class="q-num">Q5</td>
+                                <td>Las diversas funciones del sistema están bien integradas.</td>
+                                <td style="font-weight: 600;">3,90</td>
+                                <td style="color: var(--text-muted);">0,90</td>
+                                <td>
+                                    <span class="positive">POSITIVA</span>
+                                </td>
+                            </tr>
+                        
+                            <tr>
+                                <td class="q-num">Q6</td>
+                                <td>Pensé que había demasiada inconsistencia en este sistema.</td>
+                                <td style="font-weight: 600;">3,82</td>
+                                <td style="color: var(--text-muted);">0,89</td>
+                                <td>
+                                    <span class="negative">NEGATIVA</span>
+                                </td>
+                            </tr>
+                        
+                            <tr>
+                                <td class="q-num">Q7</td>
+                                <td>La mayoría de la gente aprendería a usar este sistema muy rápidamente.</td>
+                                <td style="font-weight: 600;">4,04</td>
+                                <td style="color: var(--text-muted);">0,89</td>
+                                <td>
+                                    <span class="positive">POSITIVA</span>
+                                </td>
+                            </tr>
+                        
+                            <tr>
+                                <td class="q-num">Q8</td>
+                                <td>Encontré el sistema muy pesado de usar.</td>
+                                <td style="font-weight: 600;">3,96</td>
+                                <td style="color: var(--text-muted);">0,82</td>
+                                <td>
+                                    <span class="negative">NEGATIVA</span>
+                                </td>
+                            </tr>
+                        
+                            <tr>
+                                <td class="q-num">Q9</td>
+                                <td>Me sentí muy seguro usando el sistema.</td>
+                                <td style="font-weight: 600;">4,08</td>
+                                <td style="color: var(--text-muted);">0,80</td>
+                                <td>
+                                    <span class="positive">POSITIVA</span>
+                                </td>
+                            </tr>
+                        
+                            <tr>
+                                <td class="q-num">Q10</td>
+                                <td>Necesité aprender muchas cosas antes de empezar con este sistema.</td>
+                                <td style="font-weight: 600;">4,08</td>
+                                <td style="color: var(--text-muted);">0,80</td>
+                                <td>
+                                    <span class="negative">NEGATIVA</span>
+                                </td>
+                            </tr>
+                        
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- SECCIÓN 2: ANÁLISIS DE TIEMPOS -->
+        <section id="time-analysis">
+            <h2>
+                <div class="section-title-box">Análisis de Tiempos</div>
+                <div class="export-actions">
+                    <button class="export-btn" onclick="exportElement('time-summary-cards', 'resumen_tiempos_cards')">PNG Resumen</button>
+                    <button class="export-btn" onclick="exportElement('time-analysis', 'analisis_tiempos')">Exportar Sección PNG</button>
+                </div>
+            </h2>
+            <div class="summary-cards" id="time-summary-cards" style="grid-template-columns: repeat(3, 1fr);">
+                <div class="card" id="card-time-mission" style="border-left: 4px solid var(--secondary);">
+                    <div class="export-actions-mini">
+                        <button class="export-btn mini" onclick="exportElement('card-time-mission', 'tiempo_mision')">PNG</button>
+                    </div>
+                    <h3>Mediana Tiempo Misión</h3>
+                    <div class="value" style="font-size: 1.5rem; color: var(--secondary);">13h 44m</div>
+                    <p style="font-size: 0.75rem; color: var(--text-muted); margin-top: 4px;">Desde el primer paso de la misión hasta el último</p>
+                </div>
+                <div class="card" id="card-time-journey" style="border-left: 4px solid var(--secondary);">
+                    <div class="export-actions-mini">
+                        <button class="export-btn mini" onclick="exportElement('card-time-journey', 'tiempo_usuario')">PNG</button>
+                    </div>
+                    <h3>Mediana Registro → Eval.</h3>
+                    <div class="value" style="font-size: 1.5rem; color: var(--secondary);">2d 12h</div>
+                    <p style="font-size: 0.75rem; color: var(--text-muted); margin-top: 4px;">Desde el registro hasta terminar la evaluación</p>
+                </div>
+                <div class="card" id="card-total-missions" style="border-left: 4px solid var(--secondary);">
+                    <div class="export-actions-mini">
+                        <button class="export-btn mini" onclick="exportElement('card-total-missions', 'total_misiones')">PNG</button>
+                    </div>
+                    <h3>Total Misiones Analizadas</h3>
+                    <div class="value" style="font-size: 1.5rem; color: var(--secondary);">150</div>
+                    <p style="font-size: 0.75rem; color: var(--text-muted); margin-top: 4px;">Misiones con datos de pasos completos</p>
+                </div>
+            </div>
+
+            <div class="chart-container" style="margin-top: 30px;">
+                <div class="chart-header">
+                    <h2>Distribución de Duración de Sesión (Activa)</h2>
+                    <div class="export-actions">
+                        <button class="export-btn" onclick="exportChart('sessionDurationChart', 'png', event, false)">PNG</button>
+                        <button class="export-btn" onclick="exportChart('sessionDurationChart', 'png', event, true)">Card</button>
+                        <button class="export-btn" onclick="exportChart('sessionDurationChart', 'csv', event)">Excel</button>
+                    </div>
+                </div>
+                <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 15px;">Tiempo total real transcurrido desde el registro del usuario hasta el envío de la evaluación (incluye todas las pausas y días intermedios).</p>
+                <canvas id="sessionDurationChart" style="max-height: 350px;"></canvas>
+            </div>
+
+            <h3 style="margin-top: 40px; color: var(--text-muted);">Comparativa de Tiempos por Demografía (Mediana)</h3>
+            <div class="charts-grid">
+                <div class="chart-container">
+                    <div class="chart-header">
+                        <h2>Tiempo por Edad</h2>
+                        <div class="export-actions">
+                            <button class="export-btn" onclick="exportChart('timeAgeChart', 'png', event, false)">PNG</button>
+                            <button class="export-btn" onclick="exportChart('timeAgeChart', 'png', event, true)">Card</button>
+                            <button class="export-btn" onclick="exportChart('timeAgeChart', 'csv', event)">Excel</button>
+                        </div>
+                    </div>
+                    <canvas id="timeAgeChart"></canvas>
+                </div>
+                <div class="chart-container">
+                    <div class="chart-header">
+                        <h2>Tiempo por Género</h2>
+                        <div class="export-actions">
+                            <button class="export-btn" onclick="exportChart('timeGenderChart', 'png', event, false)">PNG</button>
+                            <button class="export-btn" onclick="exportChart('timeGenderChart', 'png', event, true)">Card</button>
+                            <button class="export-btn" onclick="exportChart('timeGenderChart', 'csv', event)">Excel</button>
+                        </div>
+                    </div>
+                    <canvas id="timeGenderChart"></canvas>
+                </div>
+                <div class="chart-container">
+                    <div class="chart-header">
+                        <h2>Tiempo por Nivel Educativo</h2>
+                        <div class="export-actions">
+                            <button class="export-btn" onclick="exportChart('timeEduChart', 'png', event, false)">PNG</button>
+                            <button class="export-btn" onclick="exportChart('timeEduChart', 'png', event, true)">Card</button>
+                            <button class="export-btn" onclick="exportChart('timeEduChart', 'csv', event)">Excel</button>
+                        </div>
+                    </div>
+                    <canvas id="timeEduChart"></canvas>
+                </div>
+            </div>
+
+            <div id="mission-breakdown-container" class="item-table-container" style="margin-top: 30px; border: none; padding: 20px; background: rgba(255,255,255,0.02);">
+                <div class="chart-header">
+                    <h3 style="margin-top: 0; font-size: 1rem; color: var(--text-muted);">Desglose por Misión</h3>
+                    <div class="export-actions">
+                        <button class="export-btn" onclick="exportElement('mission-breakdown-container', 'desglose_misiones')">PNG</button>
+                    </div>
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Misión</th>
+                            <th>Mediana de Tiempo</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        
+                            <tr>
+                                <td style="font-weight: 600;">mission-1</td>
+                                <td style="color: var(--secondary); font-weight: 800; font-size: 1.05rem;">23h 56m</td>
+                            </tr>
+                        
+                            <tr>
+                                <td style="font-weight: 600;">mission-2</td>
+                                <td style="color: var(--secondary); font-weight: 800; font-size: 1.05rem;">15h 11m</td>
+                            </tr>
+                        
+                            <tr>
+                                <td style="font-weight: 600;">mission-3</td>
+                                <td style="color: var(--secondary); font-weight: 800; font-size: 1.05rem;">1h 3m</td>
+                            </tr>
+                        
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- SECCIÓN 3: ANÁLISIS DE AUDITS -->
+        <section id="audit-analysis">
+            <h2>
+                <div class="section-title-box">Análisis de Audit Logs y Database</div>
+                <div class="export-actions">
+                    <button class="export-btn" onclick="exportElement('audit-summary-cards', 'resumen_audit_cards')">PNG Resumen</button>
+                    <button class="export-btn" onclick="exportElement('audit-analysis', 'analisis_audits')">Exportar Sección PNG</button>
+                </div>
+            </h2>
+            <p style="color: var(--text-muted); margin-bottom: 30px;">Actividad técnica registrada entre el registro y la evaluación de los participantes.</p>
+            
+            <div class="summary-cards" id="audit-summary-cards" style="grid-template-columns: repeat(3, 1fr); gap: 15px; align-items: stretch;">
+                <div class="card" id="card-audit-success" style="border-left: 4px solid #14b8a6;">
+                    <div class="export-actions-mini">
+                        <button class="export-btn mini" onclick="exportElement('card-audit-success', 'exito_busquedas')">PNG</button>
+                    </div>
+                    <h3>Éxito de Búsquedas</h3>
+                    <div class="value" style="font-size: 1.3rem; color: #14b8a6;">93,8%</div>
+                    <p style="font-size: 0.75rem; color: var(--text-muted); margin-top: 4px;">75 Éxitos / 5 Fallos</p>
+                </div>
+                <div class="card" id="card-audit-wait-ok" style="border-left: 4px solid #10b981;">
+                    <div class="export-actions-mini">
+                        <button class="export-btn mini" onclick="exportElement('card-audit-wait-ok', 'espera_ok')">PNG</button>
+                    </div>
+                    <h3>T. Respuesta Búsquedas (Éxito)</h3>
+                    <div class="value" style="font-size: 1.3rem; color: #10b981;">Mediana: 17,0s</div>
+                    <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 4px; display: grid; grid-template-columns: 1fr 1fr; gap: 4px;">
+                        <span>Media: 20,9s</span>
+                        <span>Desv. Típica: 9,8s</span>
+                        <span style="grid-column: span 2; color: #34d399; font-weight: normal;">Percentil 95 (P95): 38,2s</span>
+                    </div>
+                </div>
+                <div class="card" id="card-audit-wait-err" style="border-left: 4px solid #f59e0b;">
+                    <div class="export-actions-mini">
+                        <button class="export-btn mini" onclick="exportElement('card-audit-wait-err', 'espera_err')">PNG</button>
+                    </div>
+                    <h3>T. Respuesta Búsquedas (Fallo)</h3>
+                    <div class="value" style="font-size: 1.3rem; color: #f59e0b;">Mediana: 6,0s</div>
+                    <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 4px; display: grid; grid-template-columns: 1fr 1fr; gap: 4px;">
+                        <span>Media: 7,0s</span>
+                        <span>Desv. Típica: 2,8s</span>
+                        <span style="grid-column: span 2; color: #fbbf24;">Percentil 95 (P95): 11,2s</span>
+                    </div>
+                </div>
+
+                <div class="card" id="card-audit-ia" style="border-left: 4px solid #6366f1;">
+                    <div class="export-actions-mini">
+                        <button class="export-btn mini" onclick="exportElement('card-audit-ia', 'interaccion_ia')">PNG</button>
+                    </div>
+                    <h3>Interacción Agente IA</h3>
+                    <div class="value" style="font-size: 1.3rem; color: #6366f1;">120 msg</div>
+                </div>
+                <div class="card" id="card-audit-tools" style="border-left: 4px solid #a855f7;">
+                    <div class="export-actions-mini">
+                        <button class="export-btn mini" onclick="exportElement('card-audit-tools', 'uso_herramientas')">PNG</button>
+                    </div>
+                    <h3>Uso Herramientas Agente IA</h3>
+                    <div class="value" style="font-size: 1.3rem; color: #a855f7;">80</div>
+                </div>
+                <div class="card" id="card-audit-efficiency" style="border-left: 4px solid #ec4899;">
+                    <div class="export-actions-mini">
+                        <button class="export-btn mini" onclick="exportElement('card-audit-efficiency', 'eficiencia_ia')">PNG</button>
+                    </div>
+                    <h3>Media Mensajes / Búsqueda</h3>
+                    <div class="value" style="font-size: 1.3rem; color: #ec4899;">2,1 msg/busq</div>
+                </div>
+            </div>
+
+            <div id="audit-distributions-block" style="margin-top: 50px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 40px;">
+                <h3 style="color: var(--text-muted); margin-bottom: 30px;">Distribución y Métricas de Auditoría</h3>
+                <div class="charts-grid">
+                    <div class="chart-container">
+                        <div class="chart-header">
+                            <h2>Distribución por Recurso</h2>
+                            <div class="export-actions">
+                                <button class="export-btn" onclick="exportChart('auditResourceChart', 'png', event, false)">PNG</button>
+                                <button class="export-btn" onclick="exportChart('auditResourceChart', 'png', event, true)">Card</button>
+                                <button class="export-btn" onclick="exportChart('auditResourceChart', 'csv', event)">Excel</button>
+                            </div>
+                        </div>
+                        <div class="circular-chart-wrapper">
+                            <canvas id="auditResourceChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="chart-container">
+                        <div class="chart-header">
+                            <h2>Rendimiento por Tipo de Trayecto</h2>
+                            <div class="export-actions">
+                                <button class="export-btn" onclick="exportChart('auditStatusByTypeChart', 'png', event, false)">PNG</button>
+                                <button class="export-btn" onclick="exportChart('auditStatusByTypeChart', 'png', event, true)">Card</button>
+                                <button class="export-btn" onclick="exportChart('auditStatusByTypeChart', 'csv', event)">Excel</button>
+                            </div>
+                        </div>
+                        <div style="height: 300px; padding: 10px;">
+                            <canvas id="auditStatusByTypeChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="chart-container">
+                        <div class="chart-header">
+                            <h2>Acciones más Frecuentes</h2>
+                            <div class="export-actions">
+                                <button class="export-btn" onclick="exportChart('auditActionChart', 'png', event, false)">PNG</button>
+                                <button class="export-btn" onclick="exportChart('auditActionChart', 'png', event, true)">Card</button>
+                                <button class="export-btn" onclick="exportChart('auditActionChart', 'csv', event)">Excel</button>
+                            </div>
+                        </div>
+                        <canvas id="auditActionChart"></canvas>
+                    </div>
+                    <div class="chart-container">
+                        <div class="chart-header">
+                            <h2>Eficiencia: Mensajes / Búsqueda</h2>
+                            <div class="export-actions">
+                                <button class="export-btn" onclick="exportChart('auditEfficiencyChart', 'png', event, false)">PNG</button>
+                                <button class="export-btn" onclick="exportChart('auditEfficiencyChart', 'png', event, true)">Card</button>
+                                <button class="export-btn" onclick="exportChart('auditEfficiencyChart', 'csv', event)">Excel</button>
+                            </div>
+                        </div>
+                        <canvas id="auditEfficiencyChart"></canvas>
+                    </div>
+                    <div class="chart-container">
+                        <div class="chart-header">
+                            <h2>Tiempos de Búsqueda (Éxito)</h2>
+                            <div class="export-actions">
+                                <button class="export-btn" onclick="exportChart('auditTimeDistChart', 'png', event, false)">PNG</button>
+                                <button class="export-btn" onclick="exportChart('auditTimeDistChart', 'png', event, true)">Card</button>
+                                <button class="export-btn" onclick="exportChart('auditTimeDistChart', 'csv', event)">Excel</button>
+                            </div>
+                        </div>
+                        <canvas id="auditTimeDistChart"></canvas>
+                    </div>
+                    <div class="chart-container">
+                        <div class="chart-header">
+                            <h2>Tiempos de Búsqueda (Fallo)</h2>
+                            <div class="export-actions">
+                                <button class="export-btn" onclick="exportChart('auditFailedTimeDistChart', 'png', event, false)">PNG</button>
+                                <button class="export-btn" onclick="exportChart('auditFailedTimeDistChart', 'png', event, true)">Card</button>
+                                <button class="export-btn" onclick="exportChart('auditFailedTimeDistChart', 'csv', event)">Excel</button>
+                            </div>
+                        </div>
+                        <canvas id="auditFailedTimeDistChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <div id="performance-error-block" style="margin-top: 50px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 40px;">
+                <h3 style="color: #f43f5e; margin-bottom: 20px; display: flex; align-items: center; gap: 10px;">
+                    <span>⚠️ Análisis de Rendimiento Crítico y Errores</span>
+                </h3>
+                <p style="color: var(--text-muted); margin-bottom: 30px;">Identificación de cuellos de botella técnicos y patrones de fallo en el motor de búsqueda.</p>
+                
+                <div class="chart-container" style="margin-top: 30px;">
+                    <div class="chart-header">
+                        <h2 style="color: #f43f5e;">⚠️ Análisis de Casos Críticos de busquedas sin errores (Top 5% Latencia)</h2>
+                        <div class="export-actions">
+                            <button class="export-btn mini" onclick="exportElement('critical-cases-table', 'tabla_casos_criticos')">PNG Tabla</button>
+                        </div>
+                    </div>
+                    <p style="color: var(--text-muted); margin-bottom: 20px;">Listado de las búsquedas más lentas registradas para identificar patrones de degradación.</p>
+                    <div id="critical-cases-table" style="overflow-x: auto;">
+                        <table style="width: 100%; border-collapse: collapse; font-size: 0.85rem;">
+                            <thead>
+                                <tr style="border-bottom: 1px solid #334155; text-align: left;">
+                                    
+                                    <th style="padding: 10px; color: #94a3b8;">Duración</th>
+                                    <th style="padding: 10px; color: #94a3b8;">Orígenes</th>
+                                    <th style="padding: 10px; color: #94a3b8;">Destinos</th>
+                                    <th style="padding: 10px; color: #94a3b8;">Fecha</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                
+                                    <tr style="border-bottom: 1px solid #1e293b; transition: background 0.2s;" onmouseover="this.style.background='#1e293b'" onmouseout="this.style.background='transparent'">
+                                        
+                                        <td style="padding: 10px; font-weight: bold; color: #f43f5e;">45,2s</td>
+                                        <td style="padding: 10px;">MAD</td>
+                                        <td style="padding: 10px;">JFK</td>
+                                        <td style="padding: 10px; color: var(--text-muted);">12/05/2026</td>
+                                    </tr>
+                                
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="chart-container" style="margin-top: 30px;">
+                    <div class="chart-header">
+                        <h2 style="color: #f59e0b;">❌ Análisis de Errores de Búsqueda</h2>
+                    </div>
+                    <p style="color: var(--text-muted); margin-bottom: 20px;">Listado de las búsquedas que fallaron durante la exploración con el motivo del error.</p>
+                    <div style="overflow-x: auto;">
+                        <table style="width: 100%; border-collapse: collapse; font-size: 0.85rem;">
+                            <thead>
+                                <tr style="border-bottom: 1px solid #334155; text-align: left;">
+                                    
+                                    <th style="padding: 10px; color: #94a3b8;">Motivo</th>
+                                    <th style="padding: 10px; color: #94a3b8;">Orígenes</th>
+                                    <th style="padding: 10px; color: #94a3b8;">Destinos</th>
+                                    <th style="padding: 10px; color: #94a3b8;">Duración</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                
+                                    <tr style="border-bottom: 1px solid #1e293b; transition: background 0.2s;" onmouseover="this.style.background='#1e293b'" onmouseout="this.style.background='transparent'">
+                                        
+                                        <td style="padding: 10px; color: #f87171; font-weight: 500;">Itinerary validation failed</td>
+                                        <td style="padding: 10px;">SYD</td>
+                                        <td style="padding: 10px;">AKL</td>
+                                        <td style="padding: 10px; color: var(--text-muted);">12,1s</td>
+                                    </tr>
+                                
+                                    <tr style="border-bottom: 1px solid #1e293b; transition: background 0.2s;" onmouseover="this.style.background='#1e293b'" onmouseout="this.style.background='transparent'">
+                                        
+                                        <td style="padding: 10px; color: #f87171; font-weight: 500;">SerpApi error: 400</td>
+                                        <td style="padding: 10px;">JFK</td>
+                                        <td style="padding: 10px;">LAX</td>
+                                        <td style="padding: 10px; color: var(--text-muted);">8,2s</td>
+                                    </tr>
+                                
+                                    <tr style="border-bottom: 1px solid #1e293b; transition: background 0.2s;" onmouseover="this.style.background='#1e293b'" onmouseout="this.style.background='transparent'">
+                                        
+                                        <td style="padding: 10px; color: #f87171; font-weight: 500;">No se encontraron vuelos de vuelta</td>
+                                        <td style="padding: 10px;">MAD</td>
+                                        <td style="padding: 10px;">LBG</td>
+                                        <td style="padding: 10px; color: var(--text-muted);">5,4s</td>
+                                    </tr>
+                                
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="chart-container" style="margin-top: 30px;">
+                    <div class="chart-header">
+                        <h2>📊 Agregación de Fallos</h2>
+                    </div>
+                    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; margin-top: 15px;">
+                        <div>
+                            <h4 style="color: #94a3b8; font-size: 0.8rem; text-transform: uppercase; margin-bottom: 10px;">Por Motivo</h4>
+                            <table style="width: 100%; font-size: 0.8rem; border-collapse: collapse;">
+                                
+                                    <tr style="border-bottom: 1px solid #1e293b;"><td style="padding: 6px 0;">No se encontraron vuelos de vuelta</td><td style="text-align: right; font-weight: bold; color: #f87171;">1</td></tr>
+                                
+                                    <tr style="border-bottom: 1px solid #1e293b;"><td style="padding: 6px 0;">SerpApi error: 400</td><td style="text-align: right; font-weight: bold; color: #f87171;">1</td></tr>
+                                
+                                    <tr style="border-bottom: 1px solid #1e293b;"><td style="padding: 6px 0;">Itinerary validation failed</td><td style="text-align: right; font-weight: bold; color: #f87171;">1</td></tr>
+                                
+                            </table>
+                        </div>
+                        <div>
+                            <h4 style="color: #94a3b8; font-size: 0.8rem; text-transform: uppercase; margin-bottom: 10px;">Por Fecha de Salida</h4>
+                            <table style="width: 100%; font-size: 0.8rem; border-collapse: collapse;">
+                                
+                                    <tr style="border-bottom: 1px solid #1e293b;"><td style="padding: 6px 0;">N/A</td><td style="text-align: right; font-weight: bold; color: #f87171;">2</td></tr>
+                                
+                                    <tr style="border-bottom: 1px solid #1e293b;"><td style="padding: 6px 0;">10/06/2026</td><td style="text-align: right; font-weight: bold; color: #f87171;">1</td></tr>
+                                
+                            </table>
+                        </div>
+                        <div>
+                            <h4 style="color: #94a3b8; font-size: 0.8rem; text-transform: uppercase; margin-bottom: 10px;">Orígenes Problemáticos</h4>
+                            <table style="width: 100%; font-size: 0.8rem; border-collapse: collapse;">
+                                
+                                    <tr style="border-bottom: 1px solid #1e293b;"><td style="padding: 6px 0;">MAD</td><td style="text-align: right; font-weight: bold; color: #f87171;">1</td></tr>
+                                
+                                    <tr style="border-bottom: 1px solid #1e293b;"><td style="padding: 6px 0;">JFK</td><td style="text-align: right; font-weight: bold; color: #f87171;">1</td></tr>
+                                
+                                    <tr style="border-bottom: 1px solid #1e293b;"><td style="padding: 6px 0;">SYD</td><td style="text-align: right; font-weight: bold; color: #f87171;">1</td></tr>
+                                
+                            </table>
+                        </div>
+                        <div>
+                            <h4 style="color: #94a3b8; font-size: 0.8rem; text-transform: uppercase; margin-bottom: 10px;">Destinos Problemáticos</h4>
+                            <table style="width: 100%; font-size: 0.8rem; border-collapse: collapse;">
+                                
+                                    <tr style="border-bottom: 1px solid #1e293b;"><td style="padding: 6px 0;">LBG</td><td style="text-align: right; font-weight: bold; color: #f87171;">1</td></tr>
+                                
+                                    <tr style="border-bottom: 1px solid #1e293b;"><td style="padding: 6px 0;">LAX</td><td style="text-align: right; font-weight: bold; color: #f87171;">1</td></tr>
+                                
+                                    <tr style="border-bottom: 1px solid #1e293b;"><td style="padding: 6px 0;">AKL</td><td style="text-align: right; font-weight: bold; color: #f87171;">1</td></tr>
+                                
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </div>
+
+    <script>
+        // Register the datalabels plugin globally and disable by default
+        if (typeof ChartDataLabels !== 'undefined') {
+            Chart.register(ChartDataLabels);
+            Chart.defaults.set('plugins.datalabels', {
+                display: false
+            });
+        }
+
+        function exportElement(target, fileName) {
+            const element = typeof target === 'string' ? document.getElementById(target) : target;
+            if (!element) return;
+
+            const originalId = element.id;
+            const tempId = originalId || 'export-temp-' + Math.random().toString(36).substr(2, 9);
+            if (!originalId) element.id = tempId;
+
+            // Add a class to handle specific styles during capture if needed
+            element.classList.add('html2canvas-container');
+
+            html2canvas(element, {
+                backgroundColor: null, // Transparent background by default
+                scale: 2, // Higher quality
+                logging: false,
+                useCORS: true,
+                onclone: (clonedDoc) => {
+                    const clonedEl = clonedDoc.getElementById(tempId);
+                    if (clonedEl) {
+                        const originalId = element.id;
+                        const isCanvas = clonedEl.tagName.toLowerCase() === 'canvas';
+                        const isTable = (originalId && (originalId.includes('table') || originalId.includes('mission-breakdown'))) || clonedEl.tagName.toLowerCase() === 'table';
+                        const isCard = clonedEl.classList.contains('card') || (originalId && originalId.includes('card'));
+                        const isHeader = (originalId && originalId.includes('header'));
+                        const isSummaryContainer = clonedEl.classList.contains('summary-cards') || (originalId && originalId.includes('summary'));
+                        const isSection = clonedEl.tagName.toLowerCase() === 'section' || clonedEl.classList.contains('item-table-container');
+                        const isMini = isCanvas || isCard || isHeader || isTable;
+
+                        clonedEl.style.padding = isMini ? '12px' : '20px';
+                        clonedEl.style.borderRadius = '20px';
+                        clonedEl.style.boxSizing = 'border-box';
+                        
+                        // Background logic:
+                        // 1. Individual charts (canvas) & standalone tables -> Transparent (no background)
+                        // 2. Cards, sections, or full containers -> Solid dark background
+                        if (!isCanvas && !isTable) {
+                            if (isSummaryContainer) {
+                                clonedEl.style.backgroundColor = 'transparent';
+                                clonedEl.style.background = 'transparent';
+                                if (originalId === 'header-summary') {
+                                    clonedEl.style.display = 'flex';
+                                    clonedEl.style.gap = '40px';
+                                    clonedEl.style.justifyContent = 'center';
+                                    clonedEl.style.alignItems = 'center';
+                                } else {
+                                    clonedEl.style.display = 'grid';
+                                    const originalEl = document.getElementById(originalId);
+                                    clonedEl.style.gridTemplateColumns = originalEl ? window.getComputedStyle(originalEl).gridTemplateColumns : 'repeat(4, 1fr)';
+                                    clonedEl.style.gap = '20px';
+                                }
+                                clonedEl.querySelectorAll('.card').forEach(card => {
+                                    card.style.backgroundColor = '#1e293b';
+                                    card.style.border = '1px solid rgba(255, 255, 255, 0.1)';
+                                });
+                            } else {
+                                clonedEl.style.backgroundColor = '#0f172a';
+                                clonedEl.style.border = '1px solid rgba(255, 255, 255, 0.1)';
+                                clonedEl.style.boxShadow = '0 10px 40px rgba(0,0,0,0.5)';
+                            }
+                        } else {
+                            // Canvases and Standalone Tables should always be transparent to allow integration
+                            clonedEl.style.backgroundColor = 'transparent';
+                            clonedEl.style.background = 'transparent';
+                        }
+
+                        // Size logic
+                        if (isMini) {
+                            clonedEl.style.width = 'fit-content';
+                            clonedEl.style.minWidth = 'auto';
+                            
+                            // Specific fix for transparent tables on white backgrounds
+                            if (isTable) {
+                                clonedEl.style.color = '#0f172a'; // Force dark text
+                                clonedEl.querySelectorAll('th').forEach(th => {
+                                    th.style.color = '#475569'; // Darker muted for headers
+                                    th.style.borderBottom = '2px solid rgba(0,0,0,0.15)'; // Increased contrast
+                                });
+                                clonedEl.querySelectorAll('td').forEach(td => {
+                                    // Only override if it doesn't have a specific semantic color (like red/green)
+                                    const style = window.getComputedStyle(td);
+                                    if (style.color === 'rgb(255, 255, 255)' || !td.style.color) {
+                                        td.style.color = '#1e293b';
+                                    }
+                                    td.style.borderBottom = '1px solid rgba(0,0,0,0.1)'; // Increased contrast
+                                });
+                            }
+                        } else {
+                            clonedEl.style.width = '100%';
+                            clonedEl.style.minWidth = '1000px';
+                        }
+                    }
+                }
+            }).then(canvas => {
+                const link = document.createElement('a');
+                link.download = fileName + '.png';
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+                element.classList.remove('html2canvas-container');
+                if (!originalId) element.removeAttribute('id');
+            });
+        }
+
+        function exportChart(chartId, format, event, includeContainer = false) {
+            const chart = Chart.getChart(chartId);
+            if (!chart) return;
+
+            if (format === 'png') {
+                const isCircular = chart.config.type === 'pie' || chart.config.type === 'doughnut';
+
+                if (includeContainer) {
+                    const container = document.getElementById(chartId).closest('.chart-container');
+                    if (container) {
+                        exportElement(container, chartId + '_full');
+                    } else {
+                        exportElement(chartId, chartId);
+                    }
+                } else {
+                    exportElement(chartId, chartId);
+                }
+
+            } else if (format === 'csv') {
+                const labels = chart.data.labels;
+                const datasets = chart.data.datasets;
+                let tsv = 'Categoría\t' + datasets.map(d => d.label || 'Valor').join('\t') + '\n';
+                
+                labels.forEach((l, i) => {
+                    const rowData = datasets.map(d => {
+                        const val = d.data[i];
+                        return typeof val === 'number' ? val.toLocaleString('es-ES') : val;
+                    });
+                    tsv += l + '\t' + rowData.join('\t') + '\n';
+                });
+                
+                navigator.clipboard.writeText(tsv).then(() => {
+                    if (event && event.currentTarget) {
+                        const btn = event.currentTarget;
+                        const originalText = btn.innerText;
+                        btn.innerText = '¡Copiado!';
+                        setTimeout(() => { btn.innerText = originalText; }, 2000);
+                    }
+                });
+            }
+        }
+
+        const ctxDist = document.getElementById('distChart').getContext('2d');
+        const gradient = ctxDist.createLinearGradient(0, 0, 0, 300);
+        gradient.addColorStop(0, 'rgba(99, 102, 241, 0.4)');
+        gradient.addColorStop(1, 'rgba(99, 102, 241, 0)');
+
+        const scores = [52.5,50,50,50,55,42.5,55,52.5,57.5,52.5,57.5,55,50,62.5,50,47.5,42.5,47.5,45,62.5,52.5,45,45,52.5,60,50,50,47.5,57.5,45,57.5,40,57.5,57.5,45,50,52.5,50,50,47.5,55,47.5,55,45,57.5,45,32.5,50,42.5,45];
+        
+        // Función de Kernel Gaussiano para suavizar la curva
+        function kde(x, samples, bandwidth) {
+            return samples.reduce((sum, s) => {
+                const z = (x - s) / bandwidth;
+                return sum + (1 / (Math.sqrt(2 * Math.PI) * bandwidth)) * Math.exp(-0.5 * z * z);
+            }, 0) / samples.length;
+        }
+
+        const labels = [];
+        const densityData = [];
+        const bandwidth = 8.0;
+
+        for (let i = 0; i <= 100; i += 0.5) {
+            labels.push(i);
+            densityData.push(kde(i, scores, bandwidth));
+        }
+
+        new Chart(ctxDist, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [
+                    {
+                        data: densityData,
+                        fill: true,
+                        backgroundColor: gradient,
+                        borderColor: 'rgba(99, 102, 241, 1)',
+                        borderWidth: 2,
+                        pointRadius: 0,
+                        tension: 0.4
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    x: {
+                        type: 'linear',
+                        min: 0,
+                        max: 100,
+                        ticks: { stepSize: 20 },
+                        grid: { display: false },
+                        title: { display: true, text: 'Perfil de Usabilidad (Escala SUS)', color: '#94a3b8' }
+                    },
+                    y: {
+                        beginAtZero: true,
+                        display: true,
+                        grace: '30%', // Adds space at the top to avoid overlap with region labels
+                        title: {
+                            display: true,
+                            text: 'Densidad de Frecuencia',
+                            color: '#94a3b8',
+                            font: { size: 11 }
+                        },
+                        ticks: { display: false },
+                        grid: { display: false }
+                    }
+                },
+                plugins: {
+                    legend: { display: false },
+                    tooltip: { 
+                        enabled: true,
+                        callbacks: {
+                            title: () => '', // Quitamos el título del tooltip para que sea más limpio
+                            label: (ctx) => "Puntuación SUS: " + ctx.parsed.x.toLocaleString('es-ES', { minimumFractionDigits: 1, maximumFractionDigits: 1 })
+                        }
+                    }
+                },
+                interaction: {
+                    intersect: false,
+                    mode: 'index'
+                }
+            },
+            plugins: [{
+                id: 'backgroundRegions',
+                beforeDraw: (chart) => {
+                    const {ctx, chartArea: {top, bottom, left, right, width, height}, scales: {x}} = chart;
+                    if (!x || top === undefined) return;
+                    const regions = [
+                        { start: 0, end: 51, color: 'rgba(239, 68, 68, 0.12)', label: 'F (Awful)' },
+                        { start: 51, end: 68, color: 'rgba(245, 158, 11, 0.12)', label: 'D (Poor)' },
+                        { start: 68, end: 73, color: 'rgba(234, 179, 8, 0.12)', label: 'C (OK)' },
+                        { start: 73, end: 85, color: 'rgba(34, 197, 94, 0.12)', label: 'B (Good)' },
+                        { start: 85, end: 100, color: 'rgba(16, 185, 129, 0.12)', label: 'A (Excellent)' }
+                    ];
+                    regions.forEach(r => {
+                        const xStart = x.getPixelForValue(r.start);
+                        const xEnd = x.getPixelForValue(r.end);
+                        
+                        // Fondo de la región
+                        ctx.fillStyle = r.color;
+                        ctx.fillRect(xStart, top, xEnd - xStart, height);
+                        
+                        // Línea divisoria vertical
+                        if (r.end < 100) {
+                            ctx.strokeStyle = 'rgba(128, 128, 128, 0.2)'; // Neutral gray for visibility
+                            ctx.setLineDash([2, 4]);
+                            ctx.lineWidth = 1;
+                            ctx.beginPath();
+                            ctx.moveTo(xEnd, top);
+                            ctx.lineTo(xEnd, bottom);
+                            ctx.stroke();
+                        }
+
+                        ctx.fillStyle = '#475569'; // Darker color for visibility on both dark and light
+                        ctx.font = 'bold 10px sans-serif';
+                        ctx.textAlign = 'center';
+                        ctx.fillText(r.label, xStart + (xEnd - xStart)/2, top + 20);
+                    });
+                },
+                afterDraw: (chart) => {
+                    const {ctx, chartArea: {top, bottom}, scales: {x}} = chart;
+                    const meanRaw = 50.5;
+                    const xPos = x.getPixelForValue(meanRaw);
+                    
+                    ctx.save();
+                    // Línea con brillo (Glow)
+                    ctx.shadowColor = 'rgba(99, 102, 241, 0.4)';
+                    ctx.shadowBlur = 8;
+                    ctx.setLineDash([5, 5]);
+                    ctx.strokeStyle = '#818cf8'; 
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    ctx.moveTo(xPos, top + 35); // Lowered to avoid region labels
+                    ctx.lineTo(xPos, bottom);
+                    ctx.stroke();
+                    
+                    // Cápsula (Pill) para el texto en la parte inferior
+                    const label = 'MEDIA: ' + "50,50";
+                    ctx.font = 'bold 10px sans-serif';
+                    const textWidth = ctx.measureText(label).width;
+                    const p = 6; // padding
+                    
+                    ctx.shadowBlur = 0;
+                    ctx.fillStyle = '#6366f1';
+                    const rectX = xPos - (textWidth/2 + p);
+                    const rectY = bottom - 40; // Moved up slightly to avoid clipping
+                    const rectW = textWidth + p*2;
+                    const rectH = 20;
+                    
+                    // Dibujar rectángulo redondeado manual corregido
+                    ctx.beginPath();
+                    ctx.moveTo(rectX + 4, rectY);
+                    ctx.lineTo(rectX + rectW - 4, rectY);
+                    ctx.quadraticCurveTo(rectX + rectW, rectY, rectX + rectW, rectY + 4);
+                    ctx.lineTo(rectX + rectW, rectY + rectH - 4);
+                    ctx.quadraticCurveTo(rectX + rectW, rectY + rectH, rectX + rectW - 4, rectY + rectH);
+                    ctx.lineTo(rectX + 4, rectY + rectH);
+                    ctx.quadraticCurveTo(rectX, rectY + rectH, rectX, rectY + rectH - 4);
+                    ctx.lineTo(rectX, rectY + 4);
+                    ctx.quadraticCurveTo(rectX, rectY, rectX + 4, rectY);
+                    ctx.fill();
+                    
+                    ctx.fillStyle = 'white';
+                    ctx.textAlign = 'center';
+                    ctx.fillText(label, xPos, rectY + 14);
+                    ctx.restore();
+                }
+            }]
+        });
+
+        // SAMPLE CHARTS
+        const sampleColors = ['rgba(99, 102, 241, 0.6)', 'rgba(168, 85, 247, 0.6)', 'rgba(236, 72, 153, 0.6)', 'rgba(20, 184, 166, 0.6)'];
+        
+        new Chart(document.getElementById('sampleAgeChart'), {
+            type: 'bar',
+            data: {
+                labels: Object.keys({"19":2,"20":1,"21":2,"22":0,"23":3,"24":0,"25":1,"26":0,"27":0,"28":3,"29":2,"30":0,"31":0,"32":0,"33":1,"34":1,"35":3,"36":0,"37":1,"38":2,"39":2,"40":1,"41":2,"42":2,"43":1,"44":1,"45":0,"46":0,"47":2,"48":2,"49":0,"50":0,"51":1,"52":1,"53":3,"54":1,"55":0,"56":0,"57":1,"58":1,"59":1,"60":0,"61":1,"62":0,"63":2,"64":1,"65":0,"66":2}),
+                datasets: [{ 
+                    label: 'Cantidad',
+                    data: Object.values({"19":2,"20":1,"21":2,"22":0,"23":3,"24":0,"25":1,"26":0,"27":0,"28":3,"29":2,"30":0,"31":0,"32":0,"33":1,"34":1,"35":3,"36":0,"37":1,"38":2,"39":2,"40":1,"41":2,"42":2,"43":1,"44":1,"45":0,"46":0,"47":2,"48":2,"49":0,"50":0,"51":1,"52":1,"53":3,"54":1,"55":0,"56":0,"57":1,"58":1,"59":1,"60":0,"61":1,"62":0,"63":2,"64":1,"65":0,"66":2}), 
+                    backgroundColor: 'rgba(99, 102, 241, 0.6)'
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: { legend: { display: false } },
+                scales: { 
+                    y: { 
+                        beginAtZero: true, 
+                        ticks: { stepSize: 1 },
+                        title: { display: true, text: 'Participantes', color: '#94a3b8' }
+                    },
+                    x: {
+                        title: { display: true, text: 'Edad (Años)', color: '#94a3b8' }
+                    }
+                }
+            }
+        });
+        new Chart(document.getElementById('sampleGenderChart'), {
+            type: 'pie',
+            data: {
+                labels: Object.keys({"Prefer not to say":[52.5,62.5,50,45,62.5,50,45,47.5,47.5,55,45,32.5],"Non-binary":[50,50,55,42.5,55,57.5,52.5,42.5,52.5,45,50,57.5,50,52.5,55,57.5,42.5],"Female / Femenino":[50,52.5,55,52.5,60,40,57.5,57.5,50,50,45],"Male / Masculino":[57.5,50,47.5,47.5,45,47.5,57.5,45,50,45]}),
+                datasets: [{ 
+                    data: Object.values({"Prefer not to say":[52.5,62.5,50,45,62.5,50,45,47.5,47.5,55,45,32.5],"Non-binary":[50,50,55,42.5,55,57.5,52.5,42.5,52.5,45,50,57.5,50,52.5,55,57.5,42.5],"Female / Femenino":[50,52.5,55,52.5,60,40,57.5,57.5,50,50,45],"Male / Masculino":[57.5,50,47.5,47.5,45,47.5,57.5,45,50,45]}).map(a => a.length), 
+                    backgroundColor: sampleColors,
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                aspectRatio: 1.8,
+                layout: { padding: 20 },
+                plugins: {
+                    legend: { 
+                        position: 'right', 
+                        labels: { 
+                            color: '#94a3b8',
+                            padding: 15,
+                            font: { size: 11 }
+                        } 
+                    },
+                    datalabels: {
+                        color: '#fff',
+                        font: { weight: 'bold' },
+                        formatter: (value, ctx) => {
+                            let sum = 0;
+                            let dataArr = ctx.chart.data.datasets[0].data;
+                            dataArr.map(data => { sum += data; });
+                            let percentage = (value*100 / sum).toLocaleString('es-ES', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + "%";
+                            return value + " (" + percentage + ")";
+                        },
+                        display: (context) => {
+                            const dataset = context.dataset;
+                            const sum = dataset.data.reduce((a, b) => a + b, 0);
+                            const value = dataset.data[context.dataIndex];
+                            return (value / sum) > 0.05;
+                        }
+                    }
+                }
+            }
+        });
+        new Chart(document.getElementById('sampleEduChart'), {
+            type: 'pie',
+            data: {
+                labels: Object.keys({"PhD":[52.5,50,50,57.5,62.5,47.5,50,57.5,57.5,57.5,52.5,45,57.5,32.5],"Máster / PhD":[50,55,52.5,45,45,47.5,40,50,47.5,45],"Other":[55,50,47.5,52.5,60,50,45,45,55,50,45],"High School":[42.5,55,57.5,50,50,50,47.5,55,42.5],"Grado / University Degree":[52.5,52.5,42.5,45,62.5,57.5]}),
+                datasets: [{ 
+                    data: Object.values({"PhD":[52.5,50,50,57.5,62.5,47.5,50,57.5,57.5,57.5,52.5,45,57.5,32.5],"Máster / PhD":[50,55,52.5,45,45,47.5,40,50,47.5,45],"Other":[55,50,47.5,52.5,60,50,45,45,55,50,45],"High School":[42.5,55,57.5,50,50,50,47.5,55,42.5],"Grado / University Degree":[52.5,52.5,42.5,45,62.5,57.5]}).map(a => a.length), 
+                    backgroundColor: sampleColors,
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                aspectRatio: 1.8,
+                layout: { padding: 20 },
+                plugins: {
+                    legend: { 
+                        position: 'right', 
+                        labels: { 
+                            color: '#94a3b8',
+                            padding: 15,
+                            font: { size: 11 }
+                        } 
+                    },
+                    datalabels: {
+                        color: '#fff',
+                        font: { weight: 'bold' },
+                        formatter: (value, ctx) => {
+                            let sum = 0;
+                            let dataArr = ctx.chart.data.datasets[0].data;
+                            dataArr.map(data => { sum += data; });
+                            let percentage = (value*100 / sum).toLocaleString('es-ES', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + "%";
+                            return value + " (" + percentage + ")";
+                        },
+                        display: (context) => {
+                            const dataset = context.dataset;
+                            const sum = dataset.data.reduce((a, b) => a + b, 0);
+                            const value = dataset.data[context.dataIndex];
+                            return (value / sum) > 0.05;
+                        }
+                    }
+                }
+            }
+        });
+
+        // SUS BY DEMOGRAPHICS
+        const ctxAge = document.getElementById('ageChart').getContext('2d');
+        new Chart(ctxAge, {
+            type: 'bar',
+            data: {
+                labels: ["< 25","25 - 40","41 - 60","> 60"],
+                datasets: [{
+                    label: 'Puntuación Media',
+                    data: [52.8125,50,49.73684210526316,51.25],
+                    backgroundColor: 'rgba(168, 85, 247, 0.5)'
+                }]
+            },
+            options: { 
+                responsive: true, 
+                plugins: { legend: { display: false } },
+                scales: { 
+                    y: { 
+                        min: 0, 
+                        max: 100,
+                        title: { display: true, text: 'Puntuación Media', color: '#94a3b8' }
+                    },
+                    x: {
+                        title: { display: true, text: 'Grupo de Edad', color: '#94a3b8' }
+                    }
+                } 
+            }
+        });
+
+        const ctxGender = document.getElementById('genderChart').getContext('2d');
+        new Chart(ctxGender, {
+            type: 'bar',
+            data: {
+                labels: ["Prefer not to say","Non-binary","Female / Femenino","Male / Masculino"],
+                datasets: [{
+                    label: 'Puntuación Media',
+                    data: [49.583333333333336,51.029411764705884,51.81818181818182,49.25],
+                    backgroundColor: sampleColors
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: { legend: { display: false } },
+                scales: { 
+                    y: { 
+                        min: 0, 
+                        max: 100,
+                        title: { display: true, text: 'Puntuación Media', color: '#94a3b8' }
+                    },
+                    x: {
+                        title: { display: true, text: 'Género', color: '#94a3b8' }
+                    }
+                }
+            }
+        });
+
+        const ctxEdu = document.getElementById('eduChart').getContext('2d');
+        new Chart(ctxEdu, {
+            type: 'bar',
+            data: {
+                labels: ["PhD","Máster / PhD","Other","High School","Grado / University Degree"],
+                datasets: [{
+                    label: 'Puntuación Media',
+                    data: [52.142857142857146,47.75,50.45454545454545,50,52.083333333333336],
+                    backgroundColor: 'rgba(20, 184, 166, 0.5)'
+                }]
+            },
+            options: { 
+                responsive: true, 
+                plugins: { legend: { display: false } },
+                scales: { 
+                    y: { 
+                        min: 0, 
+                        max: 100,
+                        title: { display: true, text: 'Puntuación Media', color: '#94a3b8' }
+                    },
+                    x: {
+                        title: { display: true, text: 'Nivel Educativo', color: '#94a3b8' }
+                    }
+                } 
+            }
+        });
+
+        // TIME BY DEMOGRAPHICS
+        new Chart(document.getElementById('timeAgeChart'), {
+            type: 'bar',
+            data: {
+                labels: ["< 25","25 - 40","41 - 60","> 60"],
+                datasets: [{ label: 'Segundos (Mediana)', data: [54159.361000000004,35284.521,126583.971,90979.79500000001], backgroundColor: 'rgba(168, 85, 247, 0.6)' }]
+            },
+            options: { 
+                responsive: true,
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: { title: { display: true, text: 'Tiempo (s)', color: '#94a3b8' } },
+                    x: { title: { display: true, text: 'Edad', color: '#94a3b8' } }
+                }
+            }
+        });
+        new Chart(document.getElementById('timeGenderChart'), {
+            type: 'bar',
+            data: {
+                labels: ["Prefer not to say","Non-binary","Female / Femenino","Male / Masculino"],
+                datasets: [{ label: 'Segundos (Mediana)', data: [83174.75200000001,45593.768,186016.456,6982.5785], backgroundColor: sampleColors }]
+            },
+            options: { 
+                responsive: true,
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: { title: { display: true, text: 'Tiempo (s)', color: '#94a3b8' } },
+                    x: { title: { display: true, text: 'Género', color: '#94a3b8' } }
+                }
+            }
+        });
+        new Chart(document.getElementById('timeEduChart'), {
+            type: 'bar',
+            data: {
+                labels: ["PhD","Máster / PhD","Other","High School","Grado / University Degree"],
+                datasets: [{ label: 'Segundos (Mediana)', data: [20905.8245,62334.4945,20914.472,45480.657,261603.6055], backgroundColor: 'rgba(20, 184, 166, 0.6)' }]
+            },
+            options: { 
+                responsive: true,
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: { title: { display: true, text: 'Tiempo (s)', color: '#94a3b8' } },
+                    x: { title: { display: true, text: 'Nivel Educativo', color: '#94a3b8' } }
+                }
+            }
+        });
+
+        // SESSION DURATION CHART
+        new Chart(document.getElementById('sessionDurationChart'), {
+            type: 'bar',
+            data: {
+                labels: Object.keys({"0-5 min":0,"5-10 min":0,"10-15 min":0,"15-20 min":0,"20-25 min":0,"25-30 min":0,"30-35 min":0,"35-40 min":0,"40-45 min":0,"45-50 min":0,"50-55 min":0,"55-60 min":0,"60-65 min":0,"65-70 min":0,"70-75 min":0,"75-80 min":0,"80-85 min":0,"85-90 min":0,"90-95 min":0,"95-100 min":0,"100-105 min":0,"105-110 min":0,"110-115 min":1,"115-120 min":0,"> 120 min":49}),
+                datasets: [{
+                    label: 'Nº Usuarios',
+                    data: Object.values({"0-5 min":0,"5-10 min":0,"10-15 min":0,"15-20 min":0,"20-25 min":0,"25-30 min":0,"30-35 min":0,"35-40 min":0,"40-45 min":0,"45-50 min":0,"50-55 min":0,"55-60 min":0,"60-65 min":0,"65-70 min":0,"70-75 min":0,"75-80 min":0,"80-85 min":0,"85-90 min":0,"90-95 min":0,"95-100 min":0,"100-105 min":0,"105-110 min":0,"110-115 min":1,"115-120 min":0,"> 120 min":49}),
+                    backgroundColor: 'rgba(20, 184, 166, 0.5)',
+                    borderColor: '#14b8a6',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: { 
+                        beginAtZero: true, 
+                        ticks: { stepSize: 1 },
+                        title: { display: true, text: 'Participantes', color: '#94a3b8' }
+                    },
+                    x: {
+                        title: { display: true, text: 'Rango de Tiempo', color: '#94a3b8' }
+                    }
+                }
+            }
+        });
+
+        // AUDIT CHARTS
+        const resourceLabels = Object.keys({"SEARCH":180,"AGENT":200,"USER":40,"AUTH":30});
+        const resourceColorMap = {
+            'AGENT': 'rgba(99, 102, 241, 0.7)',  // Indigo
+            'AUTH': 'rgba(245, 158, 11, 0.7)',   // Amber (High contrast vs Indigo)
+            'SEARCH': 'rgba(168, 85, 247, 0.7)', // Purple
+            'USER': 'rgba(16, 185, 129, 0.7)',   // Emerald
+            'PLANE': 'rgba(236, 72, 153, 0.7)',  // Pink
+            'AIRPORT': 'rgba(20, 184, 166, 0.7)' // Teal
+        };
+        const resourceEntries = Object.entries({"SEARCH":180,"AGENT":200,"USER":40,"AUTH":30}).sort((a, b) => b[1] - a[1]);
+        const sortedResourceLabels = resourceEntries.map(e => e[0]);
+        const sortedResourceData = resourceEntries.map(e => e[1]);
+        const resourceColors = sortedResourceLabels.map(l => resourceColorMap[l] || 'rgba(148, 163, 184, 0.7)');
+
+        new Chart(document.getElementById('auditResourceChart'), {
+            type: 'pie',
+            data: {
+                labels: sortedResourceLabels,
+                datasets: [{ 
+                    data: sortedResourceData, 
+                    backgroundColor: resourceColors,
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                aspectRatio: 1.8,
+                layout: { padding: 20 },
+                plugins: {
+                    legend: { 
+                        position: 'right', 
+                        labels: { 
+                            color: '#94a3b8',
+                            padding: 15,
+                            font: { size: 11 }
+                        } 
+                    },
+                    datalabels: {
+                        color: '#fff',
+                        font: { weight: 'bold' },
+                        formatter: (value, ctx) => {
+                            let sum = 0;
+                            let dataArr = ctx.chart.data.datasets[0].data;
+                            dataArr.map(data => { sum += data; });
+                            let percentage = (value*100 / sum).toLocaleString('es-ES', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + "%";
+                            return value + " (" + percentage + ")";
+                        },
+                        display: (context) => {
+                            const dataset = context.dataset;
+                            const sum = dataset.data.reduce((a, b) => a + b, 0);
+                            const value = dataset.data[context.dataIndex];
+                            return (value / sum) > 0.05;
+                        }
+                    }
+                }
+            }
+        });
+
+        // 11. Rendimiento por Tipo de Trayecto (Grouped Bar Chart)
+        const auditStatusByType = {"oneWay":{"success":25,"failed":5},"roundTrip":{"success":50,"failed":0}};
+        new Chart(document.getElementById('auditStatusByTypeChart'), {
+            type: 'bar',
+            data: {
+                labels: ['Solo Ida', 'Ida y Vuelta'],
+                datasets: [
+                    {
+                        label: 'Completada (Éxito)',
+                        data: [auditStatusByType.oneWay.success, auditStatusByType.roundTrip.success],
+                        backgroundColor: '#10b981',
+                        borderRadius: 8
+                    },
+                    {
+                        label: 'Fallida (Error)',
+                        data: [auditStatusByType.oneWay.failed, auditStatusByType.roundTrip.failed],
+                        backgroundColor: '#f43f5e',
+                        borderRadius: 8
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: { 
+                        beginAtZero: true, 
+                        grid: { color: 'rgba(128,128,128,0.15)' }, // Visible on both dark and light
+                        ticks: { color: '#94a3b8' }, // Slate gray is visible on both
+                        title: { display: true, text: 'Nº de Búsquedas', color: '#94a3b8' }
+                    },
+                    x: {
+                        grid: { display: false },
+                        ticks: { color: '#94a3b8', font: { weight: 'bold' } } // Changed from white to slate gray
+                    }
+                },
+                plugins: {
+                    legend: { position: 'top', labels: { color: '#94a3b8' } },
+                    tooltip: { mode: 'index', intersect: false }
+                }
+            }
+        });
+
+        const sortedActions = Object.entries({"CHAT (AGENT)":120,"TOOL_CALL (AGENT)":80,"CREATE (SEARCH)":100,"EXPLORATION_COMPLETED (SEARCH)":75,"EXPLORATION_FAILED (SEARCH)":5})
+            .sort((a, b) => b[1] - a[1])
+            .slice(0, 8);
+
+        new Chart(document.getElementById('auditActionChart'), {
+            type: 'bar',
+            indexAxis: 'y',
+            data: {
+                labels: sortedActions.map(a => a[0]),
+                datasets: [{ label: 'Frecuencia', data: sortedActions.map(a => a[1]), backgroundColor: 'rgba(99, 102, 241, 0.6)' }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    x: { title: { display: true, text: 'Frecuencia de Uso', color: '#94a3b8' } },
+                    y: { title: { display: true, text: 'Acción Detectada', color: '#94a3b8' } }
+                }
+            }
+        });
+
+
+
+        new Chart(document.getElementById('auditEfficiencyChart'), {
+            type: 'bar',
+            data: {
+                labels: ["Búsq. 1","Búsq. 2","Búsq. 3","Búsq. 4","Búsq. 5","Búsq. 6","Búsq. 7","Búsq. 8","Búsq. 9","Búsq. 10"],
+                datasets: [{ label: 'Mensajes previos', data: [2,3,2,4,1,2,3,1,1,2], backgroundColor: '#ec4899' }]
+            },
+            options: { 
+                scales: { 
+                    y: { 
+                        beginAtZero: true, 
+                        ticks: { stepSize: 1 },
+                        title: { display: true, text: 'Mensajes Previos', color: '#94a3b8' }
+                    },
+                    x: {
+                        title: { display: true, text: 'Misiones/Búsquedas Secuenciales', color: '#94a3b8' }
+                    }
+                } 
+            }
+        });
+
+
+
+        new Chart(document.getElementById('auditTimeDistChart'), {
+            type: 'bar',
+            data: (() => {
+                const durations = [12,15,18,22,25,30,45,12,14,16];
+                const maxVal = Math.max(...durations, 0);
+                const step = 10;
+                const count = Math.max(1, Math.ceil((maxVal + 0.1) / step));
+                
+                const labels = [];
+                const buckets = new Array(count).fill(0);
+                
+                for (let i = 0; i < count; i++) {
+                    labels.push((i * step) + "-" + ((i + 1) * step) + "s");
+                }
+                
+                durations.forEach(v => {
+                    const idx = Math.floor(v / step);
+                    if (idx < count) buckets[idx]++;
+                    else buckets[count - 1]++;
+                });
+                
+                return {
+                    labels: labels,
+                    datasets: [{ 
+                        label: 'Éxitos', 
+                        data: buckets, 
+                        backgroundColor: 'rgba(20, 184, 166, 0.6)' 
+                    }]
+                };
+            })(),
+            options: {
+                responsive: true,
+                scales: {
+                    y: { beginAtZero: true, ticks: { stepSize: 1 }, title: { display: true, text: 'Nº de Búsquedas', color: '#94a3b8' } },
+                    x: { title: { display: true, text: 'Tiempo de Respuesta (Segundos)', color: '#94a3b8' } }
+                }
+            }
+        });
+
+        new Chart(document.getElementById('auditFailedTimeDistChart'), {
+            type: 'bar',
+            data: (() => {
+                const durations = [5,8,12,4,6];
+                const maxVal = Math.max(...durations, 0);
+                const step = 10;
+                const count = Math.max(1, Math.ceil((maxVal + 0.1) / step));
+                
+                const labels = [];
+                const buckets = new Array(count).fill(0);
+                
+                for (let i = 0; i < count; i++) {
+                    labels.push((i * step) + "-" + ((i + 1) * step) + "s");
+                }
+                
+                durations.forEach(v => {
+                    const idx = Math.floor(v / step);
+                    if (idx < count) buckets[idx]++;
+                    else buckets[count - 1]++;
+                });
+                
+                return {
+                    labels: labels,
+                    datasets: [{ 
+                        label: 'Fallos', 
+                        data: buckets, 
+                        backgroundColor: 'rgba(245, 158, 11, 0.6)' 
+                    }]
+                };
+            })(),
+            options: {
+                responsive: true,
+                scales: {
+                    y: { beginAtZero: true, ticks: { stepSize: 1 }, title: { display: true, text: 'Nº de Búsquedas', color: '#94a3b8' } },
+                    x: { title: { display: true, text: 'Tiempo de Respuesta (Segundos)', color: '#94a3b8' } }
+                }
+            }
+        });
+
+    </script>
+</body>
+</html>
+    
